@@ -1,6 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
+import { Capacitor } from '@capacitor/core';
 
-const BACKEND = import.meta.env.VITE_BACKEND_URL;
+// Native (APK): vollständige URL nötig, da relative Pfade auf capacitor://localhost landen
+// Web (Vercel): leer = same-origin /api/*
+const BACKEND = Capacitor.isNativePlatform()
+  ? 'https://bait-buddy.vercel.app'
+  : (import.meta.env.VITE_BACKEND_URL ?? '');
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 

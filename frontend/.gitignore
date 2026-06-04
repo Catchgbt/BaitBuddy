@@ -1,0 +1,10 @@
+dist/
+node_modules/
+.env.local
+
+# Capacitor Android build artifacts (regeneriert durch 'cap sync')
+android/.gradle/
+android/build/
+android/app/build/
+android/app/src/main/assets/public/
+android/app/release.keystore
