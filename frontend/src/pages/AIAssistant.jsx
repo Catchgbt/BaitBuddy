@@ -39,7 +39,11 @@ export default function AIAssistant() {
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
 
       // Action ausführen
-      if (action?.type === 'navigate') navigate(`/${action.params.page.toLowerCase()}`);
+      const VALID_PAGES = ['home', 'log', 'map', 'community', 'premium', 'chat'];
+      if (action?.type === 'navigate') {
+        const page = action.params?.page?.toLowerCase();
+        if (VALID_PAGES.includes(page)) navigate(`/${page}`);
+      }
       if (action?.type === 'log_catch') {
         await api.post('/api/catches', action.params);
         toast.success('Fang wurde eingetragen!');

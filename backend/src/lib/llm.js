@@ -7,7 +7,7 @@ export async function invokeLLM({ prompt, imageBase64 = null }) {
 
   if (imageBase64) {
     const [header, data] = imageBase64.split(',');
-    const mediaType = header.match(/:(.*?);/)[1];
+    const mediaType = header.match(/:(.*?);/)?.[1] ?? 'image/jpeg';
     content.unshift({ type: 'image', source: { type: 'base64', media_type: mediaType, data } });
   }
 
