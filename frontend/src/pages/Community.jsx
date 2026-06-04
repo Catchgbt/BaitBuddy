@@ -72,7 +72,7 @@ export default function Community() {
                 i === 2 ? 'bg-orange-400 text-black' : 'bg-gray-800 text-gray-400'
               }`}>{i + 1}</span>
               <div className="flex-1">
-                <p className="text-white text-sm font-medium">{entry.species || '?'} · {entry.length_cm}cm</p>
+                <p className="text-white text-sm font-medium">{entry.species || '?'}{entry.length_cm ? ` · ${entry.length_cm}cm` : ''}</p>
                 <p className="text-gray-500 text-xs">{entry.user_id}</p>
               </div>
               <button onClick={() => like.mutate(entry.id)}

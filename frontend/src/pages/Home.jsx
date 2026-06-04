@@ -15,9 +15,11 @@ export default function Home() {
 
   useEffect(() => {
     navigator.geolocation?.getCurrentPosition(async pos => {
-      const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&current=temperature_2m,wind_speed_10m,weather_code&timezone=auto`);
-      const d = await r.json();
-      setWeather(d.current);
+      try {
+        const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&current=temperature_2m,wind_speed_10m,weather_code&timezone=auto`);
+        const d = await r.json();
+        if (d.current) setWeather(d.current);
+      } catch {}
     });
   }, []);
 
@@ -76,7 +78,7 @@ export default function Home() {
               <div key={c.id} className="rounded-xl bg-gray-900/80 p-4 border border-gray-800 flex justify-between items-center">
                 <div>
                   <p className="text-white font-medium">{c.species || 'Unbekannt'}</p>
-                  <p className="text-gray-500 text-xs">{c.length_cm}cm · {c.weight_kg}kg</p>
+                  <p className="text-gray-500 text-xs">{c.length_cm && `${c.length_cm}cm`}{c.length_cm && c.weight_kg && ' · '}{c.weight_kg && `${c.weight_kg}kg`}</p>
                 </div>
                 <p className="text-gray-600 text-xs">{new Date(c.catch_time).toLocaleDateString('de-DE')}</p>
               </div>

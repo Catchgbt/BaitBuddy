@@ -53,10 +53,10 @@ export default function Log() {
             </select>
             <div className="grid grid-cols-2 gap-3">
               <input type="number" placeholder="Länge (cm)" value={form.length_cm}
-                onChange={e => setForm(f => ({ ...f, length_cm: e.target.value }))}
+                onChange={e => setForm(f => ({ ...f, length_cm: e.target.value === '' ? '' : parseFloat(e.target.value) }))}
                 className="px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder-gray-500" />
               <input type="number" placeholder="Gewicht (kg)" value={form.weight_kg}
-                onChange={e => setForm(f => ({ ...f, weight_kg: e.target.value }))}
+                onChange={e => setForm(f => ({ ...f, weight_kg: e.target.value === '' ? '' : parseFloat(e.target.value) }))}
                 className="px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder-gray-500" />
             </div>
             <select value={form.bait_used} onChange={e => setForm(f => ({ ...f, bait_used: e.target.value }))}
