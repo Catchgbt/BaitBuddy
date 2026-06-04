@@ -4,8 +4,12 @@
   "installCommand": "cd frontend && npm install",
   "rewrites": [
     {
-      "source": "/api(.*)",
-      "destination": "https://yejiqenqdzupauddjcyi.supabase.co/functions/v1$1"
+      "source": "/api/:path*",
+      "destination": "https://yejiqenqdzupauddjcyi.supabase.co/functions/v1/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "cleanUrls": true,
