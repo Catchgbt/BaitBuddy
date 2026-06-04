@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "com.baitbuddy.app"
+    namespace = "com.base68bb3d3b9f83dc1f55ef532b.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.baitbuddy.app"
+        applicationId "com.base68bb3d3b9f83dc1f55ef532b.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
