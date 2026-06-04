@@ -13,7 +13,11 @@ const PORT = process.env.PORT || 3000;
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://baitbuddy.vercel.app'],
+  origin: process.env.ALLOWED_ORIGINS?.split(',') || [
+    'http://localhost:5173',
+    'https://bait-buddy.vercel.app',
+    'capacitor://localhost',
+  ],
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -29,4 +33,8 @@ app.use('/api', premiumRoutes);
 app.use((req, res) => res.status(404).json({ error: `Not found: ${req.method} ${req.path}` }));
 app.use((err, req, res, next) => res.status(500).json({ error: err.message }));
 
-app.listen(PORT, () => console.log(`✅ BaitBuddy Backend läuft auf :${PORT}`));
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => console.log(`✅ BaitBuddy Backend läuft auf :${PORT}`));
+}
+
+export default app;
