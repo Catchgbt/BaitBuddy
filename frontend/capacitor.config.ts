@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.baitbuddy.app',
+  appId: 'com.base68bb3d3b9f83dc1f55ef532b.app',
   appName: 'BaitBuddy',
   webDir: 'dist',
   plugins: {
