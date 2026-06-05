@@ -3,9 +3,6 @@
   "outputDirectory": "frontend/dist",
   "installCommand": "cd frontend && npm install --legacy-peer-deps && cd ../backend && npm install",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "cleanUrls": true,
-  "trailingSlash": false
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
 }
