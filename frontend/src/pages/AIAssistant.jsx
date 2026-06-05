@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { api } from '@/api/client';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { Send, Volume2, VolumeX } from 'lucide-react';
+import { Send, Volume2, VolumeX, Mic, MicOff } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AIAssistant() {
@@ -13,7 +13,9 @@ export default function AIAssistant() {
   const [loading, setLoading] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(true);
   const [speaking, setSpeaking] = useState(false);
+  const [listening, setListening] = useState(false);
   const bottomRef = useRef();
+  const recognitionRef = useRef(null);
   const navigate = useNavigate();
   const qc = useQueryClient();
 
@@ -48,11 +50,45 @@ export default function AIAssistant() {
     setSpeaking(false);
   };
 
+  const startListening = () => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return toast.error('Spracherkennung wird nicht unterstützt');
+
+    if (listening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+
+    const rec = new SR();
+    recognitionRef.current = rec;
+    rec.lang = 'de-DE';
+    rec.continuous = false;
+    rec.interimResults = false;
+
+    rec.onstart = () => setListening(true);
+    rec.onresult = (e) => {
+      const transcript = e.results[0][0].transcript.trim();
+      if (transcript) sendMessage(transcript);
+    };
+    rec.onend = () => setListening(false);
+    rec.onerror = (e) => {
+      setListening(false);
+      if (e.error !== 'no-speech') toast.error('Spracherkennung fehlgeschlagen');
+    };
+
+    rec.start();
+  };
+
   const send = async () => {
     if (!input.trim() || loading) return;
-    const userMsg = { role: 'user', content: input.trim() };
-    setMessages(prev => [...prev, userMsg]);
+    sendMessage(input.trim());
     setInput('');
+  };
+
+  const sendMessage = async (text) => {
+    if (!text || loading) return;
+    const userMsg = { role: 'user', content: text };
+    setMessages(prev => [...prev, userMsg]);
     setLoading(true);
 
     try {
@@ -167,11 +203,21 @@ export default function AIAssistant() {
       {/* Eingabe */}
       <div className="p-4 border-t border-gray-800">
         <div className="flex gap-2">
+          <button
+            onClick={startListening}
+            className={`p-3 rounded-xl border transition-all ${
+              listening
+                ? 'bg-red-600 border-red-500 text-white animate-pulse'
+                : 'bg-gray-800 border-gray-700 text-gray-400 hover:text-white hover:border-gray-500'
+            }`}
+          >
+            {listening ? <MicOff size={18} /> : <Mic size={18} />}
+          </button>
           <input
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()}
-            placeholder="Frage stellen..."
+            placeholder={listening ? '🎤 Spreche jetzt...' : 'Frage stellen...'}
             className="flex-1 px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 text-sm"
           />
           <button onClick={send} disabled={loading || !input.trim()}
