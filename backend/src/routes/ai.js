@@ -5,13 +5,11 @@ import { invokeLLM } from '../lib/llm.js';
 
 const router = Router();
 
-// POST /api/chat - AI Angel-Assistent
 router.post('/chat', requireAuth, async (req, res) => {
   try {
     const { messages = [], userLocation = null } = req.body;
     const userEmail = req.user.email;
 
-    // Intent Detection
     const lastMsg = [...messages].reverse().find(m => m.role === 'user')?.content || '';
     const wantsCatches = /fang|fänge|gefangen|fangbuch|logbuch/i.test(lastMsg);
     const wantsRules = /schonzeit|mindestmaß|erlaubt|verboten/i.test(lastMsg);
@@ -20,7 +18,6 @@ router.post('/chat', requireAuth, async (req, res) => {
 
     const contextParts = [];
 
-    // Fänge laden
     if (wantsCatches) {
       const { data: catches } = await supabase
         .from('catches').select('*')
@@ -33,7 +30,6 @@ router.post('/chat', requireAuth, async (req, res) => {
       }
     }
 
-    // Schonzeiten laden
     if (wantsRules) {
       const { data: rules } = await supabase.from('rule_entries').select('*').limit(30);
       if (rules?.length) {
@@ -47,7 +43,6 @@ router.post('/chat', requireAuth, async (req, res) => {
       }
     }
 
-    // Spots laden
     if (wantsSpots) {
       const { data: spots } = await supabase
         .from('spots').select('name,water_type')
@@ -57,7 +52,6 @@ router.post('/chat', requireAuth, async (req, res) => {
       }
     }
 
-    // Wetter laden
     if (wantsWeather && userLocation?.latitude) {
       const w = await fetch(
         `https://api.open-meteo.com/v1/forecast?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&current=temperature_2m,wind_speed_10m,weather_code&timezone=auto`
@@ -69,12 +63,7 @@ router.post('/chat', requireAuth, async (req, res) => {
 
     const context = contextParts.length ? '\n\n--- App-Daten ---\n' + contextParts.join('\n\n') + '\n---\n' : '';
 
-    const systemPrompt = `Du bist BaitBuddy, ein professioneller Angel-Experte und KI-Assistent für eine Angel-App. Antworte kurz und präzise auf Deutsch. Keine Emojis.
-
-Wenn der Nutzer eine Aktion möchte (Fang eintragen, Navigation etc.), antworte zusätzlich mit:
-<<ACTION>>{"type":"log_catch","params":{"species":"Hecht","length_cm":75,"weight_kg":4.2,"bait_used":"Gummifisch"}}<<END>>
-
-Verfügbare Aktionen: log_catch, navigate (page: Home/Log/Map/Community/Premium), save_spot${context}`;
+    const systemPrompt = `Du bist BaitBuddy, ein professioneller Angel-Experte und KI-Assistent für eine Angel-App. Antworte kurz und präzise auf Deutsch. Keine Emojis.${context}`;
 
     const history = messages.slice(-6).map(m =>
       `${m.role === 'user' ? 'Nutzer' : 'BaitBuddy'}: ${m.content}`
@@ -82,7 +71,6 @@ Verfügbare Aktionen: log_catch, navigate (page: Home/Log/Map/Community/Premium)
 
     const reply = await invokeLLM({ prompt: `${systemPrompt}\n\n${history}\n\nAntworte:` });
 
-    // Action parsen
     let action = null;
     const actionMatch = reply.match(/<<ACTION>>(.*?)<<END>>/s);
     if (actionMatch) {
@@ -96,21 +84,77 @@ Verfügbare Aktionen: log_catch, navigate (page: Home/Log/Map/Community/Premium)
   }
 });
 
-// POST /api/analyze-photo - Fischfoto analysieren
+router.post('/ai/chat', requireAuth, async (req, res) => {
+  try {
+    const { messages = [], userLocation = null } = req.body;
+    const userEmail = req.user.email;
+    const lastMsg = [...messages].reverse().find(m => m.role === 'user')?.content || '';
+    const contextParts = [];
+
+    const systemPrompt = `Du bist BaitBuddy, ein professioneller Angel-Experte und KI-Assistent für eine Angel-App. Antworte kurz und präzise auf Deutsch.`;
+    const history = messages.slice(-6).map(m =>
+      `${m.role === 'user' ? 'Nutzer' : 'BaitBuddy'}: ${m.content}`
+    ).join('\n');
+
+    const reply = await invokeLLM({ prompt: `${systemPrompt}\n\n${history}\n\nAntworte:` });
+    return res.json({ ok: true, reply, message: reply });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+router.post('/ai/analyze-catch', requireAuth, async (req, res) => {
+  try {
+    const { image_base64, file_url } = req.body;
+    const imageBase64 = image_base64 || file_url;
+    if (!imageBase64) return res.status(400).json({ error: 'image_base64 required' });
+    const analysis = await invokeLLM({
+      prompt: 'Analysiere dieses Foto. Erkenne die Fischart, schätze Länge und Gewicht. Gib Tipps. Antworte auf Deutsch.',
+      imageBase64
+    });
+    return res.json({ ok: true, analysis });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
 router.post('/analyze-photo', requireAuth, async (req, res) => {
   try {
     const { imageBase64 } = req.body;
     if (!imageBase64) return res.status(400).json({ error: 'imageBase64 required' });
-
-    const reply = await invokeLLM({
+    const analysis = await invokeLLM({
       prompt: 'Analysiere dieses Foto. Erkenne die Fischart, schätze Länge und Gewicht. Gib Tipps zum Fang. Antworte auf Deutsch.',
       imageBase64
     });
-
-    return res.json({ ok: true, analysis: reply });
+    return res.json({ ok: true, analysis });
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
+});
+
+router.post('/ai/evaluate-catch', requireAuth, async (req, res) => {
+  try {
+    const { catch_data, context } = req.body;
+    const reply = await invokeLLM({ prompt: `Bewerte diesen Fang: ${JSON.stringify(catch_data)}. Kontext: ${context || ''}. Antworte auf Deutsch.` });
+    return res.json({ ok: true, evaluation: reply });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+router.post('/ai/generate-catch-report', requireAuth, async (req, res) => {
+  try {
+    const { period } = req.body;
+    const { data: catches } = await supabase.from('catches').select('*').eq('created_by', req.user.email).order('catch_time', { ascending: false }).limit(50);
+    const reply = await invokeLLM({ prompt: `Erstelle einen Fangbericht für den Zeitraum ${period || 'letzte 30 Tage'} basierend auf diesen Fängen: ${JSON.stringify(catches?.slice(0, 20))}. Antworte auf Deutsch.` });
+    return res.json({ ok: true, report: reply });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+router.post('/ai/tts', requireAuth, async (req, res) => {
+  return res.status(501).json({ error: 'TTS not implemented' });
 });
 
 export default router;

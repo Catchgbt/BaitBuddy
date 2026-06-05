@@ -1,0 +1,43 @@
+{
+  "name": "TrackingEvent",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "E-Mail des Nutzers oder 'guest'"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "page_view",
+        "feature_click"
+      ],
+      "description": "Art des Events"
+    },
+    "page_name": {
+      "type": "string",
+      "description": "Name der Seite (z.B. Dashboard, Logbook)"
+    },
+    "feature_id": {
+      "type": "string",
+      "description": "Feature-Kennung bei feature_click (z.B. ki_buddy, fangbuch, karte)"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Zusatzinfos (optional)",
+      "properties": {}
+    }
+  },
+  "required": [
+    "user_id",
+    "event_type"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "write": {}
+  }
+}

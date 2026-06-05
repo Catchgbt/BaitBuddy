@@ -1,0 +1,190 @@
+/**
+ * Optimized Gradient Animations for 60fps Performance
+ * 
+ * Uses transform-based animations instead of background changes
+ * to keep animations on compositor thread (GPU accelerated).
+ * Reduces main thread load on standard WebView devices.
+ */
+
+/* Root animation variables for control */
+:root {
+  --animation-duration-slow: 25s;
+  --animation-duration-medium: 20s;
+  --animation-duration-fast: 8s;
+  --animation-easing: ease-in-out;
+}
+
+/* Base hardware acceleration for all animated elements */
+[data-animated],
+.animate-gradient-shift,
+.animate-gradient-shift-reverse,
+.animate-glow-pulse,
+.animate-glow-pulse-delayed,
+.animate-glow-pulse-slow {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  contain: layout style paint;
+}
+
+/* Keyframe: Gradient Shift - 60fps optimized */
+@keyframes gradient-shift {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: var(--opacity-start, 0.2);
+  }
+  25% {
+    transform: translate(8%, -4%) scale(1.08);
+    opacity: var(--opacity-mid, 0.3);
+  }
+  50% {
+    transform: translate(-4%, 8%) scale(0.96);
+    opacity: var(--opacity-end, 0.15);
+  }
+  75% {
+    transform: translate(-8%, -8%) scale(1.04);
+    opacity: var(--opacity-mid, 0.3);
+  }
+}
+
+/* Keyframe: Gradient Shift Reverse */
+@keyframes gradient-shift-reverse {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: var(--opacity-start, 0.25);
+  }
+  25% {
+    transform: translate(-8%, 4%) scale(1.08);
+    opacity: var(--opacity-mid, 0.35);
+  }
+  50% {
+    transform: translate(4%, -8%) scale(0.96);
+    opacity: var(--opacity-end, 0.2);
+  }
+  75% {
+    transform: translate(8%, 8%) scale(1.04);
+    opacity: var(--opacity-mid, 0.35);
+  }
+}
+
+/* Keyframe: Glow Pulse - Opacity Only (GPU Friendly) */
+@keyframes glow-pulse {
+  0%, 100% {
+    opacity: 0.2;
+    filter: blur(80px);
+  }
+  50% {
+    opacity: 0.25;
+    filter: blur(100px);
+  }
+}
+
+/* Keyframe: Glow Pulse Delayed Variant */
+@keyframes glow-pulse-delayed {
+  0%, 100% {
+    opacity: 0.15;
+    filter: blur(80px);
+  }
+  50% {
+    opacity: 0.2;
+    filter: blur(100px);
+  }
+}
+
+/* Animation: Gradient Shift - 20s medium speed */
+.animate-gradient-shift {
+  animation: gradient-shift var(--animation-duration-medium) var(--animation-easing) infinite;
+  animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
+}
+
+/* Animation: Gradient Shift Reverse - 25s slow speed */
+.animate-gradient-shift-reverse {
+  animation: gradient-shift-reverse var(--animation-duration-slow) var(--animation-easing) infinite;
+  animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
+}
+
+/* Animation: Glow Pulse - 8s fast opacity pulse */
+.animate-glow-pulse {
+  animation: glow-pulse var(--animation-duration-fast) var(--animation-easing) infinite;
+  animation-iteration-count: infinite;
+}
+
+/* Animation: Glow Pulse Delayed - 8s with 2s delay */
+.animate-glow-pulse-delayed {
+  animation: glow-pulse-delayed var(--animation-duration-fast) var(--animation-easing) infinite;
+  animation-delay: 2s;
+}
+
+/* Animation: Glow Pulse Slow - 12s slow pulse */
+.animate-glow-pulse-slow {
+  animation: glow-pulse 12s var(--animation-easing) infinite;
+  animation-delay: 4s;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .animate-gradient-shift,
+  .animate-gradient-shift-reverse,
+  .animate-glow-pulse,
+  .animate-glow-pulse-delayed,
+  .animate-glow-pulse-slow {
+    animation: none !important;
+    opacity: 0.15;
+  }
+}
+
+/* Mobile optimization: Reduce animation duration on lower-end devices */
+@media (max-width: 768px) {
+  :root {
+    --animation-duration-slow: 30s;
+    --animation-duration-medium: 25s;
+  }
+
+  /* Disable GPU-intensive animations on mobile */
+  @supports (backdrop-filter: blur(10px)) {
+    /* Keep animations if backdrop-filter is supported */
+    .animate-glow-pulse {
+      filter: blur(60px);
+    }
+  }
+
+  @supports not (backdrop-filter: blur(10px)) {
+    /* Disable on devices without backdrop-filter support */
+    .animate-gradient-shift,
+    .animate-gradient-shift-reverse,
+    .animate-glow-pulse,
+    .animate-glow-pulse-delayed,
+    .animate-glow-pulse-slow {
+      animation: none !important;
+      opacity: 0.1;
+    }
+  }
+}
+
+/* Respect user's data saver mode (Android) */
+@media (prefers-reduced-data: reduce) {
+  .animate-gradient-shift,
+  .animate-gradient-shift-reverse,
+  .animate-glow-pulse,
+  .animate-glow-pulse-delayed,
+  .animate-glow-pulse-slow {
+    animation: none !important;
+  }
+}
+
+/* High refresh rate devices: Use will-change more aggressively */
+@media (min-width: 1400px) {
+  [data-animated] {
+    will-change: transform, opacity;
+  }
+}
+
+/* Low-end device detection via media queries */
+@media (max-width: 480px) and (max-height: 800px) {
+  /* Reduce complexity on small screens */
+  .animate-glow-pulse {
+    filter: none;
+    opacity: 0.15;
+  }
+}

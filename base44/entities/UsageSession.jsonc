@@ -1,0 +1,72 @@
+{
+  "name": "UsageSession",
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "description": "Eindeutige Session-ID"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "E-Mail des Benutzers"
+    },
+    "feature_id": {
+      "type": "string",
+      "description": "Name des Features (z.B. bite_detector)"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Start-Zeitpunkt"
+    },
+    "stopped_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Ende-Zeitpunkt"
+    },
+    "last_heartbeat": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Letzter Heartbeat"
+    },
+    "billed_credits": {
+      "type": "number",
+      "default": 0,
+      "description": "Abgerechnete Credits"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "stopped"
+      ],
+      "default": "active",
+      "description": "Session-Status"
+    }
+  },
+  "required": [
+    "session_id",
+    "user_id",
+    "feature_id",
+    "started_at"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "$exists": true
+      }
+    },
+    "write": {
+      "$or": [
+        {
+          "user_id": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

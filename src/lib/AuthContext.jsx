@@ -1,0 +1,78 @@
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser]                                   = useState(null);
+  const [isAuthenticated, setIsAuthenticated]             = useState(false);
+  const [isLoadingAuth, setIsLoadingAuth]                 = useState(true);
+  const [isLoadingPublicSettings]                         = useState(false);
+  const [authError, setAuthError]                         = useState(null);
+  const [appPublicSettings]                               = useState(null);
+
+  useEffect(() => { checkAppState(); }, []);
+
+  const checkAppState = async () => {
+    try {
+      setIsLoadingAuth(true);
+      setAuthError(null);
+
+      const token = base44.auth.getToken();
+      if (!token) {
+        setIsAuthenticated(false);
+        setUser(null);
+        setIsLoadingAuth(false);
+        return;
+      }
+
+      const currentUser = await base44.auth.me();
+      setUser(currentUser);
+      setIsAuthenticated(true);
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      setIsAuthenticated(false);
+      setUser(null);
+      if (error.status === 401 || error.status === 403) {
+        base44.auth.setToken(null);
+      }
+    } finally {
+      setIsLoadingAuth(false);
+    }
+  };
+
+  const logout = (shouldRedirect = true) => {
+    setUser(null);
+    setIsAuthenticated(false);
+    base44.auth.setToken(null);
+    if (shouldRedirect && typeof window !== 'undefined') {
+      window.location.href = '/';
+    }
+  };
+
+  const navigateToLogin = () => {
+    if (typeof window !== 'undefined') window.location.href = '/';
+  };
+
+  return (
+    <AuthContext.Provider value={{
+      user,
+      isAuthenticated,
+      isLoadingAuth,
+      isLoadingPublicSettings,
+      authError,
+      appPublicSettings,
+      logout,
+      navigateToLogin,
+      checkAppState,
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
+  return context;
+};

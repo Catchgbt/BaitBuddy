@@ -1,0 +1,182 @@
+/**
+ * Mobile-First Hover States
+ * 
+ * All hover effects wrapped in @media (hover: hover) to prevent desktop
+ * interaction states on touch devices. This ensures clean mobile UX without
+ * sticky hover states that persist after touch.
+ */
+
+/* Button Hover States - Desktop Only */
+@media (hover: hover) {
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  input[type="button"]:not(:disabled),
+  input[type="submit"]:not(:disabled) {
+    transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  button:hover:not(:disabled),
+  [role="button"]:hover:not(:disabled),
+  input[type="button"]:hover:not(:disabled),
+  input[type="submit"]:hover:not(:disabled) {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Primary Button Hover */
+  .bg-primary:hover:not(:disabled) {
+    background-color: rgb(var(--primary) / 0.9);
+  }
+
+  /* Outline Button Hover */
+  button[variant="outline"]:hover:not(:disabled),
+  .border.border-input:hover:not(:disabled) {
+    background-color: rgb(var(--accent));
+  }
+
+  /* Ghost Button Hover */
+  button[variant="ghost"]:hover:not(:disabled) {
+    background-color: rgb(var(--accent));
+  }
+
+  /* Cyan Accent Hover */
+  .bg-cyan-600:hover:not(:disabled) {
+    background-color: rgb(8, 145, 178);
+  }
+
+  .bg-cyan-700:hover:not(:disabled) {
+    background-color: rgb(6, 100, 126);
+  }
+
+  /* Emerald Accent Hover */
+  .bg-emerald-600:hover:not(:disabled) {
+    background-color: rgb(5, 150, 105);
+  }
+
+  /* Red/Destructive Hover */
+  .bg-red-600:hover:not(:disabled) {
+    background-color: rgb(220, 38, 38);
+  }
+
+  /* Link Hover */
+  a:hover:not([href*="javascript"]) {
+    text-decoration: underline;
+    opacity: 0.8;
+  }
+
+  /* Card Hover */
+  .glass-morphism:hover {
+    background-color: rgba(15, 23, 42, 0.8);
+    border-color: rgba(51, 65, 85, 0.5);
+    box-shadow: 0 8px 32px rgba(34, 211, 238, 0.1);
+  }
+
+  /* Interactive Group Hover */
+  [data-interactive]:hover:not(:disabled),
+  [role="tab"]:hover:not([aria-selected="true"]),
+  [role="menuitem"]:hover:not(:disabled) {
+    background-color: rgb(var(--accent));
+  }
+
+  /* Form Input Hover */
+  input[type="text"]:not(:focus):hover,
+  input[type="email"]:not(:focus):hover,
+  input[type="password"]:not(:focus):hover,
+  input[type="search"]:not(:focus):hover,
+  input[type="number"]:not(:focus):hover,
+  textarea:not(:focus):hover,
+  select:not(:focus):hover {
+    border-color: rgb(var(--ring));
+    background-color: rgb(var(--input) / 0.05);
+  }
+
+  /* Checkbox/Radio Hover */
+  input[type="checkbox"]:not(:disabled):hover,
+  input[type="radio"]:not(:disabled):hover {
+    border-color: rgb(var(--ring));
+  }
+
+  /* Switch/Toggle Hover */
+  [role="switch"]:not(:disabled):hover {
+    background-color: rgb(var(--accent));
+  }
+
+  /* Icon Button Hover */
+  button[size="icon"]:hover:not(:disabled) {
+    background-color: rgb(var(--accent));
+    transform: scale(1.05);
+  }
+
+  /* Badge Hover */
+  .badge:hover {
+    opacity: 0.8;
+  }
+
+  /* Toast Button Hover */
+  [data-sonner-toast] [data-button]:hover {
+    background-color: rgba(34, 211, 238, 0.3) !important;
+  }
+
+  [data-sonner-toast] [data-close-button]:hover {
+    color: rgb(248, 250, 252) !important;
+    background-color: rgba(51, 65, 85, 0.5) !important;
+  }
+}
+
+/* Mobile Touch States - All Devices */
+@media (hover: none) {
+  /* Prevent hover states on touch devices */
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  a:not([href*="javascript"]) {
+    /* Active state instead of hover */
+    transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+                transform 100ms cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  button:active:not(:disabled),
+  [role="button"]:active:not(:disabled),
+  a:active:not([href*="javascript"]) {
+    transform: scale(0.98);
+    background-color: rgb(var(--accent));
+  }
+
+  /* Tap feedback for cards */
+  .glass-morphism:active {
+    background-color: rgba(15, 23, 42, 0.85);
+    transform: scale(0.99);
+  }
+}
+
+/* Disabled States - All Devices */
+button:disabled,
+[role="button"][aria-disabled="true"],
+input[type="button"]:disabled,
+input[type="submit"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Focus Visible - Keyboard Navigation */
+:focus-visible {
+  outline: 2px solid rgb(34, 211, 238);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Respect Prefers Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
