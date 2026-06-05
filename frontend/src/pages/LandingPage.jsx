@@ -45,10 +45,10 @@ export default function LandingPage() {
         </div>
 
         <button
-          onClick={() => navigate('/login')}
+          onClick={() => navigate(user ? '/app' : '/login')}
           className="px-10 py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-lg font-bold shadow-lg shadow-cyan-500/20 hover:from-cyan-400 hover:to-blue-500 active:scale-95 transition-all"
         >
-          Loslegen →
+          {user ? 'Zum Dashboard →' : 'Loslegen →'}
         </button>
       </div>
 
