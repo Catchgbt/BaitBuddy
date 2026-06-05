@@ -89,7 +89,7 @@ export default function Map() {
           center={defaultCenter}
           zoom={userPos ? 13 : 6}
           style={{ height: '100%', width: '100%' }}
-          ref={mapRef}
+          whenCreated={(map) => { mapRef.current = map; }}
         >
           <TileLayer
             attribution='© <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
