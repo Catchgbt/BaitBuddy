@@ -10,23 +10,23 @@ export default function Community() {
 
   const { data: comps } = useQuery({
     queryKey: ['competitions'],
-    queryFn: () => api.get('/api/events')
+    queryFn: () => api.get('/api/competitions')
   });
 
   const { data: leaderboard } = useQuery({
     queryKey: ['leaderboard', selectedComp],
-    queryFn: () => api.get(`/api/events/${selectedComp}/leaderboard`),
+    queryFn: () => api.get(`/api/competitions/${selectedComp}/leaderboard`),
     enabled: !!selectedComp
   });
 
   const like = useMutation({
-    mutationFn: (id) => api.post(`/api/community/voting/${id}/like`, {}),
+    mutationFn: (id) => api.post(`/api/submissions/${id}/like`, {}),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['leaderboard'] }); toast.success('Geliked!'); },
     onError: e => toast.error(e.message)
   });
 
-  const competitions = comps || [];
-  const board = leaderboard || [];
+  const competitions = comps?.competitions || [];
+  const board = leaderboard?.leaderboard || [];
 
   return (
     <div className="p-4 space-y-4">
@@ -82,11 +82,6 @@ export default function Community() {
               </button>
             </div>
           ))}
-          {board.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              <p className="text-sm">Noch keine Einträge</p>
-            </div>
-          )}
         </div>
       )}
     </div>

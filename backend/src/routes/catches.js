@@ -13,7 +13,7 @@ router.get('/catches', requireAuth, async (req, res) => {
     .order('catch_time', { ascending: false })
     .range(offset, offset + limit - 1);
   if (error) return res.status(500).json({ error: error.message });
-  return res.json({ catches: data });
+  return res.json(data);
 });
 
 router.get('/catches/stats/summary', requireAuth, async (req, res) => {

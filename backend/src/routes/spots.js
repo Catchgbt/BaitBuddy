@@ -7,7 +7,7 @@ const router = Router();
 router.get('/spots', requireAuth, async (req, res) => {
   const { data, error } = await supabase.from('spots').select('*').eq('created_by', req.user.email);
   if (error) return res.status(500).json({ error: error.message });
-  return res.json({ spots: data });
+  return res.json(data);
 });
 
 router.get('/spots/public', async (req, res) => {
