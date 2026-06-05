@@ -163,14 +163,6 @@ export default function AIAssistant() {
             <Send size={18} />
           </button>
         </div>
-        <div className="flex gap-2 mt-2 overflow-x-auto pb-1">
-          {['Wie fange ich eine Forelle?', 'Welcher Köder für Hecht?', 'Meine letzten Fänge', 'Schonzeiten'].map(q => (
-            <button key={q} onClick={() => setInput(q)}
-              className="shrink-0 px-3 py-1.5 rounded-lg bg-gray-800 text-gray-400 hover:text-white text-xs border border-gray-700 transition-colors">
-              {q}
-            </button>
-          ))}
-        </div>
       </div>
     </div>
   );
