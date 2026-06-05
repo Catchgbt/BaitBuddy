@@ -1,5 +1,5 @@
 import { Outlet, NavLink } from 'react-router-dom';
-import { Home, MessageCircle, BookOpen, Map, Users, Star } from 'lucide-react';
+import { Home, MessageCircle, BookOpen, Map, Users, Star, UserCircle } from 'lucide-react';
 
 const tabs = [
   { to: '/app', label: 'Home', icon: Home },
@@ -8,6 +8,7 @@ const tabs = [
   { to: '/app/map', label: 'Karte', icon: Map },
   { to: '/app/community', label: 'Community', icon: Users },
   { to: '/app/premium', label: 'Premium', icon: Star },
+  { to: '/app/profile', label: 'Profil', icon: UserCircle },
 ];
 
 export default function Layout() {
