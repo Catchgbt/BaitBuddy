@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { api } from '@/api/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Plus, X, Trash2 } from 'lucide-react';
+import { Plus, X, Trash2, Camera, Loader2 } from 'lucide-react';
 
 const SPECIES = ['Hecht', 'Zander', 'Barsch', 'Karpfen', 'Forelle', 'Schleie', 'Aal', 'Wels', 'Sonstige'];
 const BAITS = ['Gummifisch', 'Wobbler', 'Spinner', 'Blinker', 'Boilies', 'Mais', 'Wurm', 'Fliege'];
@@ -11,22 +11,60 @@ export default function Log() {
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ species: '', length_cm: '', weight_kg: '', bait_used: '', notes: '', is_released: false });
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const fileRef = useRef();
 
   const { data } = useQuery({ queryKey: ['catches'], queryFn: () => api.get('/api/catches') });
 
   const add = useMutation({
     mutationFn: (body) => api.post('/api/catches', body),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['catches'] }); setShowForm(false); setForm({ species: '', length_cm: '', weight_kg: '', bait_used: '', notes: '', is_released: false }); toast.success('Fang eingetragen!'); },
-    onError: e => toast.error(e.message)
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['catches'] });
+      setShowForm(false);
+      setPhotoPreview(null);
+      setForm({ species: '', length_cm: '', weight_kg: '', bait_used: '', notes: '', is_released: false });
+      toast.success('Fang eingetragen!');
+    },
+    onError: e => toast.error(e.message),
   });
 
   const del = useMutation({
     mutationFn: (id) => api.delete(`/api/catches/${id}`),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['catches'] }); toast.success('Gelöscht'); },
-    onError: e => toast.error(e.message)
+    onError: e => toast.error(e.message),
   });
 
   const catches = data?.catches || [];
+
+  const handlePhoto = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const base64 = ev.target.result;
+      setPhotoPreview(base64);
+      setAnalyzing(true);
+      try {
+        const result = await api.post('/api/analyze-photo', { image: base64 });
+        if (result?.species) setForm(f => ({ ...f, species: result.species }));
+        if (result?.length_cm) setForm(f => ({ ...f, length_cm: result.length_cm }));
+        if (result?.weight_kg) setForm(f => ({ ...f, weight_kg: result.weight_kg }));
+        toast.success('KI hat den Fisch erkannt!');
+      } catch {
+        toast.info('Foto gespeichert – KI-Analyse nicht verfügbar');
+      } finally {
+        setAnalyzing(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const closeForm = () => {
+    setShowForm(false);
+    setPhotoPreview(null);
+    setForm({ species: '', length_cm: '', weight_kg: '', bait_used: '', notes: '', is_released: false });
+  };
 
   return (
     <div className="p-4 space-y-4">
@@ -40,12 +78,38 @@ export default function Log() {
 
       {/* Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center p-4">
-          <div className="w-full max-w-lg bg-gray-900 rounded-2xl p-6 border border-gray-700 space-y-4">
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center">
+          <div className="w-full max-w-lg bg-gray-900 rounded-t-3xl p-6 border-t border-gray-700 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-bold text-white">Neuer Fang</h2>
-              <button onClick={() => setShowForm(false)}><X className="text-gray-400" size={20} /></button>
+              <button onClick={closeForm}><X className="text-gray-400" size={20} /></button>
             </div>
+
+            {/* Foto-Upload */}
+            <div
+              onClick={() => fileRef.current?.click()}
+              className="w-full h-36 rounded-2xl border-2 border-dashed border-gray-700 hover:border-cyan-600 flex items-center justify-center cursor-pointer overflow-hidden relative transition-colors"
+            >
+              {photoPreview ? (
+                <>
+                  <img src={photoPreview} alt="Fang" className="w-full h-full object-cover" />
+                  {analyzing && (
+                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2">
+                      <Loader2 className="animate-spin text-cyan-400" size={28} />
+                      <p className="text-white text-sm">KI analysiert…</p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center text-gray-500">
+                  <Camera size={28} className="mx-auto mb-2" />
+                  <p className="text-sm">Foto aufnehmen</p>
+                  <p className="text-xs mt-0.5">KI erkennt Fischart automatisch</p>
+                </div>
+              )}
+            </div>
+            <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhoto} />
+
             <select value={form.species} onChange={e => setForm(f => ({ ...f, species: e.target.value }))}
               className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 text-white">
               <option value="">Fischart wählen</option>
@@ -67,11 +131,11 @@ export default function Log() {
             <textarea placeholder="Notizen (optional)" value={form.notes}
               onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
               className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder-gray-500 resize-none" rows={2} />
-            <label className="flex items-center gap-3 text-gray-400">
-              <input type="checkbox" checked={form.is_released} onChange={e => setForm(f => ({ ...f, is_released: e.target.checked }))} className="w-4 h-4" />
-              Zurückgesetzt
+            <label className="flex items-center gap-3 text-gray-400 text-sm">
+              <input type="checkbox" checked={form.is_released} onChange={e => setForm(f => ({ ...f, is_released: e.target.checked }))} className="w-4 h-4 accent-cyan-500" />
+              Fisch zurückgesetzt (C&R)
             </label>
-            <button onClick={() => add.mutate({ ...form, catch_time: new Date().toISOString() })}
+            <button onClick={() => add.mutate({ ...form, catch_time: new Date().toISOString(), photo_url: photoPreview || undefined })}
               disabled={!form.species || add.isPending}
               className="w-full py-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold disabled:opacity-50 transition-colors">
               {add.isPending ? 'Speichern...' : 'Fang eintragen'}
@@ -80,24 +144,31 @@ export default function Log() {
         </div>
       )}
 
-      {/* List */}
+      {/* Liste */}
       {catches.length === 0
-        ? <div className="text-center py-20 text-gray-500"><p className="text-4xl mb-4">🎣</p><p>Noch keine Fänge</p></div>
+        ? <div className="text-center py-20 text-gray-500"><p className="text-4xl mb-4">🎣</p><p>Noch keine Fänge eingetragen</p></div>
         : <div className="space-y-3">
           {catches.map(c => (
-            <div key={c.id} className="rounded-2xl bg-gray-900/80 p-4 border border-gray-800 flex justify-between items-start">
-              <div>
-                <div className="flex items-center gap-2">
-                  <p className="font-semibold text-white">{c.species || 'Unbekannt'}</p>
-                  {c.is_released && <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-900/50 text-emerald-400">Zurückgesetzt</span>}
+            <div key={c.id} className="rounded-2xl bg-gray-900/80 border border-gray-800 overflow-hidden">
+              {c.photo_url && c.photo_url.startsWith('data:') && (
+                <img src={c.photo_url} alt={c.species} className="w-full h-40 object-cover" />
+              )}
+              <div className="p-4 flex justify-between items-start">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-white">{c.species || 'Unbekannt'}</p>
+                    {c.is_released && <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-900/50 text-emerald-400">C&R</span>}
+                  </div>
+                  <p className="text-gray-400 text-sm mt-1">
+                    {c.length_cm && `${c.length_cm}cm`}{c.length_cm && c.weight_kg && ' · '}{c.weight_kg && `${c.weight_kg}kg`}{c.bait_used && ` · ${c.bait_used}`}
+                  </p>
+                  <p className="text-gray-600 text-xs mt-1">{new Date(c.catch_time).toLocaleString('de-DE')}</p>
+                  {c.notes && <p className="text-gray-500 text-xs mt-1 italic">{c.notes}</p>}
                 </div>
-                <p className="text-gray-400 text-sm mt-1">{c.length_cm && `${c.length_cm}cm`} {c.weight_kg && `· ${c.weight_kg}kg`} {c.bait_used && `· ${c.bait_used}`}</p>
-                <p className="text-gray-600 text-xs mt-1">{new Date(c.catch_time).toLocaleString('de-DE')}</p>
-                {c.notes && <p className="text-gray-500 text-xs mt-1 italic">{c.notes}</p>}
+                <button onClick={() => del.mutate(c.id)} className="text-gray-600 hover:text-red-400 p-1 transition-colors">
+                  <Trash2 size={16} />
+                </button>
               </div>
-              <button onClick={() => del.mutate(c.id)} className="text-gray-600 hover:text-red-400 p-1 transition-colors">
-                <Trash2 size={16} />
-              </button>
             </div>
           ))}
         </div>
