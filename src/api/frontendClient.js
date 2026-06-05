@@ -1,7 +1,7 @@
 // src/api/frontendClient.js
 // Eigener BaitBuddy API-Client — ersetzt @base44/sdk vollständig
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://baitbuddy-backend.onrender.com';
+const API_URL = import.meta.env.VITE_API_URL != null ? import.meta.env.VITE_API_URL : 'https://baitbuddy-backend.onrender.com';
 const TOKEN_KEY = 'bb_token';
 
 // ── Raw HTTP Client ───────────────────────────────────────────────────────────
@@ -154,7 +154,6 @@ const FUNCTION_MAP = {
   catchgbtPing:           ()  => api.get('/api/health').catch(() => ({ ok: false })),
   generateBathymetricMap: (d) => api.post('/api/water/bathymetric-map', d).catch(() => null),
   bathymetryProxy:        (d) => api.post('/api/water/bathymetry', d).catch(() => null),
-  // no-ops
   cleanupOldSessions:     ()  => Promise.resolve({ ok: true }),
   autoRenewPlans:         ()  => Promise.resolve({ ok: true }),
   verifyPlayIntegrity:    ()  => Promise.resolve({ valid: false }),
