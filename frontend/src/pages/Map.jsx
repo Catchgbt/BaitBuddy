@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -31,21 +31,33 @@ export default function Map() {
   const [showForm, setShowForm] = useState(false);
   const [addMode, setAddMode] = useState(false);
   const [newSpot, setNewSpot] = useState({ name: '', water_type: 'see', notes: '' });
+  const [gpsLoading, setGpsLoading] = useState(false);
   const mapRef = useRef();
 
   const { data } = useQuery({ queryKey: ['spots'], queryFn: () => api.get('/api/spots') });
   const spots = data?.spots || [];
 
-  useEffect(() => {
-    navigator.geolocation?.getCurrentPosition(
+  const requestGPS = () => {
+    if (!navigator.geolocation) return toast.error('GPS wird auf diesem Gerät nicht unterstützt');
+    setGpsLoading(true);
+    navigator.geolocation.getCurrentPosition(
       p => {
         const pos = [p.coords.latitude, p.coords.longitude];
         setUserPos(pos);
         mapRef.current?.flyTo(pos, 13);
+        setGpsLoading(false);
       },
-      () => {}
+      (err) => {
+        setGpsLoading(false);
+        if (err.code === err.PERMISSION_DENIED) {
+          toast.error('GPS-Zugriff verweigert — bitte in den Browser-Einstellungen erlauben');
+        } else {
+          toast.error('GPS-Position konnte nicht ermittelt werden');
+        }
+      },
+      { timeout: 10000, enableHighAccuracy: true }
     );
-  }, []);
+  };
 
   const add = useMutation({
     mutationFn: (body) => api.post('/api/spots', body),
@@ -143,14 +155,13 @@ export default function Map() {
           >
             {addMode ? '✕ Abbrechen' : '＋ Spot'}
           </button>
-          {userPos && (
-            <button
-              onClick={() => mapRef.current?.flyTo(userPos, 14)}
-              className="px-3 py-2 rounded-xl bg-gray-900/90 hover:bg-gray-800 text-cyan-400 text-sm font-medium shadow-lg border border-gray-700"
-            >
-              📍 Ich
-            </button>
-          )}
+          <button
+            onClick={() => userPos ? mapRef.current?.flyTo(userPos, 14) : requestGPS()}
+            disabled={gpsLoading}
+            className="px-3 py-2 rounded-xl bg-gray-900/90 hover:bg-gray-800 text-cyan-400 text-sm font-medium shadow-lg border border-gray-700 disabled:opacity-50"
+          >
+            {gpsLoading ? '⏳' : '📍'} {userPos ? 'Ich' : 'GPS'}
+          </button>
         </div>
 
         {addMode && !showForm && (

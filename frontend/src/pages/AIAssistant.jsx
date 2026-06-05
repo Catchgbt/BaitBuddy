@@ -73,7 +73,11 @@ export default function AIAssistant() {
     rec.onend = () => setListening(false);
     rec.onerror = (e) => {
       setListening(false);
-      if (e.error !== 'no-speech') toast.error('Spracherkennung fehlgeschlagen');
+      if (e.error === 'not-allowed') {
+        toast.error('Mikrofon-Zugriff verweigert — bitte in den Browser-Einstellungen erlauben');
+      } else if (e.error !== 'no-speech') {
+        toast.error('Spracherkennung fehlgeschlagen');
+      }
     };
 
     rec.start();
