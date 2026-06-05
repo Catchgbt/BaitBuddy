@@ -15,7 +15,7 @@ export default function AIAssistant() {
   const navigate = useNavigate();
   const qc = useQueryClient();
 
-  const PAGE_ROUTES = { home: '/', log: '/log', map: '/map', community: '/community', premium: '/premium', chat: '/chat' };
+  const PAGE_ROUTES = { home: '/app', log: '/app/log', map: '/app/map', community: '/app/community', premium: '/app/premium', chat: '/app/chat' };
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 

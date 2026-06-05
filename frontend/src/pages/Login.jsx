@@ -20,7 +20,7 @@ export default function Login() {
         toast.success('Konto erstellt! Bitte Email bestätigen.');
       } else {
         await signIn(email, password);
-        navigate('/');
+        navigate('/app');
       }
     } catch (e) {
       toast.error(e.message);

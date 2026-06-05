@@ -57,10 +57,10 @@ export default function Home() {
       {/* Quick Links */}
       <div className="grid grid-cols-2 gap-3">
         {[
-          { to: '/chat', label: '🤖 KI-Chat', desc: 'Frag den Experten' },
-          { to: '/log', label: '📖 Fangbuch', desc: 'Fang eintragen' },
-          { to: '/map', label: '🗺️ Karte', desc: 'Spots entdecken' },
-          { to: '/community', label: '👥 Community', desc: 'Wettbewerbe' },
+          { to: '/app/chat', label: '🤖 KI-Chat', desc: 'Frag den Experten' },
+          { to: '/app/log', label: '📖 Fangbuch', desc: 'Fang eintragen' },
+          { to: '/app/map', label: '🗺️ Karte', desc: 'Spots entdecken' },
+          { to: '/app/community', label: '👥 Community', desc: 'Wettbewerbe' },
         ].map(({ to, label, desc }) => (
           <Link key={to} to={to} className="rounded-2xl bg-gray-900/80 p-4 border border-gray-800 hover:border-gray-700 transition-colors">
             <p className="font-semibold text-white text-sm">{label}</p>
