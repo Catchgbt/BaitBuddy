@@ -11,6 +11,8 @@ import Map from './pages/Map';
 import Community from './pages/Community';
 import Premium from './pages/Premium';
 import Profile from './pages/Profile';
+import Knots from './pages/Knots';
+import Schonzeiten from './pages/Schonzeiten';
 import Login from './pages/Login';
 
 const queryClient = new QueryClient();
@@ -35,6 +37,8 @@ function AppRoutes() {
         <Route path="community" element={<Community />} />
         <Route path="premium" element={<Premium />} />
         <Route path="profile" element={<Profile />} />
+        <Route path="knots" element={<Knots />} />
+        <Route path="schonzeiten" element={<Schonzeiten />} />
       </Route>
       {/* Fallback für alte Links */}
       <Route path="*" element={<Navigate to="/" />} />

@@ -100,6 +100,8 @@ export default function Home() {
           { to: '/app/log', label: '📖 Fangbuch', desc: 'Fang eintragen' },
           { to: '/app/map', label: '🗺️ Karte', desc: 'Spots entdecken' },
           { to: '/app/community', label: '👥 Community', desc: 'Wettbewerbe' },
+          { to: '/app/knots', label: '🪢 Knoten', desc: 'Knoten-Bibliothek' },
+          { to: '/app/schonzeiten', label: '📋 Schonzeiten', desc: 'Maße & Sperrzeiten' },
         ].map(({ to, label, desc }) => (
           <Link key={to} to={to} className="rounded-2xl bg-gray-900/80 p-4 border border-gray-800 hover:border-gray-700 transition-colors">
             <p className="font-semibold text-white text-sm">{label}</p>
