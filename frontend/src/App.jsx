@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import Layout from './Layout';
+import LandingPage from './pages/LandingPage';
 import Home from './pages/Home';
 import AIAssistant from './pages/AIAssistant';
 import Log from './pages/Log';
@@ -23,8 +24,9 @@ function ProtectedRoute({ children }) {
 function AppRoutes() {
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+      <Route path="/app" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Home />} />
         <Route path="chat" element={<AIAssistant />} />
         <Route path="log" element={<Log />} />
@@ -32,6 +34,8 @@ function AppRoutes() {
         <Route path="community" element={<Community />} />
         <Route path="premium" element={<Premium />} />
       </Route>
+      {/* Fallback für alte Links */}
+      <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
 }
