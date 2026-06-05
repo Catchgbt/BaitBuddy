@@ -77,12 +77,28 @@ export default function AIAssistant() {
       if (action?.type === 'navigate') {
         const page = action.params?.page?.toLowerCase();
         const route = PAGE_ROUTES[page];
-        if (route) navigate(route);
+        if (route) {
+          toast.success('Öffne ' + (page === 'home' ? 'Startseite' : page));
+          setTimeout(() => navigate(route), 600);
+        }
       }
       if (action?.type === 'log_catch') {
-        await api.post('/api/catches', action.params);
+        await api.post('/api/catches', { ...action.params, catch_time: new Date().toISOString() });
         qc.invalidateQueries({ queryKey: ['catches'] });
         toast.success('Fang wurde eingetragen!');
+      }
+      if (action?.type === 'add_spot') {
+        if (!loc?.latitude) {
+          toast.error('Kein GPS-Signal — Spot konnte nicht gespeichert werden');
+        } else {
+          await api.post('/api/spots', {
+            ...action.params,
+            latitude: loc.latitude,
+            longitude: loc.longitude,
+          });
+          qc.invalidateQueries({ queryKey: ['spots'] });
+          toast.success('Spot gespeichert!');
+        }
       }
     } catch (e) {
       toast.error('Fehler: ' + e.message);
