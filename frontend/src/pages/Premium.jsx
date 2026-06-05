@@ -1,6 +1,7 @@
 import { api } from '@/api/client';
 import { useQuery } from '@tanstack/react-query';
 import { Check, Star } from 'lucide-react';
+import { toast } from 'sonner';
 
 const PLANS = [
   { id: 'free', name: 'Free', price: 0, features: ['5 Fänge/Monat', 'Basis KI-Chat', '2 Spots'] },
@@ -44,7 +45,9 @@ export default function Premium() {
               ))}
             </ul>
             {currentPlan?.id !== plan.id && plan.price > 0 && (
-              <button className="mt-4 w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold hover:from-cyan-400 hover:to-blue-500 transition-all text-sm">
+              <button
+                onClick={() => toast.info('Zahlungsfunktion kommt bald!')}
+                className="mt-4 w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold hover:from-cyan-400 hover:to-blue-500 transition-all text-sm">
                 {plan.name} abonnieren
               </button>
             )}
