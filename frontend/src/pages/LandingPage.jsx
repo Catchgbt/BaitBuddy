@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { Fish, Map, MessageCircle, BookOpen, Users } from 'lucide-react';
 
@@ -35,12 +35,12 @@ export default function LandingPage() {
           </p>
         </div>
 
-        <Link
-          to="/login"
+        <a
+          href="/login"
           className="px-10 py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-lg font-bold shadow-lg shadow-cyan-500/20 hover:from-cyan-400 hover:to-blue-500 active:scale-95 transition-all"
         >
-          {loading ? '...' : user ? 'Zum Dashboard →' : 'Loslegen →'}
-        </Link>
+          Loslegen →
+        </a>
       </div>
 
       {/* Features */}
@@ -58,9 +58,7 @@ export default function LandingPage() {
 
         <p className="text-center text-gray-600 text-xs pt-4">
           Bereits registriert?{' '}
-          <Link to="/login" className="text-cyan-400 hover:underline">
-            Anmelden
-          </Link>
+          <a href="/login" className="text-cyan-400 hover:underline">Anmelden</a>
         </p>
       </div>
     </div>
