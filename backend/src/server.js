@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import authRoutes from './routes/auth.js';
 import aiRoutes from './routes/ai.js';
 import catchesRoutes from './routes/catches.js';
 import spotsRoutes from './routes/spots.js';
@@ -24,6 +25,7 @@ app.use(express.json({ limit: '10mb' }));
 
 app.get('/health', (req, res) => res.json({ ok: true, app: 'BaitBuddy', version: '1.0.0' }));
 
+app.use('/api', authRoutes);
 app.use('/api', aiRoutes);
 app.use('/api', catchesRoutes);
 app.use('/api', spotsRoutes);
