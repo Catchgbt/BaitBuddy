@@ -74,7 +74,8 @@ export default function Map() {
 
   const saveSpot = () => {
     if (!newSpot.name) return toast.error('Bitte einen Namen eingeben');
-    const [latitude, longitude] = pendingPos || userPos || [0, 0];
+    if (!pendingPos && !userPos) return toast.error('Kein Standort — tippe auf die Karte oder erlaube GPS');
+    const [latitude, longitude] = pendingPos || userPos;
     add.mutate({ ...newSpot, latitude, longitude });
   };
 

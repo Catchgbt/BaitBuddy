@@ -75,10 +75,10 @@ export default function Community() {
                 <p className="text-white text-sm font-medium">{entry.species || '?'}{entry.length_cm ? ` · ${entry.length_cm}cm` : ''}</p>
                 <p className="text-gray-500 text-xs">{entry.user_id?.split('@')[0] || 'Angler'}</p>
               </div>
-              <button onClick={() => like.mutate(entry.id)}
+              <button onClick={(e) => { e.stopPropagation(); like.mutate(entry.id); }}
                 className="flex items-center gap-1 text-gray-500 hover:text-red-400 transition-colors">
                 <Heart size={16} />
-                <span className="text-xs">{entry.community_likes || 0}</span>
+                <span className="text-xs">{entry.total_score || entry.length_cm || 0}</span>
               </button>
             </div>
           ))}
