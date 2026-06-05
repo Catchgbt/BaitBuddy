@@ -120,13 +120,17 @@ router.post('/ai/analyze-catch', requireAuth, async (req, res) => {
 
 router.post('/analyze-photo', requireAuth, async (req, res) => {
   try {
-    const { imageBase64 } = req.body;
-    if (!imageBase64) return res.status(400).json({ error: 'imageBase64 required' });
-    const analysis = await invokeLLM({
-      prompt: 'Analysiere dieses Foto. Erkenne die Fischart, schätze Länge und Gewicht. Gib Tipps zum Fang. Antworte auf Deutsch.',
+    const imageBase64 = req.body.imageBase64 || req.body.image;
+    if (!imageBase64) return res.status(400).json({ error: 'image required' });
+    const raw = await invokeLLM({
+      prompt: `Analysiere dieses Fisch-Foto. Antworte NUR mit einem JSON-Objekt in diesem Format, ohne Erklärungen:
+{"species":"Fischart auf Deutsch","length_cm":Zahl_oder_null,"weight_kg":Zahl_oder_null}
+Wenn du keinen Fisch erkennst, nutze null für alle Felder.`,
       imageBase64
     });
-    return res.json({ ok: true, analysis });
+    let parsed = {};
+    try { parsed = JSON.parse(raw.match(/\{.*\}/s)?.[0] || '{}'); } catch {}
+    return res.json({ ok: true, species: parsed.species || null, length_cm: parsed.length_cm || null, weight_kg: parsed.weight_kg || null });
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
