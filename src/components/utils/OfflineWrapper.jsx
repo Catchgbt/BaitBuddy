@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { isOnline, onOnlineStatusChange } from '@/components/utils/OfflineDataCache';
+import { isOnline, onOnlineStatusChange } from '@/components/utils/offlineDataCache';
 
 export default function OfflineWrapper({ children }) {
   const [online, setOnline] = useState(true);

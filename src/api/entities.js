@@ -1,9 +1,4 @@
-import { base44 } from './base44Client';
+export { base44 as User } from './frontendClient.js';
 
-
-export const Query = base44.entities.Query;
-
-
-
-// auth sdk:
-export const User = base44.auth;
+// Kein Entity-Query-Proxy mehr nötig — direkt über base44.entities.*
+export { base44 } from './frontendClient.js';

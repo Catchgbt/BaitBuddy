@@ -22,7 +22,7 @@ export default function OfflineCacheIndicator() {
   useEffect(() => {
     const updateCacheInfo = async () => {
       try {
-        const { getOfflineData } = await import('@/components/utils/OfflineDataCache');
+        const { getOfflineData } = await import('@/components/utils/offlineDataCache');
         const [spots, weather] = await Promise.all([
           getOfflineData('spots'),
           getOfflineData('weather')

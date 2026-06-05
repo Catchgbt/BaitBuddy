@@ -101,6 +101,57 @@ export async function fetchCatchesWithFallback(fetchFn) {
   }
 }
 
+// ── Online-Status Utilities ───────────────────────────────────────────────────
+
+export function isOnline() {
+  return typeof navigator !== 'undefined' ? navigator.onLine : true;
+}
+
+export function onOnlineStatusChange(callback) {
+  if (typeof window === 'undefined') return () => {};
+  window.addEventListener('online', () => callback(true));
+  window.addEventListener('offline', () => callback(false));
+  return () => {
+    window.removeEventListener('online', () => callback(true));
+    window.removeEventListener('offline', () => callback(false));
+  };
+}
+
+// ── Generische Cache-Funktionen (für Dashboard-Kompatibilität) ────────────────
+
+export function initOfflineDB() { return Promise.resolve(); }
+
+export function cacheEntityData(type, data) {
+  try { localStorage.setItem(`bb_offline_${type}`, JSON.stringify(data)); } catch { /* ignore */ }
+  return Promise.resolve();
+}
+
+export function getOfflineData(type) {
+  try {
+    const raw = localStorage.getItem(`bb_offline_${type}`);
+    return Promise.resolve(raw ? JSON.parse(raw) : []);
+  } catch { return Promise.resolve([]); }
+}
+
+export function cacheWeatherData(lat, lon, data) {
+  try {
+    const key = `bb_weather_${Math.round(lat * 10)}_${Math.round(lon * 10)}`;
+    localStorage.setItem(key, JSON.stringify({ data, ts: Date.now() }));
+  } catch { /* ignore */ }
+  return Promise.resolve();
+}
+
+export function getCachedWeather(lat, lon) {
+  try {
+    const key = `bb_weather_${Math.round(lat * 10)}_${Math.round(lon * 10)}`;
+    const raw = localStorage.getItem(key);
+    if (!raw) return Promise.resolve(null);
+    const { data, ts } = JSON.parse(raw);
+    if (Date.now() - ts > 30 * 60 * 1000) return Promise.resolve(null); // 30 min TTL
+    return Promise.resolve(data);
+  } catch { return Promise.resolve(null); }
+}
+
 /**
  * Laedt Spots: zuerst vom Server, bei Fehler aus dem Cache.
  */
