@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { Fish, Map, MessageCircle, BookOpen, Users } from 'lucide-react';
 
@@ -14,20 +14,11 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
 
-  // Bereits eingeloggte Nutzer direkt aufs Dashboard schicken
   useEffect(() => {
     if (!loading && user) {
       navigate('/app', { replace: true });
     }
   }, [user, loading, navigate]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-gray-700 border-t-cyan-400 rounded-full animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col">
@@ -44,12 +35,12 @@ export default function LandingPage() {
           </p>
         </div>
 
-        <button
-          onClick={() => navigate(user ? '/app' : '/login')}
+        <Link
+          to="/login"
           className="px-10 py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-lg font-bold shadow-lg shadow-cyan-500/20 hover:from-cyan-400 hover:to-blue-500 active:scale-95 transition-all"
         >
-          {user ? 'Zum Dashboard →' : 'Loslegen →'}
-        </button>
+          {loading ? '...' : user ? 'Zum Dashboard →' : 'Loslegen →'}
+        </Link>
       </div>
 
       {/* Features */}
@@ -67,9 +58,9 @@ export default function LandingPage() {
 
         <p className="text-center text-gray-600 text-xs pt-4">
           Bereits registriert?{' '}
-          <button onClick={() => navigate('/login')} className="text-cyan-400 hover:underline">
+          <Link to="/login" className="text-cyan-400 hover:underline">
             Anmelden
-          </button>
+          </Link>
         </p>
       </div>
     </div>
