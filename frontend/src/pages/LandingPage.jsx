@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/lib/AuthContext';
 import { Fish, Map, MessageCircle, BookOpen, Users } from 'lucide-react';
 
 const features = [
@@ -10,6 +12,22 @@ const features = [
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
+  // Bereits eingeloggte Nutzer direkt aufs Dashboard schicken
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/app', { replace: true });
+    }
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-gray-700 border-t-cyan-400 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col">
