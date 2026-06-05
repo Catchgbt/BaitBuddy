@@ -30,8 +30,9 @@ router.post('/catches', requireAuth, async (req, res) => {
 
 // PUT /api/catches/:id
 router.put('/catches/:id', requireAuth, async (req, res) => {
+  const { species, length_cm, weight_kg, bait_used, notes, catch_time, spot_id, photo_url, is_released } = req.body;
   const { data, error } = await supabase.from('catches')
-    .update(req.body)
+    .update({ species, length_cm, weight_kg, bait_used, notes, catch_time, spot_id, photo_url, is_released })
     .eq('id', req.params.id)
     .eq('created_by', req.user.email)
     .select();

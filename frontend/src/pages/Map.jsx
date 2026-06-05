@@ -21,13 +21,19 @@ export default function Map() {
 
   const add = useMutation({
     mutationFn: (body) => api.post('/api/spots', body),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['spots'] }); setShowAdd(false); toast.success('Spot gespeichert!'); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['spots'] });
+      setShowAdd(false);
+      setNewSpot({ name: '', water_type: 'see', notes: '' });
+      toast.success('Spot gespeichert!');
+    },
     onError: e => toast.error(e.message)
   });
 
   const del = useMutation({
     mutationFn: (id) => api.delete(`/api/spots/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['spots'] })
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['spots'] }),
+    onError: e => toast.error(e.message)
   });
 
   const spots = data?.spots || [];

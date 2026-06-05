@@ -73,7 +73,7 @@ export default function Community() {
               }`}>{i + 1}</span>
               <div className="flex-1">
                 <p className="text-white text-sm font-medium">{entry.species || '?'}{entry.length_cm ? ` · ${entry.length_cm}cm` : ''}</p>
-                <p className="text-gray-500 text-xs">{entry.user_id}</p>
+                <p className="text-gray-500 text-xs">{entry.user_id?.split('@')[0] || 'Angler'}</p>
               </div>
               <button onClick={() => like.mutate(entry.id)}
                 className="flex items-center gap-1 text-gray-500 hover:text-red-400 transition-colors">

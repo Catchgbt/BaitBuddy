@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { api } from '@/api/client';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Send, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -12,6 +13,9 @@ export default function AIAssistant() {
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef();
   const navigate = useNavigate();
+  const qc = useQueryClient();
+
+  const PAGE_ROUTES = { home: '/', log: '/log', map: '/map', community: '/community', premium: '/premium', chat: '/chat' };
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
@@ -39,13 +43,14 @@ export default function AIAssistant() {
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
 
       // Action ausführen
-      const VALID_PAGES = ['home', 'log', 'map', 'community', 'premium', 'chat'];
       if (action?.type === 'navigate') {
         const page = action.params?.page?.toLowerCase();
-        if (VALID_PAGES.includes(page)) navigate(`/${page}`);
+        const route = PAGE_ROUTES[page];
+        if (route) navigate(route);
       }
       if (action?.type === 'log_catch') {
         await api.post('/api/catches', action.params);
+        qc.invalidateQueries({ queryKey: ['catches'] });
         toast.success('Fang wurde eingetragen!');
       }
     } catch (e) {
