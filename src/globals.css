@@ -1,0 +1,254 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import optimized CSS modules */
+@import './styles/hover-states-mobile-first.css';
+@import './styles/gradient-animations-optimized.css';
+
+@layer base {
+  /* Hardware acceleration for smooth animations */
+  * {
+    will-change: auto;
+  }
+  
+  /* Explicitly enable hardware acceleration for animated elements */
+  [data-animated],
+  .transition-all,
+  .animate-in,
+  .animate-out,
+  [data-sonner-toast],
+  .toast-animated,
+  [role="status"],
+  [role="alert"],
+  [role="region"] {
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+  
+  /* Optimize transition performance during rapid state changes */
+  @media (prefers-reduced-motion: no-preference) {
+    .transition-all,
+    .transition {
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      transition-duration: 150ms;
+    }
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+  :root {
+    /* Safe-area insets for notches and home bars */
+    --safe-area-top: env(safe-area-inset-top, 0px);
+    --safe-area-right: env(safe-area-inset-right, 0px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-left: env(safe-area-inset-left, 0px);
+  }
+
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html, body {
+    @apply bg-background text-foreground;
+    overscroll-behavior: none;
+    -webkit-overscroll-behavior: none;
+    /* Use full viewport - safe areas handled per component (header/bottom tabs) */
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+  
+  /* Disable text selection on interactive elements */
+  button, a, [role="button"], [role="tab"], [role="menuitem"], 
+  [role="option"], [role="switch"], [role="checkbox"], [role="radio"],
+  input[type="button"], input[type="submit"], input[type="reset"],
+  svg, [data-interactive] {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    touch-action: manipulation;
+  }
+  
+  /* Disable text selection on container elements */
+  [role="navigation"], [role="toolbar"], [role="menubar"], 
+  .touch-target, .interactive-group {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  
+  /* Live region styling - ARIA compatible */
+  [aria-live="polite"],
+  [aria-live="assertive"],
+  [role="status"],
+  [role="alert"],
+  [role="log"],
+  [role="region"] {
+   contain: layout style paint;
+  }
+
+  /* Glass-morphism text color overrides for WCAG AA compliance */
+  .glass-morphism .text-muted-foreground,
+  .glass-morphism .text-gray-400 {
+   color: rgb(148, 163, 184);
+  }
+
+  .glass-morphism .text-gray-500 {
+   color: rgb(148, 163, 184);
+  }
+
+  .glass-morphism .text-secondary-foreground {
+   color: rgb(203, 213, 225);
+  }
+
+  /* Ensure proper contrast for disabled states on glass */
+  .glass-morphism button:disabled,
+  .glass-morphism [aria-disabled="true"] {
+   color: rgb(148, 163, 184);
+  }
+  /* Mobile Guidelines: 44x44px minimum tap target for all interactive elements */
+  button, a, [role="button"], [role="tab"], [role="menuitem"], 
+  [role="option"], [role="switch"], input[type="checkbox"], 
+  input[type="radio"], input[type="button"], input[type="submit"],
+  input[type="reset"], [role="link"], [data-interactive="true"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Ensure proper padding/display for tap targets */
+  button, a, [role="button"], [role="menuitem"],
+  input[type="button"], input[type="submit"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Inline/icon-only elements override with proper sizing */
+  button.icon-only, a.icon-only, [role="button"].icon-only {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Fixed-position elements get safe-area-bottom padding */
+  [role="navigation"][style*="position: fixed"],
+  .fixed-bottom-nav, .bottom-nav-fixed,
+  nav[style*="bottom"], [data-fixed-bottom="true"],
+  .sticky-bottom {
+    padding-bottom: calc(var(--safe-area-bottom) + 1rem);
+  }
+}
+
+/* Keyboard focus styles — visible only for keyboard navigation */
+:focus-visible {
+  outline: 2px solid #22d3ee;
+  outline-offset: 2px;
+}
+/* Remove default outline for mouse/touch */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Utility classes for safe-area spacing */
+.pb-safe { padding-bottom: var(--safe-area-bottom); }
+.pt-safe { padding-top: var(--safe-area-top); }
+.pl-safe { padding-left: var(--safe-area-left); }
+.pr-safe { padding-right: var(--safe-area-right); }
+.mb-safe { margin-bottom: var(--safe-area-bottom); }
+.mt-safe { margin-top: var(--safe-area-top); }
+
+/* Touch target utilities */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Additional safe-area utilities for fixed bottom elements */
+.pb-safe-fixed {
+  padding-bottom: calc(var(--safe-area-bottom) + 1rem);
+}
+
+.mb-safe-fixed {
+  margin-bottom: calc(var(--safe-area-bottom) + 1rem);
+}
+
+.pb-safe-lg {
+  padding-bottom: calc(var(--safe-area-bottom) + 2rem);
+}
+
+/* Scrollable containers - allow normal scroll behavior within inner elements */
+.scrollable,
+.scrollable-y {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: auto;
+}
+
+.scrollable-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: auto;
+}
+
+/* Prevent scroll on specific elements when needed */
+.no-scroll {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* Selective overscroll prevention - allow inner scrolling, prevent elastic bounce */
+html {
+  overscroll-behavior: none;
+}
+
+body {
+  overscroll-behavior: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Allow scrolling on specific containers - exempt from overscroll blocking */
+.scroll-container,
+[role="region"],
+main,
+[data-scrollable="true"] {
+  overscroll-behavior: auto;
+}
+
+/* Prevent elastic scroll/overscroll on all scroll containers */
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Consistent interactive element sizing across the app */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="number"],
+textarea,
+select {
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+}
+
+/* Small input variant - still respects accessible minimums */
+input.input-sm,
+select.select-sm {
+  min-height: 40px;
+}
