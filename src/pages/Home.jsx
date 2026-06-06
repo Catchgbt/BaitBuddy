@@ -139,6 +139,12 @@ function LandingPageContent() {
     const [userName, setUserName] = useState(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+    const [loginMode, setLoginMode] = useState('login');
+    const [loginEmail, setLoginEmail] = useState('');
+    const [loginPassword, setLoginPassword] = useState('');
+    const [loginName, setLoginName] = useState('');
+    const [loginLoading, setLoginLoading] = useState(false);
+    const [loginError, setLoginError] = useState('');
     const { t } = useLanguage();
 
     useEffect(() => {
@@ -285,6 +291,45 @@ function LandingPageContent() {
             console.error('Login error:', error);
             base44.auth.redirectToLogin(createPageUrl('Dashboard'));
         }
+    };
+
+    const handleEmailAuth = async (e) => {
+        e.preventDefault();
+        setLoginLoading(true);
+        setLoginError('');
+        try {
+            if (loginMode === 'login') {
+                await base44.auth.login(loginEmail, loginPassword);
+            } else {
+                await base44.auth.register(loginEmail, loginPassword, loginName);
+            }
+            try {
+                const alreadySeen = localStorage.getItem('catchgbt_event_popup_seen');
+                if (!alreadySeen) {
+                    const evs = await base44.entities.AppEvent.filter({ is_active: true });
+                    if (evs && evs.length > 0) {
+                        const ev = evs[0];
+                        const now = new Date();
+                        if (now >= new Date(ev.start_date) && now <= new Date(ev.end_date)) {
+                            localStorage.setItem('catchgbt_event_popup_seen', '1');
+                            const endStr = new Date(ev.end_date).toLocaleDateString('de-DE');
+                            alert(`${ev.name}\n\n${ev.description || ''}\n\nPreis: ${ev.prize || ''}\n\nEvent endet am: ${endStr}`);
+                        }
+                    }
+                }
+            } catch {}
+            window.location.href = createPageUrl('Dashboard');
+        } catch (err) {
+            setLoginError(err.message || 'Anmeldung fehlgeschlagen. Bitte prüfe deine Zugangsdaten.');
+        } finally {
+            setLoginLoading(false);
+        }
+    };
+
+    const handleSocialLogin = (provider) => {
+        const apiUrl = import.meta.env.VITE_API_URL || 'https://baitbuddy-backend.onrender.com';
+        const redirect = encodeURIComponent(window.location.origin + createPageUrl('Dashboard'));
+        window.location.href = `${apiUrl}/api/auth/${provider}?redirect=${redirect}`;
     };
 
     const compressImage = (file, maxDim = 1600, maxKB = 500) => new Promise((resolve, reject) => {
@@ -809,33 +854,138 @@ function LandingPageContent() {
                 `}</style>
             </div>
 
-            <div className="fixed bottom-24 sm:bottom-40 left-4 sm:left-8 z-50">
-                <motion.button
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ 
-                        opacity: 1, 
-                        scale: 1,
-                        backgroundImage: [
-                            'linear-gradient(135deg, #a855f7, #3b82f6, #06b6d4)',
-                            'linear-gradient(135deg, #3b82f6, #06b6d4, #a855f7)',
-                            'linear-gradient(135deg, #06b6d4, #a855f7, #3b82f6)',
-                            'linear-gradient(135deg, #a855f7, #3b82f6, #06b6d4)'
-                        ],
-                        boxShadow: [
-                            '0 0 20px rgba(168, 85, 247, 0.8)',
-                            '0 0 40px rgba(59, 130, 246, 1)',
-                            '0 0 40px rgba(6, 182, 212, 1)',
-                            '0 0 20px rgba(168, 85, 247, 0.8)'
-                        ]
-                    }}
-                    transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-                    onClick={handleLogin}
-                    className="px-8 py-4 rounded-full text-white text-sm font-bold transform hover:scale-110 flex items-center justify-center whitespace-nowrap"
-                    title={t('landing.cta.start')}
+            {!isAuthenticated && (
+                <motion.div
+                    className="fixed inset-0 flex items-center justify-center z-40 pointer-events-none px-4"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.3 }}
                 >
-                    Go Fisching
-                </motion.button>
-            </div>
+                    <div className="w-full max-w-[320px] bg-black/75 backdrop-blur-2xl border border-white/10 rounded-2xl p-5 shadow-2xl pointer-events-auto">
+                        <h2 className="text-center text-base font-bold text-white mb-4">
+                            {loginMode === 'login' ? 'Willkommen bei BaitBuddy' : 'Konto erstellen'}
+                        </h2>
+
+                        <div className="flex flex-col gap-2">
+                            <button
+                                onClick={() => handleSocialLogin('google')}
+                                className="flex items-center justify-center gap-2.5 w-full py-2.5 px-4 rounded-xl bg-white text-gray-900 font-medium text-sm hover:bg-gray-100 transition-all"
+                            >
+                                <svg viewBox="0 0 24 24" className="w-4 h-4 flex-shrink-0">
+                                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                                </svg>
+                                Mit Google fortfahren
+                            </button>
+                            <button
+                                onClick={() => handleSocialLogin('facebook')}
+                                className="flex items-center justify-center gap-2.5 w-full py-2.5 px-4 rounded-xl bg-[#1877F2] text-white font-medium text-sm hover:bg-[#166FE5] transition-all"
+                            >
+                                <svg viewBox="0 0 24 24" className="w-4 h-4 flex-shrink-0" fill="white">
+                                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                </svg>
+                                Mit Facebook fortfahren
+                            </button>
+                            <button
+                                onClick={() => handleSocialLogin('apple')}
+                                className="flex items-center justify-center gap-2.5 w-full py-2.5 px-4 rounded-xl bg-white/5 text-white font-medium text-sm border border-white/20 hover:bg-white/10 transition-all"
+                            >
+                                <svg viewBox="0 0 24 24" className="w-4 h-4 flex-shrink-0" fill="white">
+                                    <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/>
+                                </svg>
+                                Mit Apple fortfahren
+                            </button>
+                        </div>
+
+                        <div className="flex items-center gap-3 my-4">
+                            <div className="flex-1 h-px bg-white/15" />
+                            <span className="text-xs text-gray-500">oder</span>
+                            <div className="flex-1 h-px bg-white/15" />
+                        </div>
+
+                        <form onSubmit={handleEmailAuth} className="flex flex-col gap-2">
+                            {loginMode === 'register' && (
+                                <input
+                                    type="text"
+                                    value={loginName}
+                                    onChange={e => setLoginName(e.target.value)}
+                                    placeholder="Vollständiger Name"
+                                    required
+                                    className="w-full bg-white/8 border border-white/15 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-500 outline-none focus:border-cyan-500/60 focus:bg-white/12 transition-all"
+                                />
+                            )}
+                            <input
+                                type="email"
+                                value={loginEmail}
+                                onChange={e => setLoginEmail(e.target.value)}
+                                placeholder="E-Mail Adresse"
+                                required
+                                className="w-full bg-white/8 border border-white/15 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-500 outline-none focus:border-cyan-500/60 focus:bg-white/12 transition-all"
+                            />
+                            <input
+                                type="password"
+                                value={loginPassword}
+                                onChange={e => setLoginPassword(e.target.value)}
+                                placeholder="Passwort"
+                                required
+                                className="w-full bg-white/8 border border-white/15 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-500 outline-none focus:border-cyan-500/60 focus:bg-white/12 transition-all"
+                            />
+                            {loginError && (
+                                <p className="text-red-400 text-xs text-center">{loginError}</p>
+                            )}
+                            <button
+                                type="submit"
+                                disabled={loginLoading}
+                                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold text-sm hover:from-cyan-400 hover:to-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-0.5"
+                            >
+                                {loginLoading ? 'Bitte warten...' : (loginMode === 'login' ? 'Anmelden' : 'Registrieren')}
+                            </button>
+                        </form>
+
+                        <p className="text-center text-xs text-gray-500 mt-3">
+                            {loginMode === 'login' ? 'Noch kein Konto?' : 'Bereits ein Konto?'}
+                            {' '}
+                            <button
+                                onClick={() => { setLoginMode(m => m === 'login' ? 'register' : 'login'); setLoginError(''); }}
+                                className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors"
+                            >
+                                {loginMode === 'login' ? 'Registrieren' : 'Anmelden'}
+                            </button>
+                        </p>
+                    </div>
+                </motion.div>
+            )}
+
+            {isAuthenticated && (
+                <div className="fixed bottom-24 sm:bottom-40 left-4 sm:left-8 z-50">
+                    <motion.button
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{
+                            opacity: 1,
+                            scale: 1,
+                            backgroundImage: [
+                                'linear-gradient(135deg, #a855f7, #3b82f6, #06b6d4)',
+                                'linear-gradient(135deg, #3b82f6, #06b6d4, #a855f7)',
+                                'linear-gradient(135deg, #06b6d4, #a855f7, #3b82f6)',
+                                'linear-gradient(135deg, #a855f7, #3b82f6, #06b6d4)'
+                            ],
+                            boxShadow: [
+                                '0 0 20px rgba(168, 85, 247, 0.8)',
+                                '0 0 40px rgba(59, 130, 246, 1)',
+                                '0 0 40px rgba(6, 182, 212, 1)',
+                                '0 0 20px rgba(168, 85, 247, 0.8)'
+                            ]
+                        }}
+                        transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+                        onClick={handleLogin}
+                        className="px-8 py-4 rounded-full text-white text-sm font-bold transform hover:scale-110 flex items-center justify-center whitespace-nowrap"
+                    >
+                        Zum Dashboard
+                    </motion.button>
+                </div>
+            )}
 
             <div className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 z-50 flex flex-col items-end gap-4">
                 <motion.div
