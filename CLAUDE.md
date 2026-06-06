@@ -1,130 +1,130 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Diese Datei gibt Claude Code (claude.ai/code) Hinweise zur Arbeit mit diesem Repository.
 
-## Project Overview
+## Projektübersicht
 
-BaitBuddy is a German-language AI-powered fishing assistant. It is a mobile-first React web app wrapped in Capacitor for Android/iOS, backed by a Node.js/Express API server connected to Supabase (PostgreSQL). The entire UI and all user-facing text is in German.
+BaitBuddy ist ein deutschsprachiger, KI-gestützter Angel-Assistent. Es handelt sich um eine mobile-first React-Web-App, die mit Capacitor für Android/iOS verpackt ist und von einem Node.js/Express-API-Server mit Supabase (PostgreSQL) als Datenbank betrieben wird. Die gesamte Benutzeroberfläche und alle benutzerseitigen Texte sind auf Deutsch.
 
-## Commands
+## Befehle
 
-### Frontend (web app)
+### Frontend (Web-App)
 ```bash
-npm run dev        # Vite dev server on localhost:5173
-npm run build      # Production build → dist/
-npm run preview    # Preview production build
-npm run lint       # ESLint check (flat config, --quiet)
-npm run lint:fix   # Auto-fix ESLint issues
-npm run typecheck  # TSC type check via jsconfig.json
+npm run dev        # Vite-Entwicklungsserver auf localhost:5173
+npm run build      # Produktions-Build → dist/
+npm run preview    # Produktions-Build als Vorschau starten
+npm run lint       # ESLint-Prüfung (flat config, --quiet)
+npm run lint:fix   # ESLint-Probleme automatisch beheben
+npm run typecheck  # TSC-Typprüfung via jsconfig.json
 ```
 
-### Backend (Express API)
+### Backend (Express-API)
 ```bash
 cd backend
 npm install
-npm run dev        # node --watch src/server.js (auto-restarts on change)
-npm run start      # node src/server.js (production)
+npm run dev        # node --watch src/server.js (startet bei Änderungen neu)
+npm run start      # node src/server.js (Produktion)
 ```
 
 ### Mobile (Capacitor / Android)
 ```bash
 cd frontend
-npm run build       # Build web assets + sync Capacitor
-npm run android     # Build + sync to Android
-npm run android:open  # Open Android Studio
+npm run build        # Web-Assets bauen + Capacitor synchronisieren
+npm run android      # Build + Sync zu Android
+npm run android:open # Android Studio öffnen
 ```
 
-There are no automated tests in this project.
+Es gibt keine automatisierten Tests in diesem Projekt.
 
-## Architecture
+## Architektur
 
-### Repository Layout
+### Repository-Struktur
 
 ```
 /
-├── src/              # React web app
-│   ├── pages/        # Routable page components (46+ pages)
-│   ├── components/   # Feature-organized components; src/components/ui/ is shadcn/ui library
-│   ├── lib/          # Core utilities, contexts, hooks helpers
-│   ├── hooks/        # Custom React hooks
-│   ├── api/          # API client layer
-│   ├── App.jsx       # Root: providers + routing
-│   ├── Layout.jsx    # Main sidebar/nav layout wrapper
-│   └── pages.config.js  # Auto-generated page registry
-├── backend/          # Express.js API server
+├── src/              # React-Web-App
+│   ├── pages/        # Routingfähige Seitenkomponenten (46+ Seiten)
+│   ├── components/   # Feature-organisierte Komponenten; src/components/ui/ ist die shadcn/ui-Bibliothek
+│   ├── lib/          # Kernhilfsprogramme, Contexts, Hook-Helfer
+│   ├── hooks/        # Benutzerdefinierte React-Hooks
+│   ├── api/          # API-Client-Schicht
+│   ├── App.jsx       # Root: Provider + Routing
+│   ├── Layout.jsx    # Haupt-Sidebar/Nav-Layout-Wrapper
+│   └── pages.config.js  # Automatisch generierte Seiten-Registry
+├── backend/          # Express.js-API-Server
 │   └── src/
-│       ├── server.js         # App entry point, 7 route modules mounted
+│       ├── server.js         # App-Einstiegspunkt, 7 Routen-Module eingebunden
 │       └── routes/           # ai.js, auth.js, catches.js, community.js, premium.js, spots.js, …
-├── frontend/         # Capacitor mobile wrapper (android/, capacitor.config.ts)
+├── frontend/         # Capacitor-Mobile-Wrapper (android/, capacitor.config.ts)
 ├── supabase/
-│   └── schema.sql    # Full PostgreSQL schema
-└── public/           # Static assets
+│   └── schema.sql    # Vollständiges PostgreSQL-Schema
+└── public/           # Statische Assets
 ```
 
-### Frontend Stack
+### Frontend-Stack
 
-- **React 18** + **Vite 6** (path alias `@` → `./src`)
-- **Tailwind CSS 3** + **shadcn/ui** (Radix UI primitives) for all UI components
-- **React Router DOM 6** for routing
-- **TanStack React Query 5** for server state (staleTime 30s, gcTime 5min, no retry on mutations)
-- **Framer Motion** for page transitions (AnimatePresence wraps all routes)
-- **Leaflet + react-leaflet** for interactive maps
-- **React Hook Form + Zod** for forms and validation
-- **Recharts** for data visualization
+- **React 18** + **Vite 6** (Pfad-Alias `@` → `./src`)
+- **Tailwind CSS 3** + **shadcn/ui** (Radix-UI-Primitive) für alle UI-Komponenten
+- **React Router DOM 6** für das Routing
+- **TanStack React Query 5** für den Server-State (staleTime 30s, gcTime 5min, kein Retry bei Mutationen)
+- **Framer Motion** für Seitenübergänge (AnimatePresence umschließt alle Routen)
+- **Leaflet + react-leaflet** für interaktive Karten
+- **React Hook Form + Zod** für Formulare und Validierung
+- **Recharts** für Datenvisualisierung
 
-### Backend Stack
+### Backend-Stack
 
-- **Express 4** with ES Modules (`"type": "module"`)
+- **Express 4** mit ES Modules (`"type": "module"`)
 - **Supabase** (PostgreSQL) via `@supabase/supabase-js`
-- **Anthropic SDK** (`@anthropic-ai/sdk`) for AI chat, catch analysis, TTS, and recommendations
-- **Helmet + CORS** for security middleware
+- **Anthropic SDK** (`@anthropic-ai/sdk`) für KI-Chat, Fang-Analyse, TTS und Empfehlungen
+- **Helmet + CORS** als Sicherheits-Middleware
 
-### API Client Layer (`src/api/frontendClient.js`)
+### API-Client-Schicht (`src/api/frontendClient.js`)
 
-This is the single source of truth for all frontend→backend communication. It exports:
+Dies ist die einzige Quelle der Wahrheit für die gesamte Frontend→Backend-Kommunikation. Sie exportiert:
 
-- **`base44`** — compatibility object with `.auth`, `.entities` (Proxy), `.functions.invoke()`, `.integrations`
-- **Named module exports** — `catches`, `spots`, `ai`, `weather`, `community`, `premium`, `fishing`, `events`, `gear`, `water`, `user` — each with typed methods
+- **`base44`** — Kompatibilitätsobjekt mit `.auth`, `.entities` (Proxy), `.functions.invoke()`, `.integrations`
+- **Benannte Modul-Exporte** — `catches`, `spots`, `ai`, `weather`, `community`, `premium`, `fishing`, `events`, `gear`, `water`, `user` — jeweils mit typisierten Methoden
 
-The `entities` property is a `Proxy` that maps entity names to REST endpoints via `ENTITY_MAP`:
+Die `entities`-Eigenschaft ist ein `Proxy`, der Entitätsnamen über `ENTITY_MAP` auf REST-Endpunkte abbildet:
 ```js
 base44.entities.Catch.create(data)   // POST /api/catches
 base44.entities.Spot.list()          // GET  /api/spots
 ```
 
-Named functions are invoked via:
+Benannte Funktionen werden so aufgerufen:
 ```js
 base44.functions.invoke('catchgbtChat', { messages })  // → POST /api/ai/chat
 ```
 
-Auth token (`bb_token`) is stored in `localStorage` and injected as `Authorization: Bearer <token>` on every request. Errors with `.status` and `.data` are thrown for HTTP non-2xx responses.
+Das Auth-Token (`bb_token`) wird im `localStorage` gespeichert und als `Authorization: Bearer <token>` bei jeder Anfrage mitgesendet. Bei HTTP-Fehlern (non-2xx) werden Fehler mit `.status` und `.data` geworfen.
 
 ### Routing
 
-Pages are auto-registered from `src/pages.config.js`. Adding a `.jsx` file in `src/pages/` causes it to appear as a route at `/<filename>`. `App.jsx` iterates `pagesConfig.Pages` and renders each under the shared `Layout` component wrapped in `ErrorBoundary`. Three pages (`CatchStats`, `AdminTracking`, `Help`) are hard-coded outside the auto-registry.
+Seiten werden automatisch aus `src/pages.config.js` registriert. Das Hinzufügen einer `.jsx`-Datei in `src/pages/` erzeugt automatisch eine Route unter `/<Dateiname>`. `App.jsx` iteriert über `pagesConfig.Pages` und rendert jede Seite unter der gemeinsamen `Layout`-Komponente, eingewickelt in `ErrorBoundary`. Drei Seiten (`CatchStats`, `AdminTracking`, `Help`) sind außerhalb der automatischen Registry fest kodiert.
 
-### State Management
+### State-Management
 
-1. **React Context** — three providers, always present at the app root:
-   - `AuthProvider` (`src/lib/AuthContext.jsx`) — user object, auth status, login/logout
-   - `NavigationProvider` (`src/lib/NavigationContext.jsx`) — navigation history/state
-   - `MobileStackProvider` (`src/components/navigation/MobileStackManager.jsx`) — Android-style back-stack
+1. **React Context** — drei Provider, immer am App-Root vorhanden:
+   - `AuthProvider` (`src/lib/AuthContext.jsx`) — Benutzerobjekt, Auth-Status, Login/Logout
+   - `NavigationProvider` (`src/lib/NavigationContext.jsx`) — Navigationsverlauf/-zustand
+   - `MobileStackProvider` (`src/components/navigation/MobileStackManager.jsx`) — Android-ähnlicher Back-Stack
 
-2. **TanStack React Query** — all server data. Use query keys as string arrays (e.g., `['catches']`).
+2. **TanStack React Query** — alle Serverdaten. Query-Keys als String-Arrays verwenden (z. B. `['catches']`).
 
-3. **Optimistic updates** — use `useOptimisticMutation` from `src/lib/useOptimisticMutation.js` for any data mutation. It cancels in-flight queries, snapshots previous data, applies the update immediately, and rolls back on error with auto-invalidation on settle.
+3. **Optimistische Updates** — `useOptimisticMutation` aus `src/lib/useOptimisticMutation.js` für jede Datenmutation verwenden. Es bricht laufende Abfragen ab, erstellt einen Snapshot der vorherigen Daten, wendet das Update sofort an und macht es bei Fehlern rückgängig, mit automatischer Invalidierung beim Abschluss.
 
-## Key Conventions
+## Wichtige Konventionen
 
-### Optimistic Mutations
+### Optimistische Mutationen
 
-Always prefer `useOptimisticMutation` over raw `useMutation`:
+`useOptimisticMutation` immer gegenüber dem rohen `useMutation` bevorzugen:
 
 ```js
 import { useOptimisticMutation } from '@/lib/useOptimisticMutation';
 
 const mutation = useOptimisticMutation({
-  queryKey: 'catches',           // or array of keys
+  queryKey: 'catches',           // oder Array von Keys
   mutationFn: (data) => base44.entities.Catch.create(data),
   optimisticUpdate: (oldList = [], newItem) => [
     { id: `tmp-${Date.now()}`, ...newItem },
@@ -135,9 +135,9 @@ const mutation = useOptimisticMutation({
 mutation.mutate(catchData);
 ```
 
-### Accessible Icon Buttons
+### Barrierefreie Icon-Buttons
 
-Never use bare `<button>` with an icon. Always use `AccessibleIconButton`:
+Niemals einen bloßen `<button>` mit einem Icon verwenden. Immer `AccessibleIconButton` nutzen:
 
 ```js
 import { AccessibleIconButton } from '@/components/ui/AccessibleIconButton';
@@ -146,26 +146,26 @@ import { X } from 'lucide-react';
 <AccessibleIconButton icon={X} label="Schließen" onClick={handleClose} />
 ```
 
-ARIA labels are centralized in `src/lib/ariaLabels.js`. Use `getAriaLabel('IconName')` for consistency across the app.
+ARIA-Labels sind zentral in `src/lib/ariaLabels.js` hinterlegt. `getAriaLabel('IconName')` für Konsistenz in der gesamten App verwenden.
 
-### Mobile Navigation
+### Mobile-Navigation
 
-Use the `useMobileStack()` hook (from `MobileStackProvider`) for back-button handling on Android. Minimum tap target size is 44×44px for all interactive elements.
+Den `useMobileStack()`-Hook (aus `MobileStackProvider`) für die Zurück-Schaltflächen-Behandlung unter Android verwenden. Minimale Tipp-Zielgröße für alle interaktiven Elemente: 44×44px.
 
-### Path Aliases
+### Pfad-Aliase
 
-`@` resolves to `./src` in both Vite (`vite.config.js`) and TypeScript (`jsconfig.json`). Always use `@/` imports rather than relative paths crossing directory boundaries.
+`@` wird in Vite (`vite.config.js`) und TypeScript (`jsconfig.json`) zu `./src` aufgelöst. Immer `@/`-Importe verwenden statt relativer Pfade über Verzeichnisgrenzen hinweg.
 
-### Environment Variables
+### Umgebungsvariablen
 
-- Frontend: must be prefixed `VITE_` (e.g., `VITE_API_URL`)
-- Backend: loaded by `dotenv`, no prefix required
-- Backend API URL defaults to `https://baitbuddy-backend.onrender.com` if `VITE_API_URL` is unset
+- Frontend: müssen mit `VITE_` beginnen (z. B. `VITE_API_URL`)
+- Backend: werden von `dotenv` geladen, kein Präfix erforderlich
+- Backend-API-URL fällt auf `https://baitbuddy-backend.onrender.com` zurück, wenn `VITE_API_URL` nicht gesetzt ist
 
 ### ESLint
 
-ESLint uses the flat config (`eslint.config.js`). The `src/components/ui/` and `src/lib/` shadcn directories are excluded from unused-import rules. Run `npm run lint:fix` before committing.
+ESLint verwendet die Flat-Config (`eslint.config.js`). Die Verzeichnisse `src/components/ui/` und `src/lib/` (shadcn) sind von den Unused-Import-Regeln ausgenommen. Vor dem Commit `npm run lint:fix` ausführen.
 
 ## CI/CD
 
-`.github/workflows/build-apk.yml` builds a debug APK on manual dispatch or version tags (`v*`), and a signed release AAB when keystore secrets are present (`KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`). The web app deploys via Vercel (`vercel.json`).
+`.github/workflows/build-apk.yml` erstellt bei manuellem Dispatch oder Versions-Tags (`v*`) ein Debug-APK und ein signiertes Release-AAB, wenn Keystore-Secrets vorhanden sind (`KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`). Die Web-App wird über Vercel bereitgestellt (`vercel.json`).
