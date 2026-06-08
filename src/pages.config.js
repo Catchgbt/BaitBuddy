@@ -48,6 +48,7 @@
  * The mainPage value must match a key in the PAGES object exactly.
  */
 import AGB from './pages/AGB';
+import AuthCallback from './pages/AuthCallback';
 import AI from './pages/AI';
 import AIAssistant from './pages/AIAssistant';
 import AIPage from './pages/AIPage';
@@ -99,6 +100,7 @@ import __Layout from './Layout.jsx';
 
 export const PAGES = {
     "AGB": AGB,
+    "AuthCallback": AuthCallback,
     "AI": AI,
     "AIAssistant": AIAssistant,
     "AIPage": AIPage,
