@@ -1,7 +1,7 @@
 // src/api/frontendClient.js
 // Eigener BaitBuddy API-Client — ersetzt @base44/sdk vollständig
 
-const API_URL = import.meta.env.VITE_API_URL != null ? import.meta.env.VITE_API_URL : 'https://baitbuddy-backend.onrender.com';
+const API_URL = import.meta.env.VITE_API_URL || '';
 const TOKEN_KEY = 'bb_token';
 
 // ── Raw HTTP Client ───────────────────────────────────────────────────────────

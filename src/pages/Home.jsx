@@ -5,6 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/utils';
 import { Camera, Fish, Map, Cloud, Brain, Award, Compass } from 'lucide-react';
 import { setGuestSession } from '@/components/utils/guestMode';
+import { supabase } from '@/api/supabaseClient';
 import { toast } from 'sonner';
 import LanguageSwitcher from '@/components/i18n/LanguageSwitcher';
 import { LanguageProvider, useLanguage } from '@/components/i18n/LanguageContext';
@@ -327,10 +328,13 @@ function LandingPageContent() {
         }
     };
 
-    const handleSocialLogin = (provider) => {
-        const apiUrl = import.meta.env.VITE_API_URL || 'https://baitbuddy-backend.onrender.com';
-        const redirect = encodeURIComponent(window.location.origin + createPageUrl('Dashboard'));
-        window.location.href = `${apiUrl}/api/auth/${provider}?redirect=${redirect}`;
+    const handleSocialLogin = async (provider) => {
+        setLoginError('');
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider,
+            options: { redirectTo: window.location.origin + '/AuthCallback' },
+        });
+        if (error) setLoginError('Social Login fehlgeschlagen: ' + error.message);
     };
 
     const handleGuestLogin = () => {
