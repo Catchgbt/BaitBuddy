@@ -5,7 +5,7 @@ import { invokeLLM } from '../lib/llm.js';
 
 const router = Router();
 
-router.post('/chat', requireAuth, async (req, res) => {
+router.post('/ai/chat', requireAuth, async (req, res) => {
   try {
     const { messages = [], userLocation = null } = req.body;
     const userEmail = req.user.email;
@@ -70,21 +70,10 @@ DU KANNST DIE APP STEUERN. Wenn der Nutzer dich darum bittet, etwas in der App z
 
 Verfügbare Aktionen:
 1. Navigieren / Seite öffnen: {"type":"navigate","params":{"page":"home|log|map|community|premium|chat"}}
-   - "Fangbuch", "meine Fänge öffnen" -> page log
-   - "Karte", "Spots", "Angelplätze öffnen" -> page map
-   - "Community", "Wettbewerbe" -> page community
-   - "Premium", "Abo" -> page premium
-   - "Startseite", "Dashboard", "nach Hause" -> page home
 2. Fang eintragen: {"type":"log_catch","params":{"species":"Hecht","length_cm":75,"weight_kg":4.2,"bait_used":"Gummifisch","notes":"..."}}
-   - Nutze nur Felder, die der Nutzer nennt. species ist Pflicht.
-   - Z.B. "Trag einen Hecht mit 75cm ein"
-3. Spot speichern (am aktuellen Standort): {"type":"add_spot","params":{"name":"Mein Spot","water_type":"see|fluss|teich|kanal|bach","notes":"..."}}
-   - Z.B. "Speichere diesen Angelplatz als Hechtbucht"
+3. Spot speichern: {"type":"add_spot","params":{"name":"Mein Spot","water_type":"see|fluss|teich|kanal|bach","notes":"..."}}
 
-Regeln:
-- Gib NUR einen Aktions-Block aus, wenn der Nutzer wirklich eine Aktion will. Bei reinen Fragen KEINE Aktion.
-- Schreibe IMMER zuerst eine kurze, natürliche Bestätigung (z.B. "Klar, ich öffne die Karte."), dann den Aktions-Block.
-- Der Aktions-Block wird dem Nutzer NICHT angezeigt, sprich ihn also nicht aus.${context}`;
+Regeln: Aktions-Block nur wenn Nutzer wirklich eine Aktion will. Zuerst kurze Bestätigung, dann Block. Block wird dem Nutzer nicht angezeigt.${context}`;
 
     const history = messages.slice(-6).map(m =>
       `${m.role === 'user' ? 'Nutzer' : 'BaitBuddy'}: ${m.content}`
@@ -99,26 +88,7 @@ Regeln:
     }
     const cleanReply = reply.replace(/<<ACTION>>.*?<<END>>/s, '').trim();
 
-    return res.json({ ok: true, reply: cleanReply, action });
-  } catch (e) {
-    return res.status(500).json({ error: e.message });
-  }
-});
-
-router.post('/ai/chat', requireAuth, async (req, res) => {
-  try {
-    const { messages = [], userLocation = null } = req.body;
-    const userEmail = req.user.email;
-    const lastMsg = [...messages].reverse().find(m => m.role === 'user')?.content || '';
-    const contextParts = [];
-
-    const systemPrompt = `Du bist BaitBuddy, ein professioneller Angel-Experte und KI-Assistent für eine Angel-App. Antworte kurz und präzise auf Deutsch.`;
-    const history = messages.slice(-6).map(m =>
-      `${m.role === 'user' ? 'Nutzer' : 'BaitBuddy'}: ${m.content}`
-    ).join('\n');
-
-    const reply = await invokeLLM({ prompt: `${systemPrompt}\n\n${history}\n\nAntworte:` });
-    return res.json({ ok: true, reply, message: reply });
+    return res.json({ ok: true, reply: cleanReply, message: cleanReply, action });
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }

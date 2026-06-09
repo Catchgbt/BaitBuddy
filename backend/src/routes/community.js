@@ -77,8 +77,13 @@ router.post('/community/clans/:id/join', requireAuth, async (req, res) => {
 });
 
 router.get('/community/clans/:id/leaderboard', optionalAuth, async (req, res) => {
+  const { data: members } = await supabase.from('clan_members')
+    .select('user_id').eq('clan_id', req.params.id);
+  if (!members?.length) return res.json([]);
+  const memberIds = members.map(m => m.user_id);
   const { data, error } = await supabase.from('catches')
     .select('created_by, species, length_cm')
+    .in('created_by', memberIds)
     .order('length_cm', { ascending: false }).limit(20);
   if (error) return res.status(500).json({ error: error.message });
   return res.json(data || []);
