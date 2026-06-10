@@ -13,9 +13,6 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.0",
-    "@capacitor/android": "6.2.1",
-    "@capacitor/cli": "6.2.1",
-    "@capacitor/core": "6.2.1",
     "@hello-pangea/dnd": "^17.0.0",
     "@hookform/resolvers": "^4.1.2",
     "@radix-ui/react-accordion": "^1.2.3",
@@ -88,6 +85,9 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@capacitor/android": "6.2.1",
+    "@capacitor/cli": "6.2.1",
+    "@capacitor/core": "6.2.1",
     "@eslint/js": "^9.19.0",
     "@types/node": "^22.13.5",
     "@types/react": "^18.2.66",
