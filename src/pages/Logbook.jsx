@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { base44 } from "@/api/base44Client";
+import { Catch } from "@/entities/Catch";
+import { Spot } from "@/entities/Spot";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOptimisticMutation } from "@/lib/optimistic/useOptimisticMutation";
 import { useActionQueue } from "@/lib/optimistic/useActionQueue";
@@ -30,12 +32,12 @@ export default function Logbook() {
   // ---- Data fetching via TanStack Query ----
   const { data: catches = [], isLoading: catchesLoading } = useQuery({
     queryKey: ['catches'],
-    queryFn: () => base44.entities.Catch.list('-catch_time'),
+    queryFn: () => Catch.list('-catch_time'),
   });
 
   const { data: spots = [], isLoading: spotsLoading } = useQuery({
     queryKey: ['spots'],
-    queryFn: () => base44.entities.Spot.list(),
+    queryFn: () => Spot.list(),
   });
 
   const loading = catchesLoading || spotsLoading;
@@ -130,7 +132,7 @@ export default function Logbook() {
     catches,
     {
       mutationFn: async (catchData) => {
-        const created = await base44.entities.Catch.create(catchData);
+        const created = await Catch.create(catchData);
         return [created, ...catches.filter(c => !c.id.startsWith('tmp-'))];
       },
       optimisticData: (variables) => 
@@ -172,7 +174,7 @@ export default function Logbook() {
     catches,
     {
       mutationFn: async ({ id, data }) => {
-        await base44.entities.Catch.update(id, data);
+        await Catch.update(id, data);
         return catches.map(c => c.id === id ? { ...c, ...data } : c);
       },
       optimisticData: ({ id, data }) => 
@@ -186,7 +188,7 @@ export default function Logbook() {
     catches,
     {
       mutationFn: async (id) => {
-        await base44.entities.Catch.delete(id);
+        await Catch.delete(id);
         return createOptimisticDelete(catches, id);
       },
       optimisticData: (id) => createOptimisticDelete(catches, id),

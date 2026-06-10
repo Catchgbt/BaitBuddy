@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Heart, Trophy, Award } from 'lucide-react';
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
+import { Catch } from "@/entities/Catch";
 
 export default function VotingEventCard({ competition, currentUser }) {
   const [submissions, setSubmissions] = useState([]);
@@ -50,7 +51,7 @@ export default function VotingEventCard({ competition, currentUser }) {
   };
 
   const handleSubmitCatch = async () => {
-    const catches = await base44.entities.Catch.filter({ created_by: currentUser.email });
+    const catches = await Catch.filter({ created_by: currentUser.email });
     
     if (catches.length === 0) {
       toast.error('Du hast noch keine Faenge im Logbuch');

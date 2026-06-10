@@ -123,6 +123,10 @@ const entitiesProxy = new Proxy({}, {
   get(_, entityName) { return makeEntity(entityName); }
 });
 
+// Nativer Entity-Zugriff (Teil der base44-Ablösung): erlaubt
+// `import { entities } from '@/api/frontendClient'` ohne base44-Wrapper.
+export const entities = entitiesProxy;
+
 // ── Function → Endpoint Mapping ───────────────────────────────────────────────
 const FUNCTION_MAP = {
   catchgbtChat:           (d) => api.post('/api/ai/chat', d),

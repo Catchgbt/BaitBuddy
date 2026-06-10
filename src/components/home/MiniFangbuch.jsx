@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { Catch } from "@/entities/Catch";
 import { Fish, BookOpen, Ruler, Weight, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -12,8 +12,8 @@ export default function MiniFangbuch() {
   useEffect(() => {
     const loadCatches = async () => {
       try {
-        const catches = await base44.entities.Catch.list('-catch_time', 1);
-        const allCatches = await base44.entities.Catch.list();
+        const catches = await Catch.list('-catch_time', 1);
+        const allCatches = await Catch.list();
         
         if (catches.length > 0) {
           setLastCatch(catches[0]);

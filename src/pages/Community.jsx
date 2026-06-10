@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { base44 } from "@/api/base44Client";
+import { Catch } from "@/entities/Catch";
 import { auth } from "@/api/auth";
 import { toast } from "sonner";
 import { Heart, MessageCircle, Send, Camera, AlertTriangle, User, Loader2, X, Globe, Facebook, Trophy, Users, Activity, Fish, TrendingUp } from "lucide-react";
@@ -243,7 +244,7 @@ export default function Community() {
     
     setLoadingCatches(true);
     try {
-      const catches = await base44.entities.Catch.filter(
+      const catches = await Catch.filter(
         { created_by: currentUser.email },
         '-catch_time',
         20

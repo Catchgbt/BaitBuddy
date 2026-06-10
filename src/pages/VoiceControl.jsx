@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { base44 } from "@/api/base44Client";
+import { Catch } from "@/entities/Catch";
+import { Spot } from "@/entities/Spot";
 import { auth } from "@/api/auth";
 import PremiumGuard from "@/components/premium/PremiumGuard";
 import { useLocation } from "@/components/location/LocationManager";
@@ -31,7 +33,7 @@ async function executeVoiceAction(action, navigate) {
     if (action.type === "log_catch") {
       const p = action.params || {};
       if (!p.species) return "Bitte sage mir welche Fischart.";
-      await base44.entities.Catch.create({
+      await Catch.create({
         species: p.species,
         catch_time: new Date().toISOString(),
         ...(p.length_cm != null && { length_cm: Number(p.length_cm) }),
@@ -410,7 +412,7 @@ function VoiceBuddy() {
         })
         .catch(err => console.warn('Wetter laden fehlgeschlagen:', err));
 
-      base44.entities.Spot.list()
+      Spot.list()
         .then(spots => {
           if (!spots || spots.length === 0) return;
           let nearest = null;

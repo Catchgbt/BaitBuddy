@@ -1,8 +1,8 @@
-import { base44, User } from '@/api/frontendClient.js';
+import { base44, entities, User } from '@/api/frontendClient.js';
 
 export { User };
-export const Catch          = base44.entities.Catch;
-export const Spot           = base44.entities.Spot;
+export const Catch          = entities.Catch;
+export const Spot           = entities.Spot;
 export const Gear           = base44.entities.Gear;
 export const LeaderboardEntry = base44.entities.LeaderboardEntry;
 export const FishingPlan    = base44.entities.FishingPlan;

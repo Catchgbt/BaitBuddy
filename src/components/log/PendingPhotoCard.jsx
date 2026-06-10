@@ -5,6 +5,7 @@ import { Sparkles, Trash2, Loader2, Camera, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
+import { Catch } from "@/entities/Catch";
 import { format } from 'date-fns';
 import { useAITTS } from '@/hooks/useAITTS';
 
@@ -52,7 +53,7 @@ export default function PendingPhotoCard({ photo, spots, findNearestSpot, onAnal
                 };
 
                 // Catch speichern
-                await base44.entities.Catch.create(catchData);
+                await Catch.create(catchData);
 
                 const successMessage = nearestSpot 
                     ? `${aiData.species_name || 'Unbekannt'} • ${aiData.length_cm ? Math.round(aiData.length_cm) + ' cm' : 'Länge unbekannt'} • 📍 ${nearestSpot.name}`

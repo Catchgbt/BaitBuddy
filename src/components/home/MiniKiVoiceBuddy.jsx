@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { catchgbtChat } from "@/functions/catchgbtChat";
 import { base44 } from "@/api/base44Client";
+import { Catch } from "@/entities/Catch";
+import { Spot } from "@/entities/Spot";
 import { auth } from "@/api/auth";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -99,7 +101,7 @@ async function executeAction(action, navigate) {
         ...(p.notes && { notes: p.notes }),
         ...(p.is_released != null && { is_released: !!p.is_released })
       };
-      await base44.entities.Catch.create(data);
+      await Catch.create(data);
       toast.success(`Fang eingetragen: ${p.species}`);
       return `Fang ${p.species} wurde im Fangbuch eingetragen.`;
     }
@@ -126,7 +128,7 @@ async function executeAction(action, navigate) {
       if (!p.name || p.latitude == null || p.longitude == null) {
         return "Ich brauche Name und Koordinaten fuer den Spot.";
       }
-      await base44.entities.Spot.create({
+      await Spot.create({
         name: p.name,
         latitude: Number(p.latitude),
         longitude: Number(p.longitude),

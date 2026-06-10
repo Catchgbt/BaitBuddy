@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { Spot } from "@/entities/Spot";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import { Card, CardContent } from "@/components/ui/card";
@@ -168,7 +169,7 @@ export default function MapPage() {
   const loadMapData = async () => {
     setLoading(true);
     try {
-      const userSpots = await base44.entities.Spot.list();
+      const userSpots = await Spot.list();
       setSpots(userSpots);
 
       try {
@@ -228,7 +229,7 @@ export default function MapPage() {
 
   const handleAddSpot = async (spotData) => {
     try {
-      await base44.entities.Spot.create(spotData);
+      await Spot.create(spotData);
       toast.success("Spot hinzugefügt!");
       await loadMapData();
       setShowAddModal(false);

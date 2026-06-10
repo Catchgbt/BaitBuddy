@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { Spot } from "@/entities/Spot";
 import { useLocation } from "@/components/location/LocationManager";
 import { MapPin, Navigation } from "lucide-react";
 
@@ -25,7 +25,7 @@ export default function MiniNearestSpot() {
       if (!currentLocation?.lat || !currentLocation?.lon) return;
 
       try {
-        const spots = await base44.entities.Spot.list();
+        const spots = await Spot.list();
         if (spots.length === 0) return;
 
         let nearest = null;

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { Spot } from "@/entities/Spot";
 import { useLocation } from "@/components/location/LocationManager";
 import { Map, MapPin, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -28,7 +29,7 @@ export default function MiniKarte() {
       try {
         // Lade sowohl persönliche Spots als auch öffentliche Angelvereine/Parks
         const [spots, fishingClubs] = await Promise.all([
-          base44.entities.Spot.list(),
+          Spot.list(),
           base44.entities.FishingClub.list()
         ]);
 

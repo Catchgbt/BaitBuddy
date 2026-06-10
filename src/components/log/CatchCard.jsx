@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import CatchDetailModal from './CatchDetailModal';
 import ShareCatchDialog from './ShareCatchDialog';
-import { base44 } from '@/api/base44Client';
+import { Spot } from "@/entities/Spot";
 
 function CatchCard({ catchItem, onEdit, onDelete }) {
   const [showDetailModal, setShowDetailModal] = React.useState(false);
@@ -18,7 +18,7 @@ function CatchCard({ catchItem, onEdit, onDelete }) {
 
   const loadSpots = async () => {
     try {
-      const spotsData = await base44.entities.Spot.list();
+      const spotsData = await Spot.list();
       setSpots(spotsData);
     } catch (error) {
       console.error("Fehler beim Laden der Spots:", error);

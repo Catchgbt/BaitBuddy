@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { Catch } from "@/entities/Catch";
+import { Spot } from "@/entities/Spot";
 import { auth } from "@/api/auth";
 import { Fish, MapPin, Calendar, TrendingUp } from "lucide-react";
 
@@ -16,8 +17,8 @@ export default function MiniQuickStats() {
     const loadStats = async () => {
       try {
         const [catches, spots, user] = await Promise.all([
-          base44.entities.Catch.list(),
-          base44.entities.Spot.list(),
+          Catch.list(),
+          Spot.list(),
           auth.me()
         ]);
 

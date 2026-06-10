@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { base44 } from "@/api/base44Client";
+import { Catch } from "@/entities/Catch";
 import { Loader2, Medal, User } from "lucide-react";
 
 export default function LeaderboardCard({ type, title, icon: Icon }) {
@@ -28,7 +29,7 @@ export default function LeaderboardCard({ type, title, icon: Icon }) {
             label: 'Punkte'
           }));
       } else if (type === 'catches') {
-        const catches = await base44.entities.Catch.list('', 1000);
+        const catches = await Catch.list('', 1000);
         const userCatches = {};
         
         catches.forEach(c => {
@@ -47,7 +48,7 @@ export default function LeaderboardCard({ type, title, icon: Icon }) {
             label: 'Faenge'
           }));
       } else if (type === 'biggest') {
-        const catches = await base44.entities.Catch.filter({ length_cm: { $gt: 0 } });
+        const catches = await Catch.filter({ length_cm: { $gt: 0 } });
         const userBiggest = {};
         
         catches.forEach(c => {

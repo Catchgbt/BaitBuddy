@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MapPin, Target, TrendingUp, Loader2 } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { Spot } from "@/entities/Spot";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
 
@@ -52,7 +52,7 @@ export default function HotspotDetection({ waterData }) {
 
   const loadSpots = async () => {
     try {
-      const userSpots = await base44.entities.Spot.list();
+      const userSpots = await Spot.list();
       setSpots(userSpots);
     } catch (error) {
       console.error("Failed to load spots:", error);
