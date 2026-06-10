@@ -69,7 +69,7 @@ export default function KiBuddyBeta() {
         context: "ki_buddy_beta"
       });
 
-      const ans = res?.data?.reply || "Keine Antwort erhalten.";
+      const ans = res?.reply || res?.message || "Keine Antwort erhalten.";
       setMessages(m => [...m, { role: "assistant", text: ans }]);
       if (tonAn) speak(ans);
       else setStatus("");

@@ -312,7 +312,7 @@ export default function MiniKiVoiceBuddy() {
         context: "ki_voice_buddy_dashboard"
       });
 
-      const raw = res?.data?.reply || "Keine Antwort erhalten.";
+      const raw = res?.reply || res?.message || "Keine Antwort erhalten.";
       const { clean, action } = parseAction(raw);
       let finalText = clean || "Erledigt.";
 
