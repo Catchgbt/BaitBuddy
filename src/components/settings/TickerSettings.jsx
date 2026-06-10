@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { auth } from "@/api/auth";
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Save, Newspaper } from 'lucide-react';
@@ -12,7 +12,7 @@ export default function TickerSettings() {
     useEffect(() => {
         (async () => {
             try {
-                const user = await base44.auth.me();
+                const user = await auth.me();
                 if (user && user.settings && user.settings.ticker_speed) {
                     setSpeed(user.settings.ticker_speed);
                     setInitialSpeed(user.settings.ticker_speed);
@@ -25,7 +25,7 @@ export default function TickerSettings() {
 
     const tickerMutation = useOptimisticMutation({
         mutationFn: async (newSpeed) => {
-            await base44.auth.updateMe({ settings: { ticker_speed: newSpeed } });
+            await auth.updateMe({ settings: { ticker_speed: newSpeed } });
             return newSpeed;
         },
         optimisticUpdate: () => speed,

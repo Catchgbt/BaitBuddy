@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { auth } from "@/api/auth";
 
 const LanguageContext = createContext();
 
@@ -1069,7 +1069,7 @@ export function LanguageProvider({ children }) {
   useEffect(() => {
     const loadLanguage = async () => {
       try {
-        const user = await base44.auth.me();
+        const user = await auth.me();
         if (user?.settings?.language) {
           setLanguage(user.settings.language);
         } else {
@@ -1095,7 +1095,7 @@ export function LanguageProvider({ children }) {
     localStorage.setItem('app_language', newLang);
     
     try {
-      await base44.auth.updateMe({ 
+      await auth.updateMe({ 
         settings: { 
           language: newLang 
         } 

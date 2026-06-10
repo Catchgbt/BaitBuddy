@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 import { toast } from "sonner";
 import { Heart, MessageCircle, Send, Camera, AlertTriangle, User, Loader2, X, Globe, Facebook, Trophy, Users, Activity, Fish, TrendingUp } from "lucide-react";
 import CompetitionCard from "@/components/community/CompetitionCard";
@@ -98,7 +99,7 @@ export default function Community() {
 
   const loadCurrentUser = async () => {
     try {
-      const user = await base44.auth.me();
+      const user = await auth.me();
       setCurrentUser(user);
     } catch (error) {
       console.error("Fehler beim Laden des Users:", error);
@@ -167,7 +168,7 @@ export default function Community() {
       
       for (const email of allEmails) {
         try {
-          const allUsers = await base44.entities.User.list('', 1000);
+          const allUsers = await User.list('', 1000);
           const foundUser = allUsers.find(u => u.email === email);
           
           if (foundUser) {
@@ -201,7 +202,7 @@ export default function Community() {
             for (const comment of comments) {
               if (!newCache[comment.created_by]) {
                 try {
-                  const allUsers = await base44.entities.User.list('', 1000);
+                  const allUsers = await User.list('', 1000);
                   const foundUser = allUsers.find(u => u.email === comment.created_by);
                   
                   if (foundUser) {

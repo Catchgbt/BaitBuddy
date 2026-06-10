@@ -4,6 +4,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Star } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { auth } from "@/api/auth";
 import { toast } from 'sonner';
 
 export default function RatingWidget({ functionName, title, onComplete }) {
@@ -20,7 +21,7 @@ export default function RatingWidget({ functionName, title, onComplete }) {
 
     setIsSubmitting(true);
     try {
-      const user = await base44.auth.me();
+      const user = await auth.me();
       
       await base44.entities.FunctionRating.create({
         function_name: functionName,

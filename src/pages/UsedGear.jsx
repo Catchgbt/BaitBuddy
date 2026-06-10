@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,7 +59,7 @@ export default function UsedGearMarket() {
 
   const checkAuth = async () => {
     try {
-      const currentUser = await base44.auth.me();
+      const currentUser = await auth.me();
       setUser(currentUser);
     } catch (error) {
       console.log("User not logged in");
@@ -170,7 +171,7 @@ export default function UsedGearMarket() {
 
           {!user && (
             <Button
-              onClick={() => base44.auth.redirectToLogin()}
+              onClick={() => auth.redirectToLogin()}
               className="bg-cyan-600 hover:bg-cyan-700"
             >
               Einloggen

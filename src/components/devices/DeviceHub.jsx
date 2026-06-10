@@ -20,7 +20,7 @@ import {
   Square
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { base44 } from '@/api/base44Client';
+import { auth } from "@/api/auth";
 
 // HR Service Constants
 const HR_SERVICE = '0000180d-0000-1000-8000-00805f9b34fb';
@@ -469,7 +469,7 @@ export default function DeviceHub() {
     const duration = Math.floor((Date.now() - hrSessionStart) / 1000);
     
     try {
-      const user = await base44.auth.me();
+      const user = await auth.me();
       
       const avgBpm = hrSamples.length > 0 
         ? Math.round(hrSamples.reduce((sum, s) => sum + s.bpm, 0) / hrSamples.length)

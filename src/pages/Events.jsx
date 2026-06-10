@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 import { getEventLeaderboard } from "@/functions/getEventLeaderboard";
 
 function formatTime(totalSeconds) {
@@ -67,7 +67,7 @@ export default function Events() {
     try {
       const [result, user] = await Promise.all([
         getEventLeaderboard({}),
-        base44.auth.me().catch(() => null)
+        auth.me().catch(() => null)
       ]);
 
       const data = result?.data || result;

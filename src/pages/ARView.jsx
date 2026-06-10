@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ARWater3D from '@/components/ar/ARWater3D';
 import ARTutorial from '@/components/ar/ARTutorial';
-import { base44 } from '@/api/base44Client';
+import { auth } from "@/api/auth";
 import PremiumGuard from "@/components/premium/PremiumGuard";
 
 export default function ARView() {
@@ -10,7 +10,7 @@ export default function ARView() {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const currentUser = await base44.auth.me();
+        const currentUser = await auth.me();
         setUser(currentUser);
       } catch (e) {
         console.log("User not logged in:", e);

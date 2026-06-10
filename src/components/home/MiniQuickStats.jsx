@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 import { Fish, MapPin, Calendar, TrendingUp } from "lucide-react";
 
 export default function MiniQuickStats() {
@@ -17,7 +18,7 @@ export default function MiniQuickStats() {
         const [catches, spots, user] = await Promise.all([
           base44.entities.Catch.list(),
           base44.entities.Spot.list(),
-          base44.auth.me()
+          auth.me()
         ]);
 
         // Fänge dieser Woche zählen

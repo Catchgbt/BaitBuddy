@@ -2,13 +2,14 @@
 // Fehler werden still verschluckt, damit Tracking niemals die App stoert.
 
 import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 
 let cachedUserId = null;
 
 async function getUserId() {
   if (cachedUserId) return cachedUserId;
   try {
-    const me = await base44.auth.me();
+    const me = await auth.me();
     cachedUserId = me?.email || "guest";
   } catch {
     cachedUserId = "guest";

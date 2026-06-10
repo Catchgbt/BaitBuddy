@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
+import { User } from "@/entities/User";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +21,7 @@ export default function AdminUsers() {
 
   useEffect(() => {
     const init = async () => {
-      const me = await base44.auth.me();
+      const me = await auth.me();
       setCurrentUser(me);
       if (me.role !== "admin") {
         toast.error("Kein Zugriff. Nur Admins erlaubt.");
@@ -33,7 +35,7 @@ export default function AdminUsers() {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      const allUsers = await base44.entities.User.list();
+      const allUsers = await User.list();
       setUsers(allUsers);
     } catch (error) {
       toast.error("Fehler beim Laden der Benutzer");

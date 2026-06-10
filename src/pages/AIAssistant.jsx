@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 import { User } from "@/entities/User";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -228,7 +229,7 @@ Verwende Emojis sparsam aber gezielt für bessere Lesbarkeit.`,
               <div className="mb-4 px-4 py-2 rounded-xl bg-amber-900/30 border border-amber-600/50 text-amber-300 text-sm text-center">
                 Gastmodus - Demo-Antworten aktiv.{' '}
                 <button
-                  onClick={() => base44.auth.redirectToLogin()}
+                  onClick={() => auth.redirectToLogin()}
                   className="underline font-semibold hover:text-amber-200"
                 >
                   Jetzt anmelden

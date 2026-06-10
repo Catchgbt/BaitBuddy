@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { auth } from "@/api/auth";
 
 const AuthContext = createContext();
 
@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
       setIsLoadingAuth(true);
       setAuthError(null);
 
-      const token = base44.auth.getToken();
+      const token = auth.getToken();
       if (!token) {
         setIsAuthenticated(false);
         setUser(null);
@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      const currentUser = await base44.auth.me();
+      const currentUser = await auth.me();
       setUser(currentUser);
       setIsAuthenticated(true);
     } catch (error) {
@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(false);
       setUser(null);
       if (error.status === 401 || error.status === 403) {
-        base44.auth.setToken(null);
+        auth.setToken(null);
       }
     } finally {
       setIsLoadingAuth(false);
@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
   const logout = (shouldRedirect = true) => {
     setUser(null);
     setIsAuthenticated(false);
-    base44.auth.setToken(null);
+    auth.setToken(null);
     if (shouldRedirect && typeof window !== 'undefined') {
       window.location.href = '/';
     }

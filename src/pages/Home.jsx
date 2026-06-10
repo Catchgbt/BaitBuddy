@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
+import { auth } from "@/api/auth";
 import { createPageUrl } from '@/utils';
 import { setGuestSession } from '@/components/utils/guestMode';
 import { supabase } from '@/api/supabaseClient';
@@ -150,7 +151,7 @@ function LandingPageContent() {
     useEffect(() => {
         loadUserPlan();
         loadUserName();
-        base44.auth.isAuthenticated().then(setIsAuthenticated).catch(() => setIsAuthenticated(false));
+        auth.isAuthenticated().then(setIsAuthenticated).catch(() => setIsAuthenticated(false));
 
         const prevBg = document.body.style.backgroundColor;
         const prevHtmlBg = document.documentElement.style.backgroundColor;
@@ -164,9 +165,9 @@ function LandingPageContent() {
 
     const loadUserName = async () => {
         try {
-            const isAuth = await base44.auth.isAuthenticated();
+            const isAuth = await auth.isAuthenticated();
             if (isAuth) {
-                const user = await base44.auth.me();
+                const user = await auth.me();
                 if (user && user.full_name) {
                     setUserName(user.full_name.split(' ')[0]);
                 }
@@ -179,7 +180,7 @@ function LandingPageContent() {
     const loadUserPlan = async () => {
         setIsLoadingPlan(true);
         try {
-            const isAuth = await base44.auth.isAuthenticated();
+            const isAuth = await auth.isAuthenticated();
 
             if (!isAuth) {
                 setCurrentPlan({ id: 'free', name: 'Kostenlos' });
@@ -187,7 +188,7 @@ function LandingPageContent() {
                 return;
             }
 
-            const user = await base44.auth.me();
+            const user = await auth.me();
 
             if (!user) {
                 setCurrentPlan({ id: 'free', name: 'Kostenlos' });
@@ -241,7 +242,7 @@ function LandingPageContent() {
                 const now = new Date();
                 const trialEnd = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-                await base44.auth.updateMe({
+                await auth.updateMe({
                     trial_start_date: now.toISOString(),
                     trial_end_date: trialEnd.toISOString(),
                     has_had_trial: true
@@ -267,7 +268,7 @@ function LandingPageContent() {
 
     const handleLogin = async () => {
         try {
-            const isAuth = await base44.auth.isAuthenticated();
+            const isAuth = await auth.isAuthenticated();
             if (isAuth) {
                 const alreadySeen = localStorage.getItem('catchgbt_event_popup_seen');
                 if (!alreadySeen) {
@@ -285,11 +286,11 @@ function LandingPageContent() {
                 }
                 window.location.href = createPageUrl('Dashboard');
             } else {
-                base44.auth.redirectToLogin(createPageUrl('Dashboard'));
+                auth.redirectToLogin(createPageUrl('Dashboard'));
             }
         } catch (error) {
             console.error('Login error:', error);
-            base44.auth.redirectToLogin(createPageUrl('Dashboard'));
+            auth.redirectToLogin(createPageUrl('Dashboard'));
         }
     };
 
@@ -299,9 +300,9 @@ function LandingPageContent() {
         setLoginError('');
         try {
             if (loginMode === 'login') {
-                await base44.auth.login(loginEmail, loginPassword);
+                await auth.login(loginEmail, loginPassword);
             } else {
-                await base44.auth.register(loginEmail, loginPassword, loginName);
+                await auth.register(loginEmail, loginPassword, loginName);
             }
             try {
                 const alreadySeen = localStorage.getItem('catchgbt_event_popup_seen');
@@ -497,7 +498,7 @@ function LandingPageContent() {
         setIsUploading(true);
 
         try {
-            const isAuth = await base44.auth.isAuthenticated();
+            const isAuth = await auth.isAuthenticated();
             
             if (!isAuth) {
                 toast.info("Bitte melde dich an, um Fotos zu speichern", {
@@ -505,7 +506,7 @@ function LandingPageContent() {
                 });
                 setIsUploading(false);
                 try {
-                    base44.auth.redirectToLogin(createPageUrl('Logbook'));
+                    auth.redirectToLogin(createPageUrl('Logbook'));
                 } catch (error) {
                     console.error('Redirect error:', error);
                     window.location.href = createPageUrl('Dashboard');

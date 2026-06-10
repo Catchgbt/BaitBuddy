@@ -6,7 +6,7 @@ import { toast, Toaster } from "sonner";
 import { catchgbtChat } from "@/functions/catchgbtChat";
 import { useHaptic } from "@/components/utils/HapticFeedback";
 import PremiumGuard from "@/components/premium/PremiumGuard";
-import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 import { MobileSelect } from "@/components/ui/mobile-select";
 
 // Leaflet CSS nachladen
@@ -626,7 +626,7 @@ export default function Gear() {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const fetchedUser = await base44.auth.me();
+        const fetchedUser = await auth.me();
         setUser(fetchedUser);
       } catch (e) {
         console.log("User not logged in:", e);

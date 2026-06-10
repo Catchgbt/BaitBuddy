@@ -5,7 +5,7 @@ import { useHaptic } from "@/components/utils/HapticFeedback";
 import { useSound } from "@/components/utils/SoundManager";
 import { useLanguage } from "@/components/i18n/LanguageContext";
 import { User } from "@/entities/User";
-import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 import { AnimatePresence, motion } from "framer-motion";
 
 import {
@@ -251,7 +251,7 @@ export default function Sidebar({ isOpen, setIsOpen, currentPageName }) {
                 onClick={() => {
                   triggerHaptic('medium');
                   playSound('click');
-                  base44.auth.logout(createPageUrl('Home'));
+                  auth.logout(createPageUrl('Home'));
                 }}
                 className="flex items-center gap-3 w-full text-left px-4 py-2 rounded-lg transition-all text-sm text-red-400 active:text-red-300 active:bg-red-500/20 active:scale-95 focus:ring-2 focus:ring-red-400 min-h-[44px]"
                 aria-label="Abmelden"

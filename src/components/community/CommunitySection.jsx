@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
+import { User } from "@/entities/User";
 import { useOptimisticMutation } from "@/lib/useOptimisticMutation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,7 +34,7 @@ export default function CommunitySection() {
 
   const loadData = async () => {
     try {
-      const user = await base44.auth.me();
+      const user = await auth.me();
       setCurrentUser(user);
 
       const allPosts = await base44.entities.Post.list('-created_date');
@@ -42,7 +44,7 @@ export default function CommunitySection() {
       const uniqueEmails = [...new Set(allPosts.map(p => p.created_by))];
       const userPromises = uniqueEmails.map(async (email) => {
         try {
-          const users = await base44.entities.User.filter({ email });
+          const users = await User.filter({ email });
           return { email, user: users[0] || null };
         } catch (e) {
           return { email, user: null };
@@ -69,7 +71,7 @@ export default function CommunitySection() {
       if (uniqueCommentEmails.length > 0) {
         const commentUserPromises = uniqueCommentEmails.map(async (email) => {
           try {
-            const users = await base44.entities.User.filter({ email });
+            const users = await User.filter({ email });
             return { email, user: users[0] || null };
           } catch (e) {
             return { email, user: null };

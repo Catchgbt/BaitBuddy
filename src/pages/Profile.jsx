@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { base44 } from '@/api/base44Client';
+import { auth } from "@/api/auth";
 import { UploadFile } from '@/integrations/Core';
 import { User as UserIcon, Camera, Copy, Check, Edit3, Calendar, Clock, MessageSquare, Crown, Link as LinkIcon, Mail, Volume2, AlertTriangle } from 'lucide-react';
 import { toast } from "sonner";
@@ -41,15 +42,15 @@ export default function ProfilePage() {
   const loadUserProfile = useCallback(async () => {
     setIsLoading(true);
     try {
-      const currentUser = await base44.auth.me();
+      const currentUser = await auth.me();
       setUser(currentUser);
       setNickname(currentUser.nickname || '');
       
       // Generiere Referral-Code falls nicht vorhanden
       if (!currentUser.referral_code) {
         const code = generateReferralCode();
-        await base44.auth.updateMe({ referral_code: code });
-        const updatedUser = await base44.auth.me();
+        await auth.updateMe({ referral_code: code });
+        const updatedUser = await auth.me();
         setUser(updatedUser);
       }
 
@@ -127,7 +128,7 @@ export default function ProfilePage() {
       const response = await UploadFile({ file });
       const imageUrl = response.file_url;
       
-      await base44.auth.updateMe({ profile_picture_url: imageUrl });
+      await auth.updateMe({ profile_picture_url: imageUrl });
       setUser(prev => ({ ...prev, profile_picture_url: imageUrl }));
       toast.success('Profilbild erfolgreich aktualisiert!');
     } catch (error) {
@@ -139,7 +140,7 @@ export default function ProfilePage() {
 
   const saveProfileMutation = useOptimisticMutation({
     mutationFn: async (data) => {
-      await base44.auth.updateMe(data);
+      await auth.updateMe(data);
       return data;
     },
     optimisticUpdate: (oldUser, newData) => ({
@@ -166,7 +167,7 @@ export default function ProfilePage() {
 
   const voiceGenderMutation = useOptimisticMutation({
     mutationFn: async (data) => {
-      await base44.auth.updateMe(data);
+      await auth.updateMe(data);
       return data;
     },
     optimisticUpdate: (oldUser, newData) => ({
