@@ -1,3 +1,3 @@
-import { base44 } from '@/api/frontendClient.js';
-export const GearCategory = base44.entities.GearCategory;
-export default base44.entities.GearCategory;
+import { entities } from '@/api/frontendClient.js';
+export const GearCategory = entities.GearCategory;
+export default entities.GearCategory;

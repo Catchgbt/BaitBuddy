@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { entities } from "@/api/frontendClient";
 import { Button } from '@/components/ui/button';
 import { MobileSelect } from '@/components/ui/mobile-select';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,7 +12,7 @@ export default function RatingForm({ spot, onSuccess }) {
   const [comment, setComment] = useState('');
 
   const { mutate, isPending } = useMutation({
-    mutationFn: (data) => base44.entities.WaterReview.create(data),
+    mutationFn: (data) => entities.WaterReview.create(data),
     onMutate: () => {
       // Optimistically reset form immediately
       const snapshot = { rating, biteActivity, comment };

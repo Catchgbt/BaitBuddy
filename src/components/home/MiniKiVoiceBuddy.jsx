@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import { catchgbtChat } from "@/functions/catchgbtChat";
-import { base44 } from "@/api/base44Client";
 import { entities } from "@/api/frontendClient";
 import { Catch } from "@/entities/Catch";
 import { Spot } from "@/entities/Spot";
@@ -143,7 +142,7 @@ async function executeAction(action, navigate) {
     if (action.type === "create_trip") {
       const p = action.params || {};
       if (!p.title || !p.target_fish) return "Ich brauche Titel und Zielfisch fuer den Trip.";
-      await base44.entities.FishingPlan.create({
+      await entities.FishingPlan.create({
         title: p.title,
         target_fish: p.target_fish,
         spot_info: p.spot_info || "",
@@ -159,7 +158,7 @@ async function executeAction(action, navigate) {
       const p = action.params || {};
       if (!p.subject || !p.message) return "Ich brauche Betreff und Beschreibung.";
       const me = await auth.me().catch(() => null);
-      await base44.entities.SupportTicket.create({
+      await entities.SupportTicket.create({
         subject: p.subject,
         message: p.message,
         category: p.category || "frage",

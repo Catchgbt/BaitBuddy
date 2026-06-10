@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
@@ -45,7 +45,7 @@ export default function SchonzeitWarner() {
       const state = geoData?.address?.state || null;
       setBundesland(state);
 
-      const allRules = await base44.entities.RuleEntry.list("-created_date", 500);
+      const allRules = await entities.RuleEntry.list("-created_date", 500);
       setRules(allRules);
     } catch (e) {
       console.error("SchonzeitWarner Fehler:", e);

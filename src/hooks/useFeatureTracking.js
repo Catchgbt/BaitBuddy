@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 
 // Trackt die Nutzung eines Features via UsageSession.
@@ -22,7 +22,7 @@ export function useFeatureTracking(featureId) {
         userEmail = user.email;
 
         const sessionId = `${featureId}_${user.email}_${Date.now()}`;
-        const session = await base44.entities.UsageSession.create({
+        const session = await entities.UsageSession.create({
           session_id: sessionId,
           user_id: user.email,
           feature_id: featureId,
@@ -32,7 +32,7 @@ export function useFeatureTracking(featureId) {
         });
 
         if (cancelled) {
-          base44.entities.UsageSession.update(session.id, {
+          entities.UsageSession.update(session.id, {
             status: "stopped",
             stopped_at: new Date().toISOString(),
           });
@@ -43,7 +43,7 @@ export function useFeatureTracking(featureId) {
 
         heartbeatIntervalRef.current = setInterval(() => {
           if (sessionDbIdRef.current) {
-            base44.entities.UsageSession.update(sessionDbIdRef.current, {
+            entities.UsageSession.update(sessionDbIdRef.current, {
               last_heartbeat: new Date().toISOString(),
             }).catch(() => {});
           }
@@ -59,7 +59,7 @@ export function useFeatureTracking(featureId) {
         heartbeatIntervalRef.current = null;
       }
       if (sessionDbIdRef.current) {
-        base44.entities.UsageSession.update(sessionDbIdRef.current, {
+        entities.UsageSession.update(sessionDbIdRef.current, {
           status: "stopped",
           stopped_at: new Date().toISOString(),
         }).catch(() => {});

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import { base44 } from "@/api/base44Client";
 import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { Link } from "react-router-dom";
@@ -39,7 +38,7 @@ function EventTimer() {
       const eventEnd = new Date(event.end_date);
       if (now < eventStart || now > eventEnd) return;
 
-      const sessions = await base44.entities.UsageSession.filter({ user_id: user.email });
+      const sessions = await entities.UsageSession.filter({ user_id: user.email });
 
       let seconds = 0;
       for (const session of sessions) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -26,7 +26,7 @@ export default function FunctionRatings() {
       }
 
       setIsAdmin(true);
-      const allRatings = await base44.entities.FunctionRating.list();
+      const allRatings = await entities.FunctionRating.list();
       setRatings(allRatings);
     } catch (error) {
       console.error('Fehler beim Laden der Bewertungen:', error);

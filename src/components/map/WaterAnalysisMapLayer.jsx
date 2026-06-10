@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Marker, Popup } from "react-leaflet";
 import L from "leaflet";
-import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { Droplets, TrendingUp } from "lucide-react";
 
 // Custom Icon für Wasser-Analyse Spots
@@ -24,7 +24,7 @@ export default function WaterAnalysisMapLayer({ onAnalysisClick }) {
   const loadRecentAnalyses = async () => {
     try {
       // Lade die letzten 20 Analysen
-      const history = await base44.entities.WaterAnalysisHistory.list('-analyzed_at', 20);
+      const history = await entities.WaterAnalysisHistory.list('-analyzed_at', 20);
       setAnalyses(history);
     } catch (error) {
       console.error("Failed to load water analyses:", error);

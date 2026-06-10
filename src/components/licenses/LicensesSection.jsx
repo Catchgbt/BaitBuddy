@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { UploadFile } from "@/integrations/Core";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,11 +23,11 @@ export default function LicensesSection() {
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["licenses"],
-    queryFn: () => base44.entities.License.list("-valid_until"),
+    queryFn: () => entities.License.list("-valid_until"),
   });
 
   const createMutation = useMutation({
-    mutationFn: (payload) => base44.entities.License.create(payload),
+    mutationFn: (payload) => entities.License.create(payload),
     onMutate: async (payload) => {
       await queryClient.cancelQueries({ queryKey: ["licenses"] });
       const previous = queryClient.getQueryData(["licenses"]);
@@ -43,7 +43,7 @@ export default function LicensesSection() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, payload }) => base44.entities.License.update(id, payload),
+    mutationFn: ({ id, payload }) => entities.License.update(id, payload),
     onMutate: async ({ id, payload }) => {
       await queryClient.cancelQueries({ queryKey: ["licenses"] });
       const previous = queryClient.getQueryData(["licenses"]);
@@ -61,7 +61,7 @@ export default function LicensesSection() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.License.delete(id),
+    mutationFn: (id) => entities.License.delete(id),
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ["licenses"] });
       const previous = queryClient.getQueryData(["licenses"]);

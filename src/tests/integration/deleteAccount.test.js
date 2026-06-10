@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { base44 } from '@/api/base44Client';
 import { entities } from "@/api/frontendClient";
 import { Catch } from "@/entities/Catch";
 import { Spot } from "@/entities/Spot";
@@ -45,7 +44,7 @@ describe('Account Deletion Integration Test', () => {
       water_type: 'see'
     });
 
-    const testPlan = await base44.entities.FishingPlan.create({
+    const testPlan = await entities.FishingPlan.create({
       title: 'Test Deletion Plan',
       target_fish: 'Zander',
       steps: ['Step 1', 'Step 2']
@@ -64,7 +63,7 @@ describe('Account Deletion Integration Test', () => {
     // Verify records exist before deletion
     const catchBefore = await Catch.filter({ created_by: userEmail });
     const spotBefore = await Spot.filter({ created_by: userEmail });
-    const planBefore = await base44.entities.FishingPlan.filter({ created_by: userEmail });
+    const planBefore = await entities.FishingPlan.filter({ created_by: userEmail });
     const messageBefore = await entities.ChatMessage.filter({ created_by: userEmail });
 
     expect(catchBefore.length).toBeGreaterThan(0);
@@ -93,7 +92,7 @@ describe('Account Deletion Integration Test', () => {
 
     const catchAfter = await Catch.filter({ created_by: userEmail });
     const spotAfter = await Spot.filter({ created_by: userEmail });
-    const planAfter = await base44.entities.FishingPlan.filter({ created_by: userEmail });
+    const planAfter = await entities.FishingPlan.filter({ created_by: userEmail });
     const messageAfter = await entities.ChatMessage.filter({ created_by: userEmail });
 
     expect(catchAfter.length).toBe(0);
@@ -111,14 +110,14 @@ describe('Account Deletion Integration Test', () => {
     const userEmail = testUser.email;
 
     // Create premium-related records
-    const testWallet = await base44.entities.PremiumWallet.create({
+    const testWallet = await entities.PremiumWallet.create({
       user_id: userEmail,
       purchased_credits: 1000,
       consumed_credits: 200,
       total_spent_eur: 50
     });
 
-    const testSession = await base44.entities.UsageSession.create({
+    const testSession = await entities.UsageSession.create({
       session_id: `session-${Date.now()}`,
       user_id: userEmail,
       feature_id: 'bite_detector',
@@ -129,8 +128,8 @@ describe('Account Deletion Integration Test', () => {
     expect(testSession.id).toBeDefined();
 
     // Verify before deletion
-    const walletBefore = await base44.entities.PremiumWallet.filter({ user_id: userEmail });
-    const sessionBefore = await base44.entities.UsageSession.filter({ user_id: userEmail });
+    const walletBefore = await entities.PremiumWallet.filter({ user_id: userEmail });
+    const sessionBefore = await entities.UsageSession.filter({ user_id: userEmail });
 
     expect(walletBefore.length).toBeGreaterThan(0);
     expect(sessionBefore.length).toBeGreaterThan(0);
@@ -150,8 +149,8 @@ describe('Account Deletion Integration Test', () => {
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // Verify deletion
-    const walletAfter = await base44.entities.PremiumWallet.filter({ user_id: userEmail });
-    const sessionAfter = await base44.entities.UsageSession.filter({ user_id: userEmail });
+    const walletAfter = await entities.PremiumWallet.filter({ user_id: userEmail });
+    const sessionAfter = await entities.UsageSession.filter({ user_id: userEmail });
 
     expect(walletAfter.length).toBe(0);
     expect(sessionAfter.length).toBe(0);
