@@ -48,6 +48,29 @@ cd android
 
 Ergebnis: `android/app/build/outputs/bundle/release/app-release.aab`
 
+## Native Funktionen
+
+Über die Integrations-Schicht `src/lib/native.js` (mit Web-Fallbacks) verfügbar:
+
+| Funktion | Plugin |
+|----------|--------|
+| Kamera / Fotos (`takePhoto`) | `@capacitor/camera` |
+| Standort (`getCurrentPosition`) | `@capacitor/geolocation` |
+| Offline-Speicher (`storage`) | `@capacitor/preferences`, `@capacitor/filesystem` |
+| Netzwerk-Erkennung (`onNetworkChange`) | `@capacitor/network` |
+| Push (`initPushNotifications`) | `@capacitor/push-notifications` |
+| Splash / Status-Bar / Back-Button | `@capacitor/splash-screen`, `status-bar`, `app` |
+| Haptik / Teilen | `@capacitor/haptics`, `@capacitor/share` |
+
+### Push-Notifications aktivieren (Firebase)
+
+Push benötigt Firebase Cloud Messaging. Ohne Konfiguration baut die App zwar,
+die Registrierung schlägt aber zur Laufzeit fehl.
+
+1. Firebase-Projekt anlegen und eine Android-App mit Package `app.baitbuddy.mobile` hinzufügen
+2. `google-services.json` herunterladen und nach `android/app/google-services.json` legen
+3. Neu bauen — der `com.google.gms.google-services`-Plugin wird automatisch aktiv
+
 ## Version erhöhen
 
 Vor jedem neuen Play-Store-Upload in `android/app/build.gradle`:
