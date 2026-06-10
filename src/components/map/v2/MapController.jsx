@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback, memo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Spot } from "@/entities/Spot";
 import { FishingClub } from "@/entities/FishingClub";
+import { angelparks } from "@/data/angelparks";
 import { Button } from "@/components/ui/button";
 import { MapPin, Plus, Layers, Navigation, X, Loader2, Info } from "lucide-react";
 import { useLocation } from "@/components/location/LocationManager";
@@ -50,6 +51,14 @@ function MapController() {
     queryFn: () => FishingClub.list(),
     initialData: []
   });
+
+  // Statische Angelparks mit den vom Backend gelieferten Vereinen/Parks
+  // zusammenführen. Backend-Einträge haben Vorrang (Dedupe per id).
+  const allClubs = useMemo(() => {
+    const seen = new Set((fishingClubs || []).map(fc => fc.id));
+    const staticParks = angelparks.filter(p => !seen.has(p.id));
+    return [...fishingClubs, ...staticParks];
+  }, [fishingClubs]);
 
   useEffect(() => {
     initializeMap();
@@ -205,7 +214,7 @@ function MapController() {
   }, [triggerHaptic, requestGpsLocation, currentLocation, announceLive]);
 
   const filteredSpots = filters.spots ? spots : [];
-  const filteredClubs = fishingClubs.filter(fc => {
+  const filteredClubs = allClubs.filter(fc => {
     if (fc.category === 'club') return filters.clubs;
     if (fc.category === 'spot') return filters.parks;
     return false;
