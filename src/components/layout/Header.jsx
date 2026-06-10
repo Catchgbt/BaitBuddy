@@ -57,8 +57,9 @@ export default function Header({
       if (alerts.dewpoint_alert_enabled) count++;
       setActiveAlertsCount(count);
 
-      if (planStatusResponse?.data?.plan) {
-        setCurrentPlan(planStatusResponse.data.plan);
+      const planPayload = planStatusResponse?.data ?? planStatusResponse;
+      if (planPayload?.plan) {
+        setCurrentPlan(planPayload.plan);
       }
     } catch (error) {
       console.error("Fehler beim Laden:", error);

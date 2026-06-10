@@ -33,8 +33,9 @@ export default function PremiumPlans() {
       setUser(currentUser);
 
       const planStatusResponse = await functions.invoke('getPlanStatus');
-      if (planStatusResponse.data && planStatusResponse.data.plan) {
-        setCurrentPlan(planStatusResponse.data.plan);
+      const planPayload = planStatusResponse?.data ?? planStatusResponse;
+      if (planPayload && planPayload.plan) {
+        setCurrentPlan(planPayload.plan);
       } else {
         setCurrentPlan({ id: 'free', name: 'Kostenlos' });
       }
