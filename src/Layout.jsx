@@ -9,7 +9,7 @@ import BottomTabs from "@/components/layout/BottomTabs";
 import SubPageHeader from "@/components/layout/SubPageHeader";
 import UpdateNotification from "@/components/pwa/UpdateNotification";
 import OfflineIndicator from "@/components/pwa/OfflineIndicator";
-import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import SwipeToRefresh from "@/components/utils/SwipeToRefresh";
 import { useQueryClient } from "@tanstack/react-query";
@@ -130,7 +130,7 @@ function LayoutContent({ children, currentPageName }) {
     const sessionId = `app_general_${user.email}_${Date.now()}`;
     let sessionDbId = null;
 
-    base44.entities.UsageSession.create({
+    entities.UsageSession.create({
       session_id: sessionId,
       user_id: user.email,
       feature_id: 'app_general',
@@ -141,14 +141,14 @@ function LayoutContent({ children, currentPageName }) {
 
     const heartbeat = setInterval(async () => {
       if (!sessionDbId) return;
-      await base44.entities.UsageSession.update(sessionDbId, {
+      await entities.UsageSession.update(sessionDbId, {
         last_heartbeat: new Date().toISOString()
       });
     }, 30000);
 
     const stopSession = () => {
       if (!sessionDbId) return;
-      base44.entities.UsageSession.update(sessionDbId, {
+      entities.UsageSession.update(sessionDbId, {
         status: 'stopped',
         stopped_at: new Date().toISOString()
       });

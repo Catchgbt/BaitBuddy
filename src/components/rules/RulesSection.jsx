@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { FixedSizeList as VirtualList } from "react-window";
-import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -63,7 +63,7 @@ export default function RulesSection() {
 
   const refreshFromNetwork = async () => {
     try {
-      const allRules = await base44.entities.RuleEntry.list("-created_date", 500);
+      const allRules = await entities.RuleEntry.list("-created_date", 500);
       setRules(allRules);
       saveRulesToCache(allRules);
       setCacheInfo({ cachedAt: Date.now(), fromCache: false });

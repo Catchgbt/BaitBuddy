@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Droplets, AlertTriangle, ArrowRight } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
@@ -17,7 +17,7 @@ export default function MiniWaterAnalysis() {
   const loadLastAnalysis = async () => {
     try {
       // Nur die letzte Analyse laden - Performance-Optimierung
-      const analyses = await base44.entities.WaterAnalysisHistory.list('-analyzed_at', 1);
+      const analyses = await entities.WaterAnalysisHistory.list('-analyzed_at', 1);
       if (analyses.length > 0) {
         setLastAnalysis(analyses[0]);
       }

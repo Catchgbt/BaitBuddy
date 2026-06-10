@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { GraduationCap, MapPin, ArrowLeft, Check, X, Trophy, Target, Clock, Sparkles, Wrench, BookOpen, AlertTriangle, Play, Fish } from "lucide-react";
 import { motion } from "framer-motion";
 import RodBuilderGame from "@/components/exam/RodBuilderGame";
-import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
@@ -67,7 +67,7 @@ export default function AngelscheinPruefungSchonzeiten() {
   useEffect(() => {
     const loadRules = async () => {
       try {
-        const allRules = await base44.entities.RuleEntry.list();
+        const allRules = await entities.RuleEntry.list();
         const filteredRules = allRules.filter(r => 
           r.region === selectedRegion || r.region === "Deutschland"
         );
@@ -82,7 +82,7 @@ export default function AngelscheinPruefungSchonzeiten() {
   const loadQuestions = async () => {
     setLoading(true);
     try {
-      const allQuestions = await base44.entities.ExamQuestion.list();
+      const allQuestions = await entities.ExamQuestion.list();
       
       if (!allQuestions || allQuestions.length === 0) {
         toast.error("Keine Prüfungsfragen in der Datenbank vorhanden!");

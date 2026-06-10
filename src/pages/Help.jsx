@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -42,7 +43,7 @@ export default function Help() {
   const loadTickets = async () => {
     setLoadingTickets(true);
     try {
-      const data = await base44.entities.SupportTicket.list("-created_date", 50);
+      const data = await entities.SupportTicket.list("-created_date", 50);
       setTickets(data);
     } catch (e) {
       console.error(e);
@@ -57,7 +58,7 @@ export default function Help() {
     }
     setSubmitting(true);
     try {
-      await base44.entities.SupportTicket.create({
+      await entities.SupportTicket.create({
         subject: subject.trim(),
         category,
         message: message.trim(),

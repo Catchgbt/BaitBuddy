@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { generateBathymetricMap } from "@/functions/generateBathymetricMap";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,7 @@ export default function BathymetricCrowdsourcing() {
   const loadMaps = async () => {
     setLoadingMaps(true);
     try {
-      const data = await base44.entities.BathymetricMap.list('-generated_at', 50);
+      const data = await entities.BathymetricMap.list('-generated_at', 50);
       setMaps(data);
     } catch (err) {
       console.error("Fehler:", err);

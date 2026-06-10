@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { Fish, Ruler, Calendar, Info, Search, ChevronDown, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -21,7 +21,7 @@ export default function RulesDisplay() {
   const loadRules = async () => {
     setLoading(true);
     try {
-      const rulesData = await base44.entities.RuleEntry.list();
+      const rulesData = await entities.RuleEntry.list();
       setRules(rulesData || []);
     } catch (error) {
       console.error("Fehler beim Laden der Regeln:", error);

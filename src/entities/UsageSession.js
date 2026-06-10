@@ -1,3 +1,3 @@
-import { base44 } from '@/api/frontendClient.js';
-export const UsageSession = base44.entities.UsageSession;
-export default base44.entities.UsageSession;
+import { entities } from '@/api/frontendClient.js';
+export const UsageSession = entities.UsageSession;
+export default entities.UsageSession;

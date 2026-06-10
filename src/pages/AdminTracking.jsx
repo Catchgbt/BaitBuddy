@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
@@ -21,8 +21,8 @@ export default function AdminTracking() {
           return;
         }
         const [evts, sess] = await Promise.all([
-          base44.entities.TrackingEvent.list("-created_date", 5000),
-          base44.entities.UsageSession.list("-created_date", 5000),
+          entities.TrackingEvent.list("-created_date", 5000),
+          entities.UsageSession.list("-created_date", 5000),
         ]);
         setEvents(evts || []);
         setSessions(sess || []);

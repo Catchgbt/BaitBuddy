@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import PremiumGuard from "@/components/premium/PremiumGuard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,7 +51,7 @@ export default function BaitMixerPage() {
 
   const loadIngredients = async () => {
     try {
-      const allIngredients = await base44.entities.BaitIngredient.list();
+      const allIngredients = await entities.BaitIngredient.list();
       const filtered = allIngredients.filter(ing => 
         ing.category === mode || ing.category === "both"
       );
@@ -160,12 +161,12 @@ Sei konkret, praxisnah und berechne die optimale Mischung!`;
 
   const { data: recipes = [] } = useQuery({
     queryKey: ['baitRecipes'],
-    queryFn: () => base44.entities.BaitRecipe.list('-created_date'),
+    queryFn: () => entities.BaitRecipe.list('-created_date'),
   });
 
   const saveRecipeMutation = useOptimisticMutation({
     queryKey: 'baitRecipes',
-    mutationFn: (data) => base44.entities.BaitRecipe.create(data),
+    mutationFn: (data) => entities.BaitRecipe.create(data),
     optimisticUpdate: (old = [], data) => [{ id: `tmp-${Date.now()}`, ...data }, ...old],
     onSuccess: () => {
       triggerHaptic('success');
@@ -178,7 +179,7 @@ Sei konkret, praxisnah und berechne die optimale Mischung!`;
 
   const deleteRecipeMutation = useOptimisticMutation({
     queryKey: 'baitRecipes',
-    mutationFn: (id) => base44.entities.BaitRecipe.delete(id),
+    mutationFn: (id) => entities.BaitRecipe.delete(id),
     optimisticUpdate: (old = [], id) => old.filter((r) => r.id !== id),
     onSuccess: () => { triggerHaptic('warning'); toast.success('Rezept geloescht!'); },
     onError: () => toast.error('Fehler beim Loeschen des Rezepts'),

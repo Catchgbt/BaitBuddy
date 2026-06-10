@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { entities } from "@/api/frontendClient";
 
 const biteActivityLabels = {
   'sehr_gering': 'Sehr gering',
@@ -20,7 +20,7 @@ export default function ReviewsList({ spotId }) {
 
   const loadReviews = async () => {
     try {
-      const data = await base44.entities.WaterReview.filter({ spot_id: spotId }, '-reviewed_at', 10);
+      const data = await entities.WaterReview.filter({ spot_id: spotId }, '-reviewed_at', 10);
       setReviews(data);
       
       if (data.length > 0) {

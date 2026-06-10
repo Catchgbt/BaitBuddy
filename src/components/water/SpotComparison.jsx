@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowRight, TrendingUp } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { Spot } from "@/entities/Spot";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
@@ -32,8 +32,8 @@ export default function SpotComparison() {
     setLoading(true);
     try {
       const [analysis1, analysis2] = await Promise.all([
-        base44.entities.WaterAnalysisHistory.filter({ spot_id: spot1 }, '-analyzed_at', 1),
-        base44.entities.WaterAnalysisHistory.filter({ spot_id: spot2 }, '-analyzed_at', 1)
+        entities.WaterAnalysisHistory.filter({ spot_id: spot1 }, '-analyzed_at', 1),
+        entities.WaterAnalysisHistory.filter({ spot_id: spot2 }, '-analyzed_at', 1)
       ]);
 
       setAnalyses([

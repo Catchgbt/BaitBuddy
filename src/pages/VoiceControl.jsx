@@ -434,7 +434,7 @@ function VoiceBuddy() {
     }
 
     // Regeln immer laden (unabhängig von Location)
-    base44.entities.RuleEntry.list()
+    entities.RuleEntry.list()
       .then(rulesData => setRules(rulesData || []))
       .catch(err => console.warn('Regeln laden fehlgeschlagen:', err));
   }, [currentLocation]);

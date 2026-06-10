@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -69,7 +69,7 @@ export default function UsedGearMarket() {
   const fetchListings = async () => {
     setLoading(true);
     try {
-      const listings = await base44.entities.GearListing.filter({ is_active: true });
+      const listings = await entities.GearListing.filter({ is_active: true });
       setItems(listings || []);
     } catch (error) {
       console.error(error);
@@ -99,7 +99,7 @@ export default function UsedGearMarket() {
         }
       }
 
-      await base44.entities.GearListing.create({
+      await entities.GearListing.create({
         title,
         category,
         condition,
@@ -130,7 +130,7 @@ export default function UsedGearMarket() {
 
   const deactivate = async (id) => {
     try {
-      await base44.entities.GearListing.update(id, { is_active: false });
+      await entities.GearListing.update(id, { is_active: false });
       setItems((prev) => prev.filter((x) => x.id !== id));
       toast.success("Anzeige gelöscht");
     } catch (error) {

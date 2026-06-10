@@ -1,7 +1,7 @@
 // Zentrale Tracking-Utility. Speichert Events ueber die TrackingEvent-Entity.
 // Fehler werden still verschluckt, damit Tracking niemals die App stoert.
 
-import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 
 let cachedUserId = null;
@@ -21,7 +21,7 @@ export async function trackPageView(pageName) {
   if (!pageName) return;
   try {
     const user_id = await getUserId();
-    await base44.entities.TrackingEvent.create({
+    await entities.TrackingEvent.create({
       user_id,
       event_type: "page_view",
       page_name: pageName,
@@ -35,7 +35,7 @@ export async function trackFeatureClick(featureId, metadata = {}) {
   if (!featureId) return;
   try {
     const user_id = await getUserId();
-    await base44.entities.TrackingEvent.create({
+    await entities.TrackingEvent.create({
       user_id,
       event_type: "feature_click",
       feature_id: featureId,

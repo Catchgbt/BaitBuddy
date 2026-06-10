@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { Spot } from "@/entities/Spot";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
@@ -196,7 +197,7 @@ export default function MapPage() {
             duration: 2000
           });
         } else {
-          const clubs = await base44.entities.FishingClub.list();
+          const clubs = await entities.FishingClub.list();
           setPublicLocations(clubs);
           
           toast.success("Karte geladen", {

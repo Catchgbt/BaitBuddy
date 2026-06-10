@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { Catch } from "@/entities/Catch";
 import { Loader2, Medal, User } from "lucide-react";
 
@@ -19,7 +19,7 @@ export default function LeaderboardCard({ type, title, icon: Icon }) {
       let data = [];
       
       if (type === 'points') {
-        const entries = await base44.entities.LeaderboardEntry.filter({ period: 'all_time' });
+        const entries = await entities.LeaderboardEntry.filter({ period: 'all_time' });
         data = entries
           .sort((a, b) => b.points - a.points)
           .slice(0, 10)

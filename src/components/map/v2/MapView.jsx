@@ -2,7 +2,7 @@ import React from "react";
 import { MapContainer, Marker, Popup, Polyline, Polygon, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import OfflineMapLayer from "./OfflineMapLayer";
 
 // Fix default marker icons
@@ -81,7 +81,7 @@ function ReviewsMarkerLoader({ onReviewsLoad }) {
       
       setIsLoading(true);
       try {
-        const reviews = await base44.entities.WaterReview.list('-reviewed_at', 500);
+        const reviews = await entities.WaterReview.list('-reviewed_at', 500);
         onReviewsLoad(reviews);
       } catch (error) {
         console.error('Error loading reviews:', error);
