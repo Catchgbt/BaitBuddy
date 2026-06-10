@@ -27,7 +27,7 @@ router.post('/auth/register', async (req, res) => {
 
   // Nutzer direkt bestätigt anlegen (Admin-API, Service-Role) — kein Warten auf
   // Bestätigungs-E-Mail nötig, damit der Login unmittelbar funktioniert.
-  const { error: createError } = await supabase.auth.admin.createUser({
+  const { data: created, error: createError } = await supabase.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
@@ -38,6 +38,19 @@ router.post('/auth/register', async (req, res) => {
       ? 'E-Mail ist bereits registriert. Bitte melde dich an.'
       : createError.message;
     return res.status(400).json({ error: msg });
+  }
+
+  // Neue Nutzer bekommen 24h Vollzugriff (Elite-Trial). Wir setzen die Metadaten
+  // final NACH createUser, da der email_confirm-Schritt die Metadaten überschreibt.
+  if (created?.user?.id) {
+    await supabase.auth.admin.updateUserById(created.user.id, {
+      user_metadata: {
+        full_name,
+        premium_plan_id: 'elite',
+        premium_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        premium_trial: true,
+      },
+    }).catch(() => {});
   }
 
   // Frisch angelegten (bestätigten) Nutzer direkt einloggen, um ein Token zu liefern.
