@@ -28,3 +28,18 @@ dist-ssr
 *.sw?
 
 .env
+
+# Android / Capacitor
+android/.gradle/
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/build/
+android/local.properties
+android/.idea/
+android/*.iml
+# Signing secrets — NEVER commit
+android/keystore.properties
+android/app/*.keystore
+android/app/*.jks
+*.aab
+*.apk
