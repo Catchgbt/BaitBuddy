@@ -156,7 +156,7 @@ export default function MiniKiBuddy() {
         userLocation: userLocation || null
       });
 
-      const response = res?.data?.reply || "Ich konnte keine Antwort generieren.";
+      const response = res?.reply || res?.message || "Ich konnte keine Antwort generieren.";
       setMessages(prev => [...prev, { role: "assistant", content: response }]);
 
       if ((voiceEnabled || forceVoice) && response) {
@@ -253,7 +253,7 @@ export default function MiniKiBuddy() {
                 setIsLoading(true);
                 try {
                   const res = await catchgbtChat({ messages: newMessages, context: 'dashboard', userLocation: userLocation || null });
-                  const response = res?.data?.reply || "Ich konnte keine Antwort generieren.";
+                  const response = res?.reply || res?.message || "Ich konnte keine Antwort generieren.";
                   setMessages(prev => [...prev, { role: "assistant", content: response }]);
                   if (voiceEnabled && response) await speakText(response);
                 } catch {
