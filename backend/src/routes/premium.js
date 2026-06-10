@@ -4,37 +4,50 @@ import { supabase } from '../lib/supabase.js';
 
 const router = Router();
 
-router.get('/premium/status', requireAuth, async (req, res) => {
-  const meta = req.user.user_metadata || {};
-  const planId = meta.premium_plan_id || 'free';
-  const expiresAt = meta.premium_expires_at;
-  let isActive = true;
-  let remainingDays = null;
+// Ermittelt den effektiven Plan aus den User-Metadaten. Ist ein Ablaufdatum
+// gesetzt und überschritten (z.B. nach dem 24h-Trial für neue Nutzer), gilt der
+// Nutzer wieder als 'free' — wichtig, weil das Frontend-Gating nur die Plan-ID
+// prüft, nicht is_active.
+function resolvePlan(user) {
+  const meta = user?.user_metadata || {};
+  const rawPlanId = meta.premium_plan_id || 'free';
+  const expiresAt = meta.premium_expires_at || null;
+  const isTrial = meta.premium_trial === true;
 
+  let isActive = rawPlanId !== 'free';
+  let remainingHours = null;
   if (expiresAt) {
-    const diff = Math.ceil((new Date(expiresAt) - new Date()) / 86400000);
-    remainingDays = diff;
-    isActive = diff > 0;
+    const msLeft = new Date(expiresAt) - new Date();
+    remainingHours = Math.ceil(msLeft / 3600000);
+    isActive = isActive && msLeft > 0;
   }
+
+  const effectiveId = isActive ? rawPlanId : 'free';
+  return { effectiveId, isActive, expiresAt, remainingHours, isTrial };
+}
+
+router.get('/premium/status', requireAuth, async (req, res) => {
+  const { effectiveId, isActive, expiresAt, remainingHours, isTrial } = resolvePlan(req.user);
 
   return res.json({
     ok: true,
     plan: {
-      id: planId,
-      name: { free: 'Free', basic: 'Basic', pro: 'Pro', elite: 'Elite' }[planId] || 'Free',
+      id: effectiveId,
+      name: { free: 'Free', basic: 'Basic', pro: 'Pro', elite: 'Elite' }[effectiveId] || 'Free',
       is_active: isActive,
+      is_trial: isTrial && isActive,
       expires_at: expiresAt,
-      remaining_days: remainingDays
+      remaining_days: remainingHours == null ? null : Math.ceil(remainingHours / 24),
+      remaining_hours: remainingHours
     }
   });
 });
 
 router.post('/plan/status', requireAuth, async (req, res) => {
-  const meta = req.user.user_metadata || {};
-  const planId = meta.premium_plan_id || 'free';
+  const { effectiveId, isActive } = resolvePlan(req.user);
   return res.json({
     ok: true,
-    plan: { id: planId, name: planId, is_active: true }
+    plan: { id: effectiveId, name: effectiveId, is_active: isActive }
   });
 });
 
@@ -48,11 +61,10 @@ router.get('/premium/products', async (req, res) => {
 
 router.post('/premium/check-feature', requireAuth, async (req, res) => {
   const { feature } = req.body;
-  const meta = req.user.user_metadata || {};
-  const planId = meta.premium_plan_id || 'free';
+  const { effectiveId } = resolvePlan(req.user);
   const freeFeatures = ['catches', 'spots', 'weather'];
-  const allowed = planId !== 'free' || freeFeatures.includes(feature);
-  return res.json({ ok: true, allowed, plan: planId });
+  const allowed = effectiveId !== 'free' || freeFeatures.includes(feature);
+  return res.json({ ok: true, allowed, plan: effectiveId });
 });
 
 router.post('/premium/checkout', requireAuth, async (req, res) => {
