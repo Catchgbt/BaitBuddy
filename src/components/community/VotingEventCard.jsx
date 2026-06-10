@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Heart, Trophy, Award } from 'lucide-react';
 import { toast } from 'sonner';
-import { base44 } from '@/api/base44Client';
+import { functions } from "@/api/frontendClient";
 import { entities } from "@/api/frontendClient";
 import { Catch } from "@/entities/Catch";
 
@@ -18,7 +18,7 @@ export default function VotingEventCard({ competition, currentUser }) {
 
   const loadSubmissions = async () => {
     try {
-      const response = await base44.functions.invoke('getVotingLeaderboard', {
+      const response = await functions.invoke('getVotingLeaderboard', {
         competition_id: competition.id
       });
       
@@ -39,7 +39,7 @@ export default function VotingEventCard({ competition, currentUser }) {
 
   const handleLike = async (submissionId) => {
     try {
-      await base44.functions.invoke('addVotingLike', {
+      await functions.invoke('addVotingLike', {
         submission_id: submissionId,
         competition_id: competition.id
       });

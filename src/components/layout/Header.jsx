@@ -12,7 +12,7 @@ import { createPageUrl } from "@/utils";
 import WakeWordIndicator from "@/components/header/WakeWordIndicator";
 import EventTimer from "@/components/header/EventTimer";
 import LastBuddyMessage from "@/components/header/LastBuddyMessage";
-import { base44 } from "@/api/base44Client";
+import { functions } from "@/api/frontendClient";
 import { entities } from "@/api/frontendClient";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { mobileStack } from "@/lib/MobileStackManager";
@@ -39,7 +39,7 @@ export default function Header({
     try {
       const [currentUser, planStatusResponse, plans] = await Promise.all([
         User.me(),
-        base44.functions.invoke('getPlanStatus').catch(() => null),
+        functions.invoke('getPlanStatus').catch(() => null),
         FishingPlan.filter({ is_active: true }).catch(() => [])
       ]);
 

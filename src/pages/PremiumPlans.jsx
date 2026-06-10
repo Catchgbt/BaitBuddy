@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, Crown, Zap, Star, Sparkles, Mail, Loader2, ShoppingBag, Smartphone, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { base44 } from "@/api/base44Client";
+import { functions } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import {
   startGooglePlayPurchase,
@@ -32,7 +32,7 @@ export default function PremiumPlans() {
       const currentUser = await auth.me();
       setUser(currentUser);
 
-      const planStatusResponse = await base44.functions.invoke('getPlanStatus');
+      const planStatusResponse = await functions.invoke('getPlanStatus');
       if (planStatusResponse.data && planStatusResponse.data.plan) {
         setCurrentPlan(planStatusResponse.data.plan);
       } else {

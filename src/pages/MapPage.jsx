@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { functions } from "@/api/frontendClient";
 import { entities } from "@/api/frontendClient";
 import { Spot } from "@/entities/Spot";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
@@ -152,7 +152,7 @@ export default function MapPage() {
     if (!gpsLocation) return;
 
     try {
-      const response = await base44.functions.invoke('calculateTravelTime', {
+      const response = await functions.invoke('calculateTravelTime', {
         fromLat: gpsLocation.lat,
         fromLon: gpsLocation.lon,
         toLat: spot.latitude,
@@ -174,7 +174,7 @@ export default function MapPage() {
       setSpots(userSpots);
 
       try {
-        const response = await base44.functions.invoke('angelspotsGeojson');
+        const response = await functions.invoke('angelspotsGeojson');
         
         if (response.data && response.data.features) {
           const locations = response.data.features.map(feature => ({

@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { base44 } from '@/api/base44Client';
+import { functions } from "@/api/frontendClient";
 import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { UploadFile } from '@/integrations/Core';
@@ -65,7 +65,7 @@ export default function ProfilePage() {
 
       // Lade Plan-Status
       try {
-        const planResponse = await base44.functions.invoke('getPlanStatus');
+        const planResponse = await functions.invoke('getPlanStatus');
         if (planResponse.data?.plan) {
           setCurrentPlan(planResponse.data.plan);
         }
