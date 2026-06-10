@@ -251,8 +251,10 @@ export const functions = {
 };
 
 // ── Analytics / AppLogs (native No-op-Clients) ───────────────────────────────
-export const analytics = { track: () => {} };
-export const appLogs   = { logUserInApp: () => {} };
+// Geben ein Promise zurück, da Aufrufer .then()/.catch() verketten (wie beim
+// base44-SDK). Andernfalls: "Cannot read properties of undefined (reading 'catch')".
+export const analytics = { track: () => Promise.resolve() };
+export const appLogs   = { logUserInApp: () => Promise.resolve() };
 
 // ── Einzeln exportierte API-Module (für direkte Nutzung) ─────────────────────
 export const catches = {

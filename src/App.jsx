@@ -124,21 +124,23 @@ function App() {
   }, []);
 
   return (
-    <AuthProvider>
-      <QueryClientProvider client={queryClientInstance}>
-        <MobileStackProvider>
-          <Router>
-            <NavigationProvider>
-              <NavigationTracker />
-              <PageViewTracker />
-              <AuthenticatedApp />
-            </NavigationProvider>
-          </Router>
-        </MobileStackProvider>
-        <Toaster />
-        <VisualEditAgent />
-      </QueryClientProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <QueryClientProvider client={queryClientInstance}>
+          <MobileStackProvider>
+            <Router>
+              <NavigationProvider>
+                <NavigationTracker />
+                <PageViewTracker />
+                <AuthenticatedApp />
+              </NavigationProvider>
+            </Router>
+          </MobileStackProvider>
+          <Toaster />
+          <VisualEditAgent />
+        </QueryClientProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   )
 }
 
