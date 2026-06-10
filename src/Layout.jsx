@@ -260,7 +260,7 @@ function LayoutContent({ children, currentPageName }) {
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker
-          .register('/api/functions/serviceWorker', {
+          .register('/sw.js', {
             scope: '/'
           })
           .then((registration) => {
