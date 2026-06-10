@@ -84,6 +84,7 @@ import PremiumPlans from './pages/PremiumPlans';
 import Profile from './pages/Profile';
 import Quiz from './pages/Quiz';
 import Rank from './pages/Rank';
+import ResetPassword from './pages/ResetPassword';
 import Settings from './pages/Settings';
 import Shop from './pages/Shop';
 import Start from './pages/Start';
@@ -136,6 +137,7 @@ export const PAGES = {
     "Profile": Profile,
     "Quiz": Quiz,
     "Rank": Rank,
+    "ResetPassword": ResetPassword,
     "Settings": Settings,
     "Shop": Shop,
     "Start": Start,

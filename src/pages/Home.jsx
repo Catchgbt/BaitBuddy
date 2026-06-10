@@ -8,6 +8,7 @@ import { supabase } from '@/api/supabaseClient';
 import { toast } from 'sonner';
 import LanguageSwitcher from '@/components/i18n/LanguageSwitcher';
 import { LanguageProvider, useLanguage } from '@/components/i18n/LanguageContext';
+import { Eye, EyeOff } from 'lucide-react';
 import TutorialModal from '@/components/tutorial/TutorialModal';
 import DeleteAccountSection from '@/components/settings/DeleteAccountSection';
 
@@ -146,6 +147,8 @@ function LandingPageContent() {
     const [loginName, setLoginName] = useState('');
     const [loginLoading, setLoginLoading] = useState(false);
     const [loginError, setLoginError] = useState('');
+    const [loginInfo, setLoginInfo] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const { t } = useLanguage();
 
     useEffect(() => {
@@ -298,6 +301,7 @@ function LandingPageContent() {
         e.preventDefault();
         setLoginLoading(true);
         setLoginError('');
+        setLoginInfo('');
         try {
             if (loginMode === 'login') {
                 await auth.login(loginEmail, loginPassword);
@@ -322,6 +326,27 @@ function LandingPageContent() {
             window.location.href = createPageUrl('Dashboard');
         } catch (err) {
             setLoginError(err.message || 'Anmeldung fehlgeschlagen. Bitte prüfe deine Zugangsdaten.');
+        } finally {
+            setLoginLoading(false);
+        }
+    };
+
+    const handleForgotPassword = async () => {
+        setLoginError('');
+        setLoginInfo('');
+        if (!loginEmail) {
+            setLoginError('Bitte zuerst deine E-Mail-Adresse oben eingeben.');
+            return;
+        }
+        setLoginLoading(true);
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(loginEmail, {
+                redirectTo: window.location.origin + '/ResetPassword',
+            });
+            if (error) throw error;
+            setLoginInfo('Falls ein Konto mit dieser E-Mail existiert, haben wir dir einen Link zum Zurücksetzen geschickt. Bitte prüfe deinen Posteingang (auch Spam).');
+        } catch (err) {
+            setLoginError(err.message || 'Senden fehlgeschlagen. Bitte später erneut versuchen.');
         } finally {
             setLoginLoading(false);
         }
@@ -933,16 +958,39 @@ function LandingPageContent() {
                                 required
                                 className="w-full bg-white/8 border border-white/15 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-500 outline-none focus:border-cyan-500/60 focus:bg-white/12 transition-all"
                             />
-                            <input
-                                type="password"
-                                value={loginPassword}
-                                onChange={e => setLoginPassword(e.target.value)}
-                                placeholder="Passwort"
-                                required
-                                className="w-full bg-white/8 border border-white/15 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-500 outline-none focus:border-cyan-500/60 focus:bg-white/12 transition-all"
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    value={loginPassword}
+                                    onChange={e => setLoginPassword(e.target.value)}
+                                    placeholder="Passwort"
+                                    required
+                                    className="w-full bg-white/8 border border-white/15 rounded-xl pl-4 pr-11 py-2.5 text-white text-sm placeholder-gray-500 outline-none focus:border-cyan-500/60 focus:bg-white/12 transition-all"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(s => !s)}
+                                    aria-label={showPassword ? 'Passwort verbergen' : 'Passwort anzeigen'}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                                >
+                                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                            </div>
+                            {loginMode === 'login' && (
+                                <button
+                                    type="button"
+                                    onClick={handleForgotPassword}
+                                    disabled={loginLoading}
+                                    className="self-end text-xs text-cyan-400 hover:text-cyan-300 disabled:opacity-50 transition-colors"
+                                >
+                                    Passwort vergessen?
+                                </button>
+                            )}
                             {loginError && (
                                 <p className="text-red-400 text-xs text-center">{loginError}</p>
+                            )}
+                            {loginInfo && (
+                                <p className="text-emerald-400 text-xs text-center">{loginInfo}</p>
                             )}
                             <button
                                 type="submit"
