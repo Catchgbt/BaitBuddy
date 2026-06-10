@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { Catch } from "@/entities/Catch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import {
@@ -29,7 +29,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 function CatchStatsContent() {
   const { data: catches = [], isLoading } = useQuery({
     queryKey: ["catches"],
-    queryFn: () => base44.entities.Catch.list("-catch_time"),
+    queryFn: () => Catch.list("-catch_time"),
   });
 
   const stats = useMemo(() => {

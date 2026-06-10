@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { Spot } from "@/entities/Spot";
 import { auth } from "@/api/auth";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -127,7 +128,7 @@ export default function Dashboard() {
       const currentUser = await auth.me();
       setUser(currentUser);
 
-      let spots = await base44.entities.Spot.list('', 100).catch(() => []);
+      let spots = await Spot.list('', 100).catch(() => []);
       
       // Cache Spots wenn online
       if (spots.length > 0 && navigator.onLine) {

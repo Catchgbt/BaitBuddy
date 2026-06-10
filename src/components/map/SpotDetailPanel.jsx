@@ -14,6 +14,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { Spot } from "@/entities/Spot";
 import { toast } from 'sonner';
 import { useLocation } from '@/components/location/LocationManager';
 import { motion } from 'framer-motion';
@@ -74,7 +75,7 @@ export default function SpotDetailPanel({ spot, onClose, onUpdate }) {
     }
 
     try {
-      await base44.entities.Spot.update(spot.id, {
+      await Spot.update(spot.id, {
         is_favorite: !isFavorite
       });
       setIsFavorite(!isFavorite);

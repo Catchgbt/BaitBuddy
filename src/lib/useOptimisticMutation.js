@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Catch } from "@/entities/Catch";
 
 /**
  * useOptimisticMutation
@@ -11,7 +12,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
  *
  *   const mutation = useOptimisticMutation({
  *     queryKey: 'catches',
- *     mutationFn: (data) => base44.entities.Catch.create(data),
+ *     mutationFn: (data) => Catch.create(data),
  *     optimisticUpdate: (oldList = [], newItem) => [
  *       { id: `tmp-${Date.now()}`, ...newItem },
  *       ...oldList,

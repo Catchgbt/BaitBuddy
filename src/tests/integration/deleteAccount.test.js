@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { base44 } from '@/api/base44Client';
+import { Catch } from "@/entities/Catch";
+import { Spot } from "@/entities/Spot";
 import { auth } from "@/api/auth";
 
 describe('Account Deletion Integration Test', () => {
@@ -28,14 +30,14 @@ describe('Account Deletion Integration Test', () => {
     const userEmail = testUser.email;
 
     // Create test data across multiple entities
-    const testCatch = await base44.entities.Catch.create({
+    const testCatch = await Catch.create({
       species: 'Hecht',
       catch_time: new Date().toISOString(),
       weight_kg: 3.5,
       length_cm: 65
     });
 
-    const testSpot = await base44.entities.Spot.create({
+    const testSpot = await Spot.create({
       name: 'Test Deletion Spot',
       latitude: 52.5,
       longitude: 13.4,
@@ -59,8 +61,8 @@ describe('Account Deletion Integration Test', () => {
     expect(testMessage.id).toBeDefined();
 
     // Verify records exist before deletion
-    const catchBefore = await base44.entities.Catch.filter({ created_by: userEmail });
-    const spotBefore = await base44.entities.Spot.filter({ created_by: userEmail });
+    const catchBefore = await Catch.filter({ created_by: userEmail });
+    const spotBefore = await Spot.filter({ created_by: userEmail });
     const planBefore = await base44.entities.FishingPlan.filter({ created_by: userEmail });
     const messageBefore = await base44.entities.ChatMessage.filter({ created_by: userEmail });
 
@@ -88,8 +90,8 @@ describe('Account Deletion Integration Test', () => {
     // Verify records are deleted (with small delay for eventual consistency)
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    const catchAfter = await base44.entities.Catch.filter({ created_by: userEmail });
-    const spotAfter = await base44.entities.Spot.filter({ created_by: userEmail });
+    const catchAfter = await Catch.filter({ created_by: userEmail });
+    const spotAfter = await Spot.filter({ created_by: userEmail });
     const planAfter = await base44.entities.FishingPlan.filter({ created_by: userEmail });
     const messageAfter = await base44.entities.ChatMessage.filter({ created_by: userEmail });
 

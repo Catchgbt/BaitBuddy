@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { FixedSizeList as VirtualList } from "react-window";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { Catch } from "@/entities/Catch";
+import { Spot } from "@/entities/Spot";
 import { auth } from "@/api/auth";
 import { UploadFile, ExtractDataFromUploadedFile } from "@/integrations/Core";
 import { toast } from "sonner";
@@ -39,7 +40,7 @@ export default function LogSection() {
         await auth.me();
         setIsGuest(false);
         const { data } = await fetchCatchesWithFallback(
-          () => base44.entities.Catch.list("-catch_time", PAGE_SIZE)
+          () => Catch.list("-catch_time", PAGE_SIZE)
         );
         return data;
       } catch {
@@ -53,7 +54,7 @@ export default function LogSection() {
     queryKey: ["spots"],
     queryFn: async () => {
       try {
-        const { data } = await fetchSpotsWithFallback(() => base44.entities.Spot.list());
+        const { data } = await fetchSpotsWithFallback(() => Spot.list());
         return data;
       } catch {
         return [];
@@ -63,7 +64,7 @@ export default function LogSection() {
 
   // --- Mutations with optimistic updates ---
   const createMutation = useMutation({
-    mutationFn: (payload) => base44.entities.Catch.create(payload),
+    mutationFn: (payload) => Catch.create(payload),
     onMutate: async (payload) => {
       await queryClient.cancelQueries({ queryKey: ["catches"] });
       const previous = queryClient.getQueryData(["catches"]);
@@ -84,7 +85,7 @@ export default function LogSection() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, payload }) => base44.entities.Catch.update(id, payload),
+    mutationFn: ({ id, payload }) => Catch.update(id, payload),
     onMutate: async ({ id, payload }) => {
       await queryClient.cancelQueries({ queryKey: ["catches"] });
       const previous = queryClient.getQueryData(["catches"]);
@@ -101,7 +102,7 @@ export default function LogSection() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Catch.delete(id),
+    mutationFn: (id) => Catch.delete(id),
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ["catches"] });
       const previous = queryClient.getQueryData(["catches"]);
@@ -237,7 +238,7 @@ export default function LogSection() {
   const loadMore = async () => {
     setPage((p) => p + 1);
     const { data: more } = await fetchCatchesWithFallback(
-      () => base44.entities.Catch.list("-catch_time", PAGE_SIZE, PAGE_SIZE * page)
+      () => Catch.list("-catch_time", PAGE_SIZE, PAGE_SIZE * page)
     );
     queryClient.setQueryData(["catches"], (old = []) => [...old, ...more]);
   };

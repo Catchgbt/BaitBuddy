@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowRight, TrendingUp } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { Spot } from "@/entities/Spot";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 export default function SpotComparison() {
@@ -18,7 +19,7 @@ export default function SpotComparison() {
 
   const loadSpots = async () => {
     try {
-      const allSpots = await base44.entities.Spot.list();
+      const allSpots = await Spot.list();
       setSpots(allSpots);
     } catch (error) {
       console.error("Failed to load spots:", error);
