@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,7 +24,7 @@ export default function CommentSection({ postId }) {
 
   useEffect(() => {
     loadComments();
-    const unsubscribe = base44.entities.Comment.subscribe((event) => {
+    const unsubscribe = entities.Comment.subscribe((event) => {
       if (event.type === 'create' && event.data?.post_id === postId) {
         setComments(prev => [event.data, ...prev]);
       }
@@ -34,7 +34,7 @@ export default function CommentSection({ postId }) {
 
   const loadComments = async () => {
     try {
-      const data = await base44.entities.Comment.filter({ post_id: postId }, '-created_date', 50);
+      const data = await entities.Comment.filter({ post_id: postId }, '-created_date', 50);
       setComments(data);
     } catch (e) {
       console.error("Error loading comments:", e);
@@ -46,7 +46,7 @@ export default function CommentSection({ postId }) {
     
     setLoading(true);
     try {
-      await base44.entities.Comment.create({
+      await entities.Comment.create({
         post_id: postId,
         text: newComment
       });

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { base44 } from '@/api/base44Client';
+import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { UploadFile } from '@/integrations/Core';
 import { User as UserIcon, Camera, Copy, Check, Edit3, Calendar, Clock, MessageSquare, Crown, Link as LinkIcon, Mail, Volume2, AlertTriangle } from 'lucide-react';
@@ -56,7 +57,7 @@ export default function ProfilePage() {
 
       // Lade Posts-Anzahl
       try {
-        const posts = await base44.entities.Post.filter({ created_by: currentUser.email });
+        const posts = await entities.Post.filter({ created_by: currentUser.email });
         setPostsCount(posts.length);
       } catch (error) {
         console.error('Fehler beim Laden der Posts:', error);
@@ -74,7 +75,7 @@ export default function ProfilePage() {
 
       // Lade Chat-Historie (letzte 5 Konversationen)
       try {
-        const messages = await base44.entities.ChatMessage.list('-created_date', 100);
+        const messages = await entities.ChatMessage.list('-created_date', 100);
         
         // Gruppiere nach conversation_id
         const groupedConversations = {};

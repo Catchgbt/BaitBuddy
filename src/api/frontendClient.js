@@ -115,6 +115,12 @@ function makeEntity(entityName) {
       if (!base) return { ok: true };
       try { return await api.del(`${base}/${id}`); } catch { return { ok: true }; }
     },
+
+    // Realtime-Subscriptions gibt es backend-seitig (noch) nicht. Sicherer
+    // No-op-Stub: ruft den Callback nie auf und liefert eine No-op-unsubscribe
+    // zurück. Verhindert TypeError (vormals base44-SDK-Funktion); Initialdaten
+    // kommen weiterhin über list/filter.
+    subscribe: () => () => {},
   };
 }
 

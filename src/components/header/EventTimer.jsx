@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -29,7 +30,7 @@ function EventTimer() {
       if (!isAuth) return;
 
       const user = await auth.me();
-      const events = await base44.entities.AppEvent.filter({ is_active: true });
+      const events = await entities.AppEvent.filter({ is_active: true });
       if (!events || events.length === 0) return;
 
       const event = events[0];

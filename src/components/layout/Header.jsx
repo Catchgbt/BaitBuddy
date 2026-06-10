@@ -13,6 +13,7 @@ import WakeWordIndicator from "@/components/header/WakeWordIndicator";
 import EventTimer from "@/components/header/EventTimer";
 import LastBuddyMessage from "@/components/header/LastBuddyMessage";
 import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { mobileStack } from "@/lib/MobileStackManager";
 
@@ -97,7 +98,7 @@ export default function Header({
 
   const loadRecentPosts = async () => {
     try {
-      const posts = await base44.entities.Post.list('-created_date', 20);
+      const posts = await entities.Post.list('-created_date', 20);
       const postsWithImages = posts.filter(p => p.photo_url);
       setRecentPosts(postsWithImages);
     } catch (error) {
