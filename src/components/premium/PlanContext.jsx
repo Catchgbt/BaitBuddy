@@ -20,8 +20,11 @@ export function PlanProvider({ children }) {
     setLoading(true);
     try {
       const response = await functions.invoke('getPlanStatus');
-      if (response.data && response.data.plan) {
-        setPlan(response.data.plan);
+      // /api/premium/status liefert { ok, plan } direkt (kein data-Wrapper);
+      // ältere Aufrufer erwarteten response.data.plan -> beide Formen tolerieren.
+      const payload = response?.data ?? response;
+      if (payload && payload.plan) {
+        setPlan(payload.plan);
       } else {
         setPlan({ id: 'free', name: 'Kostenlos', is_active: false });
       }

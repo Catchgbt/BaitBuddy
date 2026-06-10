@@ -66,8 +66,9 @@ export default function ProfilePage() {
       // Lade Plan-Status
       try {
         const planResponse = await functions.invoke('getPlanStatus');
-        if (planResponse.data?.plan) {
-          setCurrentPlan(planResponse.data.plan);
+        const planPayload = planResponse?.data ?? planResponse;
+        if (planPayload?.plan) {
+          setCurrentPlan(planPayload.plan);
         }
       } catch (error) {
         console.error('Fehler beim Laden des Plans:', error);

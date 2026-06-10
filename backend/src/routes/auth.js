@@ -25,19 +25,24 @@ router.post('/auth/register', async (req, res) => {
   const { email, password, full_name } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'E-Mail und Passwort sind erforderlich' });
 
-  const { data, error } = await supabase.auth.signUp({
+  // Nutzer direkt bestätigt anlegen (Admin-API, Service-Role) — kein Warten auf
+  // Bestätigungs-E-Mail nötig, damit der Login unmittelbar funktioniert.
+  const { error: createError } = await supabase.auth.admin.createUser({
     email,
     password,
-    options: { data: { full_name } },
+    email_confirm: true,
+    user_metadata: { full_name },
   });
-  if (error) return res.status(400).json({ error: error.message });
-
-  if (!data.session) {
-    return res.json({
-      message: 'Bestätigungs-E-Mail gesendet. Bitte prüfen Sie Ihren Posteingang.',
-      user: { email },
-    });
+  if (createError) {
+    const msg = /already.*registered|already.*exists|duplicate/i.test(createError.message || '')
+      ? 'E-Mail ist bereits registriert. Bitte melde dich an.'
+      : createError.message;
+    return res.status(400).json({ error: msg });
   }
+
+  // Frisch angelegten (bestätigten) Nutzer direkt einloggen, um ein Token zu liefern.
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) return res.status(401).json({ error: error.message });
 
   return res.json({
     token: data.session.access_token,
