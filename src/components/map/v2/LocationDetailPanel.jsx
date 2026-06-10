@@ -144,9 +144,40 @@ export default function LocationDetailPanel({ location, onClose, onSetAsLocation
 
           {location.address && (
             <div className="text-sm text-gray-300">
-              <p>{location.address.street}</p>
+              {location.address.street && <p>{location.address.street}</p>}
               <p>{location.address.city}</p>
             </div>
+          )}
+
+          {location.besonderheit && (
+            <div className="text-sm text-gray-300">
+              <p>{location.besonderheit}</p>
+            </div>
+          )}
+
+          {Array.isArray(location.fische) && location.fische.length > 0 && (
+            <div className="bg-gray-800/50 rounded-lg p-3">
+              <div className="text-sm text-gray-400 mb-2">Fischarten:</div>
+              <div className="flex flex-wrap gap-2">
+                {location.fische.map(fisch => (
+                  <span key={fisch} className="text-xs bg-cyan-600/30 text-cyan-300 px-2 py-1 rounded">
+                    {fisch}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {location.website && (
+            <a
+              href={location.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300"
+            >
+              <ExternalLink className="w-4 h-4" aria-hidden="true" />
+              Website besuchen
+            </a>
           )}
 
           {/* Travel Info */}

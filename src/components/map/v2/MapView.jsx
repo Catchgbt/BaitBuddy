@@ -341,12 +341,28 @@ export default function MapView({
             <div className="text-sm">
               <strong>{club.name}</strong>
               <p className="text-xs text-gray-600 mt-1">
-                {club.category === 'club' ? 'Angelverein' : 'Angelpark'}
+                {club.category === 'club' ? 'Angelverein' : (club.typ || 'Angelpark')}
               </p>
               {club.address && (
                 <p className="text-xs text-gray-600">
                   {club.address.city}
                 </p>
+              )}
+              {Array.isArray(club.fische) && club.fische.length > 0 && (
+                <p className="text-xs text-gray-600 mt-1">
+                  🎣 {club.fische.slice(0, 4).join(', ')}
+                  {club.fische.length > 4 ? ' …' : ''}
+                </p>
+              )}
+              {club.website && (
+                <a
+                  href={club.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-cyan-600 underline mt-1 inline-block"
+                >
+                  Website
+                </a>
               )}
             </div>
           </Popup>
