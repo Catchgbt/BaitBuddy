@@ -18,6 +18,7 @@ import { SoundProvider } from "@/components/utils/SoundManager";
 import { Toaster } from "sonner";
 import { LanguageProvider } from "@/components/i18n/LanguageContext";
 import { PlanProvider } from "@/components/premium/PlanContext";
+import TrialBanner from "@/components/premium/TrialBanner";
 import { AnimatePresence } from "framer-motion";
 import PageTransition from "@/lib/PageTransitionEnhanced";
 import { WakeWordDetector } from "@/components/utils/WakeWordDetector";
@@ -388,7 +389,9 @@ function LayoutContent({ children, currentPageName }) {
                     DEMO-MODUS AKTIV
                   </div>
                 )}
-                
+
+                <TrialBanner />
+
                 <SuspenseWithErrorBoundary>
                   <QuickCatchDialog />
                 </SuspenseWithErrorBoundary>
