@@ -1,0 +1,11 @@
+{
+  "appId": "app.baitbuddy.mobile",
+  "appName": "BaitBuddy",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": false
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}
