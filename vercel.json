@@ -3,6 +3,7 @@
   "outputDirectory": "dist",
   "installCommand": "npm install --legacy-peer-deps && cd backend && npm install",
   "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/[...path]" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
