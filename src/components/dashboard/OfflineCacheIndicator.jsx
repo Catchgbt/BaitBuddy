@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, Wifi, WifiOff, Database } from 'lucide-react';
+import { Wifi, WifiOff, Database } from 'lucide-react';
 
 export default function OfflineCacheIndicator() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);

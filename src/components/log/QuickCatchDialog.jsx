@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Catch, Spot, User } from "@/entities/all";
+import { Catch, Spot } from "@/entities/all";
 import { UploadFile } from "@/integrations/Core";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import PremiumGuard from "@/components/premium/PremiumGuard";
 import MapController from "@/components/map/v2/MapController";
 import WeatherRadarMap from "@/components/weather/WeatherRadarMap";
 import BathymetricCrowdsourcing from "@/pages/BathymetricCrowdsourcing";

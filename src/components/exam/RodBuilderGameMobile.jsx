@@ -1,17 +1,12 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { 
   Fish, 
   Target, 
   Award, 
-  RotateCcw, 
-  CheckCircle2, 
-  XCircle,
-  AlertCircle,
-  Sparkles,
+  RotateCcw,
   ChevronDown
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";

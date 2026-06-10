@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -9,7 +9,7 @@ import MiniKiVoiceBuddy from "@/components/home/MiniKiVoiceBuddy";
 import SchonzeitWarner from "@/components/dashboard/SchonzeitWarner";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { cacheEntityData, cacheWeatherData, getCachedWeather, getOfflineData, initOfflineDB } from "@/components/utils/offlineDataCache";
+import { cacheEntityData, cacheWeatherData, getCachedWeather, getOfflineData } from "@/components/utils/offlineDataCache";
 import OfflineCacheIndicator from "@/components/dashboard/OfflineCacheIndicator";
 import FishingRecommendationCard from "@/components/dashboard/FishingRecommendationCard";
 import { useQueryClient } from "@tanstack/react-query";

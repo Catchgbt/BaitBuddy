@@ -1,4 +1,4 @@
-import React, { memo, useCallback } from 'react';
+import React, { memo } from 'react';
 import { FixedSizeList } from 'react-window';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import CatchCard from './CatchCard';

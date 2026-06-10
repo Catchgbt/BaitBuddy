@@ -6,7 +6,7 @@ import { useHaptic } from "@/components/utils/HapticFeedback";
 import { useSound } from "@/components/utils/SoundManager";
 import { User } from "@/entities/User";
 import { FishingPlan } from "@/entities/FishingPlan";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import WakeWordIndicator from "@/components/header/WakeWordIndicator";

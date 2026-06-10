@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { TileLayer, useMap } from "react-leaflet";
-import { getCachedTile } from "@/components/utils/offlineMapDownload";
+import { useEffect, useState } from "react";
+import { useMap } from "react-leaflet";
 import L from "leaflet";
 
 export default function OfflineMapLayer({ isOnline }) {
