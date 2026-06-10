@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { Catch } from "@/entities/Catch";
 import { auth } from "@/api/auth";
 import { toast } from "sonner";
@@ -109,7 +110,7 @@ export default function Community() {
 
   const loadCompetitions = async () => {
     try {
-      const comps = await base44.entities.Competition.list('-created_date', 20);
+      const comps = await entities.Competition.list('-created_date', 20);
       setCompetitions(comps.filter(c => c.is_active));
     } catch (error) {
       console.error("Fehler beim Laden der Wettbewerbe:", error);
@@ -118,7 +119,7 @@ export default function Community() {
 
   const loadRecentActivity = async () => {
     try {
-      const activeComps = await base44.entities.Competition.filter({ is_active: true });
+      const activeComps = await entities.Competition.filter({ is_active: true });
       setRecentActivity(activeComps);
     } catch (error) {
       console.error("Fehler beim Laden der Aktivitaten:", error);
@@ -128,7 +129,7 @@ export default function Community() {
   const loadActiveUserCount = async () => {
     try {
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-      const sessions = await base44.entities.ChatSession.filter({ is_active: true });
+      const sessions = await entities.ChatSession.filter({ is_active: true });
       const active = sessions.filter(s => new Date(s.last_activity) > new Date(fiveMinutesAgo));
       setActiveUserCount(active.length);
     } catch (error) {
@@ -160,7 +161,7 @@ export default function Community() {
   const loadPosts = async () => {
     setLoading(true);
     try {
-      const postsData = await base44.entities.Post.list("-created_date", 50);
+      const postsData = await entities.Post.list("-created_date", 50);
       
       const newCache = {};
       const allEmails = new Set();
@@ -198,7 +199,7 @@ export default function Community() {
       const postsWithComments = await Promise.all(
         postsData.map(async (post) => {
           try {
-            const comments = await base44.entities.Comment.filter({ post_id: post.id });
+            const comments = await entities.Comment.filter({ post_id: post.id });
             
             for (const comment of comments) {
               if (!newCache[comment.created_by]) {
@@ -315,7 +316,7 @@ export default function Community() {
       }
 
       toast.info("Erstelle Post...");
-      await base44.entities.Post.create({
+      await entities.Post.create({
         text: newPostText.trim(),
         photo_url: photoUrl,
         likes: 0,
@@ -343,7 +344,7 @@ export default function Community() {
     ));
 
     try {
-      await base44.entities.Post.update(postId, { likes: currentLikes + 1 });
+      await entities.Post.update(postId, { likes: currentLikes + 1 });
     } catch (error) {
       console.error("Fehler beim Liken:", error);
       // Revert on error
@@ -384,7 +385,7 @@ export default function Community() {
     setCommentText("");
 
     try {
-      const newComment = await base44.entities.Comment.create({
+      const newComment = await entities.Comment.create({
         post_id: postId,
         text
       });
@@ -414,7 +415,7 @@ export default function Community() {
       return;
     }
     try {
-      await base44.entities.Post.update(postId, { reported: true });
+      await entities.Post.update(postId, { reported: true });
       const updated = [...reportedPostIds, postId];
       setReportedPostIds(updated);
       localStorage.setItem('reported_posts', JSON.stringify(updated));
@@ -430,7 +431,7 @@ export default function Community() {
 
     setDeletingPostId(postId);
     try {
-      await base44.entities.Post.delete(postId);
+      await entities.Post.delete(postId);
       toast.success("Post gelöscht");
       await loadPosts();
     } catch (error) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { User } from "@/entities/User";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,7 @@ export default function ChatWidget({ topic = "Allgemein" }) {
     if (isOpen) {
       loadMessages();
       loadActiveUsers();
-      const unsubscribe = base44.entities.ChatMessage.subscribe((event) => {
+      const unsubscribe = entities.ChatMessage.subscribe((event) => {
         if (event.type === 'create' && event.data?.context === topic) {
           setMessages(prev => [...prev, event.data]);
         }
@@ -53,7 +53,7 @@ export default function ChatWidget({ topic = "Allgemein" }) {
 
   const loadMessages = async () => {
     try {
-      const data = await base44.entities.ChatMessage.filter({ context: topic }, '-timestamp', 30);
+      const data = await entities.ChatMessage.filter({ context: topic }, '-timestamp', 30);
       
       const newCache = { ...userCache };
       const uniqueEmails = [...new Set(data.map(m => m.created_by))];
@@ -80,7 +80,7 @@ export default function ChatWidget({ topic = "Allgemein" }) {
   const loadActiveUsers = async () => {
     try {
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-      const sessions = await base44.entities.ChatSession.filter({ is_active: true });
+      const sessions = await entities.ChatSession.filter({ is_active: true });
       const active = sessions.filter(s => new Date(s.last_activity) > new Date(fiveMinutesAgo));
       setActiveUsers(active);
     } catch (e) {
@@ -91,14 +91,14 @@ export default function ChatWidget({ topic = "Allgemein" }) {
   const updateUserSession = async () => {
     if (!user) return;
     try {
-      const existing = await base44.entities.ChatSession.filter({ user_email: user.email });
+      const existing = await entities.ChatSession.filter({ user_email: user.email });
       if (existing.length > 0) {
-        await base44.entities.ChatSession.update(existing[0].id, {
+        await entities.ChatSession.update(existing[0].id, {
           last_activity: new Date().toISOString(),
           is_active: true
         });
       } else {
-        await base44.entities.ChatSession.create({
+        await entities.ChatSession.create({
           user_email: user.email,
           user_name: user.full_name || user.email.split('@')[0],
           last_activity: new Date().toISOString(),
@@ -116,7 +116,7 @@ export default function ChatWidget({ topic = "Allgemein" }) {
 
     setLoading(true);
     try {
-      await base44.entities.ChatMessage.create({
+      await entities.ChatMessage.create({
         role: "user",
         content: newMessage,
         context: topic,

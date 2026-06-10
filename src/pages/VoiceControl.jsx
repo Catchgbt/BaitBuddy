@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { Catch } from "@/entities/Catch";
 import { Spot } from "@/entities/Spot";
 import { auth } from "@/api/auth";
@@ -49,7 +50,7 @@ async function executeVoiceAction(action, navigate) {
       const p = action.params || {};
       if (!p.text) return "Was soll ich posten?";
       const me = await auth.me().catch(() => null);
-      await base44.entities.Post.create({
+      await entities.Post.create({
         text: p.text,
         author_name: me?.nickname || me?.full_name || "Angler"
       });
@@ -323,13 +324,13 @@ async function saveConversationMessage(role, content) {
   try {
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     // Alte Nachrichten (älter als 1 Tag) löschen
-    const old = await base44.entities.ChatMessage.filter({ context: 'voice_control' });
+    const old = await entities.ChatMessage.filter({ context: 'voice_control' });
     for (const msg of old) {
       if (msg.timestamp && msg.timestamp < oneDayAgo) {
-        await base44.entities.ChatMessage.delete(msg.id);
+        await entities.ChatMessage.delete(msg.id);
       }
     }
-    await base44.entities.ChatMessage.create({
+    await entities.ChatMessage.create({
       conversation_id: SESSION_ID,
       role,
       content,
@@ -370,7 +371,7 @@ function VoiceBuddy() {
     setLoadingHistory(true);
     try {
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const msgs = await base44.entities.ChatMessage.filter({ context: 'voice_control' });
+      const msgs = await entities.ChatMessage.filter({ context: 'voice_control' });
       const recent = msgs
         .filter(m => m.timestamp && m.timestamp >= oneDayAgo)
         .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
@@ -1154,8 +1155,8 @@ function VoiceBuddy() {
             {conversationHistory.length > 0 && (
               <button
                 onClick={async () => {
-                  const all = await base44.entities.ChatMessage.filter({ context: 'voice_control' });
-                  for (const m of all) await base44.entities.ChatMessage.delete(m.id);
+                  const all = await entities.ChatMessage.filter({ context: 'voice_control' });
+                  for (const m of all) await entities.ChatMessage.delete(m.id);
                   setConversationHistory([]);
                   toast.success('Verlauf gelöscht');
                 }}

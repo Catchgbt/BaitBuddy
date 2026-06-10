@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 
 function formatTime(totalSeconds) {
   const h = Math.floor(totalSeconds / 3600);
@@ -21,7 +22,7 @@ export default function EventLeaderboard() {
 
   const loadEventData = async () => {
     try {
-      const events = await base44.entities.AppEvent.filter({ is_active: true });
+      const events = await entities.AppEvent.filter({ is_active: true });
       if (!events || events.length === 0) {
         setLoading(false);
         return;

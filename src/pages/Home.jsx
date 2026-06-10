@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
+import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { createPageUrl } from '@/utils';
 import { setGuestSession } from '@/components/utils/guestMode';
@@ -272,7 +272,7 @@ function LandingPageContent() {
             if (isAuth) {
                 const alreadySeen = localStorage.getItem('catchgbt_event_popup_seen');
                 if (!alreadySeen) {
-                    const events = await base44.entities.AppEvent.filter({ is_active: true });
+                    const events = await entities.AppEvent.filter({ is_active: true });
                     if (events && events.length > 0) {
                         const ev = events[0];
                         const now = new Date();
@@ -307,7 +307,7 @@ function LandingPageContent() {
             try {
                 const alreadySeen = localStorage.getItem('catchgbt_event_popup_seen');
                 if (!alreadySeen) {
-                    const evs = await base44.entities.AppEvent.filter({ is_active: true });
+                    const evs = await entities.AppEvent.filter({ is_active: true });
                     if (evs && evs.length > 0) {
                         const ev = evs[0];
                         const now = new Date();

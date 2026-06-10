@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { Catch } from "@/entities/Catch";
 import { Spot } from "@/entities/Spot";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -159,7 +160,7 @@ export default function Logbook() {
 
         if (shareRef.current) {
           const catchText = `Mein Fang: ${savedCatch.species}${savedCatch.length_cm ? ` (${savedCatch.length_cm}cm)` : ''}${savedCatch.weight_kg ? `, ${savedCatch.weight_kg}kg` : ''}${savedCatch.bait_used ? `\nKöder: ${savedCatch.bait_used}` : ''}${savedCatch.notes ? `\n\n${savedCatch.notes}` : ''}`;
-          await base44.entities.Post.create({ text: catchText, photo_url: savedCatch.photo_url || null, likes: 0, reported: false });
+          await entities.Post.create({ text: catchText, photo_url: savedCatch.photo_url || null, likes: 0, reported: false });
           toast.success("Fang in Community geteilt!");
           setShareInCommunity(false);
         } else {
@@ -282,7 +283,7 @@ export default function Logbook() {
     setIsSharing(true);
     try {
       const catchText = `Mein Fang: ${savedCatchData.species}${savedCatchData.length_cm ? ` (${savedCatchData.length_cm}cm)` : ''}${savedCatchData.weight_kg ? `, ${savedCatchData.weight_kg}kg` : ''}${savedCatchData.bait_used ? `\nKöder: ${savedCatchData.bait_used}` : ''}${savedCatchData.notes ? `\n\n${savedCatchData.notes}` : ''}`;
-      await base44.entities.Post.create({ text: catchText, photo_url: savedCatchData.photo_url || null, likes: 0, reported: false });
+      await entities.Post.create({ text: catchText, photo_url: savedCatchData.photo_url || null, likes: 0, reported: false });
       toast.success("Fang in der Community geteilt!");
       setShowShareDialog(false);
       setSavedCatchData(null);

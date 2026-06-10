@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { createPageUrl } from "@/utils";
 import { Link } from "react-router-dom";
 
@@ -20,7 +20,7 @@ export default function CommunityPostDialog({ isOpen, onOpenChange }) {
   const fetchLatestPosts = async () => {
     setLoading(true);
     try {
-      const result = await base44.entities.Post.list("-created_date", 4);
+      const result = await entities.Post.list("-created_date", 4);
       setPosts(result || []);
     } catch (error) {
       console.error("Fehler beim Laden der Community-Posts:", error);

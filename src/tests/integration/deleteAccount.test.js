@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { base44 } from '@/api/base44Client';
+import { entities } from "@/api/frontendClient";
 import { Catch } from "@/entities/Catch";
 import { Spot } from "@/entities/Spot";
 import { auth } from "@/api/auth";
@@ -50,7 +51,7 @@ describe('Account Deletion Integration Test', () => {
       steps: ['Step 1', 'Step 2']
     });
 
-    const testMessage = await base44.entities.ChatMessage.create({
+    const testMessage = await entities.ChatMessage.create({
       role: 'user',
       content: 'Test message for deletion'
     });
@@ -64,7 +65,7 @@ describe('Account Deletion Integration Test', () => {
     const catchBefore = await Catch.filter({ created_by: userEmail });
     const spotBefore = await Spot.filter({ created_by: userEmail });
     const planBefore = await base44.entities.FishingPlan.filter({ created_by: userEmail });
-    const messageBefore = await base44.entities.ChatMessage.filter({ created_by: userEmail });
+    const messageBefore = await entities.ChatMessage.filter({ created_by: userEmail });
 
     expect(catchBefore.length).toBeGreaterThan(0);
     expect(spotBefore.length).toBeGreaterThan(0);
@@ -93,7 +94,7 @@ describe('Account Deletion Integration Test', () => {
     const catchAfter = await Catch.filter({ created_by: userEmail });
     const spotAfter = await Spot.filter({ created_by: userEmail });
     const planAfter = await base44.entities.FishingPlan.filter({ created_by: userEmail });
-    const messageAfter = await base44.entities.ChatMessage.filter({ created_by: userEmail });
+    const messageAfter = await entities.ChatMessage.filter({ created_by: userEmail });
 
     expect(catchAfter.length).toBe(0);
     expect(spotAfter.length).toBe(0);

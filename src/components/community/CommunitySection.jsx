@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { User } from "@/entities/User";
 import { useOptimisticMutation } from "@/lib/useOptimisticMutation";
@@ -37,7 +37,7 @@ export default function CommunitySection() {
       const user = await auth.me();
       setCurrentUser(user);
 
-      const allPosts = await base44.entities.Post.list('-created_date');
+      const allPosts = await entities.Post.list('-created_date');
       setPosts(allPosts);
 
       // User-Daten für alle Post-Ersteller laden
@@ -60,7 +60,7 @@ export default function CommunitySection() {
 
       // Kommentare laden
       const commentPromises = allPosts.map(post => 
-        base44.entities.Comment.filter({ post_id: post.id })
+        entities.Comment.filter({ post_id: post.id })
       );
       const allComments = await Promise.all(commentPromises);
       
@@ -121,7 +121,7 @@ export default function CommunitySection() {
   };
 
   const createPostMutation = useMutation({
-    mutationFn: (data) => base44.entities.Post.create(data),
+    mutationFn: (data) => entities.Post.create(data),
     onMutate: (data) => {
       const optimistic = {
         id: `tmp-${Date.now()}`,
@@ -162,7 +162,7 @@ export default function CommunitySection() {
 
   const updateLikeMutation = useOptimisticMutation({
     queryKey: 'posts',
-    mutationFn: ({ postId, likes }) => base44.entities.Post.update(postId, { likes }),
+    mutationFn: ({ postId, likes }) => entities.Post.update(postId, { likes }),
     optimisticUpdate: (old = [], { postId, likes }) => old.map(p => p.id === postId ? { ...p, likes } : p),
     onMutate: () => {
       triggerHaptic('light');
@@ -176,7 +176,7 @@ export default function CommunitySection() {
   };
 
   const commentMutation = useMutation({
-    mutationFn: ({ postId, commentText }) => base44.entities.Comment.create({ post_id: postId, text: commentText }),
+    mutationFn: ({ postId, commentText }) => entities.Comment.create({ post_id: postId, text: commentText }),
     onMutate: ({ postId, commentText }) => {
       const optimisticComment = {
         id: `temp-${Date.now()}`,
@@ -219,7 +219,7 @@ export default function CommunitySection() {
 
   const reportMutation = useOptimisticMutation({
     queryKey: 'posts',
-    mutationFn: (postId) => base44.entities.Post.update(postId, { reported: true }),
+    mutationFn: (postId) => entities.Post.update(postId, { reported: true }),
     optimisticUpdate: (old = [], postId) => old.map(p => p.id === postId ? { ...p, reported: true } : p),
     onMutate: () => {
       triggerHaptic('medium');

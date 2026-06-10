@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { catchgbtChat } from "@/functions/catchgbtChat";
 import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { Catch } from "@/entities/Catch";
 import { Spot } from "@/entities/Spot";
 import { auth } from "@/api/auth";
@@ -109,7 +110,7 @@ async function executeAction(action, navigate) {
       const p = action.params || {};
       if (!p.text) return "Was soll ich posten?";
       const me = await auth.me().catch(() => null);
-      await base44.entities.Post.create({
+      await entities.Post.create({
         text: p.text,
         author_name: me?.nickname || me?.full_name || "Angler"
       });

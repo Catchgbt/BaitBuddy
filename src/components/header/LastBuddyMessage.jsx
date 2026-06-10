@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function LastBuddyMessage() {
@@ -9,7 +9,7 @@ export default function LastBuddyMessage() {
 
   const loadLastMessage = async () => {
     try {
-      const msgs = await base44.entities.ChatMessage.filter(
+      const msgs = await entities.ChatMessage.filter(
         { context: "voice_control", role: "assistant" },
         "-timestamp",
         1

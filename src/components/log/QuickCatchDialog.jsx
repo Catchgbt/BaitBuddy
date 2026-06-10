@@ -12,6 +12,7 @@ import { useHaptic } from "@/components/utils/HapticFeedback";
 import { useSound } from "@/components/utils/SoundManager";
 import { useLanguage } from "@/components/i18n/LanguageContext";
 import { base44 } from "@/api/base44Client";
+import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
@@ -211,7 +212,7 @@ export default function QuickCatchDialog() {
     try {
       const catchText = `Mein Fang: ${savedCatchData.species}${savedCatchData.length_cm ? ` (${savedCatchData.length_cm}cm)` : ''}${savedCatchData.weight_kg ? `, ${savedCatchData.weight_kg}kg` : ''}${savedCatchData.bait_used ? `\nKöder: ${savedCatchData.bait_used}` : ''}${savedCatchData.notes ? `\n\n${savedCatchData.notes}` : ''}`;
 
-      await base44.entities.Post.create({
+      await entities.Post.create({
         text: catchText,
         photo_url: savedCatchData.photo_url || null,
         likes: 0,
@@ -441,7 +442,7 @@ export default function QuickCatchDialog() {
         if (form.shareInCommunity) {
           // direkt teilen ohne Dialog
           const catchText = `Mein Fang: ${catchData.species}${catchData.length_cm ? ` (${catchData.length_cm}cm)` : ''}${catchData.weight_kg ? `, ${catchData.weight_kg}kg` : ''}${catchData.bait_used ? `\nKöder: ${catchData.bait_used}` : ''}${catchData.notes ? `\n\n${catchData.notes}` : ''}`;
-          await base44.entities.Post.create({ text: catchText, photo_url: catchData.photo_url || null, likes: 0, reported: false });
+          await entities.Post.create({ text: catchText, photo_url: catchData.photo_url || null, likes: 0, reported: false });
           toast.success("Fang gespeichert und in der Community geteilt!");
         } else {
           setShowShareDialog(true);

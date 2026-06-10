@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Heart, Trophy, Award } from 'lucide-react';
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
+import { entities } from "@/api/frontendClient";
 import { Catch } from "@/entities/Catch";
 
 export default function VotingEventCard({ competition, currentUser }) {
@@ -23,7 +24,7 @@ export default function VotingEventCard({ competition, currentUser }) {
       
       setSubmissions(response.leaderboard || []);
       
-      const likes = await base44.entities.VotingLike.filter({
+      const likes = await entities.VotingLike.filter({
         user_id: currentUser?.email,
         competition_id: competition.id
       });

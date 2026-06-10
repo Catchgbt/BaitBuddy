@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Trophy, Calendar, Users, Award } from 'lucide-react';
 import { toast } from 'sonner';
-import { base44 } from '@/api/base44Client';
+import { entities } from "@/api/frontendClient";
 
 export default function CompetitionCard({ competition, currentUser, onUpdate }) {
   const isParticipating = competition.participants?.includes(currentUser?.email);
@@ -23,7 +23,7 @@ export default function CompetitionCard({ competition, currentUser, onUpdate }) 
   const handleJoin = async () => {
     try {
       const updatedParticipants = [...(competition.participants || []), currentUser.email];
-      await base44.entities.Competition.update(competition.id, {
+      await entities.Competition.update(competition.id, {
         participants: updatedParticipants
       });
       toast.success('Du nimmst jetzt am Wettbewerb teil!');
@@ -37,7 +37,7 @@ export default function CompetitionCard({ competition, currentUser, onUpdate }) 
   const handleLeave = async () => {
     try {
       const updatedParticipants = competition.participants.filter(p => p !== currentUser.email);
-      await base44.entities.Competition.update(competition.id, {
+      await entities.Competition.update(competition.id, {
         participants: updatedParticipants
       });
       toast.success('Du nimmst nicht mehr am Wettbewerb teil');

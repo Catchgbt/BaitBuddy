@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Users, TrendingUp, Fish } from 'lucide-react';
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
+import { entities } from "@/api/frontendClient";
 
 export default function ClanLeaderboardCard({ competition, currentUser }) {
   const [clans, setClans] = useState([]);
@@ -20,7 +21,7 @@ export default function ClanLeaderboardCard({ competition, currentUser }) {
 
   const loadData = async () => {
     try {
-      const allClans = await base44.entities.Clan.filter({
+      const allClans = await entities.Clan.filter({
         competition_id: competition.id
       });
       
