@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
-import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 import { Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { useOptimisticMutation } from "@/lib/useOptimisticMutation";
@@ -20,7 +20,7 @@ export default function VoiceSettings() {
 
   const loadSettings = async () => {
     try {
-      const user = await base44.auth.me();
+      const user = await auth.me();
       const settings = user?.settings || {};
       
       const state = {
@@ -38,8 +38,8 @@ export default function VoiceSettings() {
   const voiceSettingsMutation = useOptimisticMutation({
     queryKey: 'userSettings',
     mutationFn: async (settings) => {
-      const user = await base44.auth.me();
-      await base44.auth.updateMe({
+      const user = await auth.me();
+      await auth.updateMe({
         settings: {
           ...user.settings,
           audio_enabled: settings.audioEnabled,

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 import { 
   Radio, 
   Camera, 
@@ -37,7 +37,7 @@ export default function DevicesPage() {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const currentUser = await base44.auth.me();
+        const currentUser = await auth.me();
         setUser(currentUser);
         
         const planId = currentUser?.premium_plan_id || 'free';

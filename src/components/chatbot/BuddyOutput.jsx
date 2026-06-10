@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Volume2, VolumeX, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 
 const cleanTextForSpeech = (text) => {
   if (!text || typeof text !== 'string') return '';
@@ -123,7 +123,7 @@ export default function BuddyOutput({ text, autoPlay = true }) {
 
       let user = null;
       try {
-        user = await base44.auth.me();
+        user = await auth.me();
       } catch (e) {
         console.log("BuddyOutput: User not authenticated, using defaults");
       }

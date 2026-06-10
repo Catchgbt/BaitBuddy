@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { FixedSizeList as VirtualList } from "react-window";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 import { UploadFile, ExtractDataFromUploadedFile } from "@/integrations/Core";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,7 +36,7 @@ export default function LogSection() {
     queryKey: ["catches"],
     queryFn: async () => {
       try {
-        await base44.auth.me();
+        await auth.me();
         setIsGuest(false);
         const { data } = await fetchCatchesWithFallback(
           () => base44.entities.Catch.list("-catch_time", PAGE_SIZE)
@@ -153,9 +154,9 @@ export default function LogSection() {
         createMutation.mutate(payload);
         setEditing(null);
         try {
-          const user = await base44.auth.me();
+          const user = await auth.me();
           const credits = calculateCatchCredits(form.species, parseFloat(form.length_cm));
-          await base44.auth.updateMe({ credits: (user.credits || 0) + credits, total_earned: (user.total_earned || 0) + credits });
+          await auth.updateMe({ credits: (user.credits || 0) + credits, total_earned: (user.total_earned || 0) + credits });
           toast.success(`Fang gespeichert! +${credits} Credits.`);
         } catch {
           toast.success("Fang gespeichert.");
@@ -266,7 +267,7 @@ export default function LogSection() {
             {isGuest && (
               <p className="text-xs text-amber-400 mt-1">
                 Gastmodus - Faenge werden 24 Stunden lokal gespeichert.{" "}
-                <button onClick={() => base44.auth.redirectToLogin()} className="underline font-semibold hover:text-amber-300">
+                <button onClick={() => auth.redirectToLogin()} className="underline font-semibold hover:text-amber-300">
                   Anmelden
                 </button>
               </p>

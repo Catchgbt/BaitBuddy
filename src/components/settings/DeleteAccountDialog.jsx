@@ -15,6 +15,7 @@ import {
 import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
+import { auth } from "@/api/auth";
 
 export default function DeleteAccountDialog() {
   const [open, setOpen] = useState(false);
@@ -37,7 +38,7 @@ export default function DeleteAccountDialog() {
         setOpen(false);
         setConfirmText('');
         setTimeout(() => {
-          base44.auth.logout('/');
+          auth.logout('/');
         }, 2000);
       } else {
         toast.error(response.data?.message || 'Fehler beim Löschen der Account-Daten');

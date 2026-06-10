@@ -10,6 +10,7 @@ import SubPageHeader from "@/components/layout/SubPageHeader";
 import UpdateNotification from "@/components/pwa/UpdateNotification";
 import OfflineIndicator from "@/components/pwa/OfflineIndicator";
 import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 import SwipeToRefresh from "@/components/utils/SwipeToRefresh";
 import { useQueryClient } from "@tanstack/react-query";
 import { HapticProvider } from "@/components/utils/HapticFeedback";
@@ -95,11 +96,11 @@ function LayoutContent({ children, currentPageName }) {
 
   const refreshUser = async () => {
     try {
-      let currentUser = await base44.auth.me();
+      let currentUser = await auth.me();
 
       if (currentUser && !currentUser.first_open_at) {
-        await base44.auth.updateMe({ first_open_at: new Date().toISOString() });
-        currentUser = await base44.auth.me();
+        await auth.updateMe({ first_open_at: new Date().toISOString() });
+        currentUser = await auth.me();
       }
 
       startTransition(() => {
@@ -317,7 +318,7 @@ function LayoutContent({ children, currentPageName }) {
                     </p>
                     <div className="flex flex-col gap-3">
                       <button
-                        onClick={() => base44.auth.redirectToLogin()}
+                        onClick={() => auth.redirectToLogin()}
                         className="w-full py-3 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold transition-colors"
                       >
                         Jetzt anmelden

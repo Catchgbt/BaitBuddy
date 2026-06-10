@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { auth } from "@/api/auth";
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Save, Settings2 } from 'lucide-react';
@@ -13,7 +13,7 @@ export default function GeneralSettings() {
     useEffect(() => {
         (async () => {
             try {
-                const user = await base44.auth.me();
+                const user = await auth.me();
                 if (user && user.settings) {
                     const currentSettings = {
                         language: user.settings.language || 'de',
@@ -31,7 +31,7 @@ export default function GeneralSettings() {
 
     const settingsMutation = useOptimisticMutation({
         mutationFn: async (newSettings) => {
-            await base44.auth.updateMe({ settings: newSettings });
+            await auth.updateMe({ settings: newSettings });
             return newSettings;
         },
         optimisticUpdate: () => settings,

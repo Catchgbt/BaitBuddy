@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
+import { User } from "@/entities/User";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -17,7 +19,7 @@ export default function ChatWidget({ topic = "Allgemein" }) {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const currentUser = await base44.auth.me();
+        const currentUser = await auth.me();
         setUser(currentUser);
       } catch (e) {
         console.log("User not authenticated");
@@ -59,7 +61,7 @@ export default function ChatWidget({ topic = "Allgemein" }) {
       for (const email of uniqueEmails) {
         if (!newCache[email]) {
           try {
-            const allUsers = await base44.entities.User.list('', 1000);
+            const allUsers = await User.list('', 1000);
             const foundUser = allUsers.find(u => u.email === email);
             newCache[email] = foundUser?.full_name || email.split('@')[0];
           } catch {

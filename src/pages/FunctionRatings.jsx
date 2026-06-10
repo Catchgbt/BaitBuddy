@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { auth } from "@/api/auth";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Star, Users } from 'lucide-react';
@@ -16,7 +17,7 @@ export default function FunctionRatings() {
 
   const loadData = async () => {
     try {
-      const user = await base44.auth.me();
+      const user = await auth.me();
       
       if (user?.role !== 'admin') {
         setIsAdmin(false);

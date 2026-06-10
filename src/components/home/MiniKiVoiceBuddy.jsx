@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { catchgbtChat } from "@/functions/catchgbtChat";
 import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
@@ -105,7 +106,7 @@ async function executeAction(action, navigate) {
     if (action.type === "post_community") {
       const p = action.params || {};
       if (!p.text) return "Was soll ich posten?";
-      const me = await base44.auth.me().catch(() => null);
+      const me = await auth.me().catch(() => null);
       await base44.entities.Post.create({
         text: p.text,
         author_name: me?.nickname || me?.full_name || "Angler"
@@ -154,7 +155,7 @@ async function executeAction(action, navigate) {
     if (action.type === "support_ticket") {
       const p = action.params || {};
       if (!p.subject || !p.message) return "Ich brauche Betreff und Beschreibung.";
-      const me = await base44.auth.me().catch(() => null);
+      const me = await auth.me().catch(() => null);
       await base44.entities.SupportTicket.create({
         subject: p.subject,
         message: p.message,

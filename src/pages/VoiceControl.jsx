@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 import PremiumGuard from "@/components/premium/PremiumGuard";
 import { useLocation } from "@/components/location/LocationManager";
 import { toast } from "sonner";
@@ -45,7 +46,7 @@ async function executeVoiceAction(action, navigate) {
     if (action.type === "post_community") {
       const p = action.params || {};
       if (!p.text) return "Was soll ich posten?";
-      const me = await base44.auth.me().catch(() => null);
+      const me = await auth.me().catch(() => null);
       await base44.entities.Post.create({
         text: p.text,
         author_name: me?.nickname || me?.full_name || "Angler"
@@ -1251,7 +1252,7 @@ export default function VoiceControlPage() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    auth.me().then(setUser).catch(() => {});
   }, []);
 
   return (

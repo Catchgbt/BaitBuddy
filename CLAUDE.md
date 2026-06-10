@@ -1,5 +1,19 @@
 # BaitBuddy — Entwicklungsregeln für Claude
 
+## Kommunikation
+
+**Immer auf Deutsch antworten** — alle Antworten, Erklärungen und Zusammenfassungen in dieser Session und in zukünftigen Sessions auf Deutsch. (Code, Commit-Messages und PR-Titel dürfen technisch/englisch bleiben, wo üblich.)
+
+## Projektziel: Unabhängigkeit von base44
+
+**BaitBuddy soll vollständig unabhängig von base44 werden.**
+
+- Die npm-Abhängigkeit `@base44/sdk` ist bereits entfernt. `src/api/frontendClient.js` ist aktuell nur ein **Kompatibilitäts-Shim**, der die base44-SDK-Form nachbaut (`base44.entities.*`, `base44.auth.*`, `base44.functions.invoke`, `base44.integrations.Core.*`).
+- **Ziel:** diesen Shim schrittweise abbauen und durch native, eigene API-Clients ersetzen (die sauberen Named Exports in `frontendClient.js` wie `catches`, `spots`, `ai`, `community`, `premium`, `fishing`, `events`, `gear`, `water`, `user` sind die Zielform).
+- Ca. **109 Dateien** in `src/` nutzen noch das `base44.*`-Muster → werden nach und nach migriert.
+- Das `base44/`-Verzeichnis (config.jsonc, entities/, functions/) ist nur noch base44-Altmetadaten und wird vom laufenden Code **nicht** verwendet — kann am Ende der Migration gelöscht werden.
+- Bei neuem Code **keine** neuen `base44.*`-Aufrufe einführen; native Clients verwenden.
+
 ## WICHTIG: Es gibt NUR EINE App
 
 **Immer mit `src/` (Root) arbeiten. Niemals `frontend/` anfassen.**

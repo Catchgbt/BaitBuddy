@@ -12,6 +12,7 @@ import { useHaptic } from "@/components/utils/HapticFeedback";
 import { useSound } from "@/components/utils/SoundManager";
 import { useLanguage } from "@/components/i18n/LanguageContext";
 import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 export default function QuickCatchDialog() {
@@ -405,9 +406,9 @@ export default function QuickCatchDialog() {
       const savedCatch = await Catch.create(catchData);
 
       try {
-        const user = await base44.auth.me();
+        const user = await auth.me();
         const credits = calculateCatchCredits(trimmedSpecies, parseFloat(form.length_cm));
-        await base44.auth.updateMe({
+        await auth.updateMe({
           credits: (user.credits || 0) + credits,
           total_earned: (user.total_earned || 0) + credits
         });

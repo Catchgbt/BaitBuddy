@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { createPageUrl } from "@/utils";
@@ -12,7 +12,7 @@ export default function FirstLoginTutorialPrompt() {
   useEffect(() => {
     const check = async () => {
       try {
-        const user = await base44.auth.me();
+        const user = await auth.me();
         if (user && !user.tutorial_prompt_seen) {
           setOpen(true);
         }
@@ -25,7 +25,7 @@ export default function FirstLoginTutorialPrompt() {
 
   const markSeen = async () => {
     try {
-      await base44.auth.updateMe({ tutorial_prompt_seen: true });
+      await auth.updateMe({ tutorial_prompt_seen: true });
     } catch (e) {
       console.warn("Konnte tutorial_prompt_seen nicht speichern", e);
     }

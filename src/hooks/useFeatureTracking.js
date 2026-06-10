@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 
 // Trackt die Nutzung eines Features via UsageSession.
 // Erstellt beim Mount eine Session, sendet alle 30s einen Heartbeat
@@ -16,7 +17,7 @@ export function useFeatureTracking(featureId) {
 
     const startSession = async () => {
       try {
-        const user = await base44.auth.me();
+        const user = await auth.me();
         if (!user?.email || cancelled) return;
         userEmail = user.email;
 

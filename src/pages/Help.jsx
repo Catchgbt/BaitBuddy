@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
@@ -31,7 +32,7 @@ export default function Help() {
 
   const loadUser = async () => {
     try {
-      const u = await base44.auth.me();
+      const u = await auth.me();
       setUser(u);
     } catch (e) {
       console.error(e);

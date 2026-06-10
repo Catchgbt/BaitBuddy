@@ -161,7 +161,7 @@ const FUNCTION_MAP = {
 };
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
-const auth = {
+export const auth = {
   me: () => api.get('/api/auth/me'),
 
   updateMe: (data) => api.patch('/api/auth/me', data),

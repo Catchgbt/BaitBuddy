@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -12,7 +13,7 @@ export default function CommentSection({ postId }) {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const currentUser = await base44.auth.me();
+        const currentUser = await auth.me();
         setUser(currentUser);
       } catch (e) {
         console.log("User not authenticated");

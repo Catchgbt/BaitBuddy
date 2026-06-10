@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 import PremiumGuard from "@/components/premium/PremiumGuard";
 import WaterAnalysisPanel from "@/components/water/WaterAnalysisPanel";
 import WaterRadarChart from "@/components/water/WaterRadarChart";
@@ -37,7 +37,7 @@ export default function WaterAnalysisPage() {
 
   const loadUser = async () => {
     try {
-      const currentUser = await base44.auth.me();
+      const currentUser = await auth.me();
       setUser(currentUser);
     } catch (error) {
       console.error("User loading error:", error);

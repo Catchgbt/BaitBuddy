@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
@@ -24,10 +25,10 @@ function EventTimer() {
 
   const loadEventTime = async () => {
     try {
-      const isAuth = await base44.auth.isAuthenticated();
+      const isAuth = await auth.isAuthenticated();
       if (!isAuth) return;
 
-      const user = await base44.auth.me();
+      const user = await auth.me();
       const events = await base44.entities.AppEvent.filter({ is_active: true });
       if (!events || events.length === 0) return;
 

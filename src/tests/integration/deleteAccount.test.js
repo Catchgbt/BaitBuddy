@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { base44 } from '@/api/base44Client';
+import { auth } from "@/api/auth";
 
 describe('Account Deletion Integration Test', () => {
   let testUser = null;
@@ -7,7 +8,7 @@ describe('Account Deletion Integration Test', () => {
 
   beforeEach(async () => {
     try {
-      testUser = await base44.auth.me();
+      testUser = await auth.me();
     } catch (e) {
       console.warn('Could not authenticate before test:', e.message);
     }
@@ -73,7 +74,7 @@ describe('Account Deletion Integration Test', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${await base44.auth.getToken()}`
+        'Authorization': `Bearer ${await auth.getToken()}`
       }
     });
 
@@ -136,7 +137,7 @@ describe('Account Deletion Integration Test', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${await base44.auth.getToken()}`
+        'Authorization': `Bearer ${await auth.getToken()}`
       }
     });
 
@@ -164,7 +165,7 @@ describe('Account Deletion Integration Test', () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${await base44.auth.getToken()}`
+        'Authorization': `Bearer ${await auth.getToken()}`
       }
     });
 

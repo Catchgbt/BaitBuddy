@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 import { generateBathymetricMap } from "@/functions/generateBathymetricMap";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +23,7 @@ export default function BathymetricCrowdsourcing() {
   }, []);
 
   const loadUser = async () => {
-    const u = await base44.auth.me();
+    const u = await auth.me();
     setUser(u);
   };
 

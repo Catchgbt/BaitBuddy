@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 
 export default function MyDepthDataList() {
   const [stats, setStats] = useState({ total: 0, waterBodies: [] });
@@ -13,7 +14,7 @@ export default function MyDepthDataList() {
   const loadStats = async () => {
     setLoading(true);
     try {
-      const user = await base44.auth.me();
+      const user = await auth.me();
       const points = await base44.entities.DepthDataPoint.filter({ created_by: user.email });
       
       const byWater = {};

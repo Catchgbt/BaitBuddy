@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
@@ -13,7 +14,7 @@ export default function AdminTracking() {
   useEffect(() => {
     (async () => {
       try {
-        const me = await base44.auth.me();
+        const me = await auth.me();
         setUser(me);
         if (me?.role !== "admin") {
           setLoading(false);

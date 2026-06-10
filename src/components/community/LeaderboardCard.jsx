@@ -71,7 +71,7 @@ export default function LeaderboardCard({ type, title, icon: Icon }) {
       
       for (const email of allEmails) {
         try {
-          const allUsers = await base44.entities.User.list('', 1000);
+          const allUsers = await User.list('', 1000);
           const foundUser = allUsers.find(u => u.email === email);
           
           if (foundUser) {

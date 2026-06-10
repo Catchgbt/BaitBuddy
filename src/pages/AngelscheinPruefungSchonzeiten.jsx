@@ -5,6 +5,7 @@ import { GraduationCap, MapPin, ArrowLeft, Check, X, Trophy, Target, Clock, Spar
 import { motion } from "framer-motion";
 import RodBuilderGame from "@/components/exam/RodBuilderGame";
 import { base44 } from "@/api/base44Client";
+import { auth } from "@/api/auth";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import PremiumGuard from "@/components/premium/PremiumGuard";
@@ -45,7 +46,7 @@ export default function AngelscheinPruefungSchonzeiten() {
   ];
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    auth.me().then(setUser).catch(() => {});
   }, []);
 
   useEffect(() => {
