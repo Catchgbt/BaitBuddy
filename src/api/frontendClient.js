@@ -254,16 +254,6 @@ export const functions = {
 export const analytics = { track: () => {} };
 export const appLogs   = { logUserInApp: () => {} };
 
-// ── base44 Compatibility Export ───────────────────────────────────────────────
-export const base44 = {
-  auth,
-  entities: entitiesProxy,
-  functions,
-  integrations,
-  analytics,
-  appLogs,
-};
-
 // ── Einzeln exportierte API-Module (für direkte Nutzung) ─────────────────────
 export const catches = {
   list:   (p = {}) => api.get(`/api/catches?limit=${p.limit||50}&offset=${p.offset||0}`),

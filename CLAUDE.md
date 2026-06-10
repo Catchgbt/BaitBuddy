@@ -4,15 +4,19 @@
 
 **Immer auf Deutsch antworten** — alle Antworten, Erklärungen und Zusammenfassungen in dieser Session und in zukünftigen Sessions auf Deutsch. (Code, Commit-Messages und PR-Titel dürfen technisch/englisch bleiben, wo üblich.)
 
-## Projektziel: Unabhängigkeit von base44
+## Projektziel: Unabhängigkeit von base44 — ✅ ERREICHT
 
-**BaitBuddy soll vollständig unabhängig von base44 werden.**
+**BaitBuddy ist vollständig unabhängig von base44.** Das `base44`-Objekt/-Shim wurde komplett entfernt (Domänen 1–7, PRs #27–#33).
 
-- Die npm-Abhängigkeit `@base44/sdk` ist bereits entfernt. `src/api/frontendClient.js` ist aktuell nur ein **Kompatibilitäts-Shim**, der die base44-SDK-Form nachbaut (`base44.entities.*`, `base44.auth.*`, `base44.functions.invoke`, `base44.integrations.Core.*`).
-- **Ziel:** diesen Shim schrittweise abbauen und durch native, eigene API-Clients ersetzen (die sauberen Named Exports in `frontendClient.js` wie `catches`, `spots`, `ai`, `community`, `premium`, `fishing`, `events`, `gear`, `water`, `user` sind die Zielform).
-- Ca. **109 Dateien** in `src/` nutzen noch das `base44.*`-Muster → werden nach und nach migriert.
-- Das `base44/`-Verzeichnis (config.jsonc, entities/, functions/) ist nur noch base44-Altmetadaten und wird vom laufenden Code **nicht** verwendet — kann am Ende der Migration gelöscht werden.
-- Bei neuem Code **keine** neuen `base44.*`-Aufrufe einführen; native Clients verwenden.
+Native API-Clients (alle aus `src/api/`):
+- `auth` (`@/api/auth`) — Login/Logout/Registrierung, aktueller Benutzer
+- `entities` (`@/api/frontendClient`) — Entity-CRUD (`entities.Catch.list()` …); pro-Entity-Module unter `@/entities/*` (z. B. `@/entities/Catch`)
+- `functions` (`@/api/frontendClient`) — `functions.invoke(name, data)` via `FUNCTION_MAP`
+- `integrations` (`@/api/frontendClient` bzw. `@/integrations/Core`) — InvokeLLM, UploadFile, …
+- `analytics`, `appLogs` (`@/api/frontendClient`) — No-op-Clients
+- spezialisierte Module: `catches`, `spots`, `ai`, `community`, `premium`, `fishing`, `events`, `gear`, `water`, `user`
+
+**Regel:** Niemals wieder `base44.*` einführen — immer die nativen Clients nutzen. Das `base44/`-Verzeichnis (config.jsonc, entities/, functions/) ist nur Altmetadaten und wird vom Code nicht verwendet.
 
 ## WICHTIG: Es gibt NUR EINE App
 
