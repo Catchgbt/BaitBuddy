@@ -223,7 +223,7 @@ export const auth = {
 export const User = Object.assign(makeEntity('User'), auth);
 
 // ── Integrations ──────────────────────────────────────────────────────────────
-const integrations = {
+export const integrations = {
   Core: {
     InvokeLLM: ({ prompt, response_json_schema, ...rest }) =>
       api.post('/api/ai/chat', {
@@ -250,14 +250,18 @@ export const functions = {
   },
 };
 
+// ── Analytics / AppLogs (native No-op-Clients) ───────────────────────────────
+export const analytics = { track: () => {} };
+export const appLogs   = { logUserInApp: () => {} };
+
 // ── base44 Compatibility Export ───────────────────────────────────────────────
 export const base44 = {
   auth,
   entities: entitiesProxy,
   functions,
   integrations,
-  analytics: { track: () => {} },
-  appLogs:   { logUserInApp: () => {} },
+  analytics,
+  appLogs,
 };
 
 // ── Einzeln exportierte API-Module (für direkte Nutzung) ─────────────────────

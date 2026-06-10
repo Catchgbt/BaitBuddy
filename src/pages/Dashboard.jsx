@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { integrations } from "@/api/frontendClient";
 import { functions } from "@/api/frontendClient";
 import { Spot } from "@/entities/Spot";
 import { auth } from "@/api/auth";
@@ -344,7 +344,7 @@ Aufgabe: ${waterBodies.length > 0
 
 Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
 
-      const response = await base44.integrations.Core.InvokeLLM({ prompt });
+      const response = await integrations.Core.InvokeLLM({ prompt });
       const analysisText = typeof response === 'string'
         ? response
         : response?.reply || response?.message || 'Keine Analyse verfügbar.';

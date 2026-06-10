@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { base44 } from "@/api/base44Client";
+import { analytics } from "@/api/frontendClient";
 import { entities } from "@/api/frontendClient";
 import { Catch } from "@/entities/Catch";
 import { Spot } from "@/entities/Spot";
@@ -148,7 +148,7 @@ export default function Logbook() {
         const savedCatch = newCatches[0];
         setSavedCatchData(savedCatch);
         
-        base44.analytics.track({
+        analytics.track({
           eventName: "fishing_catch_logged",
           properties: {
             species: variables.species,

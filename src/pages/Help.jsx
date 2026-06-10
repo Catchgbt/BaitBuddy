@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { base44 } from "@/api/base44Client";
+import { integrations } from "@/api/frontendClient";
 import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { toast } from "sonner";
@@ -86,7 +86,7 @@ export default function Help() {
     setAiLoading(true);
     setAiAnswer("");
     try {
-      const res = await base44.integrations.Core.InvokeLLM({
+      const res = await integrations.Core.InvokeLLM({
         prompt: `Du bist der Support-Assistent fuer die Angel-App "CatchGbt". Beantworte folgende Nutzerfrage hilfsbereit, kurz und auf Deutsch:\n\nFrage: ${aiQuestion}`
       });
       setAiAnswer(typeof res === "string" ? res : JSON.stringify(res));

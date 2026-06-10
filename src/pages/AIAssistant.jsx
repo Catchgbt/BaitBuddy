@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { base44 } from "@/api/base44Client";
+import { integrations } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { User } from "@/entities/User";
 import { toast } from "sonner";
@@ -179,7 +179,7 @@ Registriere dich kostenlos, um personalisierte KI-Antworten basierend auf deinem
         await new Promise(resolve => setTimeout(resolve, 800)); // kurze Verzögerung simulieren
         responseContent = getRandomDemoResponse(questionText) + '\n\n---\n*Dies ist eine Demo-Antwort. Registriere dich kostenlos fuer echte KI-Antworten!*';
       } else {
-        const response = await base44.integrations.Core.InvokeLLM({
+        const response = await integrations.Core.InvokeLLM({
           prompt: `Du bist ein erfahrener Angel-Experte und hilfst Anglern mit präzisen, praktischen Ratschlägen. 
           
 Frage des Anglers: ${questionText}
