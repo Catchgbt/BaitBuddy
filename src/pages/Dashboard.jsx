@@ -296,37 +296,57 @@ export default function Dashboard() {
         return;
       }
 
-      const weatherData = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${location.lat}&longitude=${location.lon}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m,cloud_cover&hourly=temperature_2m,precipitation_probability&timezone=auto&forecast_days=1`
-      ).then(res => res.json());
+      const [weatherData, osmData] = await Promise.all([
+        fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${location.lat}&longitude=${location.lon}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m,cloud_cover&timezone=auto`
+        ).then(r => r.json()).catch(() => null),
+        fetch('https://overpass-api.de/api/interpreter', {
+          method: 'POST',
+          body: `[out:json][timeout:10];(way["natural"="water"](around:1500,${location.lat},${location.lon});way["waterway"~"river|stream|canal"](around:1500,${location.lat},${location.lon});relation["natural"="water"](around:1500,${location.lat},${location.lon}););out center 8;`
+        }).then(r => r.json()).catch(() => null)
+      ]);
 
-      const prompt = `Du bist ein erfahrener Angel-Experte und Geografie-Assistent.
+      const waterBodies = osmData?.elements
+        ?.filter(el => el.tags?.name)
+        ?.map(el => {
+          const dlat = (el.center?.lat || el.lat || location.lat) - location.lat;
+          const dlon = (el.center?.lon || el.lon || location.lon) - location.lon;
+          const distM = Math.round(Math.sqrt(dlat * dlat + dlon * dlon) * 111320);
+          const type = el.tags?.waterway ? `Fließgewässer (${el.tags.waterway})` : 'Stillgewässer';
+          return `${el.tags.name} (${type}, ca. ${distM < 1000 ? distM + ' m' : (distM / 1000).toFixed(1) + ' km'})`;
+        }) || [];
 
-AUFGABE: Pruefe zuerst, ob sich der Angler an einem Gewaesser befindet oder ob sich in der naeheren Umgebung (bis ca. 1 km) ein Gewaesser (See, Fluss, Teich, Kanal, Bach, etc.) befindet. Nutze dazu das Internet und OpenStreetMap-Daten fuer die genauen Koordinaten.
+      const gewaesserInfo = waterBodies.length > 0
+        ? `Gefundene Gewässer in der Nähe (aus OpenStreetMap):\n${waterBodies.slice(0, 5).map(w => `- ${w}`).join('\n')}`
+        : 'Laut OpenStreetMap wurden innerhalb von 1,5 km KEINE benannten Gewässer gefunden.';
 
-Standortkoordinaten: Breitengrad ${location.lat.toFixed(5)}, Laengengrad ${location.lon.toFixed(5)}
+      const wetter = weatherData?.current;
+      const prompt = `Du bist ein erfahrener Angel-Experte.
 
-Wetterbedingungen:
-- Temperatur: ${weatherData.current?.temperature_2m}°C
-- Luftfeuchtigkeit: ${weatherData.current?.relative_humidity_2m}%
-- Luftdruck: ${weatherData.current?.surface_pressure} hPa
-- Windgeschwindigkeit: ${weatherData.current?.wind_speed_10m} m/s
-- Windrichtung: ${weatherData.current?.wind_direction_10m}°
-- Bewoelkung: ${weatherData.current?.cloud_cover}%
-- Niederschlag: ${weatherData.current?.precipitation} mm
+Standort des Anglers: ${location.lat.toFixed(5)}, ${location.lon.toFixed(5)}
 
-WICHTIGE REGELN:
-- Wenn KEIN Gewaesser innerhalb von 1 km gefunden wird: Teile dem Angler klar mit, dass er aktuell NICHT an einem Gewaesser ist und daher keine sinnvollen Angel-Tipps gegeben werden koennen. Nenne die naechsten bekannten Gewaesser in der Region und deren ungefaehre Entfernung.
-- Wenn ein Gewaesser GEFUNDEN wird: Nenne den Namen des Gewaessers, die Entfernung, und gib dann konkrete Angel-Tipps fuer genau dieses Gewaesser basierend auf den aktuellen Wetterbedingungen (Fischarten, Koeder, Taktik, beste Uhrzeit).
+${gewaesserInfo}
 
-Antworte auf Deutsch, klar und direkt, ohne Floskeln, in max 6 Saetzen.`;
+Aktuelle Wetterbedingungen:
+- Temperatur: ${wetter?.temperature_2m ?? '?'}°C
+- Luftfeuchtigkeit: ${wetter?.relative_humidity_2m ?? '?'}%
+- Luftdruck: ${wetter?.surface_pressure ?? '?'} hPa
+- Wind: ${wetter?.wind_speed_10m ?? '?'} m/s aus ${wetter?.wind_direction_10m ?? '?'}°
+- Bewölkung: ${wetter?.cloud_cover ?? '?'}%
+- Niederschlag: ${wetter?.precipitation ?? '?'} mm
 
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt: prompt,
-        add_context_from_internet: true
-      });
+Aufgabe: ${waterBodies.length > 0
+  ? 'Nenne das nächste Gewässer und gib konkrete Angel-Tipps für genau dieses Gewässer basierend auf den Wetterbedingungen (Fischarten, Köder, Taktik, beste Uhrzeit).'
+  : 'Teile dem Angler mit, dass er gerade nicht an einem Gewässer ist. Nenne die nächsten bekannten Angelgewässer der Region und grobe Entfernung.'}
 
-      setAiAnalysis(response);
+Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
+
+      const response = await base44.integrations.Core.InvokeLLM({ prompt });
+      const analysisText = typeof response === 'string'
+        ? response
+        : response?.reply || response?.message || 'Keine Analyse verfügbar.';
+
+      setAiAnalysis(analysisText);
       setShowAnalysis(true);
       if (statusAnnouncementRef?.current) {
         statusAnnouncementRef.current.textContent = "KI-Analyse abgeschlossen";
