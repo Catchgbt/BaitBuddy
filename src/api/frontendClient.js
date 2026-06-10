@@ -166,6 +166,9 @@ const auth = {
 
   updateMe: (data) => api.patch('/api/auth/me', data),
 
+  // base44-SDK-Kompatibilität: gleicher Endpunkt wie updateMe
+  updateMyUserData: (data) => api.patch('/api/auth/me', data),
+
   isAuthenticated: async () => {
     if (!api.getToken()) return false;
     try { await api.get('/api/auth/me'); return true; }
@@ -201,6 +204,13 @@ const auth = {
       return res;
     }),
 };
+
+// ── Unified User ──────────────────────────────────────────────────────────────
+// Das base44-SDK bündelte am `User` sowohl Auth-Helfer (me, updateMyUserData …)
+// als auch Entity-Queries (list, filter …). Wir spiegeln das hier, damit beide
+// Aufrufstile funktionieren. Auth-Methoden werden zuletzt gemerged und haben so
+// Vorrang vor den generischen Entity-Methoden.
+export const User = Object.assign(makeEntity('User'), auth);
 
 // ── Integrations ──────────────────────────────────────────────────────────────
 const integrations = {
