@@ -164,7 +164,7 @@ function LayoutContent({ children, currentPageName }) {
   // Einmaliger, verzögerter Aufruf nach dem ersten Paint – blockiert FCP nicht
   useEffect(() => {
     deferredRefreshUser();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   useEffect(() => {

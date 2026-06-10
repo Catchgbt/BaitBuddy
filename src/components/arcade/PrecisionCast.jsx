@@ -231,7 +231,7 @@ export default function PrecisionCast({ onGameEnd }) {
               </label>
               <div className="w-full h-6 bg-gray-700 rounded-full overflow-hidden border border-cyan-500/30">
                 <div 
-                  className="h-full bg-gradient-to-r from-green-500 via-cyan-500 to-yellow-500 transition-all duration-[50ms]"
+                  className="h-full bg-gradient-to-r from-green-500 via-cyan-500 to-yellow-500 transition-all [transition-duration:50ms]"
                   style={{ width: `${power}%` }}
                 ></div>
               </div>

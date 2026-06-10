@@ -1,9 +1,7 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/utils';
-import { Camera, Fish, Map, Cloud, Brain, Award, Compass } from 'lucide-react';
 import { setGuestSession } from '@/components/utils/guestMode';
 import { supabase } from '@/api/supabaseClient';
 import { toast } from 'sonner';

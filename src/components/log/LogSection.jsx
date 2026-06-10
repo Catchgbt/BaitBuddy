@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState } from "react";
 import { FixedSizeList as VirtualList } from "react-window";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { MobileSelect } from "@/components/ui/mobile-select";
 import SwipeToRefresh from "@/components/utils/SwipeToRefresh";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Camera, Edit2, Filter, MapPin, Ruler, Trash2, Upload, Weight, X, Loader2 } from "lucide-react";
+import { Camera, Edit2, Filter, Trash2, Upload, X, Loader2 } from "lucide-react";
 import { getGuestCatches, addGuestCatch, updateGuestCatch, deleteGuestCatch } from "@/components/utils/guestMode";
 import { fetchCatchesWithFallback, fetchSpotsWithFallback } from "@/components/utils/offlineDataCache";
 

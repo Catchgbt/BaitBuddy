@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Download, X, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Download, X, Loader2 } from "lucide-react";
 import { downloadMapArea, getOfflineMapSize } from "@/components/utils/offlineMapDownload";
 import { toast } from "sonner";
 

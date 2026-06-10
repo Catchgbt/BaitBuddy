@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useOptimisticMutation } from '@/lib/useOptimisticMutation';
-import { toast } from 'sonner';
 
 export default function DeleteAccountSection() {
   const [step, setStep] = useState('idle');
