@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import { entities } from "@/api/frontendClient";
 
 function formatTime(totalSeconds) {
@@ -45,7 +44,7 @@ export default function EventLeaderboard() {
         return 0;
       };
 
-      const allSessions = await base44.asServiceRole.entities.UsageSession.list();
+      const allSessions = await entities.UsageSession.list();
       const userMap = {};
       for (const session of allSessions) {
         if (session.feature_id !== 'app_general') continue;

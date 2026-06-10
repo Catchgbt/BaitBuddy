@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { base44 } from "@/api/base44Client";
+import { integrations } from "@/api/frontendClient";
 import { processDepthData } from "@/functions/processDepthData";
 import { MobileSelect } from "@/components/ui/mobile-select";
 import { toast } from "sonner";
@@ -22,7 +22,7 @@ export default function DepthUploadPanel({ onUploadSuccess }) {
 
     setLoading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await integrations.Core.UploadFile({ file });
       const res = await processDepthData({ file_url, water_body_name: waterBodyName, device_type: deviceType, is_public: isPublic });
       toast.success(res.data?.message || "Daten importiert");
       setFile(null);

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { base44 } from "@/api/base44Client";
+import { integrations } from "@/api/frontendClient";
 import { entities } from "@/api/frontendClient";
 import { Catch } from "@/entities/Catch";
 import { auth } from "@/api/auth";
@@ -305,11 +305,11 @@ export default function Community() {
     let photoUrl = null;
     
     try {
-      // FIXIERT: Nutze base44.integrations.Core.UploadFile statt dynamischen Import
+      // FIXIERT: Nutze integrations.Core.UploadFile statt dynamischen Import
       if (newPostImage) {
         toast.info("Lade Bild hoch...");
         
-        const response = await base44.integrations.Core.UploadFile({ file: newPostImage });
+        const response = await integrations.Core.UploadFile({ file: newPostImage });
         photoUrl = response.file_url;
         
         toast.success("Bild hochgeladen!");

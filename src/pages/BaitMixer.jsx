@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { integrations } from "@/api/frontendClient";
 import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import PremiumGuard from "@/components/premium/PremiumGuard";
@@ -142,7 +142,7 @@ ${ingredients.map(ing => `- ${ing.name} (Max: ${ing.max_percentage}%, ${targetFi
 
 Sei konkret, praxisnah und berechne die optimale Mischung!`;
 
-      const response = await base44.integrations.Core.InvokeLLM({
+      const response = await integrations.Core.InvokeLLM({
         prompt,
         add_context_from_internet: false
       });

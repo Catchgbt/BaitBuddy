@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
-import { base44 } from '@/api/base44Client';
+import { appLogs } from "@/api/frontendClient";
 import { stackManager } from '@/components/navigation/MobileStackManager';
 
 /**
@@ -67,7 +67,7 @@ export default function NavigationTracker() {
    */
   useEffect(() => {
     if (isAuthenticated) {
-      base44.appLogs.logUserInApp(location.pathname).catch(() => {});
+      appLogs.logUserInApp(location.pathname).catch(() => {});
     }
   }, [location.pathname, isAuthenticated]);
 

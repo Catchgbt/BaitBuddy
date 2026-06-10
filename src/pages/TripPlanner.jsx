@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { User } from "@/entities/User";
-import { base44 } from "@/api/base44Client";
+import { analytics } from "@/api/frontendClient";
 import { functions } from "@/api/frontendClient";
 import PremiumGuard from "@/components/premium/PremiumGuard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -128,7 +128,7 @@ function TripPlannerContent() {
       window.dispatchEvent(new Event('active-trips-updated'));
       
       if (newActiveState) {
-        base44.analytics.track({
+        analytics.track({
           eventName: "fishing_trip_started",
           properties: {
             target_fish: plan.target_fish,
