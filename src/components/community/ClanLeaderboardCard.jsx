@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Users, TrendingUp, Fish } from 'lucide-react';
 import { toast } from 'sonner';
-import { base44 } from '@/api/base44Client';
+import { functions } from "@/api/frontendClient";
 import { entities } from "@/api/frontendClient";
 
 export default function ClanLeaderboardCard({ competition, currentUser }) {
@@ -30,7 +30,7 @@ export default function ClanLeaderboardCard({ competition, currentUser }) {
       const myClan = allClans.find(c => c.members.includes(currentUser?.email));
       setUserClan(myClan);
 
-      const response = await base44.functions.invoke('getClanLeaderboard', {
+      const response = await functions.invoke('getClanLeaderboard', {
         competition_id: competition.id
       });
       
@@ -49,7 +49,7 @@ export default function ClanLeaderboardCard({ competition, currentUser }) {
     }
 
     try {
-      await base44.functions.invoke('createClan', {
+      await functions.invoke('createClan', {
         name: newClanName,
         description: '',
         competition_id: competition.id
@@ -66,7 +66,7 @@ export default function ClanLeaderboardCard({ competition, currentUser }) {
 
   const handleJoinClan = async (clanId) => {
     try {
-      await base44.functions.invoke('joinClan', {
+      await functions.invoke('joinClan', {
         clan_id: clanId
       });
       

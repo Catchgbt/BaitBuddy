@@ -1,4 +1,4 @@
-import { base44 } from "@/api/base44Client";
+import { functions } from "@/api/frontendClient";
 
 /**
  * Play Integrity Helper
@@ -94,7 +94,7 @@ export async function checkIntegrity(packageName) {
     const nonce = generateNonce();
     const integrityToken = await requestNativeToken(nonce);
 
-    const { data } = await base44.functions.invoke('verifyPlayIntegrity', {
+    const { data } = await functions.invoke('verifyPlayIntegrity', {
       integrityToken,
       packageName,
     });

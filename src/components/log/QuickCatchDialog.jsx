@@ -12,6 +12,7 @@ import { useHaptic } from "@/components/utils/HapticFeedback";
 import { useSound } from "@/components/utils/SoundManager";
 import { useLanguage } from "@/components/i18n/LanguageContext";
 import { base44 } from "@/api/base44Client";
+import { functions } from "@/api/frontendClient";
 import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -590,7 +591,7 @@ export default function QuickCatchDialog() {
                   toast.info("KI analysiert das Bild...");
                   setIsAnalyzing(true);
                   try {
-                    const analysisResult = await base44.functions.invoke('analyzeCatchPhoto', { file_url: form.photo_url });
+                    const analysisResult = await functions.invoke('analyzeCatchPhoto', { file_url: form.photo_url });
                     const data = analysisResult?.data;
                     if (data?.result_data) {
                       setAiAnalysisData(data.result_data);

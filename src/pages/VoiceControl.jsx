@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { base44 } from "@/api/base44Client";
+import { functions } from "@/api/frontendClient";
 import { entities } from "@/api/frontendClient";
 import { Catch } from "@/entities/Catch";
 import { Spot } from "@/entities/Spot";
@@ -481,7 +481,7 @@ function VoiceBuddy() {
     if (parsed.intent === 'ai_fallback') {
       setProcessingAI(true);
       try {
-        const response = await base44.functions.invoke('catchgbtChat', {
+        const response = await functions.invoke('catchgbtChat', {
           messages: [{ role: 'user', content: parsed.entities.question }],
           context: 'voice_control',
           userLocation: currentLocation ? { latitude: currentLocation.lat, longitude: currentLocation.lon } : null

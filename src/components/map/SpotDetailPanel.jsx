@@ -13,7 +13,7 @@ import {
   Heart,
   ExternalLink
 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { functions } from "@/api/frontendClient";
 import { Spot } from "@/entities/Spot";
 import { toast } from 'sonner';
 import { useLocation } from '@/components/location/LocationManager';
@@ -52,7 +52,7 @@ export default function SpotDetailPanel({ spot, onClose, onUpdate }) {
     
     setLoadingTravel(true);
     try {
-      const response = await base44.functions.invoke('calculateTravelTime', {
+      const response = await functions.invoke('calculateTravelTime', {
         fromLat: gpsLocation.lat,
         fromLon: gpsLocation.lon,
         toLat: coords.lat,

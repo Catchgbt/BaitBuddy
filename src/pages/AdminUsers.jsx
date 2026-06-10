@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { functions } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { User } from "@/entities/User";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,7 +51,7 @@ export default function AdminUsers() {
 
     setAssigning(true);
     try {
-      const result = await base44.functions.invoke("adminAssignPlan", {
+      const result = await functions.invoke("adminAssignPlan", {
         target_user_id: selectedUser.id,
         plan_id: selectedPlan,
         duration_days: parseInt(durationDays) || 30

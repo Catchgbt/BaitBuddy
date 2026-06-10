@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Trophy, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { base44 } from '@/api/base44Client';
+import { functions } from "@/api/frontendClient";
 
 const TEMPLATES = [
   {
@@ -60,7 +60,7 @@ export default function CompetitionLauncher({ currentUser, onStarted }) {
     }
     setLoadingId(templateId);
     try {
-      const res = await base44.functions.invoke('startCommunityCompetition', {
+      const res = await functions.invoke('startCommunityCompetition', {
         template_id: templateId
       });
       if (res?.data?.error) {

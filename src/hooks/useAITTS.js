@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { functions } from "@/api/frontendClient";
 import { usePlan } from '@/components/premium/PlanContext';
 import { speakWithBrowserTTS, cancelBrowserTTS, isBrowserTTSAvailable } from '@/components/utils/browserTTS';
 
@@ -32,7 +32,7 @@ export function useAITTS() {
     if (useElevenLabs) {
       try {
         setIsSpeaking(true);
-        const response = await base44.functions.invoke('textToSpeech', { text });
+        const response = await functions.invoke('textToSpeech', { text });
 
         // SDK liefert axios-ähnliches Objekt; bei Audio-Mpeg landet es in response.data
         const data = response?.data;

@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { base44 } from '@/api/base44Client';
+import { functions } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 
 export default function DeleteAccountDialog() {
@@ -31,7 +31,7 @@ export default function DeleteAccountDialog() {
     setIsDeleting(true);
     try {
       toast.info('Lösche Account-Daten...');
-      const response = await base44.functions.invoke('deleteAccount');
+      const response = await functions.invoke('deleteAccount');
 
       if (response.data?.success) {
         toast.success('Account erfolgreich gelöscht!');

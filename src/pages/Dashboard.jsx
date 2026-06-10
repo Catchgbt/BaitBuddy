@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { functions } from "@/api/frontendClient";
 import { Spot } from "@/entities/Spot";
 import { auth } from "@/api/auth";
 import { Link } from "react-router-dom";
@@ -52,7 +53,7 @@ export default function Dashboard() {
   useEffect(() => {
     const cleanupSessions = async () => {
       try {
-        await base44.functions.invoke('cleanupOldSessions');
+        await functions.invoke('cleanupOldSessions');
       } catch (error) {
         console.log('Session cleanup (ignoriert):', error.message);
       }

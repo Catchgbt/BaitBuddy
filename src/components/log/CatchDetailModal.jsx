@@ -5,7 +5,7 @@ import { X, MapPin, Calendar, Ruler, Weight, Fish, FileText, Sparkles, Loader2 }
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import { base44 } from "@/api/base44Client";
+import { functions } from "@/api/frontendClient";
 import { Catch } from "@/entities/Catch";
 import { toast } from "sonner";
 
@@ -27,7 +27,7 @@ export default function CatchDetailModal({ catchItem, onClose, onEdit, spots }) 
     try {
       toast.info("🔍 KI analysiert das Foto...", { duration: 3000 });
 
-      const response = await base44.functions.invoke('analyzeCatchPhoto', {
+      const response = await functions.invoke('analyzeCatchPhoto', {
         file_url: catchItem.photo_url
       });
 

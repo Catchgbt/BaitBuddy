@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { User } from "@/entities/User";
 import { base44 } from "@/api/base44Client";
+import { functions } from "@/api/frontendClient";
 import PremiumGuard from "@/components/premium/PremiumGuard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -79,7 +80,7 @@ function TripPlannerContent() {
     setLoadingTravel(prev => ({ ...prev, [plan.id]: true }));
 
     try {
-      const response = await base44.functions.invoke('calculateTravelTime', {
+      const response = await functions.invoke('calculateTravelTime', {
         fromLat: currentLocation.lat,
         fromLon: currentLocation.lon,
         toLat: toLat,

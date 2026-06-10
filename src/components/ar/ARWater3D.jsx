@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { base44 } from '@/api/base44Client';
+import { functions } from "@/api/frontendClient";
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
@@ -595,7 +595,7 @@ export default function ARWater3D() {
       sensor.start();
 
       const proxyFn = async (z, x, y) => {
-        const response = await base44.functions.invoke('bathymetryProxy', {}, {
+        const response = await functions.invoke('bathymetryProxy', {}, {
           params: { provider: 'gebco', z, x, y }
         });
         return response.config.url;

@@ -11,7 +11,7 @@
 //   - 'play-billing-error'    detail: { productId, code, message }
 //   - 'play-billing-restored' detail: { purchases: [{ productId, purchaseToken, orderId }] }
 
-import { base44 } from "@/api/base44Client";
+import { functions } from "@/api/frontendClient";
 
 export const GOOGLE_PLAY_PRODUCT_IDS = {
   basic: 'catchgbt_basic_monthly',
@@ -40,7 +40,7 @@ export function isGooglePlayBillingAvailable() {
 
 // Aktiviert den Plan serverseitig nach erfolgreichem Google Play Kauf.
 async function activatePlanOnServer({ planId, productId, purchaseToken, orderId }) {
-  const response = await base44.functions.invoke('activatePlan', {
+  const response = await functions.invoke('activatePlan', {
     plan_id: planId,
     payment_method: 'google_play',
     transaction_id: orderId || purchaseToken,

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, Trash2, Loader2, Camera, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { base44 } from '@/api/base44Client';
+import { functions } from "@/api/frontendClient";
 import { Catch } from "@/entities/Catch";
 import { format } from 'date-fns';
 import { useAITTS } from '@/hooks/useAITTS';
@@ -32,7 +32,7 @@ export default function PendingPhotoCard({ photo, spots, findNearestSpot, onAnal
             toast.info('🔍 Analysiere Foto mit KI...');
             
             // KI-Analyse durchführen
-            const response = await base44.functions.invoke('analyzeCatchPhoto', {
+            const response = await functions.invoke('analyzeCatchPhoto', {
                 file_url: photo.photo_url
             });
 

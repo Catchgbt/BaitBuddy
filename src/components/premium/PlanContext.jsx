@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { functions } from "@/api/frontendClient";
 import { planMeetsRequirement, getPlanLevel } from './planHierarchy';
 
 const PlanContext = createContext();
@@ -19,7 +19,7 @@ export function PlanProvider({ children }) {
   const loadPlan = async () => {
     setLoading(true);
     try {
-      const response = await base44.functions.invoke('getPlanStatus');
+      const response = await functions.invoke('getPlanStatus');
       if (response.data && response.data.plan) {
         setPlan(response.data.plan);
       } else {

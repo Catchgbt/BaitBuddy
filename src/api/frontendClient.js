@@ -239,18 +239,22 @@ const integrations = {
   },
 };
 
+// ── Nativer Functions-Client (Teil der base44-Ablösung) ──────────────────────
+// invoke(name, data) -> ruft die in FUNCTION_MAP hinterlegte Backend-Funktion.
+export const functions = {
+  invoke: (name, data) => {
+    const fn = FUNCTION_MAP[name];
+    if (fn) return fn(data);
+    console.warn(`[BaitBuddy] Unbekannte Funktion: ${name}`);
+    return Promise.resolve({});
+  },
+};
+
 // ── base44 Compatibility Export ───────────────────────────────────────────────
 export const base44 = {
   auth,
   entities: entitiesProxy,
-  functions: {
-    invoke: (name, data) => {
-      const fn = FUNCTION_MAP[name];
-      if (fn) return fn(data);
-      console.warn(`[BaitBuddy] Unbekannte Funktion: ${name}`);
-      return Promise.resolve({});
-    },
-  },
+  functions,
   integrations,
   analytics: { track: () => {} },
   appLogs:   { logUserInApp: () => {} },

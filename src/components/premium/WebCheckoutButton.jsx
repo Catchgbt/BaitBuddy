@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CreditCard, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { base44 } from "@/api/base44Client";
+import { functions } from "@/api/frontendClient";
 
 // Web-Checkout via Stripe: Karte, PayPal, SEPA Lastschrift, Klarna
 export default function WebCheckoutButton({ planId, disabled }) {
@@ -11,7 +11,7 @@ export default function WebCheckoutButton({ planId, disabled }) {
   const handleClick = async () => {
     setLoading(true);
     try {
-      const response = await base44.functions.invoke('createStripeCheckoutSession', {
+      const response = await functions.invoke('createStripeCheckoutSession', {
         plan_id: planId
       });
 
