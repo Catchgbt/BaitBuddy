@@ -20,10 +20,14 @@ function KiBuddyBetaInner() {
   const [tonAn, setTonAn] = useState(true);
   const [recording, setRecording] = useState(false);
   const [waveBars, setWaveBars] = useState([4, 4, 4, 4, 4]);
+  const [interimTranscript, setInterimTranscript] = useState("");
+  const [confidence, setConfidence] = useState(0);
+  const [retryCount, setRetryCount] = useState(0);
   const chatRef = useRef();
   const recRef = useRef(null);
   const waveRef = useRef(null);
   const synthRef = useRef(window.speechSynthesis);
+  const timeoutRef = useRef(null);
 
   useEffect(() => {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
@@ -66,8 +70,8 @@ function KiBuddyBetaInner() {
     setStatus("");
   }
 
-  async function ask(q) {
-    setStatus("thinking");
+  async function ask(q, isRetry = false) {
+    if (!isRetry) setStatus("thinking");
     try {
       const chatMessages = messages
         .filter(m => m.role !== "system")
@@ -81,11 +85,19 @@ function KiBuddyBetaInner() {
 
       const ans = res?.reply || res?.message || "Keine Antwort erhalten.";
       setMessages(m => [...m, { role: "assistant", text: ans }]);
+      setRetryCount(0);
       if (tonAn) speak(ans);
       else setStatus("");
-    } catch {
-      setStatus("");
-      setMessages(m => [...m, { role: "system", text: "Verbindungsfehler – bitte erneut versuchen." }]);
+    } catch (err) {
+      if (isRetry && retryCount < 2) {
+        setRetryCount(c => c + 1);
+        await new Promise(r => setTimeout(r, 800));
+        ask(q, true);
+      } else {
+        setStatus("");
+        setRetryCount(0);
+        setMessages(m => [...m, { role: "system", text: "Verbindungsfehler – bitte erneut versuchen." }]);
+      }
     }
   }
 
@@ -97,6 +109,13 @@ function KiBuddyBetaInner() {
     ask(q);
   }
 
+  function clearTimeout() {
+    if (timeoutRef.current) {
+      clearInterval(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  }
+
   function toggleMic() {
     if (recording) { stopMic(); return; }
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -105,15 +124,72 @@ function KiBuddyBetaInner() {
       return;
     }
     const rec = new SR();
-    rec.lang = "de-DE"; rec.interimResults = false;
-    rec.onresult = e => {
-      const q = e.results[0][0].transcript;
-      stopMic();
-      setMessages(m => [...m, { role: "user", text: q }]);
-      ask(q);
+    rec.lang = "de-DE";
+    rec.interimResults = true;
+    rec.maxAlternatives = 1;
+    rec.continuous = false;
+
+    let finalTranscript = "";
+
+    rec.onstart = () => {
+      setInterimTranscript("");
+      setConfidence(0);
+      clearTimeout();
+      timeoutRef.current = setTimeout(() => {
+        rec.abort();
+        setMessages(m => [...m, { role: "system", text: "Timeout – keine Sprache erkannt. Bitte erneut versuchen." }]);
+        stopMic();
+      }, 8000);
     };
-    rec.onerror = () => stopMic();
-    rec.onend = () => { if (recRef.current) stopMic(); };
+
+    rec.onresult = e => {
+      let interim = "";
+      let highestConfidence = 0;
+
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const transcript = e.results[i][0].transcript;
+        const conf = e.results[i][0].confidence || 0;
+
+        if (e.results[i].isFinal) {
+          finalTranscript += transcript + " ";
+          highestConfidence = Math.max(highestConfidence, conf);
+        } else {
+          interim += transcript;
+        }
+      }
+
+      if (interim || finalTranscript) {
+        setInterimTranscript(interim);
+        setConfidence(highestConfidence);
+      }
+
+      if (finalTranscript.trim()) {
+        clearTimeout();
+        stopMic();
+        const q = finalTranscript.trim();
+        setMessages(m => [...m, { role: "user", text: q }]);
+        ask(q, true);
+      }
+    };
+
+    rec.onerror = (event) => {
+      clearTimeout();
+      const errorMessages = {
+        'no-speech': 'Keine Sprache erkannt – Mikrofon aktivieren und erneut versuchen.',
+        'audio-capture': 'Mikrofon nicht verfügbar – bitte Berechtigungen prüfen.',
+        'network': 'Netzwerkfehler – versuche Spracherkennung erneut.',
+        'service-not-available': 'Spracherkennung momentan nicht verfügbar.',
+      };
+      const msg = errorMessages[event.error] || `Fehler bei Spracherkennung: ${event.error}`;
+      setMessages(m => [...m, { role: "system", text: msg }]);
+      stopMic();
+    };
+
+    rec.onend = () => {
+      clearTimeout();
+      if (recRef.current) stopMic();
+    };
+
     rec.start();
     recRef.current = rec;
     setRecording(true);
@@ -121,9 +197,12 @@ function KiBuddyBetaInner() {
   }
 
   function stopMic() {
+    clearTimeout();
     try { recRef.current?.stop(); } catch {}
     recRef.current = null;
     setRecording(false);
+    setInterimTranscript("");
+    setConfidence(0);
     if (status === "listening") setStatus("");
   }
 
@@ -162,7 +241,14 @@ function KiBuddyBetaInner() {
 
           {/* Voice control row */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", background: "#08111f" }}>
-            <span style={{ fontSize: 12, color: "#8899aa", maxWidth: 180, lineHeight: 1.4 }}>Mikrofon aktivieren und Frage stellen</span>
+            <div style={{ fontSize: 12, color: "#8899aa", maxWidth: 140, lineHeight: 1.4 }}>
+              <div>Mikrofon aktivieren</div>
+              {confidence > 0 && (
+                <div style={{ fontSize: 10, color: "#22d3c8", marginTop: 2 }}>
+                  Qualität: {Math.round(confidence * 100)}%
+                </div>
+              )}
+            </div>
             <button
               onClick={toggleMic}
               style={{ display: "flex", alignItems: "center", gap: 7, background: recording ? "#22d3c8" : "#0d2a28", border: "1px solid #22d3c8", borderRadius: 10, padding: "8px 14px", color: recording ? "#060d1a" : "#22d3c8", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
@@ -213,6 +299,11 @@ function KiBuddyBetaInner() {
                 {m.text}
               </div>
             ))}
+            {interimTranscript && (
+              <div style={{ alignSelf: "flex-end", background: "#1a2a3a", border: "1px dashed #1e2f44", borderRadius: 12, borderBottomRightRadius: 4, padding: "9px 12px", color: "#8899aa", fontSize: 12, fontStyle: "italic", maxWidth: "88%" }}>
+                {interimTranscript}
+              </div>
+            )}
             {status === "thinking" && (
               <div style={{ alignSelf: "flex-start", background: "#0d1e14", border: "1px solid #163025", borderRadius: 12, borderBottomLeftRadius: 4, padding: "9px 12px", color: "#7adba0", fontSize: 13 }}>
                 ...
