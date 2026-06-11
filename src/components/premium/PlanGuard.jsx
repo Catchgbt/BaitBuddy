@@ -15,7 +15,7 @@ const PLAN_LABELS = {
 };
 
 export default function PlanGuard({ children, requiredPlan = 'basic', fallback = null, featureName }) {
-  const { hasFeature, loading } = usePlan();
+  const { hasFeature, loading, plan } = usePlan();
 
   if (loading) {
     return (
@@ -25,7 +25,10 @@ export default function PlanGuard({ children, requiredPlan = 'basic', fallback =
     );
   }
 
-  if (hasFeature(requiredPlan)) {
+  const allowed = hasFeature(requiredPlan);
+  console.log(`[PlanGuard] ${featureName || requiredPlan}: plan=${plan?.id}, required=${requiredPlan}, allowed=${allowed}`);
+
+  if (allowed) {
     return children;
   }
 
