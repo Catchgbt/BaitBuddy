@@ -5,7 +5,7 @@ import { invokeLLM } from '../lib/llm.js';
 
 const router = Router();
 
-router.get('/ai/health', (req, res) => {
+router.get('/health', (req, res) => {
   const hasKey = !!process.env.GEMINI_API_KEY;
   const keyPreview = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.slice(0, 10) + '...' : 'nicht gesetzt';
   res.json({
