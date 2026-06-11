@@ -18,6 +18,19 @@ router.get('/health', (req, res) => {
   });
 });
 
+router.get('/ai/test', async (req, res) => {
+  try {
+    const hasKey = !!process.env.GEMINI_API_KEY;
+    if (!hasKey) {
+      return res.json({ ok: false, error: 'GEMINI_API_KEY ist nicht gesetzt', step: 'key_check' });
+    }
+    const reply = await invokeLLM({ prompt: 'Sage nur: Hallo, ich funktioniere!' });
+    return res.json({ ok: true, reply, provider: 'Google Gemini' });
+  } catch (e) {
+    return res.json({ ok: false, error: e.message, stack: e.stack?.split('\n').slice(0, 3), step: 'llm_call' });
+  }
+});
+
 router.post('/ai/chat', requireAuth, async (req, res) => {
   try {
     const { messages = [], userLocation = null } = req.body;
