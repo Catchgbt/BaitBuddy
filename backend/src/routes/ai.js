@@ -5,6 +5,19 @@ import { invokeLLM } from '../lib/llm.js';
 
 const router = Router();
 
+router.get('/health', (req, res) => {
+  const hasKey = !!process.env.GEMINI_API_KEY;
+  const keyPreview = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.slice(0, 10) + '...' : 'nicht gesetzt';
+  res.json({
+    ok: true,
+    api_key_set: hasKey,
+    api_key_preview: keyPreview,
+    provider: 'Google Gemini',
+    node_env: process.env.NODE_ENV,
+    timestamp: new Date().toISOString()
+  });
+});
+
 router.post('/ai/chat', requireAuth, async (req, res) => {
   try {
     const { messages = [], userLocation = null } = req.body;
@@ -90,7 +103,11 @@ Regeln: Aktions-Block nur wenn Nutzer wirklich eine Aktion will. Zuerst kurze Be
 
     return res.json({ ok: true, reply: cleanReply, message: cleanReply, action });
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    console.error('[AI Chat Error]', e.message, e.stack);
+    return res.status(500).json({
+      error: e.message,
+      details: e.message.includes('GEMINI_API_KEY') ? 'API-Schlüssel nicht konfiguriert' : 'KI-Service Fehler'
+    });
   }
 });
 
