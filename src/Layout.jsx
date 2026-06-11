@@ -67,6 +67,7 @@ function LayoutContent({ children, currentPageName }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [voiceOverlayOpen, setVoiceOverlayOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [scrollPositions, setScrollPositions] = useState({});
   const [previousPage, setPreviousPage] = useState(null);
   const [wakeWordDetector, setWakeWordDetector] = useState(null);
@@ -106,22 +107,20 @@ function LayoutContent({ children, currentPageName }) {
 
       startTransition(() => {
         setUser(currentUser);
+        setAuthLoading(false);
       });
       window.dispatchEvent(new CustomEvent('user-refresh-request'));
     } catch (error) {
       console.warn("User not logged in or error fetching user data:", error);
       startTransition(() => {
         setUser(null);
+        setAuthLoading(false);
       });
     }
   };
 
   const deferredRefreshUser = () => {
-    if (typeof requestIdleCallback !== 'undefined') {
-      requestIdleCallback(() => refreshUser(), { timeout: 2000 });
-    } else {
-      setTimeout(refreshUser, 500);
-    }
+    refreshUser();
   };
 
   // Track total online time via UsageSession
@@ -294,6 +293,15 @@ function LayoutContent({ children, currentPageName }) {
         <SEO />
         {children}
       </>
+    );
+  }
+
+  // Auth noch nicht aufgelöst → Spinner statt Gast-Redirect
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-gray-700 border-t-cyan-400 rounded-full animate-spin" />
+      </div>
     );
   }
 
