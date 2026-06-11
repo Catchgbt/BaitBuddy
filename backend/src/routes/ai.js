@@ -185,6 +185,97 @@ router.post('/ai/generate-catch-report', requireAuth, async (req, res) => {
   }
 });
 
+// KI-Standort-Analyse fürs Dashboard ("KI Angelempfehlung"): kombiniert das
+// aktuelle Wetter am Standort mit dem Fangbuch des Nutzers und lässt die KI
+// eine strukturierte Empfehlung erzeugen.
+const WMO = {
+  0: 'klar', 1: 'überwiegend klar', 2: 'teils bewölkt', 3: 'bewölkt',
+  45: 'Nebel', 48: 'Reifnebel', 51: 'leichter Niesel', 53: 'Niesel', 55: 'starker Niesel',
+  61: 'leichter Regen', 63: 'Regen', 65: 'starker Regen',
+  71: 'leichter Schnee', 73: 'Schnee', 75: 'starker Schnee',
+  80: 'Regenschauer', 81: 'Regenschauer', 82: 'heftige Schauer',
+  95: 'Gewitter', 96: 'Gewitter mit Hagel', 99: 'schweres Gewitter'
+};
+
+router.post('/ai/fishing-recommendation', requireAuth, async (req, res) => {
+  try {
+    const { latitude, longitude } = req.body || {};
+    if (latitude == null || longitude == null) {
+      return res.status(400).json({ error: 'latitude und longitude erforderlich' });
+    }
+
+    // Wetter am Standort holen
+    let weather = null;
+    try {
+      const w = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,wind_speed_10m,weather_code,surface_pressure,relative_humidity_2m&timezone=auto`
+      ).then(r => r.json());
+      if (w?.current) {
+        weather = {
+          temperature: w.current.temperature_2m,
+          wind: w.current.wind_speed_10m,
+          pressure: w.current.surface_pressure,
+          humidity: w.current.relative_humidity_2m,
+          condition: WMO[w.current.weather_code] ?? 'unbekannt'
+        };
+      }
+    } catch { /* Wetter optional */ }
+
+    // Fangbuch des Nutzers laden
+    const { data: catches } = await supabase
+      .from('catches').select('*')
+      .eq('created_by', req.user.email)
+      .order('catch_time', { ascending: false }).limit(30);
+    const catchCount = catches?.length || 0;
+
+    const catchSummary = catchCount
+      ? catches.slice(0, 20).map(c =>
+          `- ${c.species || '?'}, ${c.length_cm || '?'}cm, Köder: ${c.bait_used || '?'}, ${c.catch_time ? new Date(c.catch_time).toLocaleDateString('de-DE') : '?'}`
+        ).join('\n')
+      : 'Noch keine Fänge im Fangbuch.';
+
+    const weatherSummary = weather
+      ? `Temperatur: ${weather.temperature}°C, Wind: ${weather.wind} km/h, Luftdruck: ${weather.pressure} hPa, Luftfeuchte: ${weather.humidity}%, Wetter: ${weather.condition}`
+      : 'Keine Wetterdaten verfügbar.';
+
+    const prompt = `Du bist ein erfahrener Angel-Experte. Erstelle eine Angelempfehlung basierend auf den folgenden Daten.
+
+AKTUELLES WETTER AM STANDORT:
+${weatherSummary}
+
+FANGBUCH DES ANGLERS (${catchCount} Fänge):
+${catchSummary}
+
+Antworte AUSSCHLIESSLICH mit einem gültigen JSON-Objekt in exakt diesem Format, ohne Markdown, ohne Erklärungen:
+{
+  "weather_rating": "Gut" | "Mittel" | "Schlecht",
+  "summary": "2-3 Sätze Einschätzung der aktuellen Angelbedingungen auf Deutsch",
+  "optimal_times": ["z.B. Früh morgens 5-8 Uhr", "Abends 19-21 Uhr"],
+  "recommended_baits": ["Köder 1", "Köder 2", "Köder 3"],
+  "target_species": ["Fischart 1", "Fischart 2"],
+  "tips": ["konkreter Tipp 1", "konkreter Tipp 2", "konkreter Tipp 3"]
+}`;
+
+    const raw = await invokeLLM({ prompt });
+
+    let recommendation;
+    try {
+      recommendation = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] || '{}');
+    } catch {
+      recommendation = null;
+    }
+
+    if (!recommendation || !recommendation.summary) {
+      return res.status(502).json({ error: 'KI lieferte keine gültige Empfehlung' });
+    }
+
+    return res.json({ ok: true, data: { recommendation, catchCount, weather } });
+  } catch (e) {
+    console.error('[Fishing Recommendation Error]', e.message);
+    return res.status(500).json({ error: e.message });
+  }
+});
+
 router.post('/ai/tts', requireAuth, async (req, res) => {
   return res.status(501).json({ error: 'TTS not implemented' });
 });
