@@ -5,6 +5,18 @@ import { invokeLLM } from '../lib/llm.js';
 
 const router = Router();
 
+router.get('/ai/health', (req, res) => {
+  const hasKey = !!process.env.ANTHROPIC_API_KEY;
+  const keyPreview = process.env.ANTHROPIC_API_KEY ? process.env.ANTHROPIC_API_KEY.slice(0, 10) + '...' : 'nicht gesetzt';
+  res.json({
+    ok: true,
+    api_key_set: hasKey,
+    api_key_preview: keyPreview,
+    node_env: process.env.NODE_ENV,
+    timestamp: new Date().toISOString()
+  });
+});
+
 router.post('/ai/chat', requireAuth, async (req, res) => {
   try {
     const { messages = [], userLocation = null } = req.body;
