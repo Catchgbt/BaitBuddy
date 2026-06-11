@@ -15,6 +15,7 @@ import PageNotFound from './lib/PageNotFound';
 import PageTransition from '@/lib/PageTransitionEnhanced';
 
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
+import SplashIntro from '@/components/intro/SplashIntro';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { migrateOfflineStorage } from '@/lib/StorageMigration';
 import ErrorBoundary from '@/lib/ErrorBoundary';
@@ -117,6 +118,7 @@ function App() {
 
   return (
     <ErrorBoundary>
+      <SplashIntro />
       <AuthProvider>
         <QueryClientProvider client={queryClientInstance}>
           <MobileStackProvider>
