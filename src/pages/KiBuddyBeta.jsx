@@ -142,6 +142,7 @@ function KiBuddyBetaInner() {
 
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
+      <style>{`@keyframes bbDot { 0%,80%,100% { opacity: 0.3; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }`}</style>
       <div className="w-full max-w-md">
         <div style={{ background: "#060d1a", borderRadius: 16, overflow: "hidden", fontFamily: "'Inter',sans-serif", border: "1px solid #1a2a3a", display: "flex", flexDirection: "column" }}>
 
@@ -214,8 +215,13 @@ function KiBuddyBetaInner() {
               </div>
             ))}
             {status === "thinking" && (
-              <div style={{ alignSelf: "flex-start", background: "#0d1e14", border: "1px solid #163025", borderRadius: 12, borderBottomLeftRadius: 4, padding: "9px 12px", color: "#7adba0", fontSize: 13 }}>
-                ...
+              <div style={{ alignSelf: "flex-start", background: "#0d1e14", border: "1px solid #163025", borderRadius: 12, borderBottomLeftRadius: 4, padding: "9px 12px", color: "#7adba0", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ display: "inline-flex", gap: 3 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#7adba0", animation: "bbDot 1s infinite", animationDelay: "0s" }} />
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#7adba0", animation: "bbDot 1s infinite", animationDelay: "0.2s" }} />
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#7adba0", animation: "bbDot 1s infinite", animationDelay: "0.4s" }} />
+                </span>
+                <span>Marina denkt nach – das kann einen Moment dauern…</span>
               </div>
             )}
           </div>
@@ -243,6 +249,10 @@ function KiBuddyBetaInner() {
             >
               Stop
             </button>
+          </div>
+
+          <div style={{ textAlign: "center", fontSize: 10, color: "#4a5a6a", padding: "0 14px 6px", background: "#08111f", lineHeight: 1.4 }}>
+            Hinweis: Nach dem Senden kann es ein paar Sekunden dauern, bis die Antwort kommt.
           </div>
 
           <div style={{ textAlign: "center", fontSize: 11, color: "#223344", padding: "0 14px 10px", background: "#08111f", letterSpacing: 0.5, textTransform: "uppercase" }}>
