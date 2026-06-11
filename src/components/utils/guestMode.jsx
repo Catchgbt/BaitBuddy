@@ -1,19 +1,15 @@
 // Gastmodus-Hilfsfunktionen
 
-// Seiten, die für Gäste zugänglich sind
-export const GUEST_ALLOWED_PAGES = [
-  'Dashboard',
-  'Profile',
-  'Settings',
-  'Tutorials',
-  'AIAssistant',
-  'Logbook',
-  'Log',
-  'Home',
+// Seiten, die für Gäste GESPERRT sind (nur Admin-Seiten).
+// Alle anderen Seiten sind für Gäste zugänglich — PremiumGuard
+// übernimmt die Plan-basierte Zugriffskontrolle.
+const GUEST_BLOCKED_PAGES = [
+  'AdminUsers',
+  'AdminTracking',
 ];
 
 export function isGuestAllowedPage(pageName) {
-  return GUEST_ALLOWED_PAGES.includes(pageName);
+  return !GUEST_BLOCKED_PAGES.includes(pageName);
 }
 
 // Gast-Session-Key
