@@ -62,8 +62,8 @@ router.get('/premium/products', async (req, res) => {
 router.post('/premium/check-feature', requireAuth, async (req, res) => {
   const { feature } = req.body;
   const { effectiveId } = resolvePlan(req.user);
-  const freeFeatures = ['catches', 'spots', 'weather'];
-  const allowed = effectiveId !== 'free' || freeFeatures.includes(feature);
+  // Alle Features sind für alle Benutzer freigeschaltet
+  const allowed = true;
   return res.json({ ok: true, allowed, plan: effectiveId });
 });
 
