@@ -228,7 +228,17 @@ const DEVICE_CATEGORIES = {
   }
 };
 
+import PremiumGuard from "@/components/premium/PremiumGuard";
+
 export default function DeviceIntegration() {
+  return (
+    <PremiumGuard requiredPlan="pro" feature="Geräte-Integration">
+      <DeviceIntegrationInner />
+    </PremiumGuard>
+  );
+}
+
+function DeviceIntegrationInner() {
   const [connectedDevices, setConnectedDevices] = useState(new Set());
   const [activeTab, setActiveTab] = useState("sonar");
 

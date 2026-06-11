@@ -12,7 +12,17 @@ import { getPersonalizedGreeting } from "@/components/utils/greetings";
 import { Volume2 } from "lucide-react";
 import { getRandomDemoResponse } from "@/components/utils/guestMode";
 
+import PremiumGuard from "@/components/premium/PremiumGuard";
+
 export default function AIAssistant() {
+  return (
+    <PremiumGuard requiredPlan="basic" feature="KI-Buddy Chat">
+      <AIAssistantInner />
+    </PremiumGuard>
+  );
+}
+
+function AIAssistantInner() {
   const [user, setUser] = useState(null);
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState([]);

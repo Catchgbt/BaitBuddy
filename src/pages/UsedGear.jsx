@@ -30,7 +30,17 @@ function centsToDisplay(cents, currency) {
   );
 }
 
+import PremiumGuard from "@/components/premium/PremiumGuard";
+
 export default function UsedGearMarket() {
+  return (
+    <PremiumGuard requiredPlan="basic" feature="Angelbedarf-Marktplatz">
+      <UsedGearMarketInner />
+    </PremiumGuard>
+  );
+}
+
+function UsedGearMarketInner() {
   useFeatureTracking("gear_market");
   const [user, setUser] = useState(null);
   const [items, setItems] = useState([]);

@@ -6,7 +6,17 @@ import { User } from "@/entities/User";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion"; // Added framer-motion imports
 
+import PlanGuard from "@/components/premium/PlanGuard";
+
 export default function CameraAnalysisSection() {
+  return (
+    <PlanGuard requiredPlan="elite" featureName="KI-Echtzeit-Fischerkennung">
+      <CameraAnalysisSectionInner />
+    </PlanGuard>
+  );
+}
+
+function CameraAnalysisSectionInner() {
   const [user, setUser] = useState(null);
   const videoRef = useRef(null);
   const [stream, setStream] = useState(null);

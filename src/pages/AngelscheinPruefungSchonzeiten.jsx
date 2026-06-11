@@ -8,7 +8,6 @@ import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
-import PremiumGuard from "@/components/premium/PremiumGuard";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
 
 export default function AngelscheinPruefungSchonzeiten() {
@@ -212,11 +211,8 @@ export default function AngelscheinPruefungSchonzeiten() {
   };
 
   return (
-    <PremiumGuard 
-      user={user} 
-      requiredPlan="pro"
-      feature="Die Angelschein-Prüfung & Schonzeiten ist ein Pro-Feature"
-    >
+    <>
+      {/* Schonzeiten/Mindestmaße & Angelschein-Quiz sind laut Plan Free-Funktionen. */}
       {showGame && (
         <div className="container mx-auto px-4 py-8">
           <Button
@@ -712,6 +708,6 @@ export default function AngelscheinPruefungSchonzeiten() {
           </div>
         );
       })()}
-    </PremiumGuard>
+    </>
   );
 }

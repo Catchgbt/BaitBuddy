@@ -10,7 +10,17 @@ import BathymetricMapCard from "@/components/depth/BathymetricMapCard";
 import MyDepthDataList from "@/components/depth/MyDepthDataList";
 import { toast } from "sonner";
 
+import PremiumGuard from "@/components/premium/PremiumGuard";
+
 export default function BathymetricCrowdsourcing() {
+  return (
+    <PremiumGuard requiredPlan="pro" feature="Tiefenkarten & Bathymetrie-Crowdsourcing">
+      <BathymetricCrowdsourcingInner />
+    </PremiumGuard>
+  );
+}
+
+function BathymetricCrowdsourcingInner() {
   const [maps, setMaps] = useState([]);
   const [loadingMaps, setLoadingMaps] = useState(true);
   const [user, setUser] = useState(null);

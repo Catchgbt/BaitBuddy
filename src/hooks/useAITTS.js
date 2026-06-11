@@ -1,10 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { functions } from "@/api/frontendClient";
 import { usePlan } from '@/components/premium/PlanContext';
+import { planMeetsRequirement } from '@/components/premium/planHierarchy';
 import { speakWithBrowserTTS, cancelBrowserTTS, isBrowserTTSAvailable } from '@/components/utils/browserTTS';
-
-// Plan-IDs, die ElevenLabs erhalten (Ultimate und höher).
-const ELEVENLABS_PLANS = ['ultimate', 'elite', 'friends_monthly', 'friends'];
 
 export function useAITTS() {
   const { plan } = usePlan();
@@ -12,7 +10,8 @@ export function useAITTS() {
   const audioRef = useRef(null);
 
   const planId = plan?.id || 'free';
-  const useElevenLabs = ELEVENLABS_PLANS.includes(planId);
+  // ElevenLabs für Ultimate (elite) und höher.
+  const useElevenLabs = planMeetsRequirement(planId, 'elite');
 
   const stop = useCallback(() => {
     if (audioRef.current) {

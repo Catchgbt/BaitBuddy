@@ -2,7 +2,17 @@ import React from "react";
 import AnalysisSection from "@/components/analysis/AnalysisSection";
 import { useRef } from "react";
 
+import PremiumGuard from "@/components/premium/PremiumGuard";
+
 export default function Analysis() {
+  return (
+    <PremiumGuard requiredPlan="elite" feature="Profi-Analyse: Zeitreihen & Trends">
+      <AnalysisInner />
+    </PremiumGuard>
+  );
+}
+
+function AnalysisInner() {
   const analysisResultsRef = useRef(null);
 
   const announceAnalysisResult = (message) => {
