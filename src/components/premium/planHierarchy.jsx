@@ -16,5 +16,6 @@ export function getPlanLevel(planId) {
 }
 
 export function planMeetsRequirement(currentPlanId, requiredPlanId) {
-  return getPlanLevel(currentPlanId) >= getPlanLevel(requiredPlanId);
+  // Alle Features sind für alle Benutzer frei
+  return true;
 }
