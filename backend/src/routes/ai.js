@@ -6,13 +6,13 @@ import { invokeLLM } from '../lib/llm.js';
 const router = Router();
 
 router.get('/health', (req, res) => {
-  const hasKey = !!process.env.GEMINI_API_KEY;
-  const keyPreview = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.slice(0, 10) + '...' : 'nicht gesetzt';
+  const hasKey = !!process.env.OPENAI_API_KEY;
+  const keyPreview = process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.slice(0, 10) + '...' : 'nicht gesetzt';
   res.json({
     ok: true,
     api_key_set: hasKey,
     api_key_preview: keyPreview,
-    provider: 'Google Gemini',
+    provider: 'OpenAI',
     node_env: process.env.NODE_ENV,
     timestamp: new Date().toISOString()
   });
@@ -20,12 +20,12 @@ router.get('/health', (req, res) => {
 
 router.get('/ai/test', async (req, res) => {
   try {
-    const hasKey = !!process.env.GEMINI_API_KEY;
+    const hasKey = !!process.env.OPENAI_API_KEY;
     if (!hasKey) {
-      return res.json({ ok: false, error: 'GEMINI_API_KEY ist nicht gesetzt', step: 'key_check' });
+      return res.json({ ok: false, error: 'OPENAI_API_KEY ist nicht gesetzt', step: 'key_check' });
     }
     const reply = await invokeLLM({ prompt: 'Sage nur: Hallo, ich funktioniere!' });
-    return res.json({ ok: true, reply, provider: 'Google Gemini' });
+    return res.json({ ok: true, reply, provider: 'OpenAI' });
   } catch (e) {
     return res.json({ ok: false, error: e.message, stack: e.stack?.split('\n').slice(0, 3), step: 'llm_call' });
   }
@@ -119,7 +119,7 @@ Regeln: Aktions-Block nur wenn Nutzer wirklich eine Aktion will. Zuerst kurze Be
     console.error('[AI Chat Error]', e.message, e.stack);
     return res.status(500).json({
       error: e.message,
-      details: e.message.includes('GEMINI_API_KEY') ? 'API-Schlüssel nicht konfiguriert' : 'KI-Service Fehler'
+      details: e.message.includes('OPENAI_API_KEY') ? 'API-Schlüssel nicht konfiguriert' : 'KI-Service Fehler'
     });
   }
 });
