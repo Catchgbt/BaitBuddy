@@ -7,7 +7,7 @@ export async function invokeLLM({ prompt, imageBase64 = null }) {
     throw new Error('KI-Service nicht verfügbar – GEMINI_API_KEY fehlt in den Server-Einstellungen.');
   }
 
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
 
   const parts = [];
 
