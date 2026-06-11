@@ -209,13 +209,25 @@ export const auth = {
 
   login: (email, password) =>
     api.post('/api/auth/login', { email, password }).then(res => {
-      if (res.token) api.setToken(res.token);
+      if (res.token) {
+        api.setToken(res.token);
+        // Trigger PlanContext to reload plan after token is set
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('plan-updated'));
+        }
+      }
       return res;
     }),
 
   register: (email, password, full_name) =>
     api.post('/api/auth/register', { email, password, full_name }).then(res => {
-      if (res.token) api.setToken(res.token);
+      if (res.token) {
+        api.setToken(res.token);
+        // Trigger PlanContext to reload plan after token is set
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('plan-updated'));
+        }
+      }
       return res;
     }),
 };
