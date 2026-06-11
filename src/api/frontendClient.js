@@ -3,11 +3,13 @@
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 const TOKEN_KEY = 'bb_token';
+const REFRESH_KEY = 'bb_refresh';
 
 // ── Raw HTTP Client ───────────────────────────────────────────────────────────
 class ApiClient {
   constructor() {
     // Token wird bei jeder Request aus localStorage gelesen, nicht gecacht
+    this._refreshPromise = null;
   }
 
   setToken(token) {
@@ -24,7 +26,51 @@ class ApiClient {
     return null;
   }
 
-  async request(method, path, body) {
+  setRefreshToken(token) {
+    if (typeof localStorage !== 'undefined') {
+      if (token) localStorage.setItem(REFRESH_KEY, token);
+      else localStorage.removeItem(REFRESH_KEY);
+    }
+  }
+
+  getRefreshToken() {
+    if (typeof localStorage !== 'undefined') {
+      return localStorage.getItem(REFRESH_KEY);
+    }
+    return null;
+  }
+
+  // Supabase-Access-Tokens laufen nach ~1h ab. Bei 401 wird hier einmalig ein
+  // frisches Token geholt und die Anfrage wiederholt, statt den Nutzer mit
+  // "Verbindungsfehler" sitzen zu lassen. Parallele 401s teilen sich denselben
+  // Refresh-Call (Supabase rotiert Refresh-Tokens bei jeder Nutzung).
+  _refreshSession() {
+    if (!this._refreshPromise) {
+      this._refreshPromise = (async () => {
+        try {
+          const res = await fetch(`${API_URL}/api/auth/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh_token: this.getRefreshToken() }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || !data.token) {
+            this.setToken(null);
+            this.setRefreshToken(null);
+            return false;
+          }
+          this.setToken(data.token);
+          if (data.refresh_token) this.setRefreshToken(data.refresh_token);
+          return true;
+        } catch {
+          return false;
+        }
+      })().finally(() => { this._refreshPromise = null; });
+    }
+    return this._refreshPromise;
+  }
+
+  async request(method, path, body, _retried = false) {
     const token = this.getToken();
     const opts = {
       method,
@@ -37,6 +83,13 @@ class ApiClient {
     const res = await fetch(`${API_URL}${path}`, opts);
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
+      // Abgelaufene Sitzung: einmalig Token erneuern und Anfrage wiederholen.
+      // Login/Register/Refresh selbst sind ausgenommen (401 = falsche Daten).
+      const noRetry = ['/api/auth/login', '/api/auth/register', '/api/auth/refresh'];
+      if (res.status === 401 && !_retried && !noRetry.some(p => path.startsWith(p)) && this.getRefreshToken()) {
+        const refreshed = await this._refreshSession();
+        if (refreshed) return this.request(method, path, body, true);
+      }
       const err = new Error(data.error || `HTTP ${res.status}`);
       err.status = res.status;
       err.data = data;
@@ -194,8 +247,11 @@ export const auth = {
 
   setToken: (token) => api.setToken(token),
 
+  setRefreshToken: (token) => api.setRefreshToken(token),
+
   logout: (redirectUrl) => {
     api.setToken(null);
+    api.setRefreshToken(null);
     if (typeof window !== 'undefined') {
       window.location.href = redirectUrl || '/';
     }
@@ -211,6 +267,7 @@ export const auth = {
     api.post('/api/auth/login', { email, password }).then(res => {
       if (res.token) {
         api.setToken(res.token);
+        if (res.refresh_token) api.setRefreshToken(res.refresh_token);
         // Trigger PlanContext to reload plan after token is set
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new Event('plan-updated'));
@@ -223,6 +280,7 @@ export const auth = {
     api.post('/api/auth/register', { email, password, full_name }).then(res => {
       if (res.token) {
         api.setToken(res.token);
+        if (res.refresh_token) api.setRefreshToken(res.refresh_token);
         // Trigger PlanContext to reload plan after token is set
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new Event('plan-updated'));

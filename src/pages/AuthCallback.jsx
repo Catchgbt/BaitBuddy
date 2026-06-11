@@ -12,6 +12,7 @@ export default function AuthCallback() {
       if (unsubscribed) return;
       if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.access_token) {
         api.setToken(session.access_token);
+        if (session.refresh_token) api.setRefreshToken(session.refresh_token);
         subscription.unsubscribe();
         unsubscribed = true;
         window.location.replace('/Dashboard');
@@ -23,6 +24,7 @@ export default function AuthCallback() {
       if (error) { setStatus('Fehler: ' + error.message); return; }
       if (data.session?.access_token) {
         api.setToken(data.session.access_token);
+        if (data.session.refresh_token) api.setRefreshToken(data.session.refresh_token);
         subscription.unsubscribe();
         unsubscribed = true;
         window.location.replace('/Dashboard');

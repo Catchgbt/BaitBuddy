@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { supabase } from '../lib/supabase.js';
+import { supabase, supabaseUrl, supabaseKey } from '../lib/supabase.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
@@ -13,12 +13,37 @@ router.post('/auth/login', async (req, res) => {
 
   return res.json({
     token: data.session.access_token,
+    refresh_token: data.session.refresh_token,
     user: {
       id: data.user.id,
       email: data.user.email,
       full_name: data.user.user_metadata?.full_name || '',
     },
   });
+});
+
+// Tauscht ein Refresh-Token gegen ein frisches Access-Token. Supabase-Access-
+// Tokens laufen nach ~1h ab; das Frontend ruft diesen Endpunkt bei 401 auf,
+// statt den Nutzer auszuloggen. Direkter GoTrue-REST-Call, um den geteilten
+// Service-Role-Client nicht mit einer User-Session zu verunreinigen.
+router.post('/auth/refresh', async (req, res) => {
+  const { refresh_token } = req.body || {};
+  if (!refresh_token) return res.status(400).json({ error: 'refresh_token erforderlich' });
+
+  try {
+    const r = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: supabaseKey },
+      body: JSON.stringify({ refresh_token }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok || !data.access_token) {
+      return res.status(401).json({ error: 'Sitzung abgelaufen – bitte neu anmelden' });
+    }
+    return res.json({ token: data.access_token, refresh_token: data.refresh_token });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
 });
 
 router.post('/auth/register', async (req, res) => {
@@ -59,6 +84,7 @@ router.post('/auth/register', async (req, res) => {
 
   return res.json({
     token: data.session.access_token,
+    refresh_token: data.session.refresh_token,
     user: {
       id: data.user.id,
       email: data.user.email,

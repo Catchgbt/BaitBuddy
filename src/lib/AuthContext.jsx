@@ -35,6 +35,7 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       if (error.status === 401 || error.status === 403) {
         auth.setToken(null);
+        auth.setRefreshToken?.(null);
       }
     } finally {
       setIsLoadingAuth(false);
@@ -45,6 +46,7 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setIsAuthenticated(false);
     auth.setToken(null);
+    auth.setRefreshToken?.(null);
     if (shouldRedirect && typeof window !== 'undefined') {
       window.location.href = '/';
     }
