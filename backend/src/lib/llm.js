@@ -1,11 +1,23 @@
 import OpenAI from 'openai';
 
+// Akzeptiert mehrere mögliche Variablennamen, da der Key in Vercel
+// unterschiedlich benannt sein kann (OPENAI_API_KEY / OPEN_AI_KEY).
+function getOpenAIKey() {
+  return (
+    process.env.OPENAI_API_KEY ||
+    process.env.OPEN_AI_KEY ||
+    process.env.OPENAI_KEY ||
+    null
+  );
+}
+
 export async function invokeLLM({ prompt, imageBase64 = null }) {
-  if (!process.env.OPENAI_API_KEY) {
+  const apiKey = getOpenAIKey();
+  if (!apiKey) {
     throw new Error('KI-Service nicht verfügbar – OPENAI_API_KEY fehlt in den Server-Einstellungen.');
   }
 
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const openai = new OpenAI({ apiKey });
 
   const messages = [];
 

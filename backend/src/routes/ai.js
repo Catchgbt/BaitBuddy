@@ -5,13 +5,17 @@ import { invokeLLM } from '../lib/llm.js';
 
 const router = Router();
 
+// Liest den OpenAI-Key aus mehreren möglichen Variablennamen.
+function getOpenAIKey() {
+  return process.env.OPENAI_API_KEY || process.env.OPEN_AI_KEY || process.env.OPENAI_KEY || null;
+}
+
 router.get('/health', (req, res) => {
-  const hasKey = !!process.env.OPENAI_API_KEY;
-  const keyPreview = process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.slice(0, 10) + '...' : 'nicht gesetzt';
+  const key = getOpenAIKey();
   res.json({
     ok: true,
-    api_key_set: hasKey,
-    api_key_preview: keyPreview,
+    api_key_set: !!key,
+    api_key_preview: key ? key.slice(0, 10) + '...' : 'nicht gesetzt',
     provider: 'OpenAI',
     node_env: process.env.NODE_ENV,
     timestamp: new Date().toISOString()
@@ -20,8 +24,7 @@ router.get('/health', (req, res) => {
 
 router.get('/ai/test', async (req, res) => {
   try {
-    const hasKey = !!process.env.OPENAI_API_KEY;
-    if (!hasKey) {
+    if (!getOpenAIKey()) {
       return res.json({ ok: false, error: 'OPENAI_API_KEY ist nicht gesetzt', step: 'key_check' });
     }
     const reply = await invokeLLM({ prompt: 'Sage nur: Hallo, ich funktioniere!' });
