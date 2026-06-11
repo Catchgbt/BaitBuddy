@@ -25,7 +25,11 @@ router.get('/health', (req, res) => {
 router.get('/ai/test', async (req, res) => {
   try {
     if (!getOpenAIKey()) {
-      return res.json({ ok: false, error: 'OPENAI_API_KEY ist nicht gesetzt', step: 'key_check' });
+      // Diagnose: nur die NAMEN relevanter Env-Variablen zeigen (keine Werte)
+      const envNames = Object.keys(process.env)
+        .filter(k => /open|api|key|gemini|anthropic/i.test(k))
+        .sort();
+      return res.json({ ok: false, error: 'OPENAI_API_KEY ist nicht gesetzt', step: 'key_check', env_names: envNames });
     }
     const reply = await invokeLLM({ prompt: 'Sage nur: Hallo, ich funktioniere!' });
     return res.json({ ok: true, reply, provider: 'OpenAI' });
