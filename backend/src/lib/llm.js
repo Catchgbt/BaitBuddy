@@ -1,11 +1,11 @@
 import OpenAI from 'openai';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
 export async function invokeLLM({ prompt, imageBase64 = null }) {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error('KI-Service nicht verfügbar – OPENAI_API_KEY fehlt in den Server-Einstellungen.');
   }
+
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   const messages = [];
 
