@@ -90,7 +90,11 @@ Regeln: Aktions-Block nur wenn Nutzer wirklich eine Aktion will. Zuerst kurze Be
 
     return res.json({ ok: true, reply: cleanReply, message: cleanReply, action });
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    console.error('[AI Chat Error]', e.message, e.stack);
+    return res.status(500).json({
+      error: e.message,
+      details: e.message.includes('ANTHROPIC_API_KEY') ? 'API-Schlüssel nicht konfiguriert' : 'KI-Service Fehler'
+    });
   }
 });
 
