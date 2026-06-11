@@ -7,25 +7,30 @@ const TOKEN_KEY = 'bb_token';
 // ── Raw HTTP Client ───────────────────────────────────────────────────────────
 class ApiClient {
   constructor() {
-    this._token = typeof localStorage !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null;
+    // Token wird bei jeder Request aus localStorage gelesen, nicht gecacht
   }
 
   setToken(token) {
-    this._token = token;
     if (typeof localStorage !== 'undefined') {
       if (token) localStorage.setItem(TOKEN_KEY, token);
       else localStorage.removeItem(TOKEN_KEY);
     }
   }
 
-  getToken() { return this._token; }
+  getToken() {
+    if (typeof localStorage !== 'undefined') {
+      return localStorage.getItem(TOKEN_KEY);
+    }
+    return null;
+  }
 
   async request(method, path, body) {
+    const token = this.getToken();
     const opts = {
       method,
       headers: {
         'Content-Type': 'application/json',
-        ...(this._token ? { Authorization: `Bearer ${this._token}` } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
     };
     if (body !== undefined) opts.body = JSON.stringify(body);

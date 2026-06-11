@@ -23,9 +23,12 @@ export function PlanProvider({ children }) {
       // /api/premium/status liefert { ok, plan } direkt (kein data-Wrapper);
       // ältere Aufrufer erwarteten response.data.plan -> beide Formen tolerieren.
       const payload = response?.data ?? response;
+      console.log('[PlanContext] loadPlan response:', { payload, ok: payload?.ok, plan: payload?.plan });
       if (payload && payload.plan) {
+        console.log('[PlanContext] Setting plan to:', payload.plan);
         setPlan(payload.plan);
       } else {
+        console.log('[PlanContext] No plan in response, setting to free');
         setPlan({ id: 'free', name: 'Kostenlos', is_active: false });
       }
     } catch (error) {
