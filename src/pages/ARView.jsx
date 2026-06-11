@@ -22,8 +22,8 @@ export default function ARView() {
   return (
     <PremiumGuard 
       user={user} 
-      requiredPlan="elite"
-      feature="AR-Gewässer-Analyse"
+      requiredPlan="pro"
+      feature="AR-Gewässer-Ansicht 3D"
     >
       <div className="min-h-screen bg-gray-950">
         <ARWater3D />

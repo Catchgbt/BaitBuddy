@@ -25,7 +25,17 @@ import {
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
+import PremiumGuard from "@/components/premium/PremiumGuard";
+
 export default function CatchCam() {
+  return (
+    <PremiumGuard requiredPlan="elite" feature="CatchCam – KI-Analyse vom Foto">
+      <CatchCamInner />
+    </PremiumGuard>
+  );
+}
+
+function CatchCamInner() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const recordCanvasRef = useRef(null);

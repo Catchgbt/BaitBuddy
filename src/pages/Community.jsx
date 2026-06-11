@@ -16,6 +16,7 @@ import CompetitionLauncher from "@/components/community/CompetitionLauncher";
 import VotingEventCard from "@/components/community/VotingEventCard";
 import ClanLeaderboardCard from "@/components/community/ClanLeaderboardCard";
 import LeaderboardCard from "@/components/community/LeaderboardCard";
+import PlanGuard from "@/components/premium/PlanGuard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import ChatWidget from "@/components/community/ChatWidget";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
@@ -824,7 +825,7 @@ export default function Community() {
         )}
         </>)}
 
-        {activeTab === "competitions" && (<>
+        {activeTab === "competitions" && (<PlanGuard requiredPlan="pro" featureName="Community-Wettbewerbe & Clans"><>
         {/* Wettbewerbe starten */}
         <CompetitionLauncher 
           currentUser={currentUser}
@@ -935,9 +936,10 @@ export default function Community() {
             </CardContent>
           </Card>
         )}
-        </>)}
+        </></PlanGuard>)}
 
         {activeTab === "leaderboards" && (
+        <PlanGuard requiredPlan="pro" featureName="Bestenlisten">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <Trophy className="w-5 h-5 text-cyan-400" />
@@ -961,6 +963,7 @@ export default function Community() {
             />
           </div>
         </div>
+        </PlanGuard>
         )}
 
         {/* Externe Links Sektion */}

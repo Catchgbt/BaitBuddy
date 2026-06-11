@@ -10,7 +10,17 @@ const SectionSkeleton = () => (
   </div>
 );
 
+import PremiumGuard from "@/components/premium/PremiumGuard";
+
 export default function AI() {
+  return (
+    <PremiumGuard requiredPlan="elite" feature="KI-Echtzeit-Kamera & Live-Bissanzeiger">
+      <AIInner />
+    </PremiumGuard>
+  );
+}
+
+function AIInner() {
   useFeatureTracking("bite_detector");
   return (
     <div className="min-h-screen bg-gray-950 px-3 sm:px-6 pb-32">

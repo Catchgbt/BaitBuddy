@@ -3,7 +3,17 @@ import CameraAnalysisSection from "@/components/ai/CameraAnalysisSection";
 import BiteDetectorSection from "@/components/ai/BiteDetectorSection";
 import { User } from "@/entities/User";
 
+import PremiumGuard from "@/components/premium/PremiumGuard";
+
 export default function AIPage() {
+  return (
+    <PremiumGuard requiredPlan="elite" feature="KI-Echtzeit-Kamera & Live-Bissanzeiger">
+      <AIPageInner />
+    </PremiumGuard>
+  );
+}
+
+function AIPageInner() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {

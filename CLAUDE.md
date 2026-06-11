@@ -4,6 +4,10 @@
 
 **Immer auf Deutsch antworten** — alle Antworten, Erklärungen und Zusammenfassungen in dieser Session und in zukünftigen Sessions auf Deutsch. (Code, Commit-Messages und PR-Titel dürfen technisch/englisch bleiben, wo üblich.)
 
+## Infrastruktur: nur Vercel & Supabase
+
+**Nur Vercel (Hosting/Deploy/Serverless) und Supabase (DB/Auth/Storage) verwenden.** Keine anderen externen Dienste/Backends einführen (kein base44, kein Render, keine sonstigen MCP-Services für Produktionslogik).
+
 ## Projektziel: Unabhängigkeit von base44 — ✅ ERREICHT
 
 **BaitBuddy ist vollständig unabhängig von base44.** Das `base44`-Objekt/-Shim wurde komplett entfernt (Domänen 1–7, PRs #27–#33).

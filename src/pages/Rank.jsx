@@ -4,7 +4,17 @@ import SwipeToRefresh from "@/components/utils/SwipeToRefresh";
 import RankSection from "@/components/rank/RankSection";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
 
+import PremiumGuard from "@/components/premium/PremiumGuard";
+
 export default function Rank() {
+  return (
+    <PremiumGuard requiredPlan="pro" feature="Community-Ranking">
+      <RankInner />
+    </PremiumGuard>
+  );
+}
+
+function RankInner() {
   useFeatureTracking("leaderboard");
   const queryClient = useQueryClient();
 

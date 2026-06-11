@@ -9,7 +9,17 @@ import { toast } from "sonner";
 import { backendTextToSpeech } from "@/functions/backendTextToSpeech";
 import { MapPin, AlertCircle } from "lucide-react";
 
+import PremiumGuard from "@/components/premium/PremiumGuard";
+
 export default function Weather() {
+  return (
+    <PremiumGuard requiredPlan="basic" feature="Wetter 5-Tage & Wetter-Alarme">
+      <WeatherInner />
+    </PremiumGuard>
+  );
+}
+
+function WeatherInner() {
   const { currentLocation, requestGpsLocation, loading: locationLoading } = useLocation();
   const [weatherData, setWeatherData] = useState(null);
   const [loading, setLoading] = useState(false);

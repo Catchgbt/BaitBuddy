@@ -8,7 +8,17 @@ import BiteDetectorControls from "./BiteDetectorControls";
 import BiteDetectorMetrics from "./BiteDetectorMetrics";
 import BiteDetectorInstructions from "./BiteDetectorInstructions";
 
+import PlanGuard from "@/components/premium/PlanGuard";
+
 export default function BiteDetectorSection() {
+  return (
+    <PlanGuard requiredPlan="elite" featureName="Live-Bissanzeiger (Kamera)">
+      <BiteDetectorSectionInner />
+    </PlanGuard>
+  );
+}
+
+function BiteDetectorSectionInner() {
   const [user, setUser] = useState(null);
   const [running, setRunning] = useState(false);
   const [alarmActive, setAlarmActive] = useState(false);

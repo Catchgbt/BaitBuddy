@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { auth } from "@/api/auth";
-import { 
+import { planMeetsRequirement } from "@/components/premium/planHierarchy";
+import {
   Radio, 
   Camera, 
   Scale, 
@@ -41,7 +42,7 @@ export default function DevicesPage() {
         setUser(currentUser);
         
         const planId = currentUser?.premium_plan_id || 'free';
-        const isPremium = ['pro', 'ultimate'].includes(planId);
+        const isPremium = planMeetsRequirement(planId, 'pro');
         
         let isTrialActive = false;
         if (currentUser?.trial_end_date) {

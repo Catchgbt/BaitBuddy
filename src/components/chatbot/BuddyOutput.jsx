@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Volume2, VolumeX, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/api/auth";
+import { planMeetsRequirement } from "@/components/premium/planHierarchy";
 
 const cleanTextForSpeech = (text) => {
   if (!text || typeof text !== 'string') return '';
@@ -137,7 +138,7 @@ export default function BuddyOutput({ text, autoPlay = true }) {
       const speechRate = user?.settings?.speech_speed || 1.0;
       const voiceId = user?.settings?.voice_id || "alloy";
       const planId = user?.premium_plan_id || 'free';
-      const quality = (planId === 'pro' || planId === 'ultimate') ? 'hd' : 'standard';
+      const quality = planMeetsRequirement(planId, 'pro') ? 'hd' : 'standard';
 
       console.log("BuddyOutput: Attempting backend TTS with quality:", quality);
 
