@@ -125,11 +125,107 @@ function FeatureHints() {
         exit={{ opacity: 0, x: -20 }}
         transition={{ duration: 0.4 }}
       >
-        <p className="text-xs sm:text-sm font-medium bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent whitespace-nowrap">
+        <p className="text-xs sm:text-sm font-medium bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent text-center max-w-md px-2">
           {features[currentFeature]}
         </p>
       </motion.div>
     </AnimatePresence>
+  );
+}
+
+function SideLinks() {
+  return (
+    <div className="flex flex-col gap-6 max-w-[280px]">
+      <a
+        href="https://catchgbt-q7scna.manus.space"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block text-left"
+      >
+        <motion.div
+          animate={{
+            scale: [1, 1.08, 1],
+          }}
+          transition={{
+            duration: 2.4,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        >
+          <div className="flex flex-col items-start gap-1">
+            <span className="text-[10px] sm:text-xs font-bold tracking-[0.3em] uppercase text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.8)]">
+              Website
+            </span>
+            <motion.span
+              animate={{
+                textShadow: [
+                  '0 0 30px rgba(16, 185, 129, 0.9), 0 0 60px rgba(16, 185, 129, 0.6)',
+                  '0 0 50px rgba(34, 211, 238, 0.9), 0 0 80px rgba(34, 211, 238, 0.6)',
+                  '0 0 30px rgba(16, 185, 129, 0.9), 0 0 60px rgba(16, 185, 129, 0.6)'
+                ]
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              className="text-lg sm:text-xl font-bold bg-gradient-to-r from-emerald-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent drop-shadow-2xl break-all"
+              style={{
+                backgroundSize: '200% auto',
+                animation: 'gradient-wave 3s ease infinite'
+              }}
+            >
+              catchgbt-q7scna.manus.space
+            </motion.span>
+          </div>
+        </motion.div>
+      </a>
+
+      <a
+        href="https://bit.ly/4d97tHI"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block text-left"
+      >
+        <motion.div
+          animate={{
+            scale: [1, 1.08, 1],
+          }}
+          transition={{
+            duration: 2.8,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        >
+          <div className="flex flex-col items-start gap-1">
+            <span className="text-[10px] sm:text-xs font-bold tracking-[0.3em] uppercase text-purple-400 drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]">
+              Store Android App
+            </span>
+            <motion.span
+              animate={{
+                textShadow: [
+                  '0 0 30px rgba(168, 85, 247, 0.9), 0 0 60px rgba(168, 85, 247, 0.6)',
+                  '0 0 50px rgba(59, 130, 246, 0.9), 0 0 80px rgba(59, 130, 246, 0.6)',
+                  '0 0 30px rgba(168, 85, 247, 0.9), 0 0 60px rgba(168, 85, 247, 0.6)'
+                ]
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              className="text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-transparent drop-shadow-2xl break-all"
+              style={{
+                backgroundSize: '200% auto',
+                animation: 'gradient-wave 3s ease infinite'
+              }}
+            >
+              bit.ly/4d97tHI
+            </motion.span>
+          </div>
+        </motion.div>
+      </a>
+    </div>
   );
 }
 
@@ -749,112 +845,6 @@ function LandingPageContent() {
                 <RotatingGreeting userName={userName} />
             </motion.div>
 
-            <motion.div 
-                className="fixed top-[calc(8rem+2.5rem)] left-0 right-0 z-40 px-8 flex items-center justify-center"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-            >
-                <FeatureHints />
-            </motion.div>
-
-            <motion.div 
-                className="fixed bottom-[35%] left-[30%] -translate-x-1/2 z-40 px-4 flex flex-col gap-4"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-            >
-                <a
-                    href="https://catchgbt-q7scna.manus.space"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block text-left"
-                >
-                    <motion.div
-                        animate={{
-                            scale: [1, 1.08, 1],
-                        }}
-                        transition={{
-                            duration: 2.4,
-                            repeat: Infinity,
-                            ease: "easeInOut"
-                        }}
-                    >
-                        <div className="flex flex-col items-start gap-1">
-                            <span className="text-[10px] sm:text-xs font-bold tracking-[0.3em] uppercase text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.8)]">
-                                Website
-                            </span>
-                            <motion.span
-                                animate={{
-                                    textShadow: [
-                                        '0 0 30px rgba(16, 185, 129, 0.9), 0 0 60px rgba(16, 185, 129, 0.6)',
-                                        '0 0 50px rgba(34, 211, 238, 0.9), 0 0 80px rgba(34, 211, 238, 0.6)',
-                                        '0 0 30px rgba(16, 185, 129, 0.9), 0 0 60px rgba(16, 185, 129, 0.6)'
-                                    ]
-                                }}
-                                transition={{
-                                    duration: 3,
-                                    repeat: Infinity,
-                                    ease: "easeInOut"
-                                }}
-                                className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-emerald-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent drop-shadow-2xl break-words"
-                                style={{ 
-                                    backgroundSize: '200% auto',
-                                    animation: 'gradient-wave 3s ease infinite'
-                                }}
-                            >
-                                catchgbt-q7scna.manus.space
-                            </motion.span>
-                        </div>
-                    </motion.div>
-                </a>
-
-                <a
-                    href="https://bit.ly/4d97tHI"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block text-left"
-                >
-                    <motion.div
-                        animate={{
-                            scale: [1, 1.08, 1],
-                        }}
-                        transition={{
-                            duration: 2.8,
-                            repeat: Infinity,
-                            ease: "easeInOut"
-                        }}
-                    >
-                        <div className="flex flex-col items-start gap-1">
-                            <span className="text-[10px] sm:text-xs font-bold tracking-[0.3em] uppercase text-purple-400 drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]">
-                                Store Android App
-                            </span>
-                            <motion.span
-                                animate={{
-                                    textShadow: [
-                                        '0 0 30px rgba(168, 85, 247, 0.9), 0 0 60px rgba(168, 85, 247, 0.6)',
-                                        '0 0 50px rgba(59, 130, 246, 0.9), 0 0 80px rgba(59, 130, 246, 0.6)',
-                                        '0 0 30px rgba(168, 85, 247, 0.9), 0 0 60px rgba(168, 85, 247, 0.6)'
-                                    ]
-                                }}
-                                transition={{
-                                    duration: 3,
-                                    repeat: Infinity,
-                                    ease: "easeInOut"
-                                }}
-                                className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-transparent drop-shadow-2xl break-words"
-                                style={{ 
-                                    backgroundSize: '200% auto',
-                                    animation: 'gradient-wave 3s ease infinite'
-                                }}
-                            >
-                                bit.ly/4d97tHI
-                            </motion.span>
-                        </div>
-                    </motion.div>
-                </a>
-            </motion.div>
-
             <div className="fixed top-16 sm:top-32 left-0 right-0 z-10 w-full overflow-hidden flex items-center pointer-events-none">
                 <div
                     className="whitespace-nowrap flex items-center text-xl sm:text-4xl font-bold opacity-70 home-gold-scroll"
@@ -888,14 +878,22 @@ function LandingPageContent() {
                 `}</style>
             </div>
 
-            {!isAuthenticated && (
-                <motion.div
-                    className="fixed inset-0 flex items-center justify-center z-40 pointer-events-none px-4"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 0.3 }}
-                >
-                    <div className="w-full max-w-[320px] bg-black/75 backdrop-blur-2xl border border-white/10 rounded-2xl p-5 shadow-2xl pointer-events-auto">
+            <motion.div
+                className="fixed inset-0 z-40 overflow-y-auto px-4 py-6 pointer-events-none"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+            >
+                <div className="min-h-full flex flex-col items-center justify-center gap-4">
+                    <FeatureHints />
+
+                    <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-12">
+                        <div className="pointer-events-auto order-2 lg:order-1">
+                            <SideLinks />
+                        </div>
+
+                        {!isAuthenticated && (
+                    <div className="w-full max-w-[320px] bg-black/75 backdrop-blur-2xl border border-white/10 rounded-2xl p-5 shadow-2xl pointer-events-auto order-1 lg:order-2">
                         <h2 className="text-center text-base font-bold text-white mb-4">
                             {loginMode === 'login' ? 'Willkommen bei BaitBuddy' : 'Konto erstellen'}
                         </h2>
@@ -1028,8 +1026,10 @@ function LandingPageContent() {
                             Eingeschränkte Funktionen · Keine Registrierung nötig
                         </p>
                     </div>
-                </motion.div>
-            )}
+                        )}
+                    </div>
+                </div>
+            </motion.div>
 
             {isAuthenticated && (
                 <div className="fixed bottom-24 sm:bottom-40 left-4 sm:left-8 z-50">
