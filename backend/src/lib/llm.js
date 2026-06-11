@@ -1,42 +1,59 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+// Groq API (OpenAI-kompatibel) – kein SDK nötig, nutzt natives fetch.
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
-// Akzeptiert mehrere mögliche Variablennamen für den Gemini-Key.
-function getGeminiKey() {
+// Text-Modell und Vision-Modell (für Bildanalyse)
+const TEXT_MODEL = 'llama-3.3-70b-versatile';
+const VISION_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
+
+// Akzeptiert mehrere mögliche Variablennamen für den Groq-Key.
+function getGroqKey() {
   return (
-    process.env.GEMINI_API_KEY ||
-    process.env.GOOGLE_API_KEY ||
-    process.env.GEMINI_KEY ||
+    process.env.GROQ_API_KEY ||
+    process.env.GROG_API_KEY ||
+    process.env.GROK_API_KEY ||
     null
   );
 }
 
 export async function invokeLLM({ prompt, imageBase64 = null }) {
-  const apiKey = getGeminiKey();
+  const apiKey = getGroqKey();
   if (!apiKey) {
-    throw new Error('KI-Service nicht verfügbar – GEMINI_API_KEY fehlt in den Server-Einstellungen.');
+    throw new Error('KI-Service nicht verfügbar – GROQ_API_KEY fehlt in den Server-Einstellungen.');
   }
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
-
-  const parts = [];
+  const messages = [];
+  let model = TEXT_MODEL;
 
   if (imageBase64) {
-    const [header, data] = imageBase64.split(',');
-    const mediaType = header.match(/:(.*?);/)?.[1] ?? 'image/jpeg';
-    parts.push({
-      inlineData: {
-        mimeType: mediaType,
-        data: data
-      }
+    model = VISION_MODEL;
+    const url = imageBase64.startsWith('data:')
+      ? imageBase64
+      : `data:image/jpeg;base64,${imageBase64}`;
+    messages.push({
+      role: 'user',
+      content: [
+        { type: 'image_url', image_url: { url } },
+        { type: 'text', text: prompt }
+      ]
     });
+  } else {
+    messages.push({ role: 'user', content: prompt });
   }
 
-  parts.push({ text: prompt });
-
-  const result = await model.generateContent({
-    contents: [{ parts }]
+  const res = await fetch(GROQ_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({ model, messages, max_tokens: 1024 })
   });
 
-  return result.response.text();
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`Groq API Fehler ${res.status}: ${body.slice(0, 300)}`);
+  }
+
+  const data = await res.json();
+  return data.choices[0].message.content;
 }

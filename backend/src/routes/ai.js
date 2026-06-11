@@ -5,18 +5,18 @@ import { invokeLLM } from '../lib/llm.js';
 
 const router = Router();
 
-// Liest den Gemini-Key aus mehreren möglichen Variablennamen.
-function getGeminiKey() {
-  return process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GEMINI_KEY || null;
+// Liest den Groq-Key aus mehreren möglichen Variablennamen.
+function getGroqKey() {
+  return process.env.GROQ_API_KEY || process.env.GROG_API_KEY || process.env.GROK_API_KEY || null;
 }
 
 router.get('/health', (req, res) => {
-  const key = getGeminiKey();
+  const key = getGroqKey();
   res.json({
     ok: true,
     api_key_set: !!key,
     api_key_preview: key ? key.slice(0, 10) + '...' : 'nicht gesetzt',
-    provider: 'Google Gemini',
+    provider: 'Groq (Llama)',
     node_env: process.env.NODE_ENV,
     timestamp: new Date().toISOString()
   });
@@ -24,15 +24,15 @@ router.get('/health', (req, res) => {
 
 router.get('/ai/test', async (req, res) => {
   try {
-    if (!getGeminiKey()) {
+    if (!getGroqKey()) {
       // Diagnose: nur die NAMEN relevanter Env-Variablen zeigen (keine Werte)
       const envNames = Object.keys(process.env)
-        .filter(k => /open|api|key|gemini|anthropic/i.test(k))
+        .filter(k => /open|api|key|gemini|anthropic|gro/i.test(k))
         .sort();
-      return res.json({ ok: false, error: 'GEMINI_API_KEY ist nicht gesetzt', step: 'key_check', env_names: envNames });
+      return res.json({ ok: false, error: 'GROQ_API_KEY ist nicht gesetzt', step: 'key_check', env_names: envNames });
     }
     const reply = await invokeLLM({ prompt: 'Sage nur: Hallo, ich funktioniere!' });
-    return res.json({ ok: true, reply, provider: 'Google Gemini' });
+    return res.json({ ok: true, reply, provider: 'Groq (Llama)' });
   } catch (e) {
     return res.json({ ok: false, error: e.message, stack: e.stack?.split('\n').slice(0, 3), step: 'llm_call' });
   }
@@ -126,7 +126,7 @@ Regeln: Aktions-Block nur wenn Nutzer wirklich eine Aktion will. Zuerst kurze Be
     console.error('[AI Chat Error]', e.message, e.stack);
     return res.status(500).json({
       error: e.message,
-      details: e.message.includes('GEMINI_API_KEY') ? 'API-Schlüssel nicht konfiguriert' : 'KI-Service Fehler'
+      details: e.message.includes('GROQ_API_KEY') ? 'API-Schlüssel nicht konfiguriert' : 'KI-Service Fehler'
     });
   }
 });
