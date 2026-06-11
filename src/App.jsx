@@ -57,20 +57,18 @@ const AnimatedRoutes = () => {
   const { Pages, Layout, mainPage } = pagesConfig;
   const mainPageKey = mainPage ?? Object.keys(Pages)[0];
   const MainPage = mainPageKey ? Pages[mainPageKey] : null;
-  
-  const LayoutWrapper = ({ children, currentPageName }) => Layout
-    ? <Layout currentPageName={currentPageName}>{children}</Layout>
-    : <>{children}</>;
 
-  return (
+  const currentPageName = location.pathname === '/'
+    ? mainPageKey
+    : location.pathname.slice(1);
+
+  const routeContent = (
     <Suspense fallback={<LazyPageFallback />}>
       <AnimatePresence initial={false}>
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={
             <ErrorBoundary>
-              <LayoutWrapper currentPageName={mainPageKey}>
-                {MainPage && <MainPage />}
-              </LayoutWrapper>
+              {MainPage && <MainPage />}
             </ErrorBoundary>
           } />
           {Object.entries(Pages).map(([path, Page]) => (
@@ -79,38 +77,32 @@ const AnimatedRoutes = () => {
               path={`/${path}`}
               element={
                 <ErrorBoundary>
-                  <LayoutWrapper currentPageName={path}>
-                    <Page />
-                  </LayoutWrapper>
+                  <Page />
                 </ErrorBoundary>
               }
             />
           ))}
           <Route path="/CatchStats" element={
-            <ErrorBoundary>
-              <LayoutWrapper currentPageName="CatchStats">
-                <CatchStats />
-              </LayoutWrapper>
-            </ErrorBoundary>
+            <ErrorBoundary><CatchStats /></ErrorBoundary>
           } />
           <Route path="/AdminTracking" element={
-            <ErrorBoundary>
-              <LayoutWrapper currentPageName="AdminTracking">
-                <AdminTracking />
-              </LayoutWrapper>
-            </ErrorBoundary>
+            <ErrorBoundary><AdminTracking /></ErrorBoundary>
           } />
           <Route path="/Help" element={
-            <ErrorBoundary>
-              <LayoutWrapper currentPageName="Help">
-                <Help />
-              </LayoutWrapper>
-            </ErrorBoundary>
+            <ErrorBoundary><Help /></ErrorBoundary>
           } />
           <Route path="*" element={<PageNotFound />} />
         </Routes>
       </AnimatePresence>
     </Suspense>
+  );
+
+  if (!Layout) return routeContent;
+
+  return (
+    <Layout currentPageName={currentPageName}>
+      {routeContent}
+    </Layout>
   );
 };
 
