@@ -1,51 +1,42 @@
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Akzeptiert mehrere mögliche Variablennamen, da der Key in Vercel
-// unterschiedlich benannt sein kann (OPENAI_API_KEY / OPEN_AI_KEY).
-function getOpenAIKey() {
+// Akzeptiert mehrere mögliche Variablennamen für den Gemini-Key.
+function getGeminiKey() {
   return (
-    process.env.OPENAI_API_KEY ||
-    process.env.OPEN_AI_KEY ||
-    process.env.OPENAI_KEY ||
+    process.env.GEMINI_API_KEY ||
+    process.env.GOOGLE_API_KEY ||
+    process.env.GEMINI_KEY ||
     null
   );
 }
 
 export async function invokeLLM({ prompt, imageBase64 = null }) {
-  const apiKey = getOpenAIKey();
+  const apiKey = getGeminiKey();
   if (!apiKey) {
-    throw new Error('KI-Service nicht verfügbar – OPENAI_API_KEY fehlt in den Server-Einstellungen.');
+    throw new Error('KI-Service nicht verfügbar – GEMINI_API_KEY fehlt in den Server-Einstellungen.');
   }
 
-  const openai = new OpenAI({ apiKey });
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
 
-  const messages = [];
+  const parts = [];
 
   if (imageBase64) {
     const [header, data] = imageBase64.split(',');
     const mediaType = header.match(/:(.*?);/)?.[1] ?? 'image/jpeg';
-    messages.push({
-      role: 'user',
-      content: [
-        {
-          type: 'image_url',
-          image_url: { url: `data:${mediaType};base64,${data}` }
-        },
-        { type: 'text', text: prompt }
-      ]
-    });
-  } else {
-    messages.push({
-      role: 'user',
-      content: prompt
+    parts.push({
+      inlineData: {
+        mimeType: mediaType,
+        data: data
+      }
     });
   }
 
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: messages,
-    max_tokens: 1024
+  parts.push({ text: prompt });
+
+  const result = await model.generateContent({
+    contents: [{ parts }]
   });
 
-  return response.choices[0].message.content;
+  return result.response.text();
 }
