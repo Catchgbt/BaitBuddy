@@ -53,7 +53,7 @@ async function executeVoiceAction(action, navigate) {
   return null;
 }
 
-function speak(text) {
+function speakBrowser(text) {
   if (!('speechSynthesis' in window) || !text) return Promise.resolve();
   return new Promise((resolve) => {
     try {
@@ -73,6 +73,36 @@ function speak(text) {
       resolve();
     }
   });
+}
+
+async function speakElevenLabs(text) {
+  const token = localStorage.getItem('bb_token');
+  const res = await fetch('/api/ai/tts', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    },
+    body: JSON.stringify({ text })
+  });
+  if (!res.ok) throw new Error('ElevenLabs TTS failed');
+  const data = await res.json();
+  const audioSrc = `data:${data.contentType};base64,${data.audioBase64}`;
+  return new Promise((resolve) => {
+    const audio = new Audio(audioSrc);
+    audio.onended = resolve;
+    audio.onerror = resolve;
+    audio.play().catch(resolve);
+  });
+}
+
+async function speak(text) {
+  if (!text || !text.trim()) return;
+  try {
+    await speakElevenLabs(text);
+  } catch {
+    await speakBrowser(text);
+  }
 }
 
 // Animierter Equalizer - zeigt klar ob Voice aktiv ist oder nicht
