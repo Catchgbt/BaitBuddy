@@ -4,6 +4,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { entities } from "@/api/frontendClient";
 import OfflineMapLayer from "./OfflineMapLayer";
+import MarkerClusterGroup from "react-leaflet-cluster";
 
 // Fix default marker icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -13,42 +14,27 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
-// Custom icons
-const spotIcon = new L.Icon({
-  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
+const createCustomIcon = (color, emoji, size = 32) => {
+  const svgString = `
+    <svg width="${size}" height="${size}" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="16" cy="16" r="14" fill="${color}" opacity="0.95" stroke="white" stroke-width="2"/>
+      <circle cx="16" cy="16" r="12" fill="${color}" opacity="0.3"/>
+      <text x="16" y="20" text-anchor="middle" font-size="18" dominant-baseline="middle">${emoji}</text>
+    </svg>
+  `;
+  const svgUrl = `data:image/svg+xml;base64,${btoa(svgString)}`;
+  return L.icon({
+    iconUrl: svgUrl,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    popupAnchor: [0, -size / 2 + 10]
+  });
+};
 
-const clubIcon = new L.Icon({
-  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
-const locationIcon = new L.Icon({
-  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
-const newSpotIcon = new L.Icon({
-  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
+const spotIcon = createCustomIcon("#3b82f6", "📍");
+const clubIcon = createCustomIcon("#10b981", "🏛️");
+const locationIcon = createCustomIcon("#ef4444", "📌");
+const newSpotIcon = createCustomIcon("#f59e0b", "⭐");
 
 function MapEvents({ onMapClick }) {
   useMapEvents({
@@ -302,72 +288,88 @@ export default function MapView({
         );
       })())}
 
-      {/* User Spots */}
-      {spots.filter(spot => spot.latitude != null && spot.longitude != null).map((spot) => (
-        <Marker
-          key={spot.id}
-          position={[spot.latitude, spot.longitude]}
-          icon={spotIcon}
-          eventHandlers={{
-            click: () => onSpotClick(spot)
-          }}
-          alt={`Fishing spot: ${spot.name} on ${spot.water_type}. ${spot.notes || 'No additional notes'}`}
-          aria-label={`Spot marker for ${spot.name}`}
-        >
-          <Popup>
-            <div className="text-sm">
-              <strong>{spot.name}</strong>
-              <p className="text-xs text-gray-600 mt-1">
-                {spot.water_type} • {spot.notes || "Kein Kommentar"}
-              </p>
-            </div>
-          </Popup>
-        </Marker>
-      ))}
+      {/* User Spots with Clustering */}
+      <MarkerClusterGroup chunkedLoading>
+        {spots.filter(spot => spot.latitude != null && spot.longitude != null).map((spot) => (
+          <Marker
+            key={spot.id}
+            position={[spot.latitude, spot.longitude]}
+            icon={spotIcon}
+            eventHandlers={{
+              click: () => onSpotClick(spot)
+            }}
+            alt={`Fishing spot: ${spot.name} on ${spot.water_type}. ${spot.notes || 'No additional notes'}`}
+            aria-label={`Spot marker for ${spot.name}`}
+          >
+            <Popup>
+              <div className="text-sm max-w-xs">
+                <strong className="text-base text-cyan-400">{spot.name}</strong>
+                <p className="text-xs text-gray-400 mt-1">
+                  {spot.water_type} {spot.distance_km && `• ${spot.distance_km.toFixed(1)} km`}
+                </p>
+                {spot.notes && <p className="text-xs text-gray-300 mt-2">{spot.notes}</p>}
+                <div className="flex gap-1 mt-2 flex-wrap text-xs">
+                  {spot.fish_species && spot.fish_species.split(',').slice(0, 3).map((fish, i) => (
+                    <span key={i} className="bg-blue-900/40 text-blue-300 px-2 py-0.5 rounded">
+                      {fish.trim()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+      </MarkerClusterGroup>
 
-      {/* Fishing Clubs/Parks */}
-      {fishingClubs.filter(club => club.coordinates && club.coordinates.lat != null && club.coordinates.lng != null).map((club) => (
-        <Marker
-          key={club.id}
-          position={[club.coordinates.lat, club.coordinates.lng]}
-          icon={clubIcon}
-          eventHandlers={{
-            click: () => onClubClick(club)
-          }}
-          alt={`${club.category === 'club' ? 'Fishing club' : 'Fishing park'}: ${club.name} in ${club.address?.city || 'location unknown'}`}
-          aria-label={`${club.category === 'club' ? 'Club' : 'Park'} marker for ${club.name}`}
-        >
-          <Popup>
-            <div className="text-sm">
-              <strong>{club.name}</strong>
-              <p className="text-xs text-gray-600 mt-1">
-                {club.category === 'club' ? 'Angelverein' : (club.typ || 'Angelpark')}
-              </p>
-              {club.address && (
-                <p className="text-xs text-gray-600">
-                  {club.address.city}
+      {/* Fishing Clubs/Parks with Clustering */}
+      <MarkerClusterGroup chunkedLoading>
+        {fishingClubs.filter(club => club.coordinates && club.coordinates.lat != null && club.coordinates.lng != null).map((club) => (
+          <Marker
+            key={club.id}
+            position={[club.coordinates.lat, club.coordinates.lng]}
+            icon={clubIcon}
+            eventHandlers={{
+              click: () => onClubClick(club)
+            }}
+            alt={`${club.category === 'club' ? 'Fishing club' : 'Fishing park'}: ${club.name} in ${club.address?.city || 'location unknown'}`}
+            aria-label={`${club.category === 'club' ? 'Club' : 'Park'} marker for ${club.name}`}
+          >
+            <Popup>
+              <div className="text-sm max-w-xs">
+                <strong className="text-base text-emerald-400">{club.name}</strong>
+                <p className="text-xs text-gray-400 mt-1">
+                  {club.category === 'club' ? '🏛️ Angelverein' : (club.typ ? `🎣 ${club.typ}` : '🎣 Angelpark')}
                 </p>
-              )}
-              {Array.isArray(club.fische) && club.fische.length > 0 && (
-                <p className="text-xs text-gray-600 mt-1">
-                  🎣 {club.fische.slice(0, 4).join(', ')}
-                  {club.fische.length > 4 ? ' …' : ''}
-                </p>
-              )}
-              {club.website && (
-                <a
-                  href={club.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-cyan-600 underline mt-1 inline-block"
-                >
-                  Website
-                </a>
-              )}
-            </div>
-          </Popup>
-        </Marker>
-      ))}
+                {club.address && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    📍 {club.address.city}
+                  </p>
+                )}
+                {Array.isArray(club.fische) && club.fische.length > 0 && (
+                  <div className="flex gap-1 mt-2 flex-wrap">
+                    {club.fische.slice(0, 4).map((fish, i) => (
+                      <span key={i} className="text-xs bg-emerald-900/40 text-emerald-300 px-1.5 py-0.5 rounded">
+                        {fish}
+                      </span>
+                    ))}
+                    {club.fische.length > 4 && <span className="text-xs text-gray-400">+{club.fische.length - 4}</span>}
+                  </div>
+                )}
+                {club.website && (
+                  <a
+                    href={club.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-cyan-400 underline mt-2 inline-block hover:text-cyan-300"
+                  >
+                    🌐 Website
+                  </a>
+                )}
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+      </MarkerClusterGroup>
 
       {/* New Spot Marker (temporary) */}
       {newSpotMarker && (
