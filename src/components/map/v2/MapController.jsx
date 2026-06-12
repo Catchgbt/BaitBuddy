@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Spot } from "@/entities/Spot";
 import { FishingClub } from "@/entities/FishingClub";
 import { angelparks } from "@/data/angelparks";
+import fishingClubsCSVExport from "@/data/fishingClubsCSVExport.json";
 import { Button } from "@/components/ui/button";
 import { MapPin, Plus, Layers, Navigation, X, Loader2, Info, Search } from "lucide-react";
 import { useLocation } from "@/components/location/LocationManager";
@@ -53,12 +54,14 @@ function MapController() {
     initialData: []
   });
 
-  // Statische Angelparks mit den vom Backend gelieferten Vereinen/Parks
-  // zusammenführen. Backend-Einträge haben Vorrang (Dedupe per id).
+  // Merge: Backend Clubs + CSV Export + statische Angelparks
+  // Backend-Einträge > CSV > statische Parks (Dedupe per id)
   const allClubs = useMemo(() => {
     const seen = new Set((fishingClubs || []).map(fc => fc.id));
+    const csvClubs = (fishingClubsCSVExport || []).filter(c => !seen.has(c.id));
+    csvClubs.forEach(c => seen.add(c.id));
     const staticParks = angelparks.filter(p => !seen.has(p.id));
-    return [...fishingClubs, ...staticParks];
+    return [...fishingClubs, ...csvClubs, ...staticParks];
   }, [fishingClubs]);
 
   useEffect(() => {
@@ -223,7 +226,9 @@ function MapController() {
     ? spots.filter(s => matchesSearch(s.name))
     : [];
   const filteredClubs = allClubs.filter(fc => {
-    const categoryMatch = fc.category === 'club' ? filters.clubs : (fc.category === 'spot' ? filters.parks : false);
+    // CSV exports have category field, else default to 'club'
+    const category = fc.category || 'club';
+    const categoryMatch = category === 'club' ? filters.clubs : (category === 'spot' ? filters.parks : false);
     return categoryMatch && matchesSearch(fc.name);
   });
   const filteredWaters = filters.waters ? waterBodies : [];
