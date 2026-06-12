@@ -311,13 +311,21 @@ Sei konkret und praktisch!`;
           <div className="text-center space-y-2">
             <div className="flex items-center justify-center gap-2 mb-2">
               <Sparkles className="w-8 h-8 text-cyan-400" />
-              <h1 className="text-3xl sm:text-4xl font-bold text-cyan-400 drop-shadow-[0_0_20px_rgba(34,211,238,0.8)]">
-                KI-Köder-Mischer Pro
-              </h1>
+              <div className="relative">
+                <h1 className="text-3xl sm:text-4xl font-bold text-cyan-400 drop-shadow-[0_0_20px_rgba(34,211,238,0.8)]">
+                  KI-Köder-Mischer Pro
+                </h1>
+                <span className="absolute -top-2 -right-12 inline-block px-2 py-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold rounded-full animate-pulse">
+                  BETA
+                </span>
+              </div>
               <Zap className="w-8 h-8 text-yellow-400" />
             </div>
             <p className="text-gray-400">
               Erstelle optimierte Boilies & Anfütterung mit KI-Prognose
+            </p>
+            <p className="text-xs text-purple-400 mt-2">
+              🚀 Neue Funktion: Erweiterte Prognose mit 24 vordefinierten Rezepten
             </p>
           </div>
 
