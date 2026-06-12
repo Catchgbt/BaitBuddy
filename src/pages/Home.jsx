@@ -783,10 +783,10 @@ function LandingPageContent() {
                         Tutorial
                     </motion.span>
                 </motion.button>
+            </div>
 
-                <div className="z-50">
-                    <LanguageSwitcher />
-                </div>
+            <div className="fixed top-4 right-4 sm:top-8 sm:right-8 z-50">
+                <LanguageSwitcher />
             </div>
 
             <motion.div
