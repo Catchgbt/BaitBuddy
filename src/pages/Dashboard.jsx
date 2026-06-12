@@ -5,10 +5,10 @@ import { Spot } from "@/entities/Spot";
 import { auth } from "@/api/auth";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import WakeWordIndicator from "@/components/header/WakeWordIndicator";
+import VoiceControlWidget from "@/components/dashboard/VoiceControlWidget";
 import MiniKarte from "@/components/home/MiniKarte";
 import WeatherRadarMap from "@/components/weather/WeatherRadarMap";
-import MiniKiVoiceBuddy from "@/components/home/MiniKiVoiceBuddy";
+import { Brain, Mic, BookOpen, ArrowRight } from "lucide-react";
 import SchonzeitWarner from "@/components/dashboard/SchonzeitWarner";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -18,7 +18,6 @@ import FishingRecommendationCard from "@/components/dashboard/FishingRecommendat
 import { useQueryClient } from "@tanstack/react-query";
 import { usePredictivePrefetch } from "@/hooks/usePredictivePrefetch";
 import PageContainer from "@/components/layout/PageContainer";
-import VoiceOverlay from "@/components/layout/VoiceOverlay";
 import CommunityPostDialog from "@/components/community/CommunityPostDialog";
 
 export default function Dashboard() {
@@ -29,21 +28,12 @@ export default function Dashboard() {
   const [weather, setWeather] = useState(null);
   const [nearestSpot, setNearestSpot] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [voiceOverlayOpen, setVoiceOverlayOpen] = useState(false);
-  const [voiceStatus, setVoiceStatus] = useState({
-    isActive: false,
-    mode: null,
-    isListening: false,
-    error: null
-  });
-  const [buttonPulse, setButtonPulse] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullStart, setPullStart] = useState(0);
   const [pullDistance, setPullDistance] = useState(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
-  const [voiceTranscript, setVoiceTranscript] = useState('');
   const [showCommunityDialog, setShowCommunityDialog] = useState(false);
 
   useEffect(() => {
@@ -61,29 +51,6 @@ export default function Dashboard() {
     
     cleanupSessions();
     loadData();
-
-    const handleVoiceStatusUpdate = (event) => {
-      if (event.detail) {
-        setVoiceStatus(event.detail);
-      }
-    };
-
-    window.addEventListener('wake-word-status-change', handleVoiceStatusUpdate);
-
-    const handleWakeWordDetected = () => {
-      setButtonPulse(true);
-      setTimeout(() => setButtonPulse(false), 1000);
-    };
-
-    window.addEventListener('wake-word-detected', handleWakeWordDetected);
-
-    const handleVoiceTranscript = (event) => {
-      if (event.detail) {
-        setVoiceTranscript(event.detail);
-      }
-    };
-
-    window.addEventListener('voice-transcript', handleVoiceTranscript);
 
     const handleTouchStart = (e) => {
       if (window.scrollY === 0) {
@@ -115,9 +82,6 @@ export default function Dashboard() {
     window.addEventListener('touchend', handleTouchEnd);
 
     return () => {
-      window.removeEventListener('wake-word-status-change', handleVoiceStatusUpdate);
-      window.removeEventListener('wake-word-detected', handleWakeWordDetected);
-      window.removeEventListener('voice-transcript', handleVoiceTranscript);
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleTouchEnd);
@@ -384,12 +348,6 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
         className="sr-only"
       />
       
-      <VoiceOverlay 
-        isOpen={voiceOverlayOpen} 
-        onClose={() => setVoiceOverlayOpen(false)} 
-        currentPageName="Dashboard" 
-      />
-
       <div className="space-y-12">
 
         <div className="flex items-center justify-between border-b border-gray-800/50 pb-6">
@@ -410,26 +368,7 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
           
           <div className="flex flex-col items-end gap-2">
             <OfflineCacheIndicator />
-            <button
-              onClick={() => setVoiceOverlayOpen(true)}
-              className={`flex items-center gap-3 px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 border border-cyan-500/30 hover:border-cyan-400/50 transition-all min-h-[44px] min-w-[44px] ${
-                buttonPulse ? 'animate-pulse ring-2 ring-cyan-400' : ''
-              }`}
-            >
-              <div className="text-xs text-gray-400 hidden sm:block">KI-Voice</div>
-              <WakeWordIndicator 
-                isActive={voiceStatus.isActive}
-                mode={voiceStatus.mode}
-                isListening={voiceStatus.isListening}
-                error={voiceStatus.error}
-                showAlways={true}
-              />
-            </button>
-            {voiceTranscript && (
-              <div className="bg-gradient-to-br from-cyan-900/50 to-cyan-900/30 rounded-lg px-4 py-2 border-2 border-cyan-500/60 shadow-lg shadow-cyan-500/20 w-full max-w-sm">
-                <p className="text-sm text-cyan-200 font-medium break-words">{voiceTranscript}</p>
-              </div>
-            )}
+            <VoiceControlWidget />
           </div>
         </div>
 
@@ -450,9 +389,31 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
           </div>
         )}
 
-        <div>
-          <MiniKiVoiceBuddy />
-        </div>
+        <Link
+          to={createPageUrl('KiBuddyBeta')}
+          className="block relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-900/30 via-gray-900/60 to-emerald-900/30 backdrop-blur-sm p-6 border border-cyan-500/30 hover:border-cyan-400/50 transition-all group"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-cyan-500 to-emerald-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-cyan-500/20 group-hover:scale-105 transition-transform">
+              <Brain className="w-7 h-7 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg font-bold text-white mb-1">KI-Buddy CatchGBT</h3>
+              <p className="text-sm text-gray-300 leading-snug">
+                Frag mich alles rund ums Angeln — oder steuere die App per Voice!
+              </p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                <span className="inline-flex items-center gap-1 text-[11px] text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20">
+                  <Mic className="w-3 h-3" /> "Mach einen Fangbuch-Eintrag"
+                </span>
+                <span className="inline-flex items-center gap-1 text-[11px] text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                  <BookOpen className="w-3 h-3" /> Tipps, Koeder, Wetter
+                </span>
+              </div>
+            </div>
+            <ArrowRight className="w-5 h-5 text-cyan-400 flex-shrink-0 group-hover:translate-x-1 transition-transform" />
+          </div>
+        </Link>
 
         <Link
           to={createPageUrl('Map')}

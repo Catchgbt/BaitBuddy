@@ -130,39 +130,22 @@ export default function Header({
     >
       <div className="px-4 h-16 flex items-center justify-between">
         
-        {/* Animierter Plan-Name im Hintergrund - durchgehender CSS-Loop */}
+        {/* Aktiver Plan statisch zentriert im Hintergrund */}
         {!planLoading && currentPlan && (
           <div
-            className="absolute inset-0 z-0 pointer-events-none overflow-hidden flex items-center"
+            className="absolute inset-0 z-0 pointer-events-none overflow-hidden flex items-center justify-center"
             aria-hidden="true"
           >
-            <div
-              className="whitespace-nowrap header-plan-scroll flex"
-              style={{ willChange: 'transform' }}
+            <span
+              className={`whitespace-nowrap text-5xl font-bold tracking-wider ${
+                currentPlan.id === 'free' ? 'text-gray-300/40 drop-shadow-[0_0_20px_rgba(209,213,219,0.3)]' :
+                currentPlan.id === 'basic' ? 'text-blue-400/50 drop-shadow-[0_0_20px_rgba(96,165,250,0.4)]' :
+                currentPlan.id === 'pro' ? 'text-purple-400/50 drop-shadow-[0_0_20px_rgba(192,132,252,0.4)]' :
+                'text-amber-400/50 drop-shadow-[0_0_20px_rgba(251,191,36,0.4)]'
+              }`}
             >
-              {[0, 1].map((i) => (
-                <span
-                  key={i}
-                  className={`inline-block px-12 text-5xl font-bold tracking-wider ${
-                    currentPlan.id === 'free' ? 'text-gray-300/40 drop-shadow-[0_0_20px_rgba(209,213,219,0.3)]' :
-                    currentPlan.id === 'basic' ? 'text-blue-400/50 drop-shadow-[0_0_20px_rgba(96,165,250,0.4)]' :
-                    currentPlan.id === 'pro' ? 'text-purple-400/50 drop-shadow-[0_0_20px_rgba(192,132,252,0.4)]' :
-                    'text-amber-400/50 drop-shadow-[0_0_20px_rgba(251,191,36,0.4)]'
-                  }`}
-                >
-                  {currentPlan.name} Plan
-                </span>
-              ))}
-            </div>
-            <style>{`
-              @keyframes headerPlanScroll {
-                0% { transform: translate3d(0, 0, 0); }
-                100% { transform: translate3d(-50%, 0, 0); }
-              }
-              .header-plan-scroll {
-                animation: headerPlanScroll 18s linear infinite;
-              }
-            `}</style>
+              {currentPlan.name} Plan
+            </span>
           </div>
         )}
 
