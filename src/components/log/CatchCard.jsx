@@ -150,6 +150,7 @@ function CatchCard({ catchItem, onEdit, onDelete }) {
           catchItem={catchItem}
           spots={spots}
           onClose={() => setShowDetailModal(false)}
+          onEdit={onEdit}
         />
       )}
 
