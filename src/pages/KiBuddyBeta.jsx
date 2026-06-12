@@ -14,7 +14,7 @@ export default function KiBuddyBeta() {
 
 function KiBuddyBetaInner() {
   useFeatureTracking("ai_buddy");
-  const [messages, setMessages] = useState([{ role: "system", text: "Hallo! Ich bin Marina, deine KI-Angelexpertin. Stelle mir eine Frage!" }]);
+  const [messages, setMessages] = useState([{ role: "system", text: "Hallo! Ich bin Buddy, deine KI-Angelexpertin. Stelle mir eine Frage!" }]);
   const [input, setInput] = useState("");
   const [status, setStatus] = useState("");
   const [tonAn, setTonAn] = useState(true);
@@ -74,18 +74,38 @@ function KiBuddyBetaInner() {
         .map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.text }));
       chatMessages.push({ role: "user", content: q });
 
+      // Get user location for weather context
+      let userLocation = null;
+      if (navigator.geolocation) {
+        try {
+          const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+          });
+          userLocation = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          };
+        } catch {
+          // Location not available, continue without it
+        }
+      }
+
       const res = await catchgbtChat({
         messages: chatMessages,
-        context: "ki_buddy_beta"
+        context: "ki_buddy_beta",
+        userLocation
       });
 
-      const ans = res?.reply || res?.message || "Keine Antwort erhalten.";
+      const ans = res?.reply || res?.message || "Entschuldigung, ich konnte keine Antwort generieren.";
       setMessages(m => [...m, { role: "assistant", text: ans }]);
       if (tonAn) speak(ans);
       else setStatus("");
-    } catch {
+    } catch (err) {
       setStatus("");
-      setMessages(m => [...m, { role: "system", text: "Verbindungsfehler – bitte erneut versuchen." }]);
+      const errorMsg = err?.message?.includes('API') || err?.message?.includes('GROQ')
+        ? "Mein KI-Service ist gerade nicht verfügbar. Bitte versuche es in ein paar Sekunden erneut."
+        : "Entschuldigung, ich konnte deine Frage nicht verarbeiten. Versuche es bitte erneut.";
+      setMessages(m => [...m, { role: "system", text: errorMsg }]);
     }
   }
 
@@ -135,7 +155,7 @@ function KiBuddyBetaInner() {
 
   const statusLabels = {
     listening: "Ich hoere zu...",
-    speaking: "Marina spricht...",
+    speaking: "Buddy spricht...",
     thinking: "Denke nach...",
     "": "Tippe oder aktiviere das Mikrofon"
   };
@@ -179,12 +199,12 @@ function KiBuddyBetaInner() {
 
           {/* Avatar row */}
           <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", background: "#0a1624", borderTop: "1px solid #111e2e", borderBottom: "1px solid #111e2e" }}>
-            <div style={{ width: 52, height: 52, borderRadius: 14, background: "linear-gradient(135deg,#7c3aed,#4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0, boxShadow: avatarGlow, transition: "box-shadow 0.3s" }}>
-              M
+            <div style={{ width: 52, height: 52, borderRadius: 14, background: "linear-gradient(135deg,#22d3c8,#06b6d4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0, boxShadow: avatarGlow, transition: "box-shadow 0.3s" }}>
+              B
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: "#e0f0ff" }}>Marina</div>
-              <div style={{ fontSize: 12, color: "#556677", marginTop: 2 }}>Deine KI-Angelexpertin</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: "#e0f0ff" }}>Buddy</div>
+              <div style={{ fontSize: 12, color: "#556677", marginTop: 2 }}>Dein KI-Angel-Assistent</div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 3, height: 24, opacity: status === "speaking" ? 1 : 0, transition: "opacity 0.3s" }}>
               {waveBars.map((h, i) => (
@@ -221,7 +241,7 @@ function KiBuddyBetaInner() {
                   <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#7adba0", animation: "bbDot 1s infinite", animationDelay: "0.2s" }} />
                   <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#7adba0", animation: "bbDot 1s infinite", animationDelay: "0.4s" }} />
                 </span>
-                <span>Marina denkt nach – das kann einen Moment dauern…</span>
+                <span>Buddy denkt nach – das kann einen Moment dauern…</span>
               </div>
             )}
           </div>
