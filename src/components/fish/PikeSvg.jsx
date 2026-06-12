@@ -22,11 +22,13 @@ export const PIKE_BASE_CSS = `
   .pk-pelv { transform-box: fill-box; transform-origin: 20% 0%; animation: pkPectSway 2.6s ease-in-out -0.6s infinite alternate; }
   .pk-jaw-upper { transform-box: fill-box; transform-origin: 2% 65%; }
   .pk-jaw-lower { transform-box: fill-box; transform-origin: 2% 30%; }
+  .pk-barbel { transform-box: fill-box; transform-origin: 0% 0%; animation: pkBarbelSway 2.8s ease-in-out infinite alternate; }
   @keyframes pkTailBeat { from { transform: rotate(-6deg); } to { transform: rotate(6deg); } }
   @keyframes pkFinSway { from { transform: rotate(-2deg); } to { transform: rotate(2deg); } }
   @keyframes pkPectSway { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
+  @keyframes pkBarbelSway { from { transform: rotate(-5deg); } to { transform: rotate(6deg); } }
   @media (prefers-reduced-motion: reduce) {
-    .pk-tail, .pk-dorsal, .pk-anal, .pk-pect, .pk-pelv { animation: none; }
+    .pk-tail, .pk-dorsal, .pk-anal, .pk-pect, .pk-pelv, .pk-barbel { animation: none; }
   }
 `;
 
