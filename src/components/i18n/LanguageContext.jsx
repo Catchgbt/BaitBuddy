@@ -3,6 +3,21 @@ import { auth } from "@/api/auth";
 
 const LanguageContext = createContext();
 
+export const aiTexts = {
+  de: {
+    'ai.greeting': 'Hallo! Wie kann ich dir heute helfen?',
+    'ai.placeholder': 'Deine Frage an den Buddy...',
+    'ai.title': 'KI-Buddy',
+    'ai.subtitle': 'Dein persönlicher Angel-Assistent',
+  },
+  en: {
+    'ai.greeting': 'Hello! How can I help you today?',
+    'ai.placeholder': 'Your question to the buddy...',
+    'ai.title': 'AI Buddy',
+    'ai.subtitle': 'Your personal fishing assistant',
+  },
+};
+
 export const translations = {
   de: {
     'landing.cta.camera': 'Foto aufnehmen',
@@ -62,10 +77,6 @@ export const translations = {
     'profile.quiz_points': 'Quiz-Punkte',
     'profile.referral': 'Freunde einladen',
     'profile.demo_mode': 'Demo-Modus',
-    'ai.greeting': 'Hallo! Wie kann ich dir heute helfen?',
-    'ai.placeholder': 'Deine Frage an den Buddy...',
-    'ai.title': 'KI-Buddy',
-    'ai.subtitle': 'Dein persönlicher Angel-Assistent',
   },
   en: {
     'landing.cta.camera': 'Take Photo',
@@ -125,10 +136,6 @@ export const translations = {
     'profile.quiz_points': 'Quiz Points',
     'profile.referral': 'Invite Friends',
     'profile.demo_mode': 'Demo Mode',
-    'ai.greeting': 'Hello! How can I help you today?',
-    'ai.placeholder': 'Your question to the buddy...',
-    'ai.title': 'AI Buddy',
-    'ai.subtitle': 'Your personal fishing assistant',
   },
   fr: {
     'landing.cta.camera': 'Prendre une photo',
@@ -187,10 +194,6 @@ export const translations = {
     'profile.quiz_points': 'Points quiz',
     'profile.referral': 'Inviter des amis',
     'profile.demo_mode': 'Mode démo',
-    'ai.greeting': 'Bonjour! Comment puis-je vous aider aujourd\'hui?',
-    'ai.placeholder': 'Votre question au buddy...',
-    'ai.title': 'IA Buddy',
-    'ai.subtitle': 'Votre assistant de pêche personnel',
   },
   es: {
     'landing.cta.camera': 'Tomar foto',
@@ -249,10 +252,6 @@ export const translations = {
     'profile.quiz_points': 'Puntos quiz',
     'profile.referral': 'Invitar amigos',
     'profile.demo_mode': 'Modo demo',
-    'ai.greeting': '¡Hola! ¿Cómo puedo ayudarte hoy?',
-    'ai.placeholder': 'Tu pregunta al buddy...',
-    'ai.title': 'IA Buddy',
-    'ai.subtitle': 'Tu asistente de pesca personal',
   },
   it: {
     'landing.cta.camera': 'Scatta foto',
@@ -311,10 +310,6 @@ export const translations = {
     'profile.quiz_points': 'Punti quiz',
     'profile.referral': 'Invita amici',
     'profile.demo_mode': 'Modalità demo',
-    'ai.greeting': 'Ciao! Come posso aiutarti oggi?',
-    'ai.placeholder': 'La tua domanda al buddy...',
-    'ai.title': 'IA Buddy',
-    'ai.subtitle': 'Il tuo assistente di pesca personale',
   },
   nl: {
     'landing.cta.camera': 'Foto maken',
@@ -373,10 +368,6 @@ export const translations = {
     'profile.quiz_points': 'Quiz punten',
     'profile.referral': 'Vrienden uitnodigen',
     'profile.demo_mode': 'Demo-modus',
-    'ai.greeting': 'Hallo! Hoe kan ik je vandaag helpen?',
-    'ai.placeholder': 'Je vraag aan de buddy...',
-    'ai.title': 'AI Buddy',
-    'ai.subtitle': 'Je persoonlijke visassistent',
   },
   pl: {
     'landing.cta.camera': 'Zrób zdjęcie',
@@ -435,10 +426,6 @@ export const translations = {
     'profile.quiz_points': 'Punkty quizu',
     'profile.referral': 'Zaproś znajomych',
     'profile.demo_mode': 'Tryb demo',
-    'ai.greeting': 'Cześć! Jak mogę ci dzisiaj pomóc?',
-    'ai.placeholder': 'Twoje pytanie do buddy...',
-    'ai.title': 'AI Buddy',
-    'ai.subtitle': 'Twój osobisty asystent wędkarski',
   },
   pt: {
     'landing.cta.camera': 'Tirar foto',
@@ -497,10 +484,6 @@ export const translations = {
     'profile.quiz_points': 'Pontos quiz',
     'profile.referral': 'Convidar amigos',
     'profile.demo_mode': 'Modo demo',
-    'ai.greeting': 'Olá! Como posso ajudá-lo hoje?',
-    'ai.placeholder': 'Sua pergunta ao buddy...',
-    'ai.title': 'IA Buddy',
-    'ai.subtitle': 'Seu assistente de pesca pessoal',
   },
   sv: {
     'landing.cta.camera': 'Ta foto',
@@ -559,10 +542,6 @@ export const translations = {
     'profile.quiz_points': 'Quizpoäng',
     'profile.referral': 'Bjud in vänner',
     'profile.demo_mode': 'Demoläge',
-    'ai.greeting': 'Hej! Hur kan jag hjälpa dig idag?',
-    'ai.placeholder': 'Din fråga till buddy...',
-    'ai.title': 'AI Buddy',
-    'ai.subtitle': 'Din personliga fiskeassistent',
   },
   no: {
     'landing.cta.camera': 'Ta bilde',
@@ -621,10 +600,6 @@ export const translations = {
     'profile.quiz_points': 'Quizpoeng',
     'profile.referral': 'Inviter venner',
     'profile.demo_mode': 'Demomodus',
-    'ai.greeting': 'Hei! Hvordan kan jeg hjelpe deg i dag?',
-    'ai.placeholder': 'Ditt spørsmål til buddy...',
-    'ai.title': 'AI Buddy',
-    'ai.subtitle': 'Din personlige fiskeassistent',
   },
   da: {
     'landing.cta.camera': 'Tag billede',
@@ -683,10 +658,6 @@ export const translations = {
     'profile.quiz_points': 'Quizpoint',
     'profile.referral': 'Inviter venner',
     'profile.demo_mode': 'Demotilstand',
-    'ai.greeting': 'Hej! Hvordan kan jeg hjælpe dig i dag?',
-    'ai.placeholder': 'Dit spørgsmål til buddy...',
-    'ai.title': 'AI Buddy',
-    'ai.subtitle': 'Din personlige fiskeassistent',
   },
   fi: {
     'landing.cta.camera': 'Ota valokuva',
@@ -745,10 +716,6 @@ export const translations = {
     'profile.quiz_points': 'Tietovisapisteet',
     'profile.referral': 'Kutsu ystäviä',
     'profile.demo_mode': 'Demotila',
-    'ai.greeting': 'Hei! Miten voin auttaa sinua tänään?',
-    'ai.placeholder': 'Kysymyksesi buddylle...',
-    'ai.title': 'AI Buddy',
-    'ai.subtitle': 'Henkilökohtainen kalastusavustajasi',
   },
   el: {
     'landing.cta.camera': 'Λήψη φωτογραφίας',
@@ -807,10 +774,6 @@ export const translations = {
     'profile.quiz_points': 'Πόντοι κουίζ',
     'profile.referral': 'Προσκάλεση φίλων',
     'profile.demo_mode': 'Λειτουργία επίδειξης',
-    'ai.greeting': 'Γεια! Πώς μπορώ να σας βοηθήσω σήμερα;',
-    'ai.placeholder': 'Η ερώτησή σας στον buddy...',
-    'ai.title': 'AI Buddy',
-    'ai.subtitle': 'Ο προσωπικός σας βοηθός αλιείας',
   },
   cs: {
     'landing.cta.camera': 'Vyfotit',
@@ -869,10 +832,6 @@ export const translations = {
     'profile.quiz_points': 'Body z kvízu',
     'profile.referral': 'Pozvat přátele',
     'profile.demo_mode': 'Demo režim',
-    'ai.greeting': 'Ahoj! Jak ti dnes mohu pomoci?',
-    'ai.placeholder': 'Tvá otázka pro buddy...',
-    'ai.title': 'AI Buddy',
-    'ai.subtitle': 'Tvůj osobní rybářský asistent',
   },
   tr: {
     'landing.cta.camera': 'Fotoğraf çek',
@@ -931,10 +890,6 @@ export const translations = {
     'profile.quiz_points': 'Quiz puanları',
     'profile.referral': 'Arkadaşlarını davet et',
     'profile.demo_mode': 'Demo modu',
-    'ai.greeting': 'Merhaba! Bugün size nasıl yardımcı olabilirim?',
-    'ai.placeholder': 'Buddy\'ye sorunuz...',
-    'ai.title': 'AI Buddy',
-    'ai.subtitle': 'Kişisel balıkçılık asistanınız',
   },
   ru: {
     'landing.cta.camera': 'Сделать фото',
@@ -993,10 +948,6 @@ export const translations = {
     'profile.quiz_points': 'Очки викторины',
     'profile.referral': 'Пригласить друзей',
     'profile.demo_mode': 'Демо-режим',
-    'ai.greeting': 'Привет! Как я могу помочь вам сегодня?',
-    'ai.placeholder': 'Ваш вопрос к buddy...',
-    'ai.title': 'AI Buddy',
-    'ai.subtitle': 'Ваш личный помощник рыбака',
   },
   ro: {
     'landing.cta.camera': 'Fă o fotografie',
@@ -1055,10 +1006,6 @@ export const translations = {
     'profile.quiz_points': 'Puncte quiz',
     'profile.referral': 'Invită prieteni',
     'profile.demo_mode': 'Mod demo',
-    'ai.greeting': 'Salut! Cum te pot ajuta astăzi?',
-    'ai.placeholder': 'Întrebarea ta pentru buddy...',
-    'ai.title': 'IA Buddy',
-    'ai.subtitle': 'Asistentul tău personal de pescuit',
   },
 };
 
@@ -1109,8 +1056,12 @@ export function LanguageProvider({ children }) {
     return translations[language]?.[key] || translations['en']?.[key] || key;
   };
 
+  const tAI = (key) => {
+    return aiTexts[language]?.[key] || aiTexts['en']?.[key] || key;
+  };
+
   return (
-    <LanguageContext.Provider value={{ language, changeLanguage, t, isLoading }}>
+    <LanguageContext.Provider value={{ language, changeLanguage, t, tAI, isLoading }}>
       {children}
     </LanguageContext.Provider>
   );
