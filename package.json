@@ -1,15 +1,21 @@
 {
   "name": "baitbuddy-app",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "BaitBuddy – KI Angelbegleiter mit Fangbuch, Spots und Wetteranalyse",
+  "author": "BaitBuddy Team",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:aab": "bash build-aab.sh",
+    "build:aab:windows": "build-aab.bat",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "android:sync": "cd android && ./gradlew sync && cd .."
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.0",
