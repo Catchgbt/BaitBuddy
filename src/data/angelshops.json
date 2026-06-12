@@ -1,13 +1,13 @@
 [
   {
-    "id": "shop-001",
+    "id": "shop-001-AAC",
     "name": "DK Angelsport",
     "category": "angelshop",
     "city": "Aachen",
     "street": "Sittarderstr. 30",
     "coordinates": {
-      "lat": 50.77114307697662,
-      "lng": 6.079743593779507
+      "lat": 50.7560608,
+      "lng": 6.1390159
     },
     "email": "",
     "website": "",
@@ -15,14 +15,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-002",
+    "id": "shop-002-AAL",
     "name": "Gramlich Jagdbekleidung und Ausrüstung",
     "category": "angelshop",
     "city": "Aalen",
     "street": "Böhmerwaldstraße 53",
     "coordinates": {
-      "lat": 48.83999071147599,
-      "lng": 10.0899651294135
+      "lat": 48.8295391,
+      "lng": 10.0901796
     },
     "email": "",
     "website": "",
@@ -30,14 +30,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-003",
+    "id": "shop-003-AHA",
     "name": "Bettings Mühle",
     "category": "angelshop",
     "city": "Ahaus",
     "street": "Bahnhofstraße 88",
     "coordinates": {
-      "lat": 52.07181705416907,
-      "lng": 7.004627014244868
+      "lat": 52.0804248,
+      "lng": 7.013714
     },
     "email": "",
     "website": "",
@@ -45,14 +45,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-004",
+    "id": "shop-004-AHL",
     "name": "Jagdbedarf Rüschenschmidt",
     "category": "angelshop",
     "city": "Ahlen",
     "street": "Königstraße 18",
     "coordinates": {
-      "lat": 51.76329774072592,
-      "lng": 7.886263280332087
+      "lat": 51.7639725,
+      "lng": 7.8932273
     },
     "email": "",
     "website": "",
@@ -60,14 +60,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-005",
+    "id": "shop-005-ALB",
     "name": "Angelsport Dohm",
     "category": "angelshop",
     "city": "Albstadt",
     "street": "Unter dem Malesfelsen 44",
     "coordinates": {
-      "lat": 48.23091681564617,
-      "lng": 8.995115000300736
+      "lat": 48.2062782,
+      "lng": 9.0284282
     },
     "email": "",
     "website": "",
@@ -75,14 +75,29 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-007",
+    "id": "shop-006-ANG",
+    "name": "Angelspezi XXL Halle",
+    "category": "angelshop",
+    "city": "Angersdorf",
+    "street": "Lauchstädter Str. 10a",
+    "coordinates": {
+      "lat": 51.4588653,
+      "lng": 11.9084885
+    },
+    "email": "",
+    "website": "",
+    "phone": "",
+    "source": "angelshops_germany_csv"
+  },
+  {
+    "id": "shop-007-ANK",
     "name": "AngelSpezi Anklam",
     "category": "angelshop",
     "city": "Anklam",
     "street": "Markt 7",
     "coordinates": {
-      "lat": 53.859720132419675,
-      "lng": 13.685743971538415
+      "lat": 53.8553369,
+      "lng": 13.688055
     },
     "email": "",
     "website": "",
@@ -90,14 +105,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-008",
+    "id": "shop-008-ASC",
     "name": "Ossis Angelladen",
     "category": "angelshop",
     "city": "Aschaffenburg",
     "street": "Hanauer Str. 76",
     "coordinates": {
-      "lat": 49.96590680915559,
-      "lng": 9.137607605098706
+      "lat": 49.9801916,
+      "lng": 9.1294672
     },
     "email": "",
     "website": "",
@@ -105,14 +120,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-009",
+    "id": "shop-009-AUG",
     "name": "Jafispo Angelgeräte",
     "category": "angelshop",
     "city": "Augsburg",
     "street": "Kurzes Geländ 8a",
     "coordinates": {
-      "lat": 48.378028975837324,
-      "lng": 10.898162669594672
+      "lat": 48.3871759,
+      "lng": 10.8502237
     },
     "email": "",
     "website": "",
@@ -120,14 +135,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-010",
+    "id": "shop-010-AUG",
     "name": "Augsburger Angelcenter",
     "category": "angelshop",
     "city": "Augsburg",
     "street": "Arberstraße 1",
     "coordinates": {
-      "lat": 48.378028975837324,
-      "lng": 10.898162669594672
+      "lat": 48.3159025,
+      "lng": 10.9106818
     },
     "email": "",
     "website": "",
@@ -135,14 +150,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-011",
+    "id": "shop-011-AUG",
     "name": "Fisherman’s Partner Augsburg",
     "category": "angelshop",
     "city": "Augsburg",
     "street": "Gögginger Straße 93",
     "coordinates": {
-      "lat": 48.378028975837324,
-      "lng": 10.898162669594672
+      "lat": 48.3519197,
+      "lng": 10.8814908
     },
     "email": "",
     "website": "",
@@ -150,14 +165,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-012",
+    "id": "shop-012-AUG",
     "name": "Angelspezi Augsburg",
     "category": "angelshop",
     "city": "Augsburg",
     "street": "Edisonstraße 1",
     "coordinates": {
-      "lat": 48.378028975837324,
-      "lng": 10.898162669594672
+      "lat": 48.3467051,
+      "lng": 10.8812374
     },
     "email": "",
     "website": "",
@@ -165,14 +180,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-013",
+    "id": "shop-013-BAD",
     "name": "Schieß- und Angelsport Böhle",
     "category": "angelshop",
     "city": "Bad Hersfeld",
     "street": "Löhrgasse 2",
     "coordinates": {
-      "lat": 50.860819903972384,
-      "lng": 9.680439523264528
+      "lat": 50.8697495,
+      "lng": 9.7104927
     },
     "email": "",
     "website": "",
@@ -180,14 +195,29 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-015",
+    "id": "shop-014-BAD",
+    "name": "Sport-Eck",
+    "category": "angelshop",
+    "city": "Bad Salzuflen",
+    "street": "Am Alten Teich 12",
+    "coordinates": {
+      "lat": 52.075123,
+      "lng": 8.7605726
+    },
+    "email": "",
+    "website": "",
+    "phone": "",
+    "source": "angelshops_germany_csv"
+  },
+  {
+    "id": "shop-015-BAM",
     "name": "NB-Angelsport",
     "category": "angelshop",
     "city": "Bamberg",
     "street": "Emil-Kemmer-Str. 12",
     "coordinates": {
-      "lat": 49.896166121076845,
-      "lng": 10.887433583369464
+      "lat": 49.9141788,
+      "lng": 10.8778899
     },
     "email": "",
     "website": "",
@@ -195,14 +225,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-016",
+    "id": "shop-016-BAW",
     "name": "Fishing-Attack Emsland",
     "category": "angelshop",
     "city": "Bawinkel",
     "street": "Haselünner Strasse 19a",
     "coordinates": {
-      "lat": 52.602793833550116,
-      "lng": 7.4072117274210285
+      "lat": 52.6033334,
+      "lng": 7.4131962
     },
     "email": "",
     "website": "",
@@ -210,14 +240,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-017",
+    "id": "shop-017-BAY",
     "name": "Fishermans’s World",
     "category": "angelshop",
     "city": "Bayreuth",
     "street": "Ottostraße 15",
     "coordinates": {
-      "lat": 49.939792984274106,
-      "lng": 11.576629029266053
+      "lat": 49.9662184,
+      "lng": 11.5986336
     },
     "email": "",
     "website": "",
@@ -225,14 +255,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-018",
+    "id": "shop-018-BEN",
     "name": "Angelspezi Bensheim",
     "category": "angelshop",
     "city": "Bensheim",
     "street": "Wormser Str 14",
     "coordinates": {
-      "lat": 49.68581778389614,
-      "lng": 8.621852280177496
+      "lat": 49.677402,
+      "lng": 8.6162578
     },
     "email": "",
     "website": "",
@@ -240,14 +270,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-019",
+    "id": "shop-019-BER",
     "name": "Wichterich B.",
     "category": "angelshop",
     "city": "Bergisch Gladbach",
     "street": "Sattlerweg 8",
     "coordinates": {
-      "lat": 50.99785675040577,
-      "lng": 7.130942024450712
+      "lat": 50.9605814,
+      "lng": 7.1655722
     },
     "email": "",
     "website": "",
@@ -255,14 +285,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-020",
+    "id": "shop-020-BER",
     "name": "Bienes Angelparadies",
     "category": "angelshop",
     "city": "Bergkamen",
     "street": "Ostenhellweg 5",
     "coordinates": {
-      "lat": 51.616382831160855,
-      "lng": 7.636205039432172
+      "lat": 51.6501531,
+      "lng": 7.6508111
     },
     "email": "",
     "website": "",
@@ -270,14 +300,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-021",
+    "id": "shop-021-BER",
     "name": "Fischers Fritze",
     "category": "angelshop",
     "city": "Berlin",
     "street": "Quedlinburger Str. 44-48",
     "coordinates": {
-      "lat": 52.50937064292087,
-      "lng": 13.416946250707067
+      "lat": 52.5232043,
+      "lng": 13.3127352
     },
     "email": "",
     "website": "",
@@ -285,14 +315,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-022",
+    "id": "shop-022-BER",
     "name": "Fisherman’s Partner Berlin",
     "category": "angelshop",
     "city": "Berlin",
     "street": "Marienfelder Allee 151",
     "coordinates": {
-      "lat": 52.50937064292087,
-      "lng": 13.416946250707067
+      "lat": 52.4128054,
+      "lng": 13.3631516
     },
     "email": "",
     "website": "",
@@ -300,14 +330,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-023",
+    "id": "shop-023-BER",
     "name": "Angelsport-Fachgeschäft Knicklicht",
     "category": "angelshop",
     "city": "Berlin",
     "street": "Schnellerstr. 57",
     "coordinates": {
-      "lat": 52.50937064292087,
-      "lng": 13.416946250707067
+      "lat": 52.4531633,
+      "lng": 13.5230189
     },
     "email": "",
     "website": "",
@@ -315,14 +345,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-024",
+    "id": "shop-024-BER",
     "name": "TheBigFish Angelsport",
     "category": "angelshop",
     "city": "Berlin",
     "street": "Wernsdorfer Str. 7",
     "coordinates": {
-      "lat": 52.50937064292087,
-      "lng": 13.416946250707067
+      "lat": 52.3760116,
+      "lng": 13.6502466
     },
     "email": "",
     "website": "",
@@ -330,14 +360,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-025",
+    "id": "shop-025-BER",
     "name": "Angelspezi XXL (früher Müllers Angelmarkt)",
     "category": "angelshop",
     "city": "Berlin",
     "street": "Alt-Kaulsdorf 18",
     "coordinates": {
-      "lat": 52.50937064292087,
-      "lng": 13.416946250707067
+      "lat": 52.5042573,
+      "lng": 13.5826258
     },
     "email": "",
     "website": "",
@@ -345,14 +375,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-026",
+    "id": "shop-026-BER",
     "name": "Köderwahnsinn",
     "category": "angelshop",
     "city": "Berlin",
     "street": "Plauenerstr.163-165",
     "coordinates": {
-      "lat": 52.50937064292087,
-      "lng": 13.416946250707067
+      "lat": 52.5449055,
+      "lng": 13.5136251
     },
     "email": "",
     "website": "",
@@ -360,14 +390,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-027",
+    "id": "shop-027-BER",
     "name": "Angeljoe Berlin",
     "category": "angelshop",
     "city": "Berlin",
     "street": "Weißenseer-Weg 37",
     "coordinates": {
-      "lat": 52.50937064292087,
-      "lng": 13.416946250707067
+      "lat": 52.5358891,
+      "lng": 13.4745735
     },
     "email": "",
     "website": "",
@@ -375,14 +405,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-028",
+    "id": "shop-028-BER",
     "name": "Raubfisch-Hotspot",
     "category": "angelshop",
     "city": "Berlin",
     "street": "Falkenberger Str. 35-37",
     "coordinates": {
-      "lat": 52.50937064292087,
-      "lng": 13.416946250707067
+      "lat": 52.5556676,
+      "lng": 13.4793669
     },
     "email": "",
     "website": "",
@@ -390,89 +420,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-029",
-    "name": "Flori’s Angelcenter",
-    "category": "angelshop",
-    "city": "Berlin",
-    "street": "Rothenbacherbachstraße 48",
-    "coordinates": {
-      "lat": 52.50937064292087,
-      "lng": 13.416946250707067
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-030",
-    "name": "Angelhaus Koss",
-    "category": "angelshop",
-    "city": "Berlin",
-    "street": "Tegeler Str. 36-37",
-    "coordinates": {
-      "lat": 52.50937064292087,
-      "lng": 13.416946250707067
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-031",
-    "name": "Matzes Anglertreff",
-    "category": "angelshop",
-    "city": "Berlin",
-    "street": "Auguste Viktoria Allee 4",
-    "coordinates": {
-      "lat": 52.50937064292087,
-      "lng": 13.416946250707067
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-032",
-    "name": "Matchangel Shop Berlin Frank Schulze",
-    "category": "angelshop",
-    "city": "Berlin",
-    "street": "Gartenfelder Str. 29-37",
-    "coordinates": {
-      "lat": 52.50937064292087,
-      "lng": 13.416946250707067
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-033",
-    "name": "Angelspezi Niederbarnim",
-    "category": "angelshop",
-    "city": "Berlin",
-    "street": "Dorfstr. 26",
-    "coordinates": {
-      "lat": 52.50937064292087,
-      "lng": 13.416946250707067
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-034",
+    "id": "shop-034-BER",
     "name": "Angelbedarf Malchow",
     "category": "angelshop",
     "city": "Berlin",
     "street": "Dorfstr. 50",
     "coordinates": {
-      "lat": 52.50937064292087,
-      "lng": 13.416946250707067
+      "lat": 52.5729279,
+      "lng": 13.4825761
     },
     "email": "",
     "website": "",
@@ -480,14 +435,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-035",
+    "id": "shop-035-BER",
     "name": "Angelgräte Rau",
     "category": "angelshop",
     "city": "Berlin",
     "street": "Karl-Marx-Straße 239",
     "coordinates": {
-      "lat": 52.50937064292087,
-      "lng": 13.416946250707067
+      "lat": 52.468,
+      "lng": 13.4421632
     },
     "email": "",
     "website": "",
@@ -495,14 +450,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-036",
+    "id": "shop-036-BER",
     "name": "1A-Angelshop",
     "category": "angelshop",
     "city": "Berlin",
     "street": "Regattastr. 66",
     "coordinates": {
-      "lat": 52.50937064292087,
-      "lng": 13.416946250707067
+      "lat": 52.4219696,
+      "lng": 13.5766044
     },
     "email": "",
     "website": "",
@@ -510,59 +465,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-037",
-    "name": "Der Meeresangelshop",
-    "category": "angelshop",
-    "city": "Berlin",
-    "street": "Beuthstraße 41",
-    "coordinates": {
-      "lat": 52.50937064292087,
-      "lng": 13.416946250707067
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-038",
-    "name": "Angel Sport Bär",
-    "category": "angelshop",
-    "city": "Bernau bei Berlin",
-    "street": "Krokusstraße 4",
-    "coordinates": {
-      "lat": 52.67452038093638,
-      "lng": 13.591590298122194
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-039",
-    "name": "Angelshop Smart Bait",
-    "category": "angelshop",
-    "city": "Bielefeld",
-    "street": "Otto-Brenner-Str. 77",
-    "coordinates": {
-      "lat": 52.01475372174192,
-      "lng": 8.528621290536726
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-040",
+    "id": "shop-040-BIE",
     "name": "Angelsport-Center Bielefeld",
     "category": "angelshop",
     "city": "Bielefeld",
     "street": "Finkenstraße 2",
     "coordinates": {
-      "lat": 52.01475372174192,
-      "lng": 8.528621290536726
+      "lat": 52.0303071,
+      "lng": 8.5689576
     },
     "email": "",
     "website": "",
@@ -570,74 +480,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-041",
-    "name": "Angelsport Kastrup",
-    "category": "angelshop",
-    "city": "Bielefeld",
-    "street": "Apfelstraße 85",
-    "coordinates": {
-      "lat": 52.01475372174192,
-      "lng": 8.528621290536726
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-042",
-    "name": "Angelspezi Bitterfeld",
-    "category": "angelshop",
-    "city": "Bitterfeld-Wolfen",
-    "street": "Bismarckstraße 45",
-    "coordinates": {
-      "lat": 51.6414135330214,
-      "lng": 12.30938217551029
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-043",
-    "name": "Fishing Adventure",
-    "category": "angelshop",
-    "city": "Bocholt",
-    "street": "Am Gut Baarking 13",
-    "coordinates": {
-      "lat": 51.83618430262917,
-      "lng": 6.610458422227508
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-044",
-    "name": "Zoo und Angelsport",
-    "category": "angelshop",
-    "city": "Bochum",
-    "street": "Riemkerstrasse 13 – 15",
-    "coordinates": {
-      "lat": 51.45654737232077,
-      "lng": 7.212689670996199
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-045",
+    "id": "shop-045-BOC",
     "name": "Angelkiste Bochum",
     "category": "angelshop",
     "city": "Bochum",
     "street": "Hattinger Str. 597",
     "coordinates": {
-      "lat": 51.45654737232077,
-      "lng": 7.212689670996199
+      "lat": 51.436968,
+      "lng": 7.182889
     },
     "email": "",
     "website": "",
@@ -645,14 +495,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-046",
+    "id": "shop-046-BOC",
     "name": "Angelgeräte & Zubehör Krakowski",
     "category": "angelshop",
     "city": "Bochum",
     "street": "Oberstraße 4",
     "coordinates": {
-      "lat": 51.45654737232077,
-      "lng": 7.212689670996199
+      "lat": 51.4731152,
+      "lng": 7.3251242
     },
     "email": "",
     "website": "",
@@ -660,14 +510,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-047",
+    "id": "shop-047-BON",
     "name": "Angelsport Bonn",
     "category": "angelshop",
     "city": "Bonn",
     "street": "Kesselgasse 3",
     "coordinates": {
-      "lat": 50.733336693877426,
-      "lng": 7.103760156784409
+      "lat": 50.7370411,
+      "lng": 7.0992218
     },
     "email": "",
     "website": "",
@@ -675,14 +525,29 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-049",
+    "id": "shop-048-BOR",
+    "name": "Angelcentrum Köln-Bonn",
+    "category": "angelshop",
+    "city": "Bornheim",
+    "street": "Marie-Curie-Str. 30",
+    "coordinates": {
+      "lat": 50.8024083,
+      "lng": 6.9545081
+    },
+    "email": "",
+    "website": "",
+    "phone": "",
+    "source": "angelshops_germany_csv"
+  },
+  {
+    "id": "shop-049-BRA",
     "name": "Angelsport Hook’s and more",
     "category": "angelshop",
     "city": "Brandenburg an der Havel",
     "street": "Plauer Landstraße 44",
     "coordinates": {
-      "lat": 52.41298320333632,
-      "lng": 12.55332978337672
+      "lat": 52.41742,
+      "lng": 12.479542
     },
     "email": "",
     "website": "",
@@ -690,14 +555,29 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-051",
+    "id": "shop-050-BRA",
+    "name": "Angelwelt Braunschweig",
+    "category": "angelshop",
+    "city": "Braunschweig",
+    "street": "Hamburger Straße 268",
+    "coordinates": {
+      "lat": 52.2792515,
+      "lng": 10.5201128
+    },
+    "email": "",
+    "website": "",
+    "phone": "",
+    "source": "angelshops_germany_csv"
+  },
+  {
+    "id": "shop-051-BRE",
     "name": "Aquilion Fishing",
     "category": "angelshop",
     "city": "Bremen",
     "street": "Oslebshauser Heerstraße 87",
     "coordinates": {
-      "lat": 53.07816506217724,
-      "lng": 8.811766291142888
+      "lat": 53.1324849,
+      "lng": 8.7404113
     },
     "email": "",
     "website": "",
@@ -705,74 +585,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-052",
-    "name": "Askari Sport",
-    "category": "angelshop",
-    "city": "Bremen",
-    "street": "Steinsetzerstraße 7",
-    "coordinates": {
-      "lat": 53.07816506217724,
-      "lng": 8.811766291142888
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-053",
-    "name": "Angelsport Apelt",
-    "category": "angelshop",
-    "city": "Bremen",
-    "street": "Zum Panrepel 14",
-    "coordinates": {
-      "lat": 53.07816506217724,
-      "lng": 8.811766291142888
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-054",
-    "name": "Unser Anglerparadies",
-    "category": "angelshop",
-    "city": "Bremen",
-    "street": "Rönnebecker Str. 54",
-    "coordinates": {
-      "lat": 53.07816506217724,
-      "lng": 8.811766291142888
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-055",
-    "name": "Askari Sport",
-    "category": "angelshop",
-    "city": "Brühl",
-    "street": "Mannheimer Landstr. 5c",
-    "coordinates": {
-      "lat": 50.827012036751086,
-      "lng": 6.906629346634755
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-056",
+    "id": "shop-056-CAS",
     "name": "Angelcenter Schroll",
     "category": "angelshop",
     "city": "Castrop-Rauxel",
     "street": "Vinckestraße 108",
     "coordinates": {
-      "lat": 51.565124160704016,
-      "lng": 7.306618912401564
+      "lat": 51.5918061,
+      "lng": 7.3434393
     },
     "email": "",
     "website": "",
@@ -780,44 +600,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-057",
-    "name": "City Angelmarkt",
-    "category": "angelshop",
-    "city": "Celle",
-    "street": "Bahnhofstraße 29",
-    "coordinates": {
-      "lat": 52.62162781044882,
-      "lng": 10.079800554977883
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-058",
-    "name": "Angelspezi XXL Chemnitz",
-    "category": "angelshop",
-    "city": "Chemnitz",
-    "street": "Chemnitzer Str. 6",
-    "coordinates": {
-      "lat": 50.827841207963075,
-      "lng": 12.92196222220892
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-059",
+    "id": "shop-059-CLO",
     "name": "Angler- und Jäger-Treff",
     "category": "angelshop",
     "city": "Cloppenburg",
     "street": "Osterstraße 12",
     "coordinates": {
-      "lat": 52.850399867666745,
-      "lng": 8.04256092034668
+      "lat": 52.8481151,
+      "lng": 8.043669
     },
     "email": "",
     "website": "",
@@ -825,44 +615,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-060",
-    "name": "VF-Angelsport",
-    "category": "angelshop",
-    "city": "Cottbus",
-    "street": "Dissenchener Str. 54",
-    "coordinates": {
-      "lat": 51.75854463541661,
-      "lng": 14.33645252997194
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-061",
-    "name": "Angelcenter-Weiss",
-    "category": "angelshop",
-    "city": "Dachau",
-    "street": "Ludwig-Thoma-Str.38",
-    "coordinates": {
-      "lat": 48.257658343336324,
-      "lng": 11.438047447773773
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-062",
+    "id": "shop-062-DEL",
     "name": "Angelsportprofi",
     "category": "angelshop",
     "city": "Delmenhorst",
     "street": "Weberstr. 1 A",
     "coordinates": {
-      "lat": 53.044116664814176,
-      "lng": 8.635795736530522
+      "lat": 53.0532435,
+      "lng": 8.632283
     },
     "email": "",
     "website": "",
@@ -870,89 +630,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-063",
-    "name": "Angelspezi Delmenhorst",
-    "category": "angelshop",
-    "city": "Delmenhorst",
-    "street": "Konrad Adenauer-Allee 3",
-    "coordinates": {
-      "lat": 53.044116664814176,
-      "lng": 8.635795736530522
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-064",
-    "name": "Nipo’s Angelshop",
-    "category": "angelshop",
-    "city": "Dessau-Roßlau",
-    "street": "Willy-Lohmann-Straße 18",
-    "coordinates": {
-      "lat": 51.84749373362555,
-      "lng": 12.233050765687617
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-065",
-    "name": "Angelsport Center Detmold",
-    "category": "angelshop",
-    "city": "Detmold",
-    "street": "Industriestraße 3",
-    "coordinates": {
-      "lat": 51.940489407031755,
-      "lng": 8.877500445564785
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-066",
-    "name": "Anglertreff Hüffermann",
-    "category": "angelshop",
-    "city": "Dinslaken",
-    "street": "Elisabethstraße 21",
-    "coordinates": {
-      "lat": 51.564892445123775,
-      "lng": 6.733029202822639
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-067",
-    "name": "SCHUCH Jagd und Angelsport",
-    "category": "angelshop",
-    "city": "Dormagen",
-    "street": "Kölner Str. 47",
-    "coordinates": {
-      "lat": 51.09155011193847,
-      "lng": 6.8460408369787915
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-068",
+    "id": "shop-068-DOR",
     "name": "Angel Ussat",
     "category": "angelshop",
     "city": "Dortmund",
     "street": "Wittbräuckerstraße 18a",
     "coordinates": {
-      "lat": 51.51079829440419,
-      "lng": 7.459513066547798
+      "lat": 51.4895586,
+      "lng": 7.5557873
     },
     "email": "",
     "website": "",
@@ -960,14 +645,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-069",
+    "id": "shop-069-DOR",
     "name": "Fishermans’s Partner Dortmund",
     "category": "angelshop",
     "city": "Dortmund",
     "street": "Kammerstück 3",
     "coordinates": {
-      "lat": 51.51079829440419,
-      "lng": 7.459513066547798
+      "lat": 51.5639357,
+      "lng": 7.3674374
     },
     "email": "",
     "website": "",
@@ -975,14 +660,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-070",
+    "id": "shop-070-DRE",
     "name": "Angelshop Drebber",
     "category": "angelshop",
     "city": "Drebber",
     "street": "Bremer Straße 7",
     "coordinates": {
-      "lat": 52.65021452574405,
-      "lng": 8.419457494159973
+      "lat": 52.6498557,
+      "lng": 8.426524
     },
     "email": "",
     "website": "",
@@ -990,29 +675,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-071",
-    "name": "Angeljoe Dresden",
-    "category": "angelshop",
-    "city": "Dresden",
-    "street": "Heidestraße 1",
-    "coordinates": {
-      "lat": 51.05483215034515,
-      "lng": 13.741957465536434
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-072",
+    "id": "shop-072-DRE",
     "name": "Angelspezi XXL Dresden",
     "category": "angelshop",
     "city": "Dresden",
     "street": "Roquettestraße 27",
     "coordinates": {
-      "lat": 51.05483215034515,
-      "lng": 13.741957465536434
+      "lat": 51.0596213,
+      "lng": 13.6786482
     },
     "email": "",
     "website": "",
@@ -1020,29 +690,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-073",
-    "name": "Fisherman’s Partner Dresden",
-    "category": "angelshop",
-    "city": "Dresden",
-    "street": "Hechtstraße 169",
-    "coordinates": {
-      "lat": 51.05483215034515,
-      "lng": 13.741957465536434
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-074",
+    "id": "shop-074-DRE",
     "name": "Angelfachmarkt Laubegast",
     "category": "angelshop",
     "city": "Dresden",
     "street": "Hallstätter Str. 14",
     "coordinates": {
-      "lat": 51.05483215034515,
-      "lng": 13.741957465536434
+      "lat": 51.0239479,
+      "lng": 13.8263016
     },
     "email": "",
     "website": "",
@@ -1050,14 +705,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-075",
+    "id": "shop-075-DUI",
     "name": "Askari Angelsport",
     "category": "angelshop",
     "city": "Duisburg",
     "street": "Duissernplatz 10 Â– 12",
     "coordinates": {
-      "lat": 51.43636375391123,
-      "lng": 6.75297123755931
+      "lat": 51.437652,
+      "lng": 6.7814182
     },
     "email": "",
     "website": "",
@@ -1065,29 +720,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-076",
-    "name": "Angel HESS",
-    "category": "angelshop",
-    "city": "Duisburg",
-    "street": "Paul-Esch-Straße 115",
-    "coordinates": {
-      "lat": 51.43636375391123,
-      "lng": 6.75297123755931
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-077",
+    "id": "shop-077-DUI",
     "name": "Angelsport Martin",
     "category": "angelshop",
     "city": "Duisburg",
     "street": "Koloniestr. 112",
     "coordinates": {
-      "lat": 51.43636375391123,
-      "lng": 6.75297123755931
+      "lat": 51.4209827,
+      "lng": 6.7837839
     },
     "email": "",
     "website": "",
@@ -1095,44 +735,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-078",
-    "name": "Angelplatz Rheinhausen",
-    "category": "angelshop",
-    "city": "Duisburg",
-    "street": "Krefelder Str. 45",
-    "coordinates": {
-      "lat": 51.43636375391123,
-      "lng": 6.75297123755931
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-079",
-    "name": "Manns-Wassersport",
-    "category": "angelshop",
-    "city": "Düsseldorf",
-    "street": "Benrather Str. 7b",
-    "coordinates": {
-      "lat": 51.21519849758036,
-      "lng": 6.7636947329801895
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-080",
+    "id": "shop-080-DÜS",
     "name": "Angelsport Krings",
     "category": "angelshop",
     "city": "Düsseldorf",
     "street": "Ackerstr.196",
     "coordinates": {
-      "lat": 51.21519849758036,
-      "lng": 6.7636947329801895
+      "lat": 51.2315363,
+      "lng": 6.8113033
     },
     "email": "",
     "website": "",
@@ -1140,14 +750,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-081",
+    "id": "shop-081-DÜS",
     "name": "Fisherman’s Partner Düsseldorf",
     "category": "angelshop",
     "city": "Düsseldorf",
     "street": "Bublitzer Straße 34",
     "coordinates": {
-      "lat": 51.21519849758036,
-      "lng": 6.7636947329801895
+      "lat": 51.1759927,
+      "lng": 6.8668153
     },
     "email": "",
     "website": "",
@@ -1155,29 +765,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-082",
-    "name": "Angelshop – Köder Laden",
-    "category": "angelshop",
-    "city": "Düsseldorf",
-    "street": "Grupellostraße 25",
-    "coordinates": {
-      "lat": 51.21519849758036,
-      "lng": 6.7636947329801895
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-085",
+    "id": "shop-085-ELM",
     "name": "Fangwas Angelcenter",
     "category": "angelshop",
     "city": "Elmshorn",
     "street": "Flamweg 54",
     "coordinates": {
-      "lat": 53.756629746129455,
-      "lng": 9.656893558946665
+      "lat": 53.7557557,
+      "lng": 9.6486602
     },
     "email": "",
     "website": "",
@@ -1185,14 +780,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-086",
+    "id": "shop-086-EMD",
     "name": "Janssen + Kruse",
     "category": "angelshop",
     "city": "Emden",
     "street": "Petkumer Str 209",
     "coordinates": {
-      "lat": 53.365091313271066,
-      "lng": 7.205948351764941
+      "lat": 53.3488426,
+      "lng": 7.222107
     },
     "email": "",
     "website": "",
@@ -1200,104 +795,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-087",
-    "name": "Ruby’s Angeltreff",
-    "category": "angelshop",
-    "city": "Erfurt",
-    "street": "Friedrich-Engels-Straße 62",
-    "coordinates": {
-      "lat": 50.975155270920304,
-      "lng": 11.026900901706622
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-088",
-    "name": "Angelspezi XXL Erfurt",
-    "category": "angelshop",
-    "city": "Erfurt",
-    "street": "Weimarische Str. 22a",
-    "coordinates": {
-      "lat": 50.975155270920304,
-      "lng": 11.026900901706622
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-089",
-    "name": "Köderiste Angelbedarf",
-    "category": "angelshop",
-    "city": "Erkelenz",
-    "street": "Vossemer Str. 48",
-    "coordinates": {
-      "lat": 51.07940977676716,
-      "lng": 6.314187285825199
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-090",
-    "name": "Germantackle Angelshop",
-    "category": "angelshop",
-    "city": "Erkrath",
-    "street": "Hauptstr. 28",
-    "coordinates": {
-      "lat": 51.22141483745932,
-      "lng": 6.904815932262182
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-091",
-    "name": "Angelshop-Erlangen",
-    "category": "angelshop",
-    "city": "Erlangen",
-    "street": "Noetherstraße 61",
-    "coordinates": {
-      "lat": 49.592297607864914,
-      "lng": 10.985537768900455
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-092",
-    "name": "Askari Sport",
-    "category": "angelshop",
-    "city": "Eschwege",
-    "street": "Hessenring 35",
-    "coordinates": {
-      "lat": 51.17002845859764,
-      "lng": 10.06542187251972
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-093",
+    "id": "shop-093-ESS",
     "name": "K.Schallbruch",
     "category": "angelshop",
     "city": "Essen",
     "street": "Turmstr. 19",
     "coordinates": {
-      "lat": 51.462918655159875,
-      "lng": 7.007652577761102
+      "lat": 51.4614407,
+      "lng": 7.0097792
     },
     "email": "",
     "website": "",
@@ -1305,59 +810,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-094",
-    "name": "Angelsport Hagenkötter",
-    "category": "angelshop",
-    "city": "Essen",
-    "street": "Werdener Str. 18",
-    "coordinates": {
-      "lat": 51.462918655159875,
-      "lng": 7.007652577761102
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-095",
-    "name": "Meyer’s Angelladen",
-    "category": "angelshop",
-    "city": "Ettlingen",
-    "street": "Im Schlehert 26",
-    "coordinates": {
-      "lat": 48.93690118547635,
-      "lng": 8.402901243805182
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-096",
-    "name": "Angelsport Pohl",
-    "category": "angelshop",
-    "city": "Euskirchen",
-    "street": "Kuchenheimer Str. 47",
-    "coordinates": {
-      "lat": 50.659622342348825,
-      "lng": 6.789388149685594
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-097",
+    "id": "shop-097-FAL",
     "name": "Andre`s Angelshop",
     "category": "angelshop",
     "city": "Falkensee",
     "street": "Spandauer Str 122",
     "coordinates": {
-      "lat": 52.55841043741685,
-      "lng": 13.088178916848344
+      "lat": 52.5600704,
+      "lng": 13.1294348
     },
     "email": "",
     "website": "",
@@ -1365,59 +825,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-098",
-    "name": "DS Angelsport-Center",
-    "category": "angelshop",
-    "city": "Flensburg",
-    "street": "Ochsenweg 72",
-    "coordinates": {
-      "lat": 54.7868614200901,
-      "lng": 9.431514926960872
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-099",
-    "name": "Frankenberger Angelshop",
-    "category": "angelshop",
-    "city": "Frankenberg/Eder",
-    "street": "Ederstraße 2",
-    "coordinates": {
-      "lat": 51.08038815569296,
-      "lng": 8.788215700037973
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-100",
-    "name": "Angelstuben an der Klinge",
-    "category": "angelshop",
-    "city": "Frankfurt (Oder)",
-    "street": "Poetensteig 6",
-    "coordinates": {
-      "lat": 52.33946600681697,
-      "lng": 14.54554628822311
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-101",
+    "id": "shop-101-FRA",
     "name": "Angel Bär",
     "category": "angelshop",
     "city": "Frankfurt am Main",
     "street": "Braubachstraße 7",
     "coordinates": {
-      "lat": 50.116395086724346,
-      "lng": 8.682266600125779
+      "lat": 50.1117376,
+      "lng": 8.6851433
     },
     "email": "",
     "website": "",
@@ -1425,44 +840,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-102",
-    "name": "Angelshop West",
-    "category": "angelshop",
-    "city": "Frankfurt am Main",
-    "street": "Westring 44",
-    "coordinates": {
-      "lat": 50.116395086724346,
-      "lng": 8.682266600125779
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-103",
-    "name": "Gaudium Est",
-    "category": "angelshop",
-    "city": "Frankfurt am Main",
-    "street": "Hostatostraße 28",
-    "coordinates": {
-      "lat": 50.116395086724346,
-      "lng": 8.682266600125779
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-104",
+    "id": "shop-104-FRA",
     "name": "Angelfachgeschäft N. Ulshöfer",
     "category": "angelshop",
     "city": "Frankfurt am Main",
     "street": "Kehreinstr. 18",
     "coordinates": {
-      "lat": 50.116395086724346,
-      "lng": 8.682266600125779
+      "lat": 50.1006737,
+      "lng": 8.5685651
     },
     "email": "",
     "website": "",
@@ -1470,14 +855,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-105",
+    "id": "shop-105-FRE",
     "name": "Angelgeräte Bode",
     "category": "angelshop",
     "city": "Frechen",
     "street": "Ernst-Heinrich-Geist-Straße 10",
     "coordinates": {
-      "lat": 50.90517075846348,
-      "lng": 6.812124471772986
+      "lat": 50.9094853,
+      "lng": 6.8209081
     },
     "email": "",
     "website": "",
@@ -1485,14 +870,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-106",
+    "id": "shop-106-FRE",
     "name": "Angelzentrum Freiburg",
     "category": "angelshop",
     "city": "Freiburg im Breisgau",
     "street": "Jechtingerstr. 12",
     "coordinates": {
-      "lat": 47.99150439191543,
-      "lng": 7.848949776254674
+      "lat": 47.9867397,
+      "lng": 7.7899941
     },
     "email": "",
     "website": "",
@@ -1500,29 +885,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-107",
-    "name": "Anglermarkt Büchelmaier",
-    "category": "angelshop",
-    "city": "Friedrichshafen",
-    "street": "Paulinenstraße 59",
-    "coordinates": {
-      "lat": 47.64693890892156,
-      "lng": 9.475975006473902
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-108",
+    "id": "shop-108-FRI",
     "name": "Angelshop Kampe",
     "category": "angelshop",
     "city": "Friesoythe",
     "street": "Am Dorfplatz 2",
     "coordinates": {
-      "lat": 53.02049309124169,
-      "lng": 7.863317475655071
+      "lat": 53.0813617,
+      "lng": 7.8388447
     },
     "email": "",
     "website": "",
@@ -1530,14 +900,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-109",
+    "id": "shop-109-FRI",
     "name": "B.Richi Tackle",
     "category": "angelshop",
     "city": "Friesoythe",
     "street": "Huntestr. 5",
     "coordinates": {
-      "lat": 53.02049309124169,
-      "lng": 7.863317475655071
+      "lat": 53.0137716,
+      "lng": 7.8500982
     },
     "email": "",
     "website": "",
@@ -1545,29 +915,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-110",
-    "name": "Algelsport Happ",
-    "category": "angelshop",
-    "city": "Fulda",
-    "street": "Florengasse 15",
-    "coordinates": {
-      "lat": 50.55034600915183,
-      "lng": 9.680761785625675
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-113",
+    "id": "shop-113-GEE",
     "name": "Mannis Angelshop",
     "category": "angelshop",
     "city": "Geesthacht",
     "street": "Bergedorfer Str. 9",
     "coordinates": {
-      "lat": 53.438651072948026,
-      "lng": 10.36708898619634
+      "lat": 53.4316875,
+      "lng": 10.3714973
     },
     "email": "",
     "website": "",
@@ -1575,14 +930,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-114",
-    "name": "Sobottka Angelshop",
+    "id": "shop-115-GER",
+    "name": "Haus und Hobby Fachgeschäft Eul",
     "category": "angelshop",
-    "city": "Gelsenkirchen",
-    "street": "Forsthauswinkel 2",
+    "city": "Gerolstein",
+    "street": "Bahnhofstraße 6",
     "coordinates": {
-      "lat": 51.492718634362035,
-      "lng": 7.089233344178499
+      "lat": 50.2230443,
+      "lng": 6.6589326
     },
     "email": "",
     "website": "",
@@ -1590,14 +945,29 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-118",
+    "id": "shop-117-GRE",
+    "name": "Hagens Angelshop",
+    "category": "angelshop",
+    "city": "Greifswald",
+    "street": "Lomonossowallee 58",
+    "coordinates": {
+      "lat": 54.0827365,
+      "lng": 13.4052674
+    },
+    "email": "",
+    "website": "",
+    "phone": "",
+    "source": "angelshops_germany_csv"
+  },
+  {
+    "id": "shop-118-GRO",
     "name": "Angelsport Böcker",
     "category": "angelshop",
     "city": "Gronau (Westf.)",
     "street": "Brookstraße 16",
     "coordinates": {
-      "lat": 52.210735629561796,
-      "lng": 7.0245280889962824
+      "lat": 52.2176038,
+      "lng": 7.014217
     },
     "email": "",
     "website": "",
@@ -1605,14 +975,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-120",
-    "name": "Angelzentrum Görlitz",
+    "id": "shop-121-GÖT",
+    "name": "Der Schwarzangler",
     "category": "angelshop",
-    "city": "Görlitz",
-    "street": "Brautwiesenstr. 14",
+    "city": "Göttingen",
+    "street": "Steinweg 21A",
     "coordinates": {
-      "lat": 51.156330582987806,
-      "lng": 14.988548208216969
+      "lat": 51.5643423,
+      "lng": 9.935687
     },
     "email": "",
     "website": "",
@@ -1620,14 +990,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-122",
+    "id": "shop-122-GÜT",
     "name": "Askari Sport",
     "category": "angelshop",
     "city": "Gütersloh",
     "street": "Strengerstraße 24",
     "coordinates": {
-      "lat": 51.91376583056177,
-      "lng": 8.399360713571392
+      "lat": 51.9077845,
+      "lng": 8.3835072
     },
     "email": "",
     "website": "",
@@ -1635,14 +1005,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-123",
-    "name": "Peter’s Angelshop",
+    "id": "shop-124-HAL",
+    "name": "Internationale Angelgeräte",
     "category": "angelshop",
-    "city": "Hagen",
-    "street": "Boeler Str 115",
+    "city": "Halle (Saale)",
+    "street": "Zeppelinstraße 3",
     "coordinates": {
-      "lat": 51.362817343883144,
-      "lng": 7.4757810484495755
+      "lat": 51.4566043,
+      "lng": 11.9894964
     },
     "email": "",
     "website": "",
@@ -1650,44 +1020,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-125",
-    "name": "KHD Fishing",
-    "category": "angelshop",
-    "city": "Hamburg",
-    "street": "Emilienstrasse 78",
-    "coordinates": {
-      "lat": 53.56325352003984,
-      "lng": 10.088006887584818
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-126",
-    "name": "Angelshop deal schnappen",
-    "category": "angelshop",
-    "city": "Hamburg",
-    "street": "Süderstraße 149-153",
-    "coordinates": {
-      "lat": 53.56325352003984,
-      "lng": 10.088006887584818
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-127",
+    "id": "shop-127-HAM",
     "name": "Bergedorfer Angler-Centrum",
     "category": "angelshop",
     "city": "Hamburg",
     "street": "Curslacker Neuer Deich 66",
     "coordinates": {
-      "lat": 53.56325352003984,
-      "lng": 10.088006887584818
+      "lat": 53.4781731,
+      "lng": 10.2058682
     },
     "email": "",
     "website": "",
@@ -1695,29 +1035,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-128",
-    "name": "Marlo Flyfishing",
-    "category": "angelshop",
-    "city": "Hamburg",
-    "street": "Sietwende 9",
-    "coordinates": {
-      "lat": 53.56325352003984,
-      "lng": 10.088006887584818
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-129",
+    "id": "shop-129-HAM",
     "name": "Angel- und Waffencenter Harburg",
     "category": "angelshop",
     "city": "Hamburg",
     "street": "Küchgarten 21",
     "coordinates": {
-      "lat": 53.56325352003984,
-      "lng": 10.088006887584818
+      "lat": 53.4621763,
+      "lng": 9.9838252
     },
     "email": "",
     "website": "",
@@ -1725,44 +1050,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-130",
-    "name": "Marko-Fisch Angelsport",
-    "category": "angelshop",
-    "city": "Hamburg",
-    "street": "Bremer Str. 56",
-    "coordinates": {
-      "lat": 53.56325352003984,
-      "lng": 10.088006887584818
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-131",
-    "name": "MSK-Markt Angelladen",
-    "category": "angelshop",
-    "city": "Hamburg",
-    "street": "Am Neugrabener Bahnhof 34",
-    "coordinates": {
-      "lat": 53.56325352003984,
-      "lng": 10.088006887584818
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-132",
+    "id": "shop-132-HAM",
     "name": "Angeljoe XS Hamburg",
     "category": "angelshop",
     "city": "Hamburg",
     "street": "Mühlendamm 2",
     "coordinates": {
-      "lat": 53.56325352003984,
-      "lng": 10.088006887584818
+      "lat": 53.5601965,
+      "lng": 10.0258416
     },
     "email": "",
     "website": "",
@@ -1770,59 +1065,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-133",
-    "name": "Adventure Fishing",
-    "category": "angelshop",
-    "city": "Hamburg",
-    "street": "Reismühle 5",
-    "coordinates": {
-      "lat": 53.56325352003984,
-      "lng": 10.088006887584818
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-134",
-    "name": "Angelcenter Vögler",
-    "category": "angelshop",
-    "city": "Hamburg",
-    "street": "Billstedter Hauptstr. 56",
-    "coordinates": {
-      "lat": 53.56325352003984,
-      "lng": 10.088006887584818
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-135",
-    "name": "Mega Angelcenter Martins",
-    "category": "angelshop",
-    "city": "Hamburg",
-    "street": "Rahlstedter Strasse 154",
-    "coordinates": {
-      "lat": 53.56325352003984,
-      "lng": 10.088006887584818
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-136",
+    "id": "shop-136-HAM",
     "name": "Ronnis Angelshop",
     "category": "angelshop",
     "city": "Hamburg",
     "street": "Bramfelder Straße 77",
     "coordinates": {
-      "lat": 53.56325352003984,
-      "lng": 10.088006887584818
+      "lat": 53.5873763,
+      "lng": 10.0514694
     },
     "email": "",
     "website": "",
@@ -1830,29 +1080,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-137",
-    "name": "Sportfischercenter Langenhorn",
-    "category": "angelshop",
-    "city": "Hamburg",
-    "street": "Langenhorner Chaussee 184",
-    "coordinates": {
-      "lat": 53.56325352003984,
-      "lng": 10.088006887584818
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-138",
+    "id": "shop-138-HAM",
     "name": "Askari Sport",
     "category": "angelshop",
     "city": "Hamburg",
     "street": "Holstenkamp 58",
     "coordinates": {
-      "lat": 53.56325352003984,
-      "lng": 10.088006887584818
+      "lat": 53.5710906,
+      "lng": 9.9209223
     },
     "email": "",
     "website": "",
@@ -1860,89 +1095,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-140",
-    "name": "Angler-Shop Hamm",
-    "category": "angelshop",
-    "city": "Hamm",
-    "street": "Caldenhofer Weg 130",
-    "coordinates": {
-      "lat": 50.01728596389884,
-      "lng": 6.4175237704351344
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-141",
-    "name": "Sportfischer-Center Heidemann",
-    "category": "angelshop",
-    "city": "Hamm",
-    "street": "Hafenstraße 30",
-    "coordinates": {
-      "lat": 50.01728596389884,
-      "lng": 6.4175237704351344
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-143",
-    "name": "Liro’s Angeln & Zubehör",
-    "category": "angelshop",
-    "city": "Hannover",
-    "street": "Vahrenwalder Str. 101",
-    "coordinates": {
-      "lat": 52.375320953765794,
-      "lng": 9.725947364972223
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-144",
-    "name": "S. Kapune, Angelsport",
-    "category": "angelshop",
-    "city": "Hannover",
-    "street": "Goethestraße 40",
-    "coordinates": {
-      "lat": 52.375320953765794,
-      "lng": 9.725947364972223
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-146",
-    "name": "Fisherman’s Partner",
-    "category": "angelshop",
-    "city": "Heilbronn",
-    "street": "Hahnstraße 8",
-    "coordinates": {
-      "lat": 49.13827478464506,
-      "lng": 9.214923748733547
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-149",
+    "id": "shop-149-HER",
     "name": "Angel Domäne",
     "category": "angelshop",
     "city": "Herne",
     "street": "Dorstenerstr. 552",
     "coordinates": {
-      "lat": 51.53675673708246,
-      "lng": 7.216853846875684
+      "lat": 51.5454489,
+      "lng": 7.147035
     },
     "email": "",
     "website": "",
@@ -1950,29 +1110,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-150",
-    "name": "Mücke Angeln & Freizeit Angelspezi",
-    "category": "angelshop",
-    "city": "Hildesheim",
-    "street": "Zingel 23",
-    "coordinates": {
-      "lat": 52.15359759411637,
-      "lng": 9.953964311054623
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-151",
+    "id": "shop-151-HOC",
     "name": "Reiners Angelladen",
     "category": "angelshop",
     "city": "Hochheim",
     "street": "Delkenheimer Str. 9",
     "coordinates": {
-      "lat": 50.030704006635396,
-      "lng": 8.35397630429688
+      "lat": 50.0123886,
+      "lng": 8.3536216
     },
     "email": "",
     "website": "",
@@ -1980,134 +1125,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-152",
-    "name": "Angelspezi Hof",
-    "category": "angelshop",
-    "city": "Hof",
-    "street": "Schleizer Str. 49",
-    "coordinates": {
-      "lat": 50.31453750563539,
-      "lng": 11.91861552439896
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-153",
-    "name": "Eric Scherer Angelfachgeräte",
-    "category": "angelshop",
-    "city": "Homburg",
-    "street": "Fabrikstraße 18",
-    "coordinates": {
-      "lat": 49.32002718980893,
-      "lng": 7.338388778439303
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-156",
-    "name": "Carp-World",
-    "category": "angelshop",
-    "city": "Ingolstadt",
-    "street": "Marie-Curie-Straße 20",
-    "coordinates": {
-      "lat": 48.76426214043887,
-      "lng": 11.42039685931654
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-161",
-    "name": "Meyers Angelladen",
-    "category": "angelshop",
-    "city": "Karlsruhe",
-    "street": "Im Schlehert 26",
-    "coordinates": {
-      "lat": 49.00342977539481,
-      "lng": 8.399126434199042
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-162",
-    "name": "M&R Angelgeräte",
-    "category": "angelshop",
-    "city": "Karlsruhe",
-    "street": "Ottostraße 4a",
-    "coordinates": {
-      "lat": 49.00342977539481,
-      "lng": 8.399126434199042
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-164",
-    "name": "Angelcenter Kassel",
-    "category": "angelshop",
-    "city": "Kassel",
-    "street": "Hafenstraße 6",
-    "coordinates": {
-      "lat": 51.31220329734055,
-      "lng": 9.503482950518858
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-165",
-    "name": "Angelcenter Albatros Kassel",
-    "category": "angelshop",
-    "city": "Kassel",
-    "street": "Waldmannstraße 21a",
-    "coordinates": {
-      "lat": 51.31220329734055,
-      "lng": 9.503482950518858
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-166",
-    "name": "Angelfachgeschäft Beisszeit",
-    "category": "angelshop",
-    "city": "Kaufbeuren",
-    "street": "Bürgerstraße 23",
-    "coordinates": {
-      "lat": 47.885091032311536,
-      "lng": 10.622113594196122
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-167",
+    "id": "shop-167-KAU",
     "name": "Angelgeräte Müller",
     "category": "angelshop",
     "city": "Kaufbeuren",
     "street": "Salzstraße 22",
     "coordinates": {
-      "lat": 47.885091032311536,
-      "lng": 10.622113594196122
+      "lat": 47.8695891,
+      "lng": 10.5968094
     },
     "email": "",
     "website": "",
@@ -2115,14 +1140,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-172",
-    "name": "Großmanns Angeltreff",
+    "id": "shop-170-KIE",
+    "name": "Fisherman’s Partner Kiel",
     "category": "angelshop",
     "city": "Kiel",
-    "street": "Sörensenstr. 45",
+    "street": "Seekoppelweg 12",
     "coordinates": {
-      "lat": 54.32645243535811,
-      "lng": 10.1310932761144
+      "lat": 54.297367,
+      "lng": 10.0864493
     },
     "email": "",
     "website": "",
@@ -2130,14 +1155,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-176",
-    "name": "Fly Fishing Nation Pro Shop",
+    "id": "shop-171-KIE",
+    "name": "Serious Flyfishing",
     "category": "angelshop",
-    "city": "Köln",
-    "street": "Auf dem Berlich 30",
+    "city": "Kiel",
+    "street": "Gablenzstrasse 6",
     "coordinates": {
-      "lat": 50.934904086530814,
-      "lng": 6.958794085419628
+      "lat": 54.3107974,
+      "lng": 10.128557
     },
     "email": "",
     "website": "",
@@ -2145,14 +1170,29 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-177",
+    "id": "shop-173-KIR",
+    "name": "A+M Angelsport",
+    "category": "angelshop",
+    "city": "Kirchheim am Neckar",
+    "street": "Max-Eyth-Str. 8",
+    "coordinates": {
+      "lat": 49.0343167,
+      "lng": 9.1452199
+    },
+    "email": "",
+    "website": "",
+    "phone": "",
+    "source": "angelshops_germany_csv"
+  },
+  {
+    "id": "shop-177-KÖL",
     "name": "Angeljoe Köln",
     "category": "angelshop",
     "city": "Köln",
     "street": "Fettenweg 2",
     "coordinates": {
-      "lat": 50.934904086530814,
-      "lng": 6.958794085419628
+      "lat": 50.969431,
+      "lng": 6.8665891
     },
     "email": "",
     "website": "",
@@ -2160,14 +1200,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-178",
+    "id": "shop-178-KÖL",
     "name": "Trout-Hunter-Cologne",
     "category": "angelshop",
     "city": "Köln",
     "street": "Immendorfer Str.20",
     "coordinates": {
-      "lat": 50.934904086530814,
-      "lng": 6.958794085419628
+      "lat": 50.8492814,
+      "lng": 6.972897
     },
     "email": "",
     "website": "",
@@ -2175,14 +1215,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-179",
+    "id": "shop-179-KÖL",
     "name": "Angelsport Steinborn",
     "category": "angelshop",
     "city": "Köln",
     "street": "Wallstrasse 78",
     "coordinates": {
-      "lat": 50.934904086530814,
-      "lng": 6.958794085419628
+      "lat": 50.9643633,
+      "lng": 7.0013877
     },
     "email": "",
     "website": "",
@@ -2190,14 +1230,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-180",
+    "id": "shop-180-KÖL",
     "name": "Fishermans’s Partner Köln",
     "category": "angelshop",
     "city": "Köln",
     "street": "Ackerstraße 92-94",
     "coordinates": {
-      "lat": 50.934904086530814,
-      "lng": 6.958794085419628
+      "lat": 50.9595244,
+      "lng": 7.0171985
     },
     "email": "",
     "website": "",
@@ -2205,14 +1245,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-181",
+    "id": "shop-181-KÖL",
     "name": "Angelsport Dellbrück",
     "category": "angelshop",
     "city": "Köln",
     "street": "Bergisch Gladbacher Str. 1000",
     "coordinates": {
-      "lat": 50.934904086530814,
-      "lng": 6.958794085419628
+      "lat": 50.9783434,
+      "lng": 7.0699407
     },
     "email": "",
     "website": "",
@@ -2220,14 +1260,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-183",
-    "name": "Tonis Angelshop Landshut",
+    "id": "shop-182-LAN",
+    "name": "Askari Sport",
     "category": "angelshop",
-    "city": "Landshut",
-    "street": "äußere Regensburgerstr.43",
+    "city": "Landsberg",
+    "street": "Mägdeberge 2",
     "coordinates": {
-      "lat": 48.53388725788599,
-      "lng": 12.155098697778087
+      "lat": 51.5176584,
+      "lng": 12.063097
     },
     "email": "",
     "website": "",
@@ -2235,29 +1275,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-184",
-    "name": "Vilstaler Angler Zentrale",
-    "category": "angelshop",
-    "city": "Landshut",
-    "street": "Schützenstraße 16A",
-    "coordinates": {
-      "lat": 48.53388725788599,
-      "lng": 12.155098697778087
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-185",
+    "id": "shop-185-LAN",
     "name": "Askari Angelsport",
     "category": "angelshop",
     "city": "Langenfeld (Rheinland)",
     "street": "Bahnhofstraße 43",
     "coordinates": {
-      "lat": 51.10360962453387,
-      "lng": 6.946486081193531
+      "lat": 51.0995487,
+      "lng": 6.9415079
     },
     "email": "",
     "website": "",
@@ -2265,14 +1290,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-186",
+    "id": "shop-186-LAT",
     "name": "Angelgeräte und Pokale Haake",
     "category": "angelshop",
     "city": "Lathen",
     "street": "Mühlenstr.25",
     "coordinates": {
-      "lat": 52.86219096658027,
-      "lng": 7.320323046934043
+      "lat": 52.8662543,
+      "lng": 7.3151068
     },
     "email": "",
     "website": "",
@@ -2280,14 +1305,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-188",
+    "id": "shop-188-LEI",
     "name": "Angelbedarf Leipzig",
     "category": "angelshop",
     "city": "Leipzig",
     "street": "Berliner Str. 121",
     "coordinates": {
-      "lat": 51.33905288929809,
-      "lng": 12.36839644904913
+      "lat": 51.3594676,
+      "lng": 12.3955072
     },
     "email": "",
     "website": "",
@@ -2295,14 +1320,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-189",
+    "id": "shop-189-LEI",
     "name": "Fisherman’s Partner Leipzig",
     "category": "angelshop",
     "city": "Leipzig",
     "street": "Brentanostraße 1",
     "coordinates": {
-      "lat": 51.33905288929809,
-      "lng": 12.36839644904913
+      "lat": 51.4018516,
+      "lng": 12.3843879
     },
     "email": "",
     "website": "",
@@ -2310,14 +1335,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-190",
+    "id": "shop-190-LEI",
     "name": "Angel-Zentrum-Leipzig",
     "category": "angelshop",
     "city": "Leipzig",
     "street": "Karl-Heine-Strasse 64",
     "coordinates": {
-      "lat": 51.33905288929809,
-      "lng": 12.36839644904913
+      "lat": 51.3312335,
+      "lng": 12.3322055
     },
     "email": "",
     "website": "",
@@ -2325,14 +1350,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-191",
+    "id": "shop-191-LEI",
     "name": "Angelspezi XXL Leipzig",
     "category": "angelshop",
     "city": "Leipzig",
     "street": "Hugo-Aurig-Str. 7",
     "coordinates": {
-      "lat": 51.33905288929809,
-      "lng": 12.36839644904913
+      "lat": 51.3419067,
+      "lng": 12.4860412
     },
     "email": "",
     "website": "",
@@ -2340,29 +1365,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-192",
-    "name": "Angel Domäne",
-    "category": "angelshop",
-    "city": "Leipzig",
-    "street": "Hauptstr. 101",
-    "coordinates": {
-      "lat": 51.33905288929809,
-      "lng": 12.36839644904913
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-194",
+    "id": "shop-194-LEV",
     "name": "Angelshop Leverkusen",
     "category": "angelshop",
     "city": "Leverkusen",
     "street": "Ahrstraße 2",
     "coordinates": {
-      "lat": 51.036662734408644,
-      "lng": 6.992121777754948
+      "lat": 51.0464492,
+      "lng": 6.9827939
     },
     "email": "",
     "website": "",
@@ -2370,74 +1380,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-195",
-    "name": "Angler-Shop Mayfly",
-    "category": "angelshop",
-    "city": "Lingen (Ems)",
-    "street": "Am Darmer Bahmdamm 2",
-    "coordinates": {
-      "lat": 52.52212700727858,
-      "lng": 7.314777114505939
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-196",
-    "name": "Askari Sport GmbH",
-    "category": "angelshop",
-    "city": "Ludwigshafen am Rhein",
-    "street": "Mannheimer Landstraße 5C",
-    "coordinates": {
-      "lat": 49.46697114003915,
-      "lng": 8.434128124267117
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-199",
-    "name": "AngelSpezi Lübben im Spreewald",
-    "category": "angelshop",
-    "city": "Lübben",
-    "street": "Frankfurter Str. 19",
-    "coordinates": {
-      "lat": 51.94376472745726,
-      "lng": 13.901370705108368
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-200",
-    "name": "Angeln und Meh/er",
-    "category": "angelshop",
-    "city": "Lübeck",
-    "street": "Bei der Lohmühle 21a",
-    "coordinates": {
-      "lat": 53.86572382694645,
-      "lng": 10.690049503866046
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-201",
+    "id": "shop-201-LÜB",
     "name": "Fisherman’s Partner Lübeck",
     "category": "angelshop",
     "city": "Lübeck",
     "street": "Pinassenweg 26",
     "coordinates": {
-      "lat": 53.86572382694645,
-      "lng": 10.690049503866046
+      "lat": 53.8513355,
+      "lng": 10.6442849
     },
     "email": "",
     "website": "",
@@ -2445,14 +1395,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-202",
+    "id": "shop-202-LÜN",
     "name": "Angel- u. Trekkingshop",
     "category": "angelshop",
     "city": "Lüneburg",
     "street": "Rackerstr. 6",
     "coordinates": {
-      "lat": 53.252428111490175,
-      "lng": 10.40775976324506
+      "lat": 53.2462568,
+      "lng": 10.4064808
     },
     "email": "",
     "website": "",
@@ -2460,14 +1410,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-203",
+    "id": "shop-203-LÜN",
     "name": "Angelcenter Lüneburg",
     "category": "angelshop",
     "city": "Lüneburg",
     "street": "Boecklerstraße 14",
     "coordinates": {
-      "lat": 53.252428111490175,
-      "lng": 10.40775976324506
+      "lat": 53.2730802,
+      "lng": 10.4060504
     },
     "email": "",
     "website": "",
@@ -2475,14 +1425,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-204",
+    "id": "shop-204-LÜN",
     "name": "Angler`s Point Lünen",
     "category": "angelshop",
     "city": "Lünen",
     "street": "Derner Str. 84",
     "coordinates": {
-      "lat": 51.612271925126535,
-      "lng": 7.52332509298888
+      "lat": 51.5817191,
+      "lng": 7.5300893
     },
     "email": "",
     "website": "",
@@ -2490,14 +1440,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-206",
+    "id": "shop-206-MAN",
     "name": "Köder & Futtershop",
     "category": "angelshop",
     "city": "Mannheim",
     "street": "Industriestr. 41a",
     "coordinates": {
-      "lat": 49.48695570355045,
-      "lng": 8.469183493953398
+      "lat": 49.5137909,
+      "lng": 8.4702212
     },
     "email": "",
     "website": "",
@@ -2505,14 +1455,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-207",
+    "id": "shop-207-MAR",
     "name": "Angelprofi Larenta",
     "category": "angelshop",
     "city": "Marl",
     "street": "Wacholderstraße 26",
     "coordinates": {
-      "lat": 51.647082793393956,
-      "lng": 7.080912437834185
+      "lat": 51.6632942,
+      "lng": 7.1864887
     },
     "email": "",
     "website": "",
@@ -2520,14 +1470,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-210",
-    "name": "Friedfischen",
+    "id": "shop-213-MÖN",
+    "name": "Jutta’s Angelshop",
     "category": "angelshop",
-    "city": "Menden (Sauerland)",
-    "street": "Alleestraße 19",
+    "city": "Mönchengladbach",
+    "street": "Friedrich-Ebert-Straße 167",
     "coordinates": {
-      "lat": 51.4329893016578,
-      "lng": 7.791063596502225
+      "lat": 51.171577,
+      "lng": 6.4392579
     },
     "email": "",
     "website": "",
@@ -2535,29 +1485,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-214",
-    "name": "Angelbedarf House-of-Rose",
-    "category": "angelshop",
-    "city": "Mülheim an der Ruhr",
-    "street": "Saarner Str 491",
-    "coordinates": {
-      "lat": 51.4301079842311,
-      "lng": 6.887602961851643
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-215",
+    "id": "shop-215-MÜN",
     "name": "AFG Münchner Angler",
     "category": "angelshop",
     "city": "München",
     "street": "Dachauer Str. 109",
     "coordinates": {
-      "lat": 48.13839465971312,
-      "lng": 11.577051903583987
+      "lat": 48.1516662,
+      "lng": 11.5566138
     },
     "email": "",
     "website": "",
@@ -2565,14 +1500,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-216",
+    "id": "shop-216-MÜN",
     "name": "AKM Angel- und Ködermarkt",
     "category": "angelshop",
     "city": "München",
     "street": "Hermann-Lingg-Str. 11",
     "coordinates": {
-      "lat": 48.13839465971312,
-      "lng": 11.577051903583987
+      "lat": 48.1379615,
+      "lng": 11.5517598
     },
     "email": "",
     "website": "",
@@ -2580,14 +1515,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-217",
+    "id": "shop-217-MÜN",
     "name": "Home of Flyfishing Brinkhoff",
     "category": "angelshop",
     "city": "München",
     "street": "Helene-Weber-Allee 11",
     "coordinates": {
-      "lat": 48.13839465971312,
-      "lng": 11.577051903583987
+      "lat": 48.1628778,
+      "lng": 11.5442625
     },
     "email": "",
     "website": "",
@@ -2595,29 +1530,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-218",
-    "name": "Angler-Zentrum-Laim",
-    "category": "angelshop",
-    "city": "München",
-    "street": "Landsberger Str. 199?",
-    "coordinates": {
-      "lat": 48.13839465971312,
-      "lng": 11.577051903583987
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-219",
+    "id": "shop-219-MÜN",
     "name": "Fisherman’s Partner München",
     "category": "angelshop",
     "city": "München",
     "street": "Bodenseestr. 275",
     "coordinates": {
-      "lat": 48.13839465971312,
-      "lng": 11.577051903583987
+      "lat": 48.1418757,
+      "lng": 11.4200772
     },
     "email": "",
     "website": "",
@@ -2625,29 +1545,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-220",
-    "name": "CaJo Angelsport & Rutenbau",
-    "category": "angelshop",
-    "city": "Münster",
-    "street": "Albrecht-Thaer-Straße 20",
-    "coordinates": {
-      "lat": 51.95960629026466,
-      "lng": 7.625545247309999
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-221",
+    "id": "shop-221-MÜN",
     "name": "Angelsport Schmidt",
     "category": "angelshop",
     "city": "Münster",
     "street": "Hünenburg 60",
     "coordinates": {
-      "lat": 51.95960629026466,
-      "lng": 7.625545247309999
+      "lat": 51.9113299,
+      "lng": 7.6234479
     },
     "email": "",
     "website": "",
@@ -2655,14 +1560,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-223",
-    "name": "Der Angler: Angelbedarf",
+    "id": "shop-222-NEU",
+    "name": "Elchinger-Angelcenter",
     "category": "angelshop",
-    "city": "Neubrandenburg",
-    "street": "Johannesstraße 12a",
+    "city": "Neu-Ulm",
+    "street": "Daimlerstr. 2",
     "coordinates": {
-      "lat": 53.56173700240714,
-      "lng": 13.259959544479603
+      "lat": 48.4231154,
+      "lng": 10.0660195
     },
     "email": "",
     "website": "",
@@ -2670,14 +1575,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-224",
+    "id": "shop-224-NEU",
     "name": "Fishermans World Neumarkt",
     "category": "angelshop",
     "city": "Neumarkt in der Oberpfalz",
     "street": "Blomenhofstraße 1",
     "coordinates": {
-      "lat": 49.275778981488,
-      "lng": 11.457729968695938
+      "lat": 49.2986185,
+      "lng": 11.4604957
     },
     "email": "",
     "website": "",
@@ -2685,44 +1590,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-230",
-    "name": "Angelshop Gerstner",
-    "category": "angelshop",
-    "city": "Nienburg Saale",
-    "street": "Brückenstraße 7",
-    "coordinates": {
-      "lat": 51.84150023860295,
-      "lng": 11.762773804538366
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-233",
-    "name": "Sportangler-Zentrale",
-    "category": "angelshop",
-    "city": "Nürnberg",
-    "street": "Rothenburger Str. 253",
-    "coordinates": {
-      "lat": 49.45448467123704,
-      "lng": 11.079852769121784
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-234",
+    "id": "shop-234-NÜR",
     "name": "Fisherman’s Partner",
     "category": "angelshop",
     "city": "Nürnberg",
     "street": "Strawinskystr. 28",
     "coordinates": {
-      "lat": 49.45448467123704,
-      "lng": 11.079852769121784
+      "lat": 49.3471226,
+      "lng": 11.0622382
     },
     "email": "",
     "website": "",
@@ -2730,14 +1605,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-269",
-    "name": "Angelsport Becker",
+    "id": "shop-235-OBE",
+    "name": "Angelcenter Kiepen",
     "category": "angelshop",
-    "city": "Saarbrücken",
-    "street": "Neumühler Weg 75",
+    "city": "Oberhausen",
+    "street": "Buschhausener Strasse 2",
     "coordinates": {
-      "lat": 49.234959985624464,
-      "lng": 6.996815341892048
+      "lat": 51.4773219,
+      "lng": 6.8517368
     },
     "email": "",
     "website": "",
@@ -2745,14 +1620,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-272",
-    "name": "Fangplatz Angelbedarf",
+    "id": "shop-236-OBE",
+    "name": "Angelsport-Koziol",
     "category": "angelshop",
-    "city": "Schloß Holte – Stukenbrock",
-    "street": "Beckersheide 7",
+    "city": "Oberhausen",
+    "street": "Neugahlener Str. 2",
     "coordinates": {
-      "lat": 51.897938118910034,
-      "lng": 8.637298840272827
+      "lat": 51.5112787,
+      "lng": 6.8417487
     },
     "email": "",
     "website": "",
@@ -2760,14 +1635,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-277",
-    "name": "Hechtfreunde Angelzentrum",
+    "id": "shop-239-OFF",
+    "name": "Arno Schlisske Jagd und Angelsport",
     "category": "angelshop",
-    "city": "Senden",
-    "street": "Siemensstraße 2",
+    "city": "Offenburg",
+    "street": "Gerberstraße 6",
     "coordinates": {
-      "lat": 48.32556592960645,
-      "lng": 10.051039557478147
+      "lat": 48.4681167,
+      "lng": 7.9434293
     },
     "email": "",
     "website": "",
@@ -2775,14 +1650,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-285",
-    "name": "Angelservice Ullrich",
+    "id": "shop-240-OLD",
+    "name": "Udos Anglershop",
     "category": "angelshop",
-    "city": "Stralsund",
-    "street": "Wasserstraße 63",
+    "city": "Oldenburg",
+    "street": "Bremer Heerstraße 400",
     "coordinates": {
-      "lat": 54.310251666961875,
-      "lng": 13.08525274268854
+      "lat": 53.1130803,
+      "lng": 8.2644714
     },
     "email": "",
     "website": "",
@@ -2790,119 +1665,14 @@
     "source": "angelshops_germany_csv"
   },
   {
-    "id": "shop-287",
-    "name": "Fisherman’s Partner Stuttgart",
+    "id": "shop-242-OSN",
+    "name": "Sportfischerzentrum",
     "category": "angelshop",
-    "city": "Stuttgart",
-    "street": "Nagoldstraße 49",
+    "city": "Osnabrück",
+    "street": "Hunteburger Weg 1",
     "coordinates": {
-      "lat": 48.77319316174503,
-      "lng": 9.184917126777954
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-289",
-    "name": "Wessels Angeln",
-    "category": "angelshop",
-    "city": "Südbrookmerland",
-    "street": "Ekelser Straße 22",
-    "coordinates": {
-      "lat": 53.481534546700686,
-      "lng": 7.350612855913807
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-301",
-    "name": "Uwe Halm Angelbedarf",
-    "category": "angelshop",
-    "city": "Wilhelmshaven",
-    "street": "Menkestraße 38A",
-    "coordinates": {
-      "lat": 53.53244384473168,
-      "lng": 8.105022445213148
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-302",
-    "name": "Waffen Wenck Winsen",
-    "category": "angelshop",
-    "city": "Winsen",
-    "street": "Marktstraße 18",
-    "coordinates": {
-      "lat": 53.36717719995782,
-      "lng": 10.201064835578427
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-304",
-    "name": "Angelsport Engert",
-    "category": "angelshop",
-    "city": "Worms",
-    "street": "Petrus-Dorn-Straße 28a",
-    "coordinates": {
-      "lat": 49.62912928272738,
-      "lng": 8.36466355885444
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-306",
-    "name": "Angelsport Möller",
-    "category": "angelshop",
-    "city": "Wuppertal",
-    "street": "Märkische Straße 40",
-    "coordinates": {
-      "lat": 51.25818734302038,
-      "lng": 7.160659404029082
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-307",
-    "name": "Hartung & Streile Angelsport",
-    "category": "angelshop",
-    "city": "Wuppertal",
-    "street": "Friedrich- Engels- Allee 172",
-    "coordinates": {
-      "lat": 51.25818734302038,
-      "lng": 7.160659404029082
-    },
-    "email": "",
-    "website": "",
-    "phone": "",
-    "source": "angelshops_germany_csv"
-  },
-  {
-    "id": "shop-310",
-    "name": "Angelspezi XXl Zwickau",
-    "category": "angelshop",
-    "city": "Zwickau",
-    "street": "Wildenfelser Str. 19",
-    "coordinates": {
-      "lat": 50.71954300856644,
-      "lng": 12.49312971920702
+      "lat": 52.2852987,
+      "lng": 8.0774286
     },
     "email": "",
     "website": "",
