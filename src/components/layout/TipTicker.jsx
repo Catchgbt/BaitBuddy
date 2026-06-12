@@ -165,7 +165,7 @@ export default function EnhancedTicker() {
   }, 0) * (0.1 / (speed/100));
 
   return (
-    <div className="w-full h-8 bg-gray-900 overflow-hidden flex items-center border-b border-gray-800">
+    <div className="w-full h-8 bg-gray-900/50 overflow-hidden flex items-center border-b border-gray-800">
       <div className="flex items-center h-full">
         <div 
           ref={tickerRef}

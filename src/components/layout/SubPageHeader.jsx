@@ -24,7 +24,7 @@ export default function SubPageHeader({ title }) {
   };
 
   return (
-    <div className="md:hidden sticky top-0 z-40 bg-gray-950/95 backdrop-blur-xl border-b border-gray-800">
+    <div className="md:hidden sticky top-0 z-40 bg-gray-950/60 backdrop-blur-xl border-b border-gray-800">
       <div
         className="flex items-center h-12 px-4"
         style={{ paddingTop: 'env(safe-area-inset-top)' }}

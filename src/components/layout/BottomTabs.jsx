@@ -76,7 +76,7 @@ export default function BottomTabs() {
   return (
     <nav
       aria-label="Hauptnavigation"
-      className="md:hidden fixed bottom-0 left-0 right-0 bg-gray-950/95 backdrop-blur-xl border-t border-gray-800 z-50"
+      className="md:hidden fixed bottom-0 left-0 right-0 bg-gray-950/75 backdrop-blur-xl border-t border-gray-800 z-50"
       style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0px)' }}
       role="tablist"
     >

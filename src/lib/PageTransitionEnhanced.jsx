@@ -52,7 +52,7 @@ export default function PageTransition({ children }) {
       animate="animate"
       exit="exit"
       transition={transition}
-      className="bg-gray-950"
+      className="bg-transparent"
       style={{
         minHeight: 'calc(100vh - 200px)',
         paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))',
