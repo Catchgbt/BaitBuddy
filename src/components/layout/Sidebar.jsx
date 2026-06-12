@@ -46,24 +46,26 @@ export default function Sidebar({ isOpen, setIsOpen, currentPageName }) {
     };
   }, []);
 
-  const menuItems = [
+  const mainItems = [
     { name: "Dashboard", path: "Dashboard", key: "nav.dashboard" },
     { name: "Fangbuch", path: "Logbook", key: "nav.logbook" },
     { name: "Fang-Uebersicht", path: "CatchStats", key: "nav.catchstats" },
     { name: "Spots & Karte", path: "Map", key: "nav.map" },
     { name: "Wetter", path: "Weather", key: "nav.weather" },
     { name: "Event", path: "Events", key: "nav.events", isLive: true },
-    
-    // KI Tools Header
-    { type: "header", key: "nav.ai_tools" },
-    { name: "KI Chat-Buddy", path: "AIAssistant", key: "nav.ai_chat", indent: true },
-    { name: "KI-Kamera & Biss", path: "AI", key: "nav.ai_camera", indent: true },
-    { name: "AR-Gewässer", path: "ARView", key: "nav.ar_view", indent: true },
-    { name: "AR Knoten AI", path: "ARKnotenAssistent", key: "nav.ar_knoten", indent: true, isBeta: true },
-    { name: "KI Voice Control", path: "VoiceControl", key: "nav.ai_voice", indent: true },
-    { name: "Satelliten-Analyse", path: "WaterAnalysis", key: "nav.water_analysis", indent: true },
-    { name: "KI-Köder-Mischer", path: "BaitMixer", key: "nav.bait_mixer", indent: true },
-    
+  ];
+
+  const aiItems = [
+    { name: "KI Chat-Buddy", path: "AIAssistant", key: "nav.ai_chat" },
+    { name: "KI-Kamera & Biss", path: "AI", key: "nav.ai_camera" },
+    { name: "AR-Gewässer", path: "ARView", key: "nav.ar_view" },
+    { name: "AR Knoten AI", path: "ARKnotenAssistent", key: "nav.ar_knoten", isBeta: true },
+    { name: "KI Voice Control", path: "VoiceControl", key: "nav.ai_voice" },
+    { name: "Satelliten-Analyse", path: "WaterAnalysis", key: "nav.water_analysis" },
+    { name: "KI-Köder-Mischer", path: "BaitMixer", key: "nav.bait_mixer" },
+  ];
+
+  const moreItems = [
     { name: "Ausrüstung", path: "Gear", key: "nav.gear" },
     { name: "Meine Trips", path: "TripPlanner", key: "nav.trips" },
     { name: "Community", path: "Community", key: "nav.community", isBeta: true },
@@ -75,7 +77,6 @@ export default function Sidebar({ isOpen, setIsOpen, currentPageName }) {
     { name: "Profil", path: "Profile", key: "nav.profile" },
     { name: "Datenschutz", path: "Datenschutz", key: "Datenschutz" },
     { name: "Hilfe & Support", path: "Help", key: "Hilfe & Support" },
-
   ];
 
   const handleClose = () => {
@@ -118,6 +119,41 @@ export default function Sidebar({ isOpen, setIsOpen, currentPageName }) {
   const displayName = user?.nickname || user?.full_name || "Mein Profil";
   const isDemo = user?.is_demo_user;
 
+  const renderMenuItem = (item) => {
+    const isActive = currentPageName === item.path;
+    let displayText = item.name;
+    if (item.key.startsWith('nav.')) {
+      const translated = t(item.key);
+      // Fallback auf item.name, wenn Key nicht übersetzt wurde
+      displayText = (translated && translated !== item.key) ? translated : item.name;
+    }
+
+    return (
+      <Link
+        key={item.path}
+        to={createPageUrl(item.path)}
+        onClick={() => handleNavClick(item)}
+        className={`
+                flex items-center justify-between gap-1 px-2.5 py-1.5 rounded-lg transition-all text-xs leading-tight min-h-[38px] active:scale-95 focus:ring-2 focus:ring-cyan-400
+                ${isActive ?
+                  'bg-emerald-600 text-white font-medium active:bg-emerald-700' :
+                  'text-gray-300 active:text-white active:bg-gray-700'}
+              `}>
+        <span>{displayText}</span>
+        {item.isBeta && (
+          <span className="flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40">
+            BETA
+          </span>
+        )}
+        {item.isLive && (
+          <span className="flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse">
+            LIVE
+          </span>
+        )}
+      </Link>
+    );
+  };
+
   return (
     <>
       {/* Backdrop */}
@@ -136,7 +172,7 @@ export default function Sidebar({ isOpen, setIsOpen, currentPageName }) {
       `}>
         <div className="flex flex-col" style={{ height: '100vh', height: '100dvh', maxHeight: '100vh', maxHeight: '100dvh' }}>
           
-          <div className="flex items-center justify-between p-6 border-b border-gray-800 flex-shrink-0">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 flex-shrink-0">
             <AnimatePresence mode="wait">
               {isOpen && (
                 <motion.button
@@ -186,74 +222,39 @@ export default function Sidebar({ isOpen, setIsOpen, currentPageName }) {
               height: '100%'
             }}
           >
-            <nav className="px-5 py-4">
-              <div className="space-y-0.5 mb-4">
-                {menuItems.map((item, idx) => {
-                  // Kategorie-Header
-                  if (item.type === "header") {
-                    const label = item.label || t(item.key);
-                    return (
-                      <div key={idx} className="pt-4 pb-2 px-4 flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider text-cyan-400">
-                          {label}
-                        </span>
-                        {item.key === "nav.ai_tools" && (
-                          <span className="ml-2 px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-[0_0_10px_rgba(168,85,247,0.3)]">
-                            BETA
-                          </span>
-                        )}
-                      </div>
-                    );
-                  }
+            <nav className="px-4 py-3">
+              <div className="grid grid-cols-2 gap-1">
+                {mainItems.map(renderMenuItem)}
+              </div>
 
-                  // Normaler Menüpunkt
-                  const isActive = currentPageName === item.path;
-                  let displayText = item.name;
-                  if (item.key.startsWith('nav.')) {
-                    const translated = t(item.key);
-                    // Fallback auf item.name, wenn Key nicht übersetzt wurde
-                    displayText = (translated && translated !== item.key) ? translated : item.name;
-                  }
+              <div className="pt-3 pb-1.5 px-1 flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-cyan-400">
+                  {t('nav.ai_tools')}
+                </span>
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-[0_0_10px_rgba(168,85,247,0.3)]">
+                  BETA
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-1">
+                {aiItems.map(renderMenuItem)}
+              </div>
 
-                  return (
-                    <Link
-                      key={item.path}
-                      to={createPageUrl(item.path)}
-                      onClick={() => handleNavClick(item)}
-                      className={`
-                              flex items-center justify-between w-full text-left px-4 py-2 rounded-lg transition-all text-sm min-h-[44px] active:scale-95 focus:ring-2 focus:ring-cyan-400
-                              ${item.indent ? 'pl-8' : ''}
-                              ${isActive ?
-                                'bg-emerald-600 text-white font-medium active:bg-emerald-700' :
-                                'text-gray-300 active:text-white active:bg-gray-700'}
-                            `}>
-                      <span>{displayText}</span>
-                      {item.isBeta && (
-                        <span className="ml-2 px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40">
-                          BETA
-                        </span>
-                      )}
-                      {item.isLive && (
-                        <span className="ml-2 px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse">
-                          LIVE
-                        </span>
-                      )}
-                    </Link>
-                  );
-                })}
+              <div className="my-3 h-px bg-gray-800" />
+              <div className="grid grid-cols-2 gap-1">
+                {moreItems.map(renderMenuItem)}
               </div>
             </nav>
           </div>
 
           <div className="flex-shrink-0">
-            <div className="p-6 border-t border-gray-800 space-y-3">
+            <div className="px-4 py-3 border-t border-gray-800 space-y-1.5">
               <button
                 onClick={() => {
                   triggerHaptic('medium');
                   playSound('click');
                   auth.logout(createPageUrl('Home'));
                 }}
-                className="flex items-center gap-3 w-full text-left px-4 py-2 rounded-lg transition-all text-sm text-red-400 active:text-red-300 active:bg-red-500/20 active:scale-95 focus:ring-2 focus:ring-red-400 min-h-[44px]"
+                className="flex items-center gap-3 w-full text-left px-4 py-1.5 rounded-lg transition-all text-sm text-red-400 active:text-red-300 active:bg-red-500/20 active:scale-95 focus:ring-2 focus:ring-red-400 min-h-[38px]"
                 aria-label="Abmelden"
               >
                 <LogOut className="w-4 h-4" aria-hidden="true" />
