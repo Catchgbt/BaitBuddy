@@ -8,7 +8,6 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import VoiceControlWidget from "@/components/dashboard/VoiceControlWidget";
 import MiniKarte from "@/components/home/MiniKarte";
-import WeatherRadarMap from "@/components/weather/WeatherRadarMap";
 import { Brain, Mic, BookOpen, ArrowRight } from "lucide-react";
 import SchonzeitWarner from "@/components/dashboard/SchonzeitWarner";
 import { Button } from "@/components/ui/button";
@@ -510,12 +509,6 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
           <MiniKarte />
         </div>
 
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900/80 to-gray-900/40 backdrop-blur-sm p-6 sm:p-8 border border-gray-800/50">
-          <h3 className="text-sm font-semibold text-cyan-400/70 uppercase tracking-wider mb-4">Wetterradar</h3>
-          <div className="h-96">
-            <WeatherRadarMap />
-          </div>
-        </div>
 
         <FishingRecommendationCard />
 
