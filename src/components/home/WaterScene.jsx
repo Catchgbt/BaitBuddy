@@ -6,11 +6,12 @@ import TroutSvg from '@/components/fish/TroutSvg';
 import ZanderSvg from '@/components/fish/ZanderSvg';
 import CatfishSvg from '@/components/fish/CatfishSvg';
 
-// Unterwasser-Szene für die Landingpage: Tiefenverlauf wie in einem See,
-// Lichtstrahlen von der Oberfläche, aufsteigende Blasen und Süßwasserfische,
-// die ruhig durch das Bild ziehen. Sobald ein Fisch das Bild verlassen hat,
-// schwimmt die nächste Art herein (Karpfen → Barsch → Forelle → Hecht →
-// Zander → Wels → …). Rein dekorativ (pointer-events: none).
+// Unterwasser-Szene (app-weiter Hintergrund): Tiefenverlauf wie in einem See,
+// Lichtstrahlen von der Oberfläche mit gelegentlichen hellen Einstrahlungen,
+// viele aufsteigende, seitlich pendelnde Blasen, Schwebeteilchen und
+// Süßwasserfische, die ruhig durch das Bild ziehen. Sobald ein Fisch das Bild
+// verlassen hat, schwimmt die nächste Art herein (Karpfen → Barsch → Forelle
+// → Hecht → Zander → Wels → …). Rein dekorativ (pointer-events: none).
 const FISH_SPECIES = [
   { id: 'carp', Component: CarpSvg, size: 1.0 },
   { id: 'perch', Component: PerchSvg, size: 0.6 },
@@ -20,15 +21,28 @@ const FISH_SPECIES = [
   { id: 'catfish', Component: CatfishSvg, size: 1.3 },
 ];
 
-const BUBBLES = [
-  // [left %, Größe px, Dauer s, Delay s, seitliche Drift px]
-  [5, 5, 14, -2, 18], [11, 3, 18, -9, -14], [18, 7, 12, -5, 24],
-  [26, 4, 16, -12, -20], [33, 6, 13, -1, 12], [41, 3, 19, -7, -10],
-  [48, 8, 11, -4, 28], [55, 4, 17, -14, -16], [62, 5, 14, -8, 14],
-  [69, 3, 20, -3, -22], [75, 6, 12, -10, 18], [81, 4, 16, -6, -12],
-  [87, 7, 13, -11, 20], [93, 3, 18, -1, -18], [38, 5, 15, -15, 10],
-  [58, 6, 21, -17, -8],
-];
+// Deterministisch „gewürfelte“ Blasen: gut verteilt, sofort gefüllt (negative
+// Delays), kleine Blasen steigen langsamer und pendeln schneller.
+const BUBBLES = Array.from({ length: 44 }, (_, i) => ({
+  left: (i * 97 + 13) % 100,
+  size: 2 + ((i * 53 + 7) % 12),
+  dur: 9 + ((i * 31 + 5) % 14),
+  delay: -((i * 67 + 11) % 22),
+  drift: ((i * 41 + 3) % 56) - 28,
+  sway: 4 + ((i * 29) % 10),
+  swayDur: 1.4 + (((i * 13) % 18) / 10),
+}));
+
+// Feine Schwebeteilchen, die langsam durchs Wasser driften.
+const MOTES = Array.from({ length: 18 }, (_, i) => ({
+  left: (i * 53 + 29) % 100,
+  top: 8 + ((i * 37 + 17) % 84),
+  size: 1.5 + ((i * 19) % 3),
+  dur: 22 + ((i * 23) % 20),
+  delay: -((i * 47) % 30),
+  mx: ((i * 31) % 120) - 60,
+  my: ((i * 43) % 80) - 40,
+}));
 
 const randBetween = (a, b) => a + Math.random() * (b - a);
 
@@ -94,16 +108,31 @@ export default function WaterScene() {
         .bb-water-scene {
           position: fixed; inset: 0; z-index: 0;
           overflow: hidden; pointer-events: none;
-          background: linear-gradient(180deg, #0c3b58 0%, #07293f 38%, #041a2b 70%, #020f1a 100%);
+          background: linear-gradient(180deg,
+            #0e4467 0%, #0a3a59 18%, #07293f 42%,
+            #04202f 62%, #031624 80%, #020f1a 100%);
         }
 
         /* Wasseroberfläche (Licht von oben) */
         .bb-surface {
           position: absolute; left: 0; right: 0; top: 0; height: 22vh;
-          background: linear-gradient(180deg, rgba(125,205,240,.22) 0%, rgba(125,205,240,.06) 55%, transparent 100%);
+          background: linear-gradient(180deg, rgba(125,205,240,.24) 0%, rgba(125,205,240,.07) 55%, transparent 100%);
         }
 
-        /* Lichtstrahlen */
+        /* wanderndes Glitzern direkt unter der Oberfläche */
+        .bb-shimmer {
+          position: absolute; top: 0; left: -50%; width: 200%; height: 9vh;
+          background: repeating-linear-gradient(100deg,
+            transparent 0 40px, rgba(160,215,245,.06) 40px 80px);
+          mix-blend-mode: screen; filter: blur(6px);
+          animation: bbShimmer 16s linear infinite;
+        }
+        @keyframes bbShimmer {
+          from { transform: translateX(0); }
+          to   { transform: translateX(20%); }
+        }
+
+        /* Lichtstrahlen (permanent, sanft schwingend) */
         .bb-ray {
           position: absolute; top: -15vh; height: 140vh;
           background: linear-gradient(180deg, rgba(150,210,240,.17) 0%, rgba(150,210,240,.05) 45%, transparent 75%);
@@ -113,6 +142,21 @@ export default function WaterScene() {
         @keyframes bbRaySway {
           from { transform: rotate(calc(var(--tilt) - 3deg)) translateX(-1.5vw); }
           to   { transform: rotate(calc(var(--tilt) + 3deg)) translateX(1.5vw); }
+        }
+
+        /* gelegentliche helle Lichteinstrahlung (blitzt ab und zu auf) */
+        .bb-rayflash {
+          position: absolute; top: -15vh; height: 150vh; opacity: 0;
+          background: linear-gradient(180deg, rgba(195,235,255,.32) 0%, rgba(170,220,245,.10) 50%, transparent 78%);
+          filter: blur(10px); transform-origin: top center; mix-blend-mode: screen;
+          animation: bbRayFlash linear infinite;
+        }
+        @keyframes bbRayFlash {
+          0%, 58% { opacity: 0; transform: rotate(calc(var(--tilt) - 2deg)); }
+          66%     { opacity: .55; }
+          72%     { opacity: .65; transform: rotate(var(--tilt)); }
+          80%     { opacity: .22; }
+          88%, 100% { opacity: 0; transform: rotate(calc(var(--tilt) + 2deg)); }
         }
 
         /* wandernde Lichtflecken im Wasser */
@@ -126,17 +170,40 @@ export default function WaterScene() {
           to   { transform: translate(4vw, 3vh) scale(1.12); }
         }
 
-        /* aufsteigende Blasen */
+        /* aufsteigende Blasen: außen Aufstieg, innen seitliches Pendeln */
         .bb-bubble {
-          position: absolute; bottom: -24px; border-radius: 50%;
-          background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.5), rgba(190,225,245,.16) 60%, transparent 72%);
+          position: absolute; bottom: -24px;
           animation: bbBubbleUp linear infinite;
+        }
+        .bb-bubble-core {
+          display: block; width: 100%; height: 100%; border-radius: 50%;
+          background: radial-gradient(circle at 35% 30%,
+            rgba(255,255,255,.6), rgba(190,225,245,.22) 55%,
+            rgba(190,225,245,.06) 75%, transparent 82%);
+          animation: bbBubbleSway ease-in-out infinite alternate;
         }
         @keyframes bbBubbleUp {
           0%   { transform: translate(0, 0); opacity: 0; }
-          8%   { opacity: .55; }
+          8%   { opacity: .6; }
           92%  { opacity: .35; }
           100% { transform: translate(var(--drift), -112vh); opacity: 0; }
+        }
+        @keyframes bbBubbleSway {
+          from { transform: translateX(calc(var(--sway) * -1)); }
+          to   { transform: translateX(var(--sway)); }
+        }
+
+        /* feine Schwebeteilchen */
+        .bb-mote {
+          position: absolute; border-radius: 50%;
+          background: rgba(200,230,245,.28);
+          animation: bbMoteDrift linear infinite;
+        }
+        @keyframes bbMoteDrift {
+          0%   { transform: translate(0, 0); opacity: 0; }
+          12%  { opacity: .45; }
+          88%  { opacity: .25; }
+          100% { transform: translate(var(--mx), var(--my)); opacity: 0; }
         }
 
         /* Fische: eine Querung pro Art, Wechsel erfolgt außerhalb des Bildes */
@@ -173,33 +240,54 @@ export default function WaterScene() {
         @media (prefers-reduced-motion: reduce) {
           .bb-water-scene * { animation: none !important; }
           .bb-fish-far { display: none; }
-          .bb-bubble { display: none; }
+          .bb-bubble, .bb-mote { display: none; }
         }
       `}</style>
 
       <div className="bb-surface" />
+      <div className="bb-shimmer" />
 
       <div className="bb-ray" style={{ left: '12%', width: '9vw', '--tilt': '14deg', animationDuration: '17s' }} />
       <div className="bb-ray" style={{ left: '34%', width: '14vw', '--tilt': '10deg', opacity: .8, animationDuration: '23s', animationDelay: '-6s' }} />
       <div className="bb-ray" style={{ left: '58%', width: '8vw', '--tilt': '17deg', opacity: .65, animationDuration: '19s', animationDelay: '-11s' }} />
       <div className="bb-ray" style={{ left: '78%', width: '12vw', '--tilt': '8deg', opacity: .5, animationDuration: '27s', animationDelay: '-3s' }} />
 
+      {/* ab und zu aufblitzende Einstrahlungen */}
+      <div className="bb-rayflash" style={{ left: '22%', width: '16vw', '--tilt': '12deg', animationDuration: '26s' }} />
+      <div className="bb-rayflash" style={{ left: '63%', width: '20vw', '--tilt': '7deg', animationDuration: '37s', animationDelay: '-14s' }} />
+
       <div className="bb-caustic" style={{ width: '55vw', height: '38vh', left: '8%', top: '6%', background: 'radial-gradient(ellipse, rgba(56,180,220,.20), transparent 65%)', animationDuration: '26s' }} />
       <div className="bb-caustic" style={{ width: '48vw', height: '34vh', right: '4%', top: '30%', background: 'radial-gradient(ellipse, rgba(34,150,200,.14), transparent 65%)', animationDuration: '34s', animationDelay: '-12s' }} />
+      <div className="bb-caustic" style={{ width: '40vw', height: '28vh', left: '30%', top: '55%', background: 'radial-gradient(ellipse, rgba(30,130,180,.10), transparent 65%)', animationDuration: '40s', animationDelay: '-20s' }} />
+
+      {MOTES.map((m, i) => (
+        <span
+          key={`m${i}`}
+          className="bb-mote"
+          style={{
+            left: `${m.left}%`, top: `${m.top}%`,
+            width: m.size, height: m.size,
+            animationDuration: `${m.dur}s`, animationDelay: `${m.delay}s`,
+            '--mx': `${m.mx}px`, '--my': `${m.my}px`,
+          }}
+        />
+      ))}
 
       {/* Fisch in der Tiefe (unscharf, dunkler) – startet mit dem Zander */}
       <RoamingFish layer="far" startIndex={4} startDir={-1} />
 
-      {BUBBLES.map(([left, size, dur, delay, drift], i) => (
+      {BUBBLES.map((b, i) => (
         <span
-          key={i}
+          key={`b${i}`}
           className="bb-bubble"
           style={{
-            left: `${left}%`, width: size, height: size,
-            animationDuration: `${dur}s`, animationDelay: `${delay}s`,
-            '--drift': `${drift}px`,
+            left: `${b.left}%`, width: b.size, height: b.size,
+            animationDuration: `${b.dur}s`, animationDelay: `${b.delay}s`,
+            '--drift': `${b.drift}px`, '--sway': `${b.sway}px`,
           }}
-        />
+        >
+          <span className="bb-bubble-core" style={{ animationDuration: `${b.swayDur}s` }} />
+        </span>
       ))}
 
       {/* Fisch im Vordergrund – startet mit dem Karpfen */}

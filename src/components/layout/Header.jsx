@@ -123,7 +123,7 @@ export default function Header({
 
   return (
     <header 
-      className="sticky top-0 z-50 bg-gray-950/95 backdrop-blur-xl border-b border-gray-800 shadow-lg relative"
+      className="sticky top-0 z-50 bg-gray-950/60 backdrop-blur-xl border-b border-gray-800 shadow-lg relative"
       style={{ 
         paddingTop: 'env(safe-area-inset-top)',
       }}

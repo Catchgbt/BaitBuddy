@@ -30,6 +30,7 @@ import BackButtonHandler from "@/components/navigation/BackButtonHandler";
 
 import ErrorBoundary from "@/lib/ErrorBoundary";
 import VoiceOverlay from "@/components/layout/VoiceOverlay";
+import WaterScene from "@/components/home/WaterScene";
 
 // Lazy-loaded nicht-kritische Komponenten
 const Sidebar = lazy(() => import("@/components/layout/Sidebar"));
@@ -369,26 +370,8 @@ function LayoutContent({ children, currentPageName }) {
               <UpdateNotification />
               <OfflineIndicator />
               
-              {/* Animierte Farbverläufe - KLEINER UND SUBTILER */}
-              <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
-                <div className="absolute inset-x-0 -top-40 transform-gpu overflow-hidden blur-3xl sm:-top-80 opacity-20 animate-glow-pulse" aria-hidden="true">
-                  <div
-                    className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#f59e0b] via-[#f97316] to-[#ea580c] animate-gradient-shift"
-                    style={{
-                      clipPath: 'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
-                    }}
-                  />
-                </div>
-
-                <div className="absolute right-0 top-1/4 transform-gpu overflow-hidden blur-3xl opacity-15 animate-glow-pulse-delayed" aria-hidden="true">
-                  <div
-                    className="relative aspect-[1155/678] w-[36.125rem] translate-x-1/2 rotate-[60deg] bg-gradient-to-tr from-[#22d3ee] via-[#06b6d4] to-[#0891b2] animate-gradient-shift-reverse"
-                    style={{
-                      clipPath: 'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
-                    }}
-                  />
-                </div>
-              </div>
+              {/* Unterwasser-Hintergrund (wie auf der Landingpage) */}
+              <WaterScene />
 
               {/* Content Layer */}
               <div className="relative" style={{ zIndex: 1 }}>
@@ -418,7 +401,7 @@ function LayoutContent({ children, currentPageName }) {
                   <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} currentPageName={currentPageName} />
                 </SuspenseWithErrorBoundary>
 
-                <div className="sticky top-0 z-40 bg-gray-950" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+                <div className="sticky top-0 z-40 bg-[#06223a]/80 backdrop-blur-xl" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
                   <Header 
                     isSidebarOpen={isSidebarOpen}
                     setIsSidebarOpen={setIsSidebarOpen} 
@@ -468,7 +451,7 @@ function LayoutContent({ children, currentPageName }) {
               <style>{`
                 :root {
                   --radius: 1rem;
-                  --background: 3 7 18;
+                  --background: 2 15 26;
                   --foreground: 248 250 252;
                   --catchly: #165DFF;
                 }
@@ -485,89 +468,6 @@ function LayoutContent({ children, currentPageName }) {
                   scroll-behavior: smooth; 
                 }
                 
-                @keyframes gradient-shift {
-                    0%, 100% {
-                        transform: translate(0, 0) scale(1);
-                        opacity: var(--opacity-start, 0.2);
-                    }
-                    25% {
-                        transform: translate(8%, -4%) scale(1.08);
-                        opacity: var(--opacity-mid, 0.3);
-                    }
-                    50% {
-                        transform: translate(-4%, 8%) scale(0.96);
-                        opacity: var(--opacity-end, 0.15);
-                    }
-                    75% {
-                        transform: translate(-8%, -8%) scale(1.04);
-                        opacity: var(--opacity-mid, 0.3);
-                    }
-                }
-
-                @keyframes gradient-shift-reverse {
-                    0%, 100% {
-                        transform: translate(0, 0) scale(1);
-                        opacity: var(--opacity-start, 0.25);
-                    }
-                    25% {
-                        transform: translate(-8%, 4%) scale(1.08);
-                        opacity: var(--opacity-mid, 0.35);
-                    }
-                    50% {
-                        transform: translate(4%, -8%) scale(0.96);
-                        opacity: var(--opacity-end, 0.2);
-                    }
-                    75% {
-                        transform: translate(8%, 8%) scale(1.04);
-                        opacity: var(--opacity-mid, 0.35);
-                    }
-                }
-
-                @keyframes glow-pulse {
-                    0%, 100% {
-                        opacity: 0.2;
-                        filter: blur(80px);
-                    }
-                    50% {
-                        opacity: 0.25;
-                        filter: blur(100px);
-                    }
-                }
-
-                .animate-gradient-shift {
-                    animation: gradient-shift 20s cubic-bezier(0.42, 0, 0.58, 1) infinite;
-                    will-change: transform, opacity;
-                    transform: translateZ(0);
-                    backface-visibility: hidden;
-                }
-
-                .animate-gradient-shift-reverse {
-                    animation: gradient-shift-reverse 25s cubic-bezier(0.42, 0, 0.58, 1) infinite;
-                    will-change: transform, opacity;
-                    transform: translateZ(0);
-                    backface-visibility: hidden;
-                }
-
-                .animate-glow-pulse {
-                    animation: glow-pulse 8s cubic-bezier(0.42, 0, 0.58, 1) infinite;
-                    will-change: opacity;
-                    transform: translateZ(0);
-                }
-
-                .animate-glow-pulse-delayed {
-                    animation: glow-pulse 8s cubic-bezier(0.42, 0, 0.58, 1) infinite;
-                    animation-delay: 2s;
-                    will-change: opacity;
-                    transform: translateZ(0);
-                }
-
-                .animate-glow-pulse-slow {
-                    animation: glow-pulse 12s cubic-bezier(0.42, 0, 0.58, 1) infinite;
-                    animation-delay: 4s;
-                    will-change: opacity;
-                    transform: translateZ(0);
-                }
-
                 [data-sonner-toast] {
                   background: rgba(15, 23, 42, 0.9) !important;
                   backdrop-filter: blur(16px);
