@@ -16,14 +16,14 @@ const LIST_MAX_HEIGHT = 640;
  * Row renderer for react-window.
  * Data is passed via the `data` prop to avoid closure staleness.
  */
-const VirtualRow = ({ index, style, data }) => {
+const VirtualRow = memo(({ index, style, data }) => {
   const { catches, onEdit, onDelete } = data;
   return (
     <div style={{ ...style, paddingBottom: 16 }}>
       <CatchCard catchItem={catches[index]} onEdit={onEdit} onDelete={onDelete} />
     </div>
   );
-};
+});
 
 function CatchHistory({ catches, isLoading, onEdit, onDelete, onRefresh }) {
   const itemData = { catches, onEdit, onDelete };
