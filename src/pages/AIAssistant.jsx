@@ -190,8 +190,8 @@ Registriere dich kostenlos, um personalisierte KI-Antworten basierend auf deinem
         responseContent = getRandomDemoResponse(questionText) + '\n\n---\n*Dies ist eine Demo-Antwort. Registriere dich kostenlos fuer echte KI-Antworten!*';
       } else {
         const response = await integrations.Core.InvokeLLM({
-          prompt: `Du bist ein erfahrener Angel-Experte und hilfst Anglern mit präzisen, praktischen Ratschlägen. 
-          
+          prompt: `Du bist ein erfahrener Angel-Experte und hilfst Anglern mit präzisen, praktischen Ratschlägen.
+
 Frage des Anglers: ${questionText}
 
 Gib eine detaillierte, hilfreiche Antwort mit konkreten Tipps. Strukturiere deine Antwort klar mit:
@@ -203,7 +203,8 @@ Gib eine detaillierte, hilfreiche Antwort mit konkreten Tipps. Strukturiere dein
 Verwende Emojis sparsam aber gezielt für bessere Lesbarkeit.`,
           add_context_from_internet: false
         });
-        responseContent = response;
+        // InvokeLLM gibt ein Objekt mit 'reply' oder 'message' zurück
+        responseContent = response?.reply || response?.message || response || "Entschuldigung, ich konnte keine Antwort generieren.";
         await handleSpeak(responseContent);
       }
 
