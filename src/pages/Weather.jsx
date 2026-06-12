@@ -10,6 +10,7 @@ import { backendTextToSpeech } from "@/functions/backendTextToSpeech";
 import { MapPin, AlertCircle } from "lucide-react";
 
 import PremiumGuard from "@/components/premium/PremiumGuard";
+import WeatherRadarMap from "@/components/weather/WeatherRadarMap";
 
 export default function Weather() {
   return (
@@ -315,8 +316,9 @@ Sei konkret, praktisch und detailliert!`;
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-gray-800/50">
+          <TabsList className="grid w-full grid-cols-4 bg-gray-800/50">
             <TabsTrigger value="current">Aktuell</TabsTrigger>
+            <TabsTrigger value="radar">Radar</TabsTrigger>
             <TabsTrigger value="forecast">Vorhersage</TabsTrigger>
             <TabsTrigger value="alerts">Alarme</TabsTrigger>
           </TabsList>
@@ -462,6 +464,19 @@ Sei konkret, praktisch und detailliert!`;
               </CardContent>
             </Card>
 
+          </TabsContent>
+
+          <TabsContent value="radar" className="space-y-6">
+            <Card className="glass-morphism border-gray-800 overflow-hidden">
+              <CardHeader>
+                <CardTitle className="text-white">Wetter-Radar</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="h-[600px]">
+                  <WeatherRadarMap />
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="forecast" className="space-y-6">
