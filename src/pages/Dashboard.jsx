@@ -126,7 +126,7 @@ export default function Dashboard() {
 
       let userLocation = null;
       const savedLocation = localStorage.getItem("fm_current_location");
-      
+
       if (savedLocation) {
         try {
           const location = JSON.parse(savedLocation);
@@ -138,23 +138,31 @@ export default function Dashboard() {
         }
       }
 
+      // Versuche frische Geolokation nur wenn keine gespeicherte vorhanden
       if (!userLocation && navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            userLocation = {
-              lat: position.coords.latitude,
-              lon: position.coords.longitude
-            };
-            localStorage.setItem("fm_current_location", JSON.stringify(userLocation));
-          },
-          (error) => console.warn('Geolocation error:', error),
-          { timeout: 5000 }
-        );
+        try {
+          await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                userLocation = {
+                  lat: position.coords.latitude,
+                  lon: position.coords.longitude
+                };
+                localStorage.setItem("fm_current_location", JSON.stringify(userLocation));
+                resolve();
+              },
+              reject,
+              { timeout: 5000, maximumAge: 300000 }
+            );
+          });
+        } catch (error) {
+          console.warn('Geolocation error:', error);
+        }
       }
 
       if (userLocation) {
         let weatherData = null;
-        
+
         // Versuche gecachtes Wetter zu laden
         if (!navigator.onLine) {
           const cachedWeather = await getCachedWeather(userLocation.lat, userLocation.lon);
@@ -163,18 +171,22 @@ export default function Dashboard() {
           }
         } else {
           // Hole frische Daten online
-          const weatherPromise = fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${userLocation.lat}&longitude=${userLocation.lon}&current=temperature_2m,wind_speed_10m,weather_code&timezone=auto`
-          ).then(res => res.json()).catch(() => null);
+          try {
+            const weatherPromise = fetch(
+              `https://api.open-meteo.com/v1/forecast?latitude=${userLocation.lat}&longitude=${userLocation.lon}&current=temperature_2m,wind_speed_10m,weather_code&timezone=auto`
+            ).then(res => res.json()).catch(() => null);
 
-          weatherData = await weatherPromise;
-          
-          // Cache frische Wetterdaten
-          if (weatherData && weatherData.current) {
-            await cacheWeatherData(userLocation.lat, userLocation.lon, weatherData.current);
+            weatherData = await weatherPromise;
+
+            // Cache frische Wetterdaten
+            if (weatherData && weatherData.current) {
+              await cacheWeatherData(userLocation.lat, userLocation.lon, weatherData.current);
+            }
+          } catch (error) {
+            console.warn('Fehler beim Laden von Wetterdaten:', error);
           }
         }
-        
+
         if (weatherData && weatherData.current) {
           setWeather(weatherData.current);
         } else if (weatherData && weatherData.temperature_2m !== undefined) {
@@ -332,7 +344,7 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
       const response = await integrations.Core.InvokeLLM({ prompt });
       const analysisText = typeof response === 'string'
         ? response
-        : response?.reply || response?.message || 'Keine Analyse verfügbar.';
+        : response?.reply || response?.message || response || 'Keine Analyse verfügbar.';
 
       setAiAnalysis(analysisText);
       setShowAnalysis(true);

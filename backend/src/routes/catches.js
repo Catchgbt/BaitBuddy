@@ -5,15 +5,30 @@ import { supabase } from '../lib/supabase.js';
 const router = Router();
 
 router.get('/catches', requireAuth, async (req, res) => {
-  const limit = parseInt(req.query.limit) || 50;
-  const offset = parseInt(req.query.offset) || 0;
-  const { data, error } = await supabase
-    .from('catches').select('*')
-    .eq('created_by', req.user.email)
-    .order('catch_time', { ascending: false })
-    .range(offset, offset + limit - 1);
-  if (error) return res.status(500).json({ error: error.message });
-  return res.json(data || []);
+  try {
+    const limit = parseInt(req.query.limit) || 50;
+    const offset = parseInt(req.query.offset) || 0;
+
+    if (!req.user?.email) {
+      return res.status(401).json({ error: 'Benutzer-E-Mail nicht verfügbar' });
+    }
+
+    const { data, error } = await supabase
+      .from('catches').select('*')
+      .eq('created_by', req.user.email)
+      .order('catch_time', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (error) {
+      console.error('[Catches Error]', error);
+      return res.status(500).json({ error: error.message, details: 'Datenbankfehler beim Laden der Fänge' });
+    }
+
+    return res.json(data || []);
+  } catch (e) {
+    console.error('[Catches Exception]', e);
+    return res.status(500).json({ error: e.message });
+  }
 });
 
 router.get('/catches/stats/summary', requireAuth, async (req, res) => {
