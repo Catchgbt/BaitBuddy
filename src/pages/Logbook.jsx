@@ -19,6 +19,7 @@ import { UploadFile, ExtractDataFromUploadedFile } from "@/integrations/Core";
 import CatchHistory from "@/components/log/CatchHistory";
 import LazyImage from "@/components/images/LazyImage";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
 
 export default function Logbook() {
@@ -283,10 +284,15 @@ export default function Logbook() {
         {/* MAIN FORM */}
         <Card className="glass-morphism border-cyan-500/30 bg-gradient-to-br from-gray-900 to-gray-950">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-cyan-400">
-              <Sparkles className="w-5 h-5" />
-              {editingCatch ? "Fang bearbeiten" : "Neuen Fang erfassen"}
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-cyan-400">
+                <Sparkles className="w-5 h-5" />
+                {editingCatch ? "Fang bearbeiten" : "Neuen Fang erfassen"}
+              </CardTitle>
+              <Badge className="bg-gradient-to-r from-orange-600 to-red-600 text-white font-semibold animate-pulse">
+                BETA
+              </Badge>
+            </div>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -447,6 +453,14 @@ export default function Logbook() {
                 <span className="text-sm text-gray-300">Mit Community teilen</span>
               </label>
             </form>
+
+            {/* BETA INFO */}
+            <div className="mt-4 p-3 bg-orange-900/20 border border-orange-500/30 rounded-lg">
+              <p className="text-xs text-orange-300">
+                ⚡ <strong>BETA Feature:</strong> Die KI-gestützte automatische Ausfüllung der Stats befindet sich noch in der Beta-Phase.
+                Bitte überprüfe die Ergebnisse und gib ggf. fehlende Werte manuell ein.
+              </p>
+            </div>
           </CardContent>
         </Card>
 
