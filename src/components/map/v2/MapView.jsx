@@ -22,7 +22,7 @@ const createCustomIcon = (color, emoji, size = 32) => {
       <text x="16" y="20" text-anchor="middle" font-size="18" dominant-baseline="middle">${emoji}</text>
     </svg>
   `;
-  const svgUrl = `data:image/svg+xml;base64,${btoa(svgString)}`;
+  const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;
   return L.icon({
     iconUrl: svgUrl,
     iconSize: [size, size],
