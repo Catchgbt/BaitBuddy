@@ -5,6 +5,7 @@ import { FishingClub } from "@/entities/FishingClub";
 import { angelparks } from "@/data/angelparks";
 import fishingClubsCSVExport from "@/data/fishingClubsCSVExport.json";
 import angelshopsCSVExport from "@/data/angelshops.json";
+import angelparksEuCSVExport from "@/data/angelparks_eu.json";
 import { Button } from "@/components/ui/button";
 import { MapPin, Plus, Layers, Navigation, X, Loader2, Info, Search } from "lucide-react";
 import { useLocation } from "@/components/location/LocationManager";
@@ -36,7 +37,8 @@ function MapController() {
     clubs: true,
     parks: true,
     waters: true,
-    angelshops: false
+    angelshops: false,
+    angelparksEu: false
   });
   const [waterBodies, setWaterBodies] = useState([]);
   const [reviews, setReviews] = useState([]);
@@ -73,6 +75,16 @@ function MapController() {
       shop.coordinates &&
       shop.coordinates.lat != null &&
       shop.coordinates.lng != null
+    );
+  }, []);
+
+  // Separate europäische Angelparks
+  const allAngelparksEu = useMemo(() => {
+    return (angelparksEuCSVExport || []).filter(park =>
+      park.category === 'angelpark_eu' &&
+      park.coordinates &&
+      park.coordinates.lat != null &&
+      park.coordinates.lng != null
     );
   }, []);
 
@@ -246,6 +258,9 @@ function MapController() {
   const filteredAngelshops = filters.angelshops
     ? allAngelshops.filter(shop => matchesSearch(shop.name))
     : [];
+  const filteredAngelparksEu = filters.angelparksEu
+    ? allAngelparksEu.filter(park => matchesSearch(park.name))
+    : [];
   const filteredWaters = filters.waters ? waterBodies : [];
 
   if (!isInitialized || !mapCenter) {
@@ -340,12 +355,12 @@ function MapController() {
 
            <div aria-live="polite" aria-atomic="true">
              <div className="text-xs text-gray-300 px-2 py-1 bg-gray-900/50 rounded" role="status">
-               🗺️ {filteredSpots.length} Spots • 🏛️ {filteredClubs.length} Vereine • 🛒 {filteredAngelshops.length} Shops • 💧 {filteredWaters.length} Gewässer
+               🗺️ {filteredSpots.length} Spots • 🏛️ {filteredClubs.length} Vereine • 🛒 {filteredAngelshops.length} Shops • 🌍 {filteredAngelparksEu.length} EU Parks • 💧 {filteredWaters.length} Gewässer
              </div>
            </div>
 
            {/* Filter Buttons */}
-           <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+           <div className="grid grid-cols-2 sm:grid-cols-6 gap-1.5">
              <button
                onClick={() => setFilters({ ...filters, spots: !filters.spots })}
                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
@@ -385,6 +400,16 @@ function MapController() {
                }`}
              >
                🛒 Shops
+             </button>
+             <button
+               onClick={() => setFilters({ ...filters, angelparksEu: !filters.angelparksEu })}
+               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                 filters.angelparksEu
+                   ? 'bg-orange-600 text-white ring-2 ring-orange-400/50'
+                   : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+               }`}
+             >
+               🌍 EU Parks
              </button>
              <button
                onClick={() => setFilters({ ...filters, waters: !filters.waters })}
@@ -466,6 +491,7 @@ function MapController() {
            spots={filteredSpots}
            fishingClubs={filteredClubs}
            angelshops={filteredAngelshops}
+           angelparksEu={filteredAngelparksEu}
            waterBodies={filteredWaters}
            currentLocation={currentLocation}
            newSpotMarker={newSpotCoords}
@@ -474,6 +500,7 @@ function MapController() {
            onSpotClick={(spot) => handleLocationClick(spot, 'spot')}
            onClubClick={(club) => handleLocationClick(club, 'club')}
            onAngelshopClick={(shop) => handleLocationClick(shop, 'angelshop')}
+           onAngelParkEuClick={(park) => handleLocationClick(park, 'angelpark_eu')}
            onWaterBodiesLoad={setWaterBodies}
            onReviewsLoad={setReviews}
            isOnline={isOnline}
