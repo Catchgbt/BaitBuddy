@@ -145,9 +145,10 @@ export default function Logbook() {
         }),
       onSuccess: async (newCatches, variables) => {
         toast.success("Fang gespeichert!");
+        resetForm();
         const savedCatch = newCatches[0];
         setSavedCatchData(savedCatch);
-        
+
         analytics.track({
           eventName: "fishing_catch_logged",
           properties: {
@@ -238,7 +239,6 @@ export default function Logbook() {
         await updateCatchMutation.mutate({ id: editingCatch.id, data: catchData });
       }, 3);
     } else {
-      resetForm();
       const actionId = actionQueue.enqueue(async () => {
         await createCatchMutation.mutate(catchData);
       }, 3);
