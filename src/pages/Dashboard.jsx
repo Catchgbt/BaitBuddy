@@ -5,7 +5,7 @@ import { Spot } from "@/entities/Spot";
 import { auth } from "@/api/auth";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import WakeWordIndicator from "@/components/header/WakeWordIndicator";
+import VoiceControlWidget from "@/components/dashboard/VoiceControlWidget";
 import MiniKarte from "@/components/home/MiniKarte";
 import WeatherRadarMap from "@/components/weather/WeatherRadarMap";
 import MiniKiVoiceBuddy from "@/components/home/MiniKiVoiceBuddy";
@@ -18,7 +18,6 @@ import FishingRecommendationCard from "@/components/dashboard/FishingRecommendat
 import { useQueryClient } from "@tanstack/react-query";
 import { usePredictivePrefetch } from "@/hooks/usePredictivePrefetch";
 import PageContainer from "@/components/layout/PageContainer";
-import VoiceOverlay from "@/components/layout/VoiceOverlay";
 import CommunityPostDialog from "@/components/community/CommunityPostDialog";
 
 export default function Dashboard() {
@@ -29,21 +28,12 @@ export default function Dashboard() {
   const [weather, setWeather] = useState(null);
   const [nearestSpot, setNearestSpot] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [voiceOverlayOpen, setVoiceOverlayOpen] = useState(false);
-  const [voiceStatus, setVoiceStatus] = useState({
-    isActive: false,
-    mode: null,
-    isListening: false,
-    error: null
-  });
-  const [buttonPulse, setButtonPulse] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullStart, setPullStart] = useState(0);
   const [pullDistance, setPullDistance] = useState(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
-  const [voiceTranscript, setVoiceTranscript] = useState('');
   const [showCommunityDialog, setShowCommunityDialog] = useState(false);
 
   useEffect(() => {
@@ -61,29 +51,6 @@ export default function Dashboard() {
     
     cleanupSessions();
     loadData();
-
-    const handleVoiceStatusUpdate = (event) => {
-      if (event.detail) {
-        setVoiceStatus(event.detail);
-      }
-    };
-
-    window.addEventListener('wake-word-status-change', handleVoiceStatusUpdate);
-
-    const handleWakeWordDetected = () => {
-      setButtonPulse(true);
-      setTimeout(() => setButtonPulse(false), 1000);
-    };
-
-    window.addEventListener('wake-word-detected', handleWakeWordDetected);
-
-    const handleVoiceTranscript = (event) => {
-      if (event.detail) {
-        setVoiceTranscript(event.detail);
-      }
-    };
-
-    window.addEventListener('voice-transcript', handleVoiceTranscript);
 
     const handleTouchStart = (e) => {
       if (window.scrollY === 0) {
@@ -115,9 +82,6 @@ export default function Dashboard() {
     window.addEventListener('touchend', handleTouchEnd);
 
     return () => {
-      window.removeEventListener('wake-word-status-change', handleVoiceStatusUpdate);
-      window.removeEventListener('wake-word-detected', handleWakeWordDetected);
-      window.removeEventListener('voice-transcript', handleVoiceTranscript);
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleTouchEnd);
@@ -384,12 +348,6 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
         className="sr-only"
       />
       
-      <VoiceOverlay 
-        isOpen={voiceOverlayOpen} 
-        onClose={() => setVoiceOverlayOpen(false)} 
-        currentPageName="Dashboard" 
-      />
-
       <div className="space-y-12">
 
         <div className="flex items-center justify-between border-b border-gray-800/50 pb-6">
@@ -410,26 +368,7 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
           
           <div className="flex flex-col items-end gap-2">
             <OfflineCacheIndicator />
-            <button
-              onClick={() => setVoiceOverlayOpen(true)}
-              className={`flex items-center gap-3 px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 border border-cyan-500/30 hover:border-cyan-400/50 transition-all min-h-[44px] min-w-[44px] ${
-                buttonPulse ? 'animate-pulse ring-2 ring-cyan-400' : ''
-              }`}
-            >
-              <div className="text-xs text-gray-400 hidden sm:block">KI-Voice</div>
-              <WakeWordIndicator 
-                isActive={voiceStatus.isActive}
-                mode={voiceStatus.mode}
-                isListening={voiceStatus.isListening}
-                error={voiceStatus.error}
-                showAlways={true}
-              />
-            </button>
-            {voiceTranscript && (
-              <div className="bg-gradient-to-br from-cyan-900/50 to-cyan-900/30 rounded-lg px-4 py-2 border-2 border-cyan-500/60 shadow-lg shadow-cyan-500/20 w-full max-w-sm">
-                <p className="text-sm text-cyan-200 font-medium break-words">{voiceTranscript}</p>
-              </div>
-            )}
+            <VoiceControlWidget />
           </div>
         </div>
 
