@@ -3,8 +3,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Spot } from "@/entities/Spot";
 import { FishingClub } from "@/entities/FishingClub";
 import { angelparks } from "@/data/angelparks";
+import fishingClubsCSVExport from "@/data/fishingClubsCSVExport.json";
 import { Button } from "@/components/ui/button";
-import { MapPin, Plus, Layers, Navigation, X, Loader2, Info } from "lucide-react";
+import { MapPin, Plus, Layers, Navigation, X, Loader2, Info, Search } from "lucide-react";
 import { useLocation } from "@/components/location/LocationManager";
 import { toast } from "sonner";
 import { useHaptic } from "@/components/utils/HapticFeedback";
@@ -38,6 +39,7 @@ function MapController() {
   const [waterBodies, setWaterBodies] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Query data with react-query
   const { data: spots = [] } = useQuery({
@@ -52,12 +54,14 @@ function MapController() {
     initialData: []
   });
 
-  // Statische Angelparks mit den vom Backend gelieferten Vereinen/Parks
-  // zusammenführen. Backend-Einträge haben Vorrang (Dedupe per id).
+  // Merge: Backend Clubs + CSV Export + statische Angelparks
+  // Backend-Einträge > CSV > statische Parks (Dedupe per id)
   const allClubs = useMemo(() => {
     const seen = new Set((fishingClubs || []).map(fc => fc.id));
+    const csvClubs = (fishingClubsCSVExport || []).filter(c => !seen.has(c.id));
+    csvClubs.forEach(c => seen.add(c.id));
     const staticParks = angelparks.filter(p => !seen.has(p.id));
-    return [...fishingClubs, ...staticParks];
+    return [...fishingClubs, ...csvClubs, ...staticParks];
   }, [fishingClubs]);
 
   useEffect(() => {
@@ -213,11 +217,19 @@ function MapController() {
     }
   }, [triggerHaptic, requestGpsLocation, currentLocation, announceLive]);
 
-  const filteredSpots = filters.spots ? spots : [];
+  const matchesSearch = (name) => {
+    if (!searchQuery) return true;
+    return name?.toLowerCase().includes(searchQuery.toLowerCase());
+  };
+
+  const filteredSpots = filters.spots
+    ? spots.filter(s => matchesSearch(s.name))
+    : [];
   const filteredClubs = allClubs.filter(fc => {
-    if (fc.category === 'club') return filters.clubs;
-    if (fc.category === 'spot') return filters.parks;
-    return false;
+    // CSV exports have category field, else default to 'club'
+    const category = fc.category || 'club';
+    const categoryMatch = category === 'club' ? filters.clubs : (category === 'spot' ? filters.parks : false);
+    return categoryMatch && matchesSearch(fc.name);
   });
   const filteredWaters = filters.waters ? waterBodies : [];
 
@@ -296,63 +308,70 @@ function MapController() {
            </div>
           </div>
 
-        {/* Filter Panel */}
+        {/* Search & Filter Panel */}
         {showFilters && (
-         <div className="mt-2 bg-gray-800/50 rounded-lg p-2 space-y-1.5" role="group" aria-label="Kartenebenen-Filter">
-           <div aria-live="polite" aria-atomic="true" aria-label="Aktive Kartenebenen und Orte Summary">
-             <div className="sr-only">
-               Filter aktiv: {filters.spots && 'Spots'}{filters.spots && filters.clubs && ', '}{filters.clubs && 'Vereine'}{(filters.spots || filters.clubs) && filters.waters && ', '}{filters.waters && 'Gewaesser'}. 
-               Karte zeigt {filteredSpots.length} Spots, {filteredClubs.length} Vereine, {filteredWaters.length} Gewaesser. 
-               Insgesamt {filteredSpots.length + filteredClubs.length + filteredWaters.length} Orte sichtbar.
-             </div>
-             <div className="text-xs text-gray-400 px-2 py-1 bg-gray-900/50 rounded mb-2" role="status">
-               {filteredSpots.length + filteredClubs.length + filteredWaters.length} Orte sichtbar
-             </div>
-           </div>
-           <div className="flex items-center gap-2">
+         <div className="mt-2 bg-gradient-to-b from-gray-800/80 to-gray-800/40 rounded-lg p-3 space-y-3 border border-gray-700/50 backdrop-blur-sm" role="group" aria-label="Karte durchsuchen und filtern">
+           {/* Suche */}
+           <div className="relative">
+             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
              <input
-               type="checkbox"
-               id="filter-spots"
-               checked={filters.spots}
-               onChange={(e) => setFilters({ ...filters, spots: e.target.checked })}
-               className="w-4 h-4 min-h-[44px] min-w-[44px] cursor-pointer"
-               aria-label="Meine persoenlichen Angelspots anzeigen"
+               type="text"
+               placeholder="Spot oder Verein suchen..."
+               value={searchQuery}
+               onChange={(e) => setSearchQuery(e.target.value)}
+               className="w-full bg-gray-700/60 border border-gray-600 rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-400/20"
              />
-             <label htmlFor="filter-spots" className="text-xs text-white cursor-pointer">Meine Spots</label>
            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="filter-clubs"
-                checked={filters.clubs}
-                onChange={(e) => setFilters({ ...filters, clubs: e.target.checked })}
-                className="w-4 h-4 min-h-[44px] min-w-[44px] cursor-pointer"
-                aria-label="Angelvereine und Verbands-Plaetze anzeigen"
-              />
-              <label htmlFor="filter-clubs" className="text-xs text-white cursor-pointer">Angelvereine</label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="filter-parks"
-                checked={filters.parks}
-                onChange={(e) => setFilters({ ...filters, parks: e.target.checked })}
-                className="w-4 h-4 min-h-[44px] min-w-[44px] cursor-pointer"
-                aria-label="Kommerzielle Angelparks anzeigen"
-              />
-              <label htmlFor="filter-parks" className="text-xs text-white cursor-pointer">Angelparks</label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="filter-waters"
-                checked={filters.waters}
-                onChange={(e) => setFilters({ ...filters, waters: e.target.checked })}
-                className="w-4 h-4 min-h-[44px] min-w-[44px] cursor-pointer"
-                aria-label="Gewaesser aus OpenStreetMap-Daten anzeigen"
-              />
-              <label htmlFor="filter-waters" className="text-xs text-white cursor-pointer">Gewässer (OSM)</label>
-            </div>
+
+           <div aria-live="polite" aria-atomic="true">
+             <div className="text-xs text-gray-300 px-2 py-1 bg-gray-900/50 rounded" role="status">
+               🗺️ {filteredSpots.length} Spots • 🏛️ {filteredClubs.length} Vereine • 💧 {filteredWaters.length} Gewässer
+             </div>
+           </div>
+
+           {/* Filter Buttons */}
+           <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+             <button
+               onClick={() => setFilters({ ...filters, spots: !filters.spots })}
+               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                 filters.spots
+                   ? 'bg-blue-600 text-white ring-2 ring-blue-400/50'
+                   : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+               }`}
+             >
+               📍 Spots
+             </button>
+             <button
+               onClick={() => setFilters({ ...filters, clubs: !filters.clubs })}
+               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                 filters.clubs
+                   ? 'bg-emerald-600 text-white ring-2 ring-emerald-400/50'
+                   : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+               }`}
+             >
+               🏛️ Vereine
+             </button>
+             <button
+               onClick={() => setFilters({ ...filters, parks: !filters.parks })}
+               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                 filters.parks
+                   ? 'bg-amber-600 text-white ring-2 ring-amber-400/50'
+                   : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+               }`}
+             >
+               🎣 Parks
+             </button>
+             <button
+               onClick={() => setFilters({ ...filters, waters: !filters.waters })}
+               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                 filters.waters
+                   ? 'bg-cyan-600 text-white ring-2 ring-cyan-400/50'
+                   : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+               }`}
+             >
+               💧 Gewässer
+             </button>
+           </div>
           </div>
         )}
       </div>
