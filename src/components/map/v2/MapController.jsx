@@ -4,6 +4,8 @@ import { Spot } from "@/entities/Spot";
 import { FishingClub } from "@/entities/FishingClub";
 import { angelparks } from "@/data/angelparks";
 import fishingClubsCSVExport from "@/data/fishingClubsCSVExport.json";
+import angelshopsCSVExport from "@/data/angelshops.json";
+import angelparksEuCSVExport from "@/data/angelparks_eu.json";
 import { Button } from "@/components/ui/button";
 import { MapPin, Plus, Layers, Navigation, X, Loader2, Info, Search } from "lucide-react";
 import { useLocation } from "@/components/location/LocationManager";
@@ -34,7 +36,9 @@ function MapController() {
     spots: true,
     clubs: true,
     parks: true,
-    waters: true
+    waters: true,
+    angelshops: false,
+    angelparksEu: false
   });
   const [waterBodies, setWaterBodies] = useState([]);
   const [reviews, setReviews] = useState([]);
@@ -63,6 +67,26 @@ function MapController() {
     const staticParks = angelparks.filter(p => !seen.has(p.id));
     return [...fishingClubs, ...csvClubs, ...staticParks];
   }, [fishingClubs]);
+
+  // Separate Angelshops (statische CSV-Liste)
+  const allAngelshops = useMemo(() => {
+    return (angelshopsCSVExport || []).filter(shop =>
+      shop.category === 'angelshop' &&
+      shop.coordinates &&
+      shop.coordinates.lat != null &&
+      shop.coordinates.lng != null
+    );
+  }, []);
+
+  // Separate europäische Angelparks
+  const allAngelparksEu = useMemo(() => {
+    return (angelparksEuCSVExport || []).filter(park =>
+      park.category === 'angelpark_eu' &&
+      park.coordinates &&
+      park.coordinates.lat != null &&
+      park.coordinates.lng != null
+    );
+  }, []);
 
   useEffect(() => {
     initializeMap();
@@ -231,6 +255,12 @@ function MapController() {
     const categoryMatch = category === 'club' ? filters.clubs : (category === 'spot' ? filters.parks : false);
     return categoryMatch && matchesSearch(fc.name);
   });
+  const filteredAngelshops = filters.angelshops
+    ? allAngelshops.filter(shop => matchesSearch(shop.name))
+    : [];
+  const filteredAngelparksEu = filters.angelparksEu
+    ? allAngelparksEu.filter(park => matchesSearch(park.name))
+    : [];
   const filteredWaters = filters.waters ? waterBodies : [];
 
   if (!isInitialized || !mapCenter) {
@@ -325,12 +355,12 @@ function MapController() {
 
            <div aria-live="polite" aria-atomic="true">
              <div className="text-xs text-gray-300 px-2 py-1 bg-gray-900/50 rounded" role="status">
-               🗺️ {filteredSpots.length} Spots • 🏛️ {filteredClubs.length} Vereine • 💧 {filteredWaters.length} Gewässer
+               🗺️ {filteredSpots.length} Spots • 🏛️ {filteredClubs.length} Vereine • 🛒 {filteredAngelshops.length} Shops • 🌍 {filteredAngelparksEu.length} EU Parks • 💧 {filteredWaters.length} Gewässer
              </div>
            </div>
 
            {/* Filter Buttons */}
-           <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+           <div className="grid grid-cols-2 sm:grid-cols-6 gap-1.5">
              <button
                onClick={() => setFilters({ ...filters, spots: !filters.spots })}
                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
@@ -360,6 +390,26 @@ function MapController() {
                }`}
              >
                🎣 Parks
+             </button>
+             <button
+               onClick={() => setFilters({ ...filters, angelshops: !filters.angelshops })}
+               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                 filters.angelshops
+                   ? 'bg-yellow-600 text-white ring-2 ring-yellow-400/50'
+                   : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+               }`}
+             >
+               🛒 Shops
+             </button>
+             <button
+               onClick={() => setFilters({ ...filters, angelparksEu: !filters.angelparksEu })}
+               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                 filters.angelparksEu
+                   ? 'bg-orange-600 text-white ring-2 ring-orange-400/50'
+                   : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+               }`}
+             >
+               🌍 EU Parks
              </button>
              <button
                onClick={() => setFilters({ ...filters, waters: !filters.waters })}
@@ -409,12 +459,12 @@ function MapController() {
                     <span><strong className="text-green-300">Grüne Marker:</strong> Angelvereine & Parks</span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 flex-shrink-0" />
-                    <span><strong className="text-red-300">Roter Marker:</strong> Dein aktueller Standort</span>
+                    <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 mt-1.5 flex-shrink-0" />
+                    <span><strong className="text-yellow-300">Gelbe Marker:</strong> Angelshops & Fachmärkte</span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-orange-400 mt-1.5 flex-shrink-0" />
-                    <span><strong className="text-orange-300">Orange Marker:</strong> Neuer Spot (zum Speichern)</span>
+                    <div className="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 flex-shrink-0" />
+                    <span><strong className="text-red-300">Roter Marker:</strong> Dein aktueller Standort</span>
                   </div>
                 </div>
                 <div className="mt-3 pt-2 border-t border-gray-700/50">
@@ -440,6 +490,8 @@ function MapController() {
            zoom={mapZoom}
            spots={filteredSpots}
            fishingClubs={filteredClubs}
+           angelshops={filteredAngelshops}
+           angelparksEu={filteredAngelparksEu}
            waterBodies={filteredWaters}
            currentLocation={currentLocation}
            newSpotMarker={newSpotCoords}
@@ -447,6 +499,8 @@ function MapController() {
            onLocationClick={handleLocationClick}
            onSpotClick={(spot) => handleLocationClick(spot, 'spot')}
            onClubClick={(club) => handleLocationClick(club, 'club')}
+           onAngelshopClick={(shop) => handleLocationClick(shop, 'angelshop')}
+           onAngelParkEuClick={(park) => handleLocationClick(park, 'angelpark_eu')}
            onWaterBodiesLoad={setWaterBodies}
            onReviewsLoad={setReviews}
            isOnline={isOnline}
