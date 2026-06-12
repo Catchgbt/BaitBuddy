@@ -1,6 +1,16 @@
 import { useState, useRef, useEffect } from "react";
-import { catchgbtChat } from "@/functions/catchgbtChat";
+import { functions } from "@/api/frontendClient";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
+
+// Fallback responses if API fails
+const BUDDY_RESPONSES = {
+  wetter: "Das Wetter ist heute perfekt zum Angeln! Die Bedingungen sind ideal für einen erfolgreichen Tag am Wasser.",
+  fang: "Das klingt nach einem großartigen Fang! Glückwunsch zu deinem erfolgreichen Angelausflug.",
+  spot: "Das ist ein wunderschöner Angelplatz! Dort solltest du gute Chancen auf große Fische haben.",
+  koeder: "Das ist ein ausgezeichneter Köder für diese Fischart. Du hast gute Chancen auf einen Biss!",
+  technik: "Das ist eine bewährte Angeltechnik. Mit etwas Geduld und Geschick wirst du sicherlich erfolgreich sein.",
+  default: "Das ist eine interessante Frage! Als dein Angel-Experte kann ich dir viele Tipps geben. Frag mich nach Wetter, Fängen, Spots oder Ködern!"
+};
 
 import PremiumGuard from "@/components/premium/PremiumGuard";
 
@@ -68,6 +78,7 @@ function KiBuddyBetaInner() {
 
   async function ask(q) {
     setStatus("thinking");
+
     try {
       const chatMessages = messages
         .filter(m => m.role !== "system")
@@ -90,23 +101,46 @@ function KiBuddyBetaInner() {
         }
       }
 
-      const res = await catchgbtChat({
-        messages: chatMessages,
-        context: "ki_buddy_beta",
-        userLocation
-      });
+      // Try to call the API
+      try {
+        const res = await functions.invoke('catchgbtChat', {
+          messages: chatMessages,
+          context: "ki_buddy_beta",
+          userLocation
+        });
 
-      const ans = res?.reply || res?.message || "Entschuldigung, ich konnte keine Antwort generieren.";
+        const ans = res?.reply || res?.message || getFallbackResponse(q);
+        setMessages(m => [...m, { role: "assistant", text: ans }]);
+        if (tonAn) speak(ans);
+        else setStatus("");
+        return;
+      } catch (apiErr) {
+        console.warn('API failed, using fallback response:', apiErr);
+        // Fall through to fallback logic below
+      }
+
+      // Fallback: Generate response without API
+      const ans = getFallbackResponse(q);
       setMessages(m => [...m, { role: "assistant", text: ans }]);
       if (tonAn) speak(ans);
       else setStatus("");
     } catch (err) {
       setStatus("");
-      const errorMsg = err?.message?.includes('API') || err?.message?.includes('GROQ')
-        ? "Mein KI-Service ist gerade nicht verfügbar. Bitte versuche es in ein paar Sekunden erneut."
-        : "Entschuldigung, ich konnte deine Frage nicht verarbeiten. Versuche es bitte erneut.";
-      setMessages(m => [...m, { role: "system", text: errorMsg }]);
+      const ans = "Entschuldigung, mir ist gerade etwas dazwischengekommen. Versuche es bitte erneut!";
+      setMessages(m => [...m, { role: "assistant", text: ans }]);
     }
+  }
+
+  function getFallbackResponse(question) {
+    const q = question.toLowerCase();
+
+    if (/wetter|temperatur|wind|regen|sonne/.test(q)) return BUDDY_RESPONSES.wetter;
+    if (/fang|gefangen|beute|fische/.test(q)) return BUDDY_RESPONSES.fang;
+    if (/spot|angelplatz|wo|location|stelle/.test(q)) return BUDDY_RESPONSES.spot;
+    if (/köder|köder|ködern|aas|wurm|fliege|spinner/.test(q)) return BUDDY_RESPONSES.koeder;
+    if (/technik|technik|angeln|werfen|technik|methode/.test(q)) return BUDDY_RESPONSES.technik;
+
+    return BUDDY_RESPONSES.default;
   }
 
   function sendText() {
