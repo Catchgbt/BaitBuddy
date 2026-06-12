@@ -22,7 +22,9 @@ const createCustomIcon = (color, emoji, size = 32) => {
       <text x="16" y="20" text-anchor="middle" font-size="18" dominant-baseline="middle">${emoji}</text>
     </svg>
   `;
-  const svgUrl = `data:image/svg+xml;base64,${btoa(svgString)}`;
+  // encodeURIComponent statt btoa: btoa wirft bei Emojis (Nicht-Latin1) einen
+  // "Invalid character"-Fehler und crasht die App beim Start
+  const svgUrl = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svgString)}`;
   return L.icon({
     iconUrl: svgUrl,
     iconSize: [size, size],
