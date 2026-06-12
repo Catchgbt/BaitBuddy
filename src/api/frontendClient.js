@@ -123,6 +123,7 @@ const ENTITY_MAP = {
   FunctionRating: '/api/ratings',
   ChatSession:    '/api/community/sessions',
   RuleEntry:      '/api/fishing/rules',
+  ExamQuestion:   '/api/exams',
   User:           '/api/admin/users',
   ChatMessage:    '/api/ai/messages',
 };

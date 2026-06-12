@@ -137,4 +137,10 @@ router.get('/admin/users', requireAuth, async (req, res) => {
   return res.json([]);
 });
 
+router.get('/exams', optionalAuth, async (req, res) => {
+  const { data, error } = await supabase.from('exam_questions').select('*').limit(200);
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data || []);
+});
+
 export default router;
