@@ -126,4 +126,16 @@ router.post('/events/:id/submit', requireAuth, async (req, res) => {
   return res.json(data);
 });
 
+router.post('/events/:id/join', requireAuth, async (req, res) => {
+  const { data, error } = await supabase.from('voting_submissions').insert({
+    competition_id: req.params.id,
+    user_id: req.user.email,
+    created_by: req.user.email,
+    total_score: 0
+  }).select().single();
+  if (error?.code === '23505') return res.json({ ok: true });
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json({ ok: true });
+});
+
 export default router;
