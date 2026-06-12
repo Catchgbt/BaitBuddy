@@ -60,9 +60,9 @@ export default function Sidebar({ isOpen, setIsOpen, currentPageName }) {
     { name: "KI-Kamera & Biss", path: "AI", key: "nav.ai_camera" },
     { name: "AR-Gewässer", path: "ARView", key: "nav.ar_view" },
     { name: "AR Knoten AI", path: "ARKnotenAssistent", key: "nav.ar_knoten", isBeta: true },
-    { name: "KI Voice Control", path: "VoiceControl", key: "nav.ai_voice" },
+    { name: "KI Voice Control", path: "VoiceControl", key: "nav.ai_voice", isBeta: true },
     { name: "Satelliten-Analyse", path: "WaterAnalysis", key: "nav.water_analysis" },
-    { name: "KI-Köder-Mischer", path: "BaitMixer", key: "nav.bait_mixer" },
+    { name: "KI-Köder-Mischer", path: "BaitMixer", key: "nav.bait_mixer", isBeta: true },
   ];
 
   const moreItems = [
