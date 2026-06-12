@@ -3,6 +3,7 @@ import { integrations } from "@/api/frontendClient";
 import { functions } from "@/api/frontendClient";
 import { Spot } from "@/entities/Spot";
 import { auth } from "@/api/auth";
+import { useAITTS } from "@/hooks/useAITTS";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import VoiceControlWidget from "@/components/dashboard/VoiceControlWidget";
@@ -23,7 +24,9 @@ import CommunityPostDialog from "@/components/community/CommunityPostDialog";
 export default function Dashboard() {
   const queryClient = useQueryClient();
   usePredictivePrefetch('Dashboard');
+  const { speak } = useAITTS();
   const [user, setUser] = useState(null);
+  const [greetingPlayed, setGreetingPlayed] = useState(false);
   const statusAnnouncementRef = React.useRef(null);
   const [weather, setWeather] = useState(null);
   const [nearestSpot, setNearestSpot] = useState(null);
@@ -39,6 +42,24 @@ export default function Dashboard() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  // Begrüße Nutzer mit KI-Stimme bei Dashboard-Einstieg
+  useEffect(() => {
+    if (user && user.full_name && !greetingPlayed && speak) {
+      setGreetingPlayed(true);
+      const firstName = user.full_name.split(' ')[0];
+      const greetings = [
+        `Willkommen zurück, ${firstName}. Viel Erfolg beim Angeln heute.`,
+        `Hallo ${firstName}, schön dich wiederzusehen. Petri Heil für heute.`,
+        `${firstName}, schön dich zu sehen. Die Fische warten schon.`,
+        `Willkommen, ${firstName}. Heute könnte dein bester Fangtag werden.`
+      ];
+      const greeting = greetings[Math.floor(Math.random() * greetings.length)];
+      setTimeout(() => {
+        speak(greeting, { rate: 0.9, pitch: 1 });
+      }, 500);
+    }
+  }, [user, greetingPlayed, speak]);
 
   useEffect(() => {
     const cleanupSessions = async () => {
