@@ -11,6 +11,7 @@ import { LanguageProvider, useLanguage } from '@/components/i18n/LanguageContext
 import { Eye, EyeOff } from 'lucide-react';
 import TutorialModal from '@/components/tutorial/TutorialModal';
 import DeleteAccountSection from '@/components/settings/DeleteAccountSection';
+import WaterScene from '@/components/home/WaterScene';
 
 const features = [
   'KI-Fischidentifikation aus Fotos',
@@ -254,8 +255,8 @@ function LandingPageContent() {
 
         const prevBg = document.body.style.backgroundColor;
         const prevHtmlBg = document.documentElement.style.backgroundColor;
-        document.body.style.backgroundColor = '#000';
-        document.documentElement.style.backgroundColor = '#000';
+        document.body.style.backgroundColor = '#020f1a';
+        document.documentElement.style.backgroundColor = '#020f1a';
         return () => {
             document.body.style.backgroundColor = prevBg;
             document.documentElement.style.backgroundColor = prevHtmlBg;
@@ -744,7 +745,9 @@ function LandingPageContent() {
     };
 
     return (
-        <div className="bg-black text-white min-h-screen w-full overflow-hidden fixed inset-0" style={{ minHeight: '100dvh', paddingTop: 'env(safe-area-inset-top)' }}>
+        <div className="bg-[#020f1a] text-white min-h-screen w-full overflow-hidden fixed inset-0" style={{ minHeight: '100dvh', paddingTop: 'env(safe-area-inset-top)' }}>
+
+            <WaterScene />
 
 
             <div className="fixed top-4 left-4 sm:top-8 sm:left-8 z-50 flex flex-col items-start gap-2">
@@ -786,57 +789,7 @@ function LandingPageContent() {
                 </div>
             </div>
 
-            <div className="relative isolate overflow-hidden h-screen w-full flex flex-col justify-center" style={{ height: '100dvh' }}>
-                <img
-                    src="https://images.unsplash.com/photo-1593352222543-c24119688536?q=80&w=2070&auto=format&fit=crop"
-                    alt=""
-                    className="absolute inset-0 -z-10 h-full w-full object-cover opacity-20"
-                />
-                
-                <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80 animate-glow-pulse" aria-hidden="true">
-                    <div
-                        className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#f59e0b] via-[#f97316] to-[#ea580c] opacity-40 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem] animate-gradient-shift"
-                        style={{
-                            clipPath: 'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
-                            '--rotation': '30deg', '--opacity-start': '0.4', '--opacity-mid': '0.5', '--opacity-end': '0.35'
-                        }}
-                    />
-                </div>
-
-                <div className="absolute right-0 top-1/4 -z-10 transform-gpu overflow-hidden blur-3xl animate-glow-pulse-delayed" aria-hidden="true">
-                    <div
-                        className="relative aspect-[1155/678] w-[36.125rem] translate-x-1/2 rotate-[60deg] bg-gradient-to-tr from-[#22d3ee] via-[#06b6d4] to-[#0891b2] opacity-35 sm:w-[72.1875rem] animate-gradient-shift-reverse"
-                        style={{
-                            clipPath: 'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
-                            '--rotation': '60deg', '--opacity-start': '0.35', '--opacity-mid': '0.45', '--opacity-end': '0.3'
-                        }}
-                    />
-                </div>
-
-                <div className="absolute inset-x-0 -bottom-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-bottom-80 animate-glow-pulse-slow" aria-hidden="true">
-                    <div
-                        className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[-30deg] bg-gradient-to-tr from-[#16a34a] via-[#10b981] to-[#059669] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem] animate-gradient-shift"
-                        style={{
-                            clipPath: 'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
-                            '--rotation': '-30deg', '--opacity-start': '0.3', '--opacity-mid': '0.4', '--opacity-end': '0.25'
-                        }}
-                    />
-                </div>
-
-                <div className="absolute left-0 top-1/2 -z-10 transform-gpu overflow-hidden blur-3xl animate-glow-pulse-delayed" aria-hidden="true">
-                    <div
-                        className="relative aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[-60deg] bg-gradient-to-tr from-[#a855f7] via-[#9333ea] to-[#7c3aed] opacity-25 sm:w-[72.1875rem] animate-gradient-shift-reverse"
-                        style={{
-                            clipPath: 'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
-                            '--rotation': '-60deg', '--opacity-start': '0.25', '--opacity-mid': '0.35', '--opacity-end': '0.2'
-                        }}
-                    />
-                </div>
-                
-
-            </div>
-
-            <motion.div 
+            <motion.div
                 className="fixed top-[30%] left-[30%] -translate-x-1/2 -translate-y-1/2 z-40 px-4 flex flex-col items-start gap-4 max-w-md"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -1157,74 +1110,6 @@ function LandingPageContent() {
                     }
                 }
 
-                @keyframes gradient-shift {
-                    0%, 100% {
-                        transform: translate(0, 0) rotate(var(--rotation, 0deg)) scale(1);
-                        opacity: var(--opacity-start, 0.4);
-                    }
-                    25% {
-                        transform: translate(10%, -5%) rotate(calc(var(--rotation, 0deg) + 15deg)) scale(1.1);
-                        opacity: var(--opacity-mid, 0.5);
-                    }
-                    50% {
-                        transform: translate(-5%, 10%) rotate(calc(var(--rotation, 0deg) - 10deg)) scale(0.95);
-                        opacity: var(--opacity-end, 0.35);
-                    }
-                    75% {
-                        transform: translate(-10%, -10%) rotate(calc(var(--rotation, 0deg) + 20deg)) scale(1.05);
-                        opacity: var(--opacity-mid, 0.5);
-                    }
-                }
-
-                @keyframes gradient-shift-reverse {
-                    0%, 100% {
-                        transform: translate(0, 0) rotate(var(--rotation, 0deg)) scale(1);
-                        opacity: var(--opacity-start, 0.35);
-                    }
-                    25% {
-                        transform: translate(-10%, 5%) rotate(calc(var(--rotation, 0deg) - 15deg)) scale(1.1);
-                        opacity: var(--opacity-mid, 0.45);
-                    }
-                    50% {
-                        transform: translate(5%, -10%) rotate(calc(var(--rotation, 0deg) + 10deg)) scale(0.95);
-                        opacity: var(--opacity-end, 0.3);
-                    }
-                    75% {
-                        transform: translate(10%, 10%) rotate(calc(var(--rotation, 0deg) - 20deg)) scale(1.05);
-                        opacity: var(--opacity-mid, 0.45);
-                    }
-                }
-
-                @keyframes glow-pulse {
-                    0%, 100% {
-                        filter: blur(80px);
-                    }
-                    50% {
-                        filter: blur(120px);
-                    }
-                }
-
-                .animate-gradient-shift {
-                    animation: gradient-shift 20s ease-in-out infinite;
-                }
-
-                .animate-gradient-shift-reverse {
-                    animation: gradient-shift-reverse 25s ease-in-out infinite;
-                }
-
-                .animate-glow-pulse {
-                    animation: glow-pulse 8s ease-in-out infinite;
-                }
-
-                .animate-glow-pulse-delayed {
-                    animation: glow-pulse 8s ease-in-out infinite;
-                    animation-delay: 2s;
-                }
-
-                .animate-glow-pulse-slow {
-                    animation: glow-pulse 12s ease-in-out infinite;
-                    animation-delay: 4s;
-                }
             `}</style>
         </div>
     );
