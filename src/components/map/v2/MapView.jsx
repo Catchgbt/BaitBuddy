@@ -33,6 +33,7 @@ const createCustomIcon = (color, emoji, size = 32) => {
 
 const spotIcon = createCustomIcon("#3b82f6", "📍");
 const clubIcon = createCustomIcon("#10b981", "🏛️");
+const angelshopIcon = createCustomIcon("#eab308", "🛒", 28);
 const locationIcon = createCustomIcon("#ef4444", "📌");
 const newSpotIcon = createCustomIcon("#f59e0b", "⭐");
 
@@ -146,6 +147,7 @@ export default function MapView({
   zoom,
   spots,
   fishingClubs,
+  angelshops = [],
   waterBodies = [],
   currentLocation,
   newSpotMarker,
@@ -153,6 +155,7 @@ export default function MapView({
   onLocationClick,
   onSpotClick,
   onClubClick,
+  onAngelshopClick,
   onWaterBodiesLoad,
   onReviewsLoad,
   isOnline
@@ -361,6 +364,37 @@ export default function MapView({
                 >
                   🌐 Website
                 </a>
+              )}
+            </div>
+          </Popup>
+        </Marker>
+      ))}
+
+      {/* Angelshops */}
+      {angelshops.filter(shop => shop.coordinates && shop.coordinates.lat != null && shop.coordinates.lng != null).map((shop) => (
+        <Marker
+          key={shop.id}
+          position={[shop.coordinates.lat, shop.coordinates.lng]}
+          icon={angelshopIcon}
+          eventHandlers={{
+            click: () => onAngelshopClick && onAngelshopClick(shop)
+          }}
+          alt={`Fishing shop: ${shop.name} in ${shop.city}`}
+          aria-label={`Shop marker for ${shop.name}`}
+        >
+          <Popup>
+            <div className="text-sm max-w-xs">
+              <strong className="text-base text-yellow-400">{shop.name}</strong>
+              <p className="text-xs text-gray-400 mt-1">
+                🛒 Angelshop
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                📍 {shop.city}
+              </p>
+              {shop.street && (
+                <p className="text-xs text-gray-400 mt-1">
+                  📮 {shop.street}
+                </p>
               )}
             </div>
           </Popup>
