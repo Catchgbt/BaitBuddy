@@ -15,6 +15,54 @@ import { toast } from "sonner";
 import { useHaptic } from "@/components/utils/HapticFeedback";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
 
+// Standard ingredients database - fallback wenn keine Daten in DB
+const DEFAULT_INGREDIENTS = {
+  boilies: [
+    // Proteine
+    { name: "Fischmehl", category: "boilies", max_percentage: 30, type: "protein", fish_attractiveness: { Karpfen: 9, Brassen: 8, Hecht: 7, Zander: 8, Barsch: 6, Rotauge: 7, Forelle: 5, Aal: 8 } },
+    { name: "Vogelmehl", category: "boilies", max_percentage: 25, type: "protein", fish_attractiveness: { Karpfen: 8, Brassen: 7, Hecht: 6, Zander: 7, Barsch: 7, Rotauge: 6, Forelle: 5, Aal: 7 } },
+    { name: "Sojamehl", category: "boilies", max_percentage: 20, type: "protein", fish_attractiveness: { Karpfen: 7, Brassen: 8, Hecht: 5, Zander: 6, Barsch: 6, Rotauge: 8, Forelle: 4, Aal: 6 } },
+    { name: "Erdnussmehl", category: "boilies", max_percentage: 18, type: "protein", fish_attractiveness: { Karpfen: 8, Brassen: 7, Hecht: 5, Zander: 6, Barsch: 5, Rotauge: 6, Forelle: 4, Aal: 7 } },
+    { name: "Kasein", category: "boilies", max_percentage: 25, type: "protein", fish_attractiveness: { Karpfen: 9, Brassen: 7, Hecht: 6, Zander: 7, Barsch: 6, Rotauge: 6, Forelle: 5, Aal: 8 } },
+
+    // Kohlenhydrate
+    { name: "Maismehl", category: "boilies", max_percentage: 20, type: "carbs", fish_attractiveness: { Karpfen: 7, Brassen: 9, Hecht: 4, Zander: 5, Barsch: 5, Rotauge: 9, Forelle: 3, Aal: 5 } },
+    { name: "Kartoffelmehl", category: "boilies", max_percentage: 22, type: "carbs", fish_attractiveness: { Karpfen: 6, Brassen: 8, Hecht: 3, Zander: 4, Barsch: 4, Rotauge: 8, Forelle: 3, Aal: 4 } },
+    { name: "Weizengerm", category: "boilies", max_percentage: 15, type: "carbs", fish_attractiveness: { Karpfen: 7, Brassen: 7, Hecht: 4, Zander: 5, Barsch: 4, Rotauge: 7, Forelle: 4, Aal: 6 } },
+    { name: "Paniermehl", category: "boilies", max_percentage: 18, type: "carbs", fish_attractiveness: { Karpfen: 6, Brassen: 8, Hecht: 3, Zander: 4, Barsch: 4, Rotauge: 8, Forelle: 3, Aal: 4 } },
+
+    // Aromen & Lockstoffe
+    { name: "Fischöl", category: "boilies", max_percentage: 10, type: "aroma", fish_attractiveness: { Karpfen: 9, Brassen: 8, Hecht: 8, Zander: 9, Barsch: 7, Rotauge: 6, Forelle: 7, Aal: 9 } },
+    { name: "Shrimpmehl", category: "boilies", max_percentage: 12, type: "aroma", fish_attractiveness: { Karpfen: 8, Brassen: 9, Hecht: 6, Zander: 7, Barsch: 8, Rotauge: 8, Forelle: 7, Aal: 8 } },
+    { name: "Austernmehl", category: "boilies", max_percentage: 10, type: "aroma", fish_attractiveness: { Karpfen: 9, Brassen: 8, Hecht: 5, Zander: 6, Barsch: 6, Rotauge: 7, Forelle: 5, Aal: 8 } },
+    { name: "Knoblauchpulver", category: "boilies", max_percentage: 8, type: "aroma", fish_attractiveness: { Karpfen: 8, Brassen: 6, Hecht: 7, Zander: 8, Barsch: 6, Rotauge: 5, Forelle: 4, Aal: 9 } },
+    { name: "Lecithin", category: "boilies", max_percentage: 15, type: "aroma", fish_attractiveness: { Karpfen: 7, Brassen: 7, Hecht: 6, Zander: 7, Barsch: 5, Rotauge: 6, Forelle: 4, Aal: 6 } },
+
+    // Bindemittel
+    { name: "Ei-Pulver", category: "boilies", max_percentage: 12, type: "binder", fish_attractiveness: { Karpfen: 7, Brassen: 7, Hecht: 5, Zander: 6, Barsch: 5, Rotauge: 7, Forelle: 5, Aal: 6 } },
+    { name: "Stärke", category: "boilies", max_percentage: 20, type: "binder", fish_attractiveness: { Karpfen: 5, Brassen: 7, Hecht: 3, Zander: 3, Barsch: 3, Rotauge: 7, Forelle: 2, Aal: 3 } },
+  ],
+
+  anfuetterung: [
+    // Köder-Anfütterung
+    { name: "Paniermehl", category: "anfuetterung", max_percentage: 30, type: "base", fish_attractiveness: { Karpfen: 6, Brassen: 8, Hecht: 3, Zander: 4, Barsch: 4, Rotauge: 8, Forelle: 3, Aal: 4 } },
+    { name: "Maismehl", category: "anfuetterung", max_percentage: 25, type: "base", fish_attractiveness: { Karpfen: 7, Brassen: 9, Hecht: 4, Zander: 5, Barsch: 5, Rotauge: 9, Forelle: 3, Aal: 5 } },
+    { name: "Hafermehl", category: "anfuetterung", max_percentage: 20, type: "base", fish_attractiveness: { Karpfen: 7, Brassen: 8, Hecht: 4, Zander: 5, Barsch: 4, Rotauge: 8, Forelle: 4, Aal: 5 } },
+    { name: "Hanfmehl", category: "anfuetterung", max_percentage: 15, type: "base", fish_attractiveness: { Karpfen: 8, Brassen: 7, Hecht: 5, Zander: 6, Barsch: 5, Rotauge: 7, Forelle: 4, Aal: 7 } },
+    { name: "Leinsamen", category: "anfuetterung", max_percentage: 12, type: "base", fish_attractiveness: { Karpfen: 7, Brassen: 8, Hecht: 4, Zander: 5, Barsch: 4, Rotauge: 8, Forelle: 3, Aal: 6 } },
+
+    // Lockstoffe
+    { name: "Fischmehl", category: "anfuetterung", max_percentage: 20, type: "aroma", fish_attractiveness: { Karpfen: 9, Brassen: 8, Hecht: 7, Zander: 8, Barsch: 6, Rotauge: 7, Forelle: 5, Aal: 8 } },
+    { name: "Knoblauch", category: "anfuetterung", max_percentage: 10, type: "aroma", fish_attractiveness: { Karpfen: 8, Brassen: 6, Hecht: 7, Zander: 8, Barsch: 6, Rotauge: 5, Forelle: 4, Aal: 9 } },
+    { name: "Anisöl", category: "anfuetterung", max_percentage: 8, type: "aroma", fish_attractiveness: { Karpfen: 7, Brassen: 5, Hecht: 8, Zander: 8, Barsch: 6, Rotauge: 4, Forelle: 5, Aal: 8 } },
+    { name: "Vanille", category: "anfuetterung", max_percentage: 5, type: "aroma", fish_attractiveness: { Karpfen: 6, Brassen: 5, Hecht: 4, Zander: 4, Barsch: 5, Rotauge: 6, Forelle: 6, Aal: 4 } },
+
+    // Mehr Basis-Optionen
+    { name: "Traubenkernmehl", category: "anfuetterung", max_percentage: 15, type: "base", fish_attractiveness: { Karpfen: 6, Brassen: 7, Hecht: 3, Zander: 4, Barsch: 4, Rotauge: 7, Forelle: 3, Aal: 5 } },
+    { name: "Erdnussmehl", category: "anfuetterung", max_percentage: 12, type: "base", fish_attractiveness: { Karpfen: 8, Brassen: 7, Hecht: 5, Zander: 6, Barsch: 5, Rotauge: 6, Forelle: 4, Aal: 7 } },
+  ]
+};
+
 export default function BaitMixerPage() {
   useFeatureTracking("bait_recipe");
   const queryClient = useQueryClient();
@@ -51,24 +99,45 @@ export default function BaitMixerPage() {
 
   const loadIngredients = async () => {
     try {
-      const allIngredients = await entities.BaitIngredient.list();
-      const filtered = allIngredients.filter(ing => 
+      let allIngredients = [];
+
+      // Try to load from API
+      try {
+        allIngredients = await entities.BaitIngredient.list();
+      } catch (apiErr) {
+        console.warn("API ingredients failed, using defaults:", apiErr);
+      }
+
+      // If API returned no ingredients, use defaults
+      if (!allIngredients || allIngredients.length === 0) {
+        allIngredients = mode === "boilies" ? DEFAULT_INGREDIENTS.boilies : DEFAULT_INGREDIENTS.anfuetterung;
+      }
+
+      const filtered = allIngredients.filter(ing =>
         ing.category === mode || ing.category === "both"
       );
+
       setIngredients(filtered);
-      
+
       const initialMix = {};
       filtered.forEach(ing => {
         initialMix[ing.name] = 0;
       });
       setMix(initialMix);
-      // Also clear AI analysis and recipe name when mode changes, providing a clean slate
       setAiAnalysis("");
       setRecipeName("");
 
     } catch (error) {
       console.error("Failed to load ingredients:", error);
-      toast.error("Fehler beim Laden der Zutaten");
+      // Last resort: use hardcoded defaults
+      const defaults = mode === "boilies" ? DEFAULT_INGREDIENTS.boilies : DEFAULT_INGREDIENTS.anfuetterung;
+      setIngredients(defaults);
+      const initialMix = {};
+      defaults.forEach(ing => {
+        initialMix[ing.name] = 0;
+      });
+      setMix(initialMix);
+      toast.info("Standard-Zutaten geladen");
     }
   };
 
