@@ -60,6 +60,39 @@ router.post('/catches', requireAuth, async (req, res) => {
     is_released: is_released || false
   }).select().single();
   if (error) return res.status(500).json({ error: error.message });
+
+  // Auto-update active competition scores (points = length_cm)
+  if (length_cm && data?.id) {
+    const now = new Date();
+    const { data: activeComps } = await supabase.from('competitions')
+      .select('id').eq('is_active', true)
+      .lte('start_date', now.toISOString())
+      .gte('end_date', now.toISOString())
+      .limit(10);
+
+    if (activeComps?.length) {
+      for (const comp of activeComps) {
+        const { data: existing } = await supabase.from('voting_submissions')
+          .select('id, total_score').eq('competition_id', comp.id).eq('user_id', req.user.email).single();
+
+        if (existing) {
+          await supabase.from('voting_submissions')
+            .update({ total_score: (existing.total_score || 0) + length_cm, catch_id: data.id })
+            .eq('id', existing.id);
+        } else {
+          await supabase.from('voting_submissions').insert({
+            competition_id: comp.id,
+            user_id: req.user.email,
+            created_by: req.user.email,
+            catch_id: data.id,
+            total_score: length_cm,
+            species, catch_time: data.catch_time
+          });
+        }
+      }
+    }
+  }
+
   return res.json(data);
 });
 

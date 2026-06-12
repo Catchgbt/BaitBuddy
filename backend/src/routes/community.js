@@ -138,4 +138,41 @@ router.post('/events/:id/join', requireAuth, async (req, res) => {
   return res.json({ ok: true });
 });
 
+router.get('/events/leaderboard/monthly', optionalAuth, async (req, res) => {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
+
+  const { data, error } = await supabase.from('voting_submissions')
+    .select('user_id, created_by, total_score')
+    .gte('created_at', monthStart)
+    .lte('created_at', monthEnd)
+    .order('total_score', { ascending: false })
+    .limit(50);
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  const aggregated = {};
+  (data || []).forEach(entry => {
+    const userId = entry.user_id || entry.created_by;
+    if (!aggregated[userId]) {
+      aggregated[userId] = { user_id: userId, created_by: entry.created_by || userId, total_score: 0 };
+    }
+    aggregated[userId].total_score += entry.total_score || 0;
+  });
+
+  const leaderboard = Object.values(aggregated)
+    .sort((a, b) => b.total_score - a.total_score)
+    .map((entry, idx) => ({ ...entry, rank: idx + 1 }));
+
+  return res.json({
+    leaderboard,
+    month: now.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' }),
+    rewards: {
+      1000: '1 Woche Premium',
+      4000: '1 Monat Premium'
+    }
+  });
+});
+
 export default router;

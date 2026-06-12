@@ -31,7 +31,10 @@ function Avatar({ name, initials }) {
 }
 
 export default function Events() {
+  const [activeTab, setActiveTab] = useState('active');
   const [competitions, setCompetitions] = useState([]);
+  const [monthlyLeaderboard, setMonthlyLeaderboard] = useState([]);
+  const [monthName, setMonthName] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(new Set());
@@ -40,13 +43,19 @@ export default function Events() {
 
   const loadData = useCallback(async () => {
     try {
-      const [comps, user] = await Promise.all([
+      const [comps, user, monthlyData] = await Promise.all([
         api.get('/api/events'),
-        auth.me().catch(() => null)
+        auth.me().catch(() => null),
+        api.get('/api/events/leaderboard/monthly').catch(() => ({ leaderboard: [], month: '' }))
       ]);
 
       setCompetitions(Array.isArray(comps) ? comps : []);
       setCurrentUser(user);
+
+      if (monthlyData?.leaderboard) {
+        setMonthlyLeaderboard(monthlyData.leaderboard);
+        setMonthName(monthlyData.month);
+      }
 
       if (Array.isArray(comps) && comps.length > 0 && user) {
         const leaderboardsMap = {};
@@ -96,18 +105,6 @@ export default function Events() {
     );
   }
 
-  if (!competitions.length) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 flex items-center justify-center px-4">
-        <div className="text-center space-y-3 max-w-sm">
-          <div className="text-5xl">🎯</div>
-          <h2 className="text-xl font-bold text-white">Keine aktiven Wettbewerbe</h2>
-          <p className="text-gray-400 text-sm">Aktuell sind keine Wettbewerbe aktiv. Schau später wieder vorbei!</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 px-4 py-8 max-w-2xl mx-auto pb-32">
       <div className="space-y-6">
@@ -119,8 +116,41 @@ export default function Events() {
           <p className="text-gray-400 text-sm">Tritt Wettbewerben bei und sammle Punkte für Premium-Zugang</p>
         </div>
 
-        {/* Competition Cards */}
-        <div className="space-y-4">
+        {/* Tabs */}
+        <div className="flex gap-2 bg-gray-900/50 border border-gray-800 rounded-lg p-1 sticky top-0 z-10">
+          <button
+            onClick={() => setActiveTab('active')}
+            className={`flex-1 py-2.5 px-3 rounded-md transition font-semibold text-sm ${
+              activeTab === 'active'
+                ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            ⚡ Aktiv
+          </button>
+          <button
+            onClick={() => setActiveTab('monthly')}
+            className={`flex-1 py-2.5 px-3 rounded-md transition font-semibold text-sm ${
+              activeTab === 'monthly'
+                ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            📊 Monatlich
+          </button>
+        </div>
+
+        {/* Active Competitions Tab */}
+        {activeTab === 'active' && (
+          <>
+            {!competitions.length ? (
+              <div className="text-center space-y-3 py-12 max-w-sm mx-auto">
+                <div className="text-5xl">🎯</div>
+                <h2 className="text-xl font-bold text-white">Keine aktiven Wettbewerbe</h2>
+                <p className="text-gray-400 text-sm">Aktuell sind keine Wettbewerbe aktiv. Schau später wieder vorbei!</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
           {competitions.map((comp) => {
             const lb = leaderboards[comp.id] || [];
             const isEnded = new Date() > new Date(comp.end_date);
@@ -254,7 +284,83 @@ export default function Events() {
               </div>
             );
           })}
-        </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Monthly Leaderboard Tab */}
+        {activeTab === 'monthly' && (
+          <>
+            {monthlyLeaderboard.length === 0 ? (
+              <div className="text-center space-y-3 py-12 max-w-sm mx-auto">
+                <div className="text-5xl">📈</div>
+                <h2 className="text-xl font-bold text-white">Keine Daten</h2>
+                <p className="text-gray-400 text-sm">Noch keine Einträge für diesen Monat</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-xl p-4">
+                  <div className="text-sm text-amber-400 font-bold uppercase tracking-widest mb-2">Monatliche Rangliste</div>
+                  <div className="text-lg font-bold text-white">{monthName}</div>
+                  <p className="text-xs text-gray-400 mt-2">Die Top-Performer bekommen Premium-Zugang!</p>
+                </div>
+
+                <div className="space-y-2">
+                  {monthlyLeaderboard.map((entry) => {
+                    const userName = entry.created_by || entry.user_id;
+                    const initials = userName.split("@")[0].slice(0, 2).toUpperCase();
+                    const points = Math.round(entry.total_score || 0);
+                    const reward = points >= 4000 ? '1 Monat 🎁' : points >= 1000 ? '1 Woche 🎁' : '';
+                    const isMe = currentUser && entry.user_id === currentUser.email;
+
+                    return (
+                      <div
+                        key={entry.user_id}
+                        className={`flex items-center justify-between gap-3 p-3.5 rounded-lg border transition ${
+                          isMe
+                            ? 'bg-cyan-500/20 border-cyan-500/40'
+                            : entry.rank <= 3
+                            ? 'bg-amber-500/10 border-amber-500/30'
+                            : 'bg-gray-950/50 border-gray-800'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-xs font-black text-white flex-shrink-0">
+                            {entry.rank}
+                          </div>
+                          <Avatar name={userName} initials={initials} />
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-semibold text-gray-200 truncate">
+                              {userName.split("@")[0]}
+                            </div>
+                            {isMe && (
+                              <span className="inline-block text-[9px] bg-cyan-500/30 text-cyan-300 rounded px-1 py-0.5 font-bold">
+                                Du
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="font-bold text-amber-400 text-sm">{points} Punkte</div>
+                          {reward && <div className="text-xs text-green-400 font-semibold">{reward}</div>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4 space-y-2 text-sm">
+                  <div className="font-bold text-cyan-400">💰 Rewards</div>
+                  <div className="text-gray-300 space-y-1">
+                    <div className="flex justify-between"><span>1.000 Punkte:</span> <span className="text-green-400">1 Woche Premium</span></div>
+                    <div className="flex justify-between"><span>4.000 Punkte:</span> <span className="text-green-400">1 Monat Premium</span></div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
 
         {/* Info Footer */}
         <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4 text-center text-xs text-gray-400">
