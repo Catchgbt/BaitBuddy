@@ -8,7 +8,7 @@ import { createPageUrl } from "@/utils";
 import VoiceControlWidget from "@/components/dashboard/VoiceControlWidget";
 import MiniKarte from "@/components/home/MiniKarte";
 import WeatherRadarMap from "@/components/weather/WeatherRadarMap";
-import MiniKiVoiceBuddy from "@/components/home/MiniKiVoiceBuddy";
+import { Brain, Mic, BookOpen, ArrowRight } from "lucide-react";
 import SchonzeitWarner from "@/components/dashboard/SchonzeitWarner";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -389,9 +389,31 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
           </div>
         )}
 
-        <div>
-          <MiniKiVoiceBuddy />
-        </div>
+        <Link
+          to={createPageUrl('KiBuddyBeta')}
+          className="block relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-900/30 via-gray-900/60 to-emerald-900/30 backdrop-blur-sm p-6 border border-cyan-500/30 hover:border-cyan-400/50 transition-all group"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-cyan-500 to-emerald-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-cyan-500/20 group-hover:scale-105 transition-transform">
+              <Brain className="w-7 h-7 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg font-bold text-white mb-1">KI-Buddy CatchGBT</h3>
+              <p className="text-sm text-gray-300 leading-snug">
+                Frag mich alles rund ums Angeln — oder steuere die App per Voice!
+              </p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                <span className="inline-flex items-center gap-1 text-[11px] text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20">
+                  <Mic className="w-3 h-3" /> "Mach einen Fangbuch-Eintrag"
+                </span>
+                <span className="inline-flex items-center gap-1 text-[11px] text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                  <BookOpen className="w-3 h-3" /> Tipps, Koeder, Wetter
+                </span>
+              </div>
+            </div>
+            <ArrowRight className="w-5 h-5 text-cyan-400 flex-shrink-0 group-hover:translate-x-1 transition-transform" />
+          </div>
+        </Link>
 
         <Link
           to={createPageUrl('Map')}
