@@ -945,7 +945,7 @@ function LandingPageContent() {
                                     onChange={e => setLoginName(e.target.value)}
                                     placeholder="Vollständiger Name"
                                     required
-                                    className="w-full bg-white/8 border border-white/15 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-500 outline-none focus:border-cyan-500/60 focus:bg-white/12 transition-all"
+                                    className="w-full bg-gray-800/90 border border-gray-600 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-400 outline-none focus:border-cyan-400 focus:bg-gray-800 focus:ring-2 focus:ring-cyan-400/30 transition-all"
                                 />
                             )}
                             <input
@@ -954,7 +954,7 @@ function LandingPageContent() {
                                 onChange={e => setLoginEmail(e.target.value)}
                                 placeholder="E-Mail Adresse"
                                 required
-                                className="w-full bg-white/8 border border-white/15 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-500 outline-none focus:border-cyan-500/60 focus:bg-white/12 transition-all"
+                                className="w-full bg-gray-800/90 border border-gray-600 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-400 outline-none focus:border-cyan-400 focus:bg-gray-800 focus:ring-2 focus:ring-cyan-400/30 transition-all"
                             />
                             <div className="relative">
                                 <input
@@ -963,7 +963,7 @@ function LandingPageContent() {
                                     onChange={e => setLoginPassword(e.target.value)}
                                     placeholder="Passwort"
                                     required
-                                    className="w-full bg-white/8 border border-white/15 rounded-xl pl-4 pr-11 py-2.5 text-white text-sm placeholder-gray-500 outline-none focus:border-cyan-500/60 focus:bg-white/12 transition-all"
+                                    className="w-full bg-gray-800/90 border border-gray-600 rounded-xl pl-4 pr-11 py-2.5 text-white text-sm placeholder-gray-400 outline-none focus:border-cyan-400 focus:bg-gray-800 focus:ring-2 focus:ring-cyan-400/30 transition-all"
                                 />
                                 <button
                                     type="button"
