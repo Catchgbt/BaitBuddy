@@ -747,7 +747,7 @@ function LandingPageContent() {
         <div className="bg-black text-white min-h-screen w-full overflow-hidden fixed inset-0" style={{ minHeight: '100dvh', paddingTop: 'env(safe-area-inset-top)' }}>
 
 
-            <div className="fixed top-4 left-4 sm:top-16 sm:left-8 z-50 flex flex-col items-center gap-2">
+            <div className="fixed top-4 left-4 sm:top-8 sm:left-8 z-50 flex flex-col items-start gap-2">
                 <motion.button
                     onClick={() => setTutorialOpen(true)}
                     animate={{
@@ -780,10 +780,10 @@ function LandingPageContent() {
                         Tutorial
                     </motion.span>
                 </motion.button>
-            </div>
 
-            <div className="fixed top-4 right-4 sm:top-16 sm:right-8 z-50">
-                <LanguageSwitcher />
+                <div className="z-50">
+                    <LanguageSwitcher />
+                </div>
             </div>
 
             <div className="relative isolate overflow-hidden h-screen w-full flex flex-col justify-center" style={{ height: '100dvh' }}>
