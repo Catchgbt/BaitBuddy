@@ -1,9 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PikeSvg, { PIKE_BASE_CSS } from '@/components/fish/PikeSvg';
+import CarpSvg from '@/components/fish/CarpSvg';
+import PerchSvg from '@/components/fish/PerchSvg';
+import TroutSvg from '@/components/fish/TroutSvg';
+import ZanderSvg from '@/components/fish/ZanderSvg';
+import CatfishSvg from '@/components/fish/CatfishSvg';
 
 // Unterwasser-Szene für die Landingpage: Tiefenverlauf wie in einem See,
-// Lichtstrahlen von der Oberfläche, aufsteigende Blasen und zwei Hechte,
-// die ruhig durch das Bild schwimmen. Rein dekorativ (pointer-events: none).
+// Lichtstrahlen von der Oberfläche, aufsteigende Blasen und Süßwasserfische,
+// die ruhig durch das Bild ziehen. Sobald ein Fisch das Bild verlassen hat,
+// schwimmt die nächste Art herein (Karpfen → Barsch → Forelle → Hecht →
+// Zander → Wels → …). Rein dekorativ (pointer-events: none).
+const FISH_SPECIES = [
+  { id: 'carp', Component: CarpSvg, size: 1.0 },
+  { id: 'perch', Component: PerchSvg, size: 0.6 },
+  { id: 'trout', Component: TroutSvg, size: 0.75 },
+  { id: 'pike', Component: PikeSvg, size: 1.05 },
+  { id: 'zander', Component: ZanderSvg, size: 0.85 },
+  { id: 'catfish', Component: CatfishSvg, size: 1.3 },
+];
+
 const BUBBLES = [
   // [left %, Größe px, Dauer s, Delay s, seitliche Drift px]
   [5, 5, 14, -2, 18], [11, 3, 18, -9, -14], [18, 7, 12, -5, 24],
@@ -14,6 +30,63 @@ const BUBBLES = [
   [58, 6, 21, -17, -8],
 ];
 
+const randBetween = (a, b) => a + Math.random() * (b - a);
+
+// Ein Fisch zieht einmal quer durchs Bild; nach jeder Querung wird auf die
+// nächste Art gewechselt und Richtung, Höhe, Tempo neu gewürfelt.
+function RoamingFish({ layer, startIndex = 0, startDir = 1 }) {
+  const near = layer === 'near';
+  const topRange = near ? [8, 58] : [55, 78];
+  const durRange = near ? [26, 40] : [48, 70];
+
+  const [run, setRun] = useState(() => ({
+    idx: startIndex,
+    count: 0,
+    dir: startDir,
+    top: randBetween(...topRange),
+    dur: randBetween(...durRange),
+    delay: near ? 0 : randBetween(2, 8),
+  }));
+
+  const next = () => setRun(r => ({
+    idx: (r.idx + 1) % FISH_SPECIES.length,
+    count: r.count + 1,
+    dir: -r.dir,
+    top: randBetween(...topRange),
+    dur: randBetween(...durRange),
+    delay: randBetween(1.5, 5),
+  }));
+
+  const { idx, count, dir, top, dur, delay } = run;
+  const { id, Component, size } = FISH_SPECIES[idx];
+
+  return (
+    <div
+      key={count}
+      className={`bb-fish-run ${near ? 'bb-fish-near' : 'bb-fish-far'}`}
+      style={{
+        top: `${top}vh`,
+        width: near
+          ? `calc(clamp(220px, 30vw, 400px) * ${size})`
+          : `calc(clamp(100px, 13vw, 180px) * ${size})`,
+        '--from': dir === 1 ? 'calc(-100% - 4vw)' : 'calc(100vw + 4vw)',
+        '--to': dir === 1 ? 'calc(100vw + 4vw)' : 'calc(-100% - 4vw)',
+        animationDuration: `${dur}s`,
+        animationDelay: `${delay}s`,
+      }}
+      onAnimationEnd={(e) => { if (e.animationName === 'bbSwimAcross') next(); }}
+    >
+      <div className="bb-fish-flip" style={{ transform: dir === -1 ? 'scaleX(-1)' : 'none' }}>
+        <div className="bb-fish-bob">
+          <svg viewBox="0 0 460 170" xmlns="http://www.w3.org/2000/svg">
+            <Component uid={`${layer}-${id}`} />
+          </svg>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function WaterScene() {
   return (
     <div className="bb-water-scene" aria-hidden="true">
@@ -22,7 +95,6 @@ export default function WaterScene() {
           position: fixed; inset: 0; z-index: 0;
           overflow: hidden; pointer-events: none;
           background: linear-gradient(180deg, #0c3b58 0%, #07293f 38%, #041a2b 70%, #020f1a 100%);
-          perspective: 900px;
         }
 
         /* Wasseroberfläche (Licht von oben) */
@@ -67,52 +139,30 @@ export default function WaterScene() {
           100% { transform: translate(var(--drift), -112vh); opacity: 0; }
         }
 
-        /* Hechte: ziehen ruhige Bahnen durchs Bild und wenden sichtbar */
-        .bb-pike-roam {
-          position: absolute; top: 0; left: 0;
+        /* Fische: eine Querung pro Art, Wechsel erfolgt außerhalb des Bildes */
+        .bb-fish-run {
+          position: absolute; left: 0;
           will-change: transform;
-          animation: linear infinite;
+          animation: bbSwimAcross linear both;
         }
-        .bb-pike-near {
-          width: clamp(230px, 33vw, 430px);
-          animation-name: bbRoamNear; animation-duration: 80s;
-          filter: drop-shadow(0 14px 22px rgba(1, 12, 22, .45));
+        @keyframes bbSwimAcross {
+          from { transform: translateX(var(--from)); }
+          to   { transform: translateX(var(--to)); }
         }
-        .bb-pike-far {
-          width: clamp(110px, 14vw, 190px);
-          animation-name: bbRoamFar; animation-duration: 120s;
-          opacity: .45; filter: blur(1.4px) brightness(.62) saturate(.75);
-        }
-        @keyframes bbRoamNear {
-          0%   { transform: translate(-45vw, 16vh) rotateY(0deg); }
-          20%  { transform: translate(72vw, 24vh) rotateY(0deg); }
-          24%  { transform: translate(78vw, 31vh) rotateY(180deg); }
-          46%  { transform: translate(-45vw, 58vh) rotateY(180deg); }
-          50%  { transform: translate(-45vw, 36vh) rotateY(360deg); }
-          71%  { transform: translate(70vw, 41vh) rotateY(360deg); }
-          75%  { transform: translate(76vw, 13vh) rotateY(540deg); }
-          97%  { transform: translate(-45vw, 17vh) rotateY(540deg); }
-          100% { transform: translate(-45vw, 16vh) rotateY(540deg); }
-        }
-        @keyframes bbRoamFar {
-          0%   { transform: translate(110vw, 64vh) rotateY(180deg); }
-          40%  { transform: translate(-40vw, 71vh) rotateY(180deg); }
-          45%  { transform: translate(-40vw, 76vh) rotateY(360deg); }
-          95%  { transform: translate(110vw, 68vh) rotateY(360deg); }
-          100% { transform: translate(110vw, 64vh) rotateY(360deg); }
-        }
+        .bb-fish-near { filter: drop-shadow(0 14px 22px rgba(1, 12, 22, .45)); }
+        .bb-fish-far { opacity: .45; filter: blur(1.4px) brightness(.62) saturate(.75); }
 
         /* sanftes Auf und Ab beim Schwimmen */
-        .bb-pike-bob { animation: bbPikeBob 6.5s ease-in-out infinite alternate; }
-        .bb-pike-far .bb-pike-bob { animation-duration: 8.5s; }
-        @keyframes bbPikeBob {
+        .bb-fish-bob { animation: bbFishBob 6.5s ease-in-out infinite alternate; }
+        .bb-fish-far .bb-fish-bob { animation-duration: 8.5s; }
+        @keyframes bbFishBob {
           from { transform: translateY(-9px) rotate(-1.6deg); }
           to   { transform: translateY(9px) rotate(1.6deg); }
         }
 
         ${PIKE_BASE_CSS}
-        .bb-pike-near .pk-tail { animation-duration: 1.4s; }
-        .bb-pike-far .pk-tail { animation-duration: 2.1s; }
+        .bb-fish-near .pk-tail { animation-duration: 1.4s; }
+        .bb-fish-far .pk-tail { animation-duration: 2.1s; }
 
         /* Vignette für Tiefenwirkung */
         .bb-vignette {
@@ -122,8 +172,7 @@ export default function WaterScene() {
 
         @media (prefers-reduced-motion: reduce) {
           .bb-water-scene * { animation: none !important; }
-          .bb-pike-near { transform: translate(8vw, 58vh); }
-          .bb-pike-far { transform: translate(60vw, 72vh) rotateY(180deg); }
+          .bb-fish-far { display: none; }
           .bb-bubble { display: none; }
         }
       `}</style>
@@ -138,14 +187,8 @@ export default function WaterScene() {
       <div className="bb-caustic" style={{ width: '55vw', height: '38vh', left: '8%', top: '6%', background: 'radial-gradient(ellipse, rgba(56,180,220,.20), transparent 65%)', animationDuration: '26s' }} />
       <div className="bb-caustic" style={{ width: '48vw', height: '34vh', right: '4%', top: '30%', background: 'radial-gradient(ellipse, rgba(34,150,200,.14), transparent 65%)', animationDuration: '34s', animationDelay: '-12s' }} />
 
-      {/* Hecht in der Tiefe (unscharf, dunkler) */}
-      <div className="bb-pike-roam bb-pike-far">
-        <div className="bb-pike-bob">
-          <svg viewBox="0 0 460 170" xmlns="http://www.w3.org/2000/svg">
-            <PikeSvg uid="pk-far" />
-          </svg>
-        </div>
-      </div>
+      {/* Fisch in der Tiefe (unscharf, dunkler) – startet mit dem Zander */}
+      <RoamingFish layer="far" startIndex={4} startDir={-1} />
 
       {BUBBLES.map(([left, size, dur, delay, drift], i) => (
         <span
@@ -159,14 +202,8 @@ export default function WaterScene() {
         />
       ))}
 
-      {/* Hecht im Vordergrund */}
-      <div className="bb-pike-roam bb-pike-near">
-        <div className="bb-pike-bob">
-          <svg viewBox="0 0 460 170" xmlns="http://www.w3.org/2000/svg">
-            <PikeSvg uid="pk-near" />
-          </svg>
-        </div>
-      </div>
+      {/* Fisch im Vordergrund – startet mit dem Karpfen */}
+      <RoamingFish layer="near" startIndex={0} startDir={1} />
 
       <div className="bb-vignette" />
     </div>
