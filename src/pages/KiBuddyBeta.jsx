@@ -2,14 +2,43 @@ import { useState, useRef, useEffect } from "react";
 import { functions } from "@/api/frontendClient";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
 
-// Fallback responses if API fails
-const BUDDY_RESPONSES = {
-  wetter: "Das Wetter ist heute perfekt zum Angeln! Die Bedingungen sind ideal für einen erfolgreichen Tag am Wasser.",
-  fang: "Das klingt nach einem großartigen Fang! Glückwunsch zu deinem erfolgreichen Angelausflug.",
-  spot: "Das ist ein wunderschöner Angelplatz! Dort solltest du gute Chancen auf große Fische haben.",
-  koeder: "Das ist ein ausgezeichneter Köder für diese Fischart. Du hast gute Chancen auf einen Biss!",
-  technik: "Das ist eine bewährte Angeltechnik. Mit etwas Geduld und Geschick wirst du sicherlich erfolgreich sein.",
-  default: "Das ist eine interessante Frage! Als dein Angel-Experte kann ich dir viele Tipps geben. Frag mich nach Wetter, Fängen, Spots oder Ködern!"
+// Extended buddy knowledge base for intelligent responses
+const BUDDY_KNOWLEDGE = {
+  wetter: [
+    "Das Wetter ist heute perfekt zum Angeln! Die Bedingungen sind ideal für einen erfolgreichen Tag am Wasser.",
+    "Bei wolkigem Himmel sind Fische besonders aktiv. Das ist eine großartige Zeit zum Angeln!",
+    "Wind kann vorteilhaft sein - Fische folgen dem Futter, das vom Wind ins Wasser geblasen wird.",
+    "Regen verbessert oft die Fangchancen. Die Fische werden aktiver und gehen leichter an den Köder."
+  ],
+  fang: [
+    "Das klingt nach einem großartigen Fang! Glückwunsch zu deinem erfolgreichen Angelausflug.",
+    "Wow, das ist beeindruckend! Du scheinst ein natürliches Talent zum Angeln zu haben.",
+    "Fantastisch! Solche Fänge sind der Traum jedes Anglers. Wie hast du das geschafft?"
+  ],
+  spot: [
+    "Das ist ein wunderschöner Angelplatz! Dort solltest du gute Chancen auf große Fische haben.",
+    "Seespots sind oft produktiv. Achte auf tiefe Stellen und Uferzonen.",
+    "Bachforellen lieben kaltes, sauberes Wasser. Ein idealer Spot für diese Art!",
+    "Flussplätze mit langsamen Strömungen sind perfekt - dort sammeln sich Fische zum Fressen."
+  ],
+  koeder: [
+    "Das ist ein ausgezeichneter Köder für diese Fischart. Du hast gute Chancen auf einen Biss!",
+    "Gummifische sind vielseitig und funktionieren bei vielen Arten. Gute Wahl!",
+    "Mit Wurm zu fischen ist eine klassische und zuverlässige Methode - funktioniert immer!",
+    "Kunstköder ermöglichen aktiveres Angeln und sind perfekt für gezieltes Fischen."
+  ],
+  technik: [
+    "Das ist eine bewährte Angeltechnik. Mit etwas Geduld und Geschick wirst du sicherlich erfolgreich sein.",
+    "Dein Ansatz klingt durchdacht. Das Wichtigste ist Geduld und die richtige Technik.",
+    "Das Spinnfischen ist eine effektive Methode für aktive Fische. Probier verschiedene Geschwindigkeiten!",
+    "Beim Fliegenfischen ist es wichtig, die richtige Fliege für die Jahreszeit zu wählen."
+  ],
+  default: [
+    "Das ist eine interessante Frage! Als dein Angel-Experte kann ich dir viele Tipps geben. Frag mich nach Wetter, Fängen, Spots oder Ködern!",
+    "Guter Gedanke! Beim Angeln ist es wichtig, flexibel zu sein und sich an die Bedingungen anzupassen.",
+    "Das ist eine wichtige Überlegung. Erfolgreiche Angler achten auf solche Details!",
+    "Ich verstehe deine Frage. Lass mich dir mit meinem Angelwissen helfen!"
+  ]
 };
 
 import PremiumGuard from "@/components/premium/PremiumGuard";
@@ -133,14 +162,17 @@ function KiBuddyBetaInner() {
 
   function getFallbackResponse(question) {
     const q = question.toLowerCase();
+    let category = "default";
 
-    if (/wetter|temperatur|wind|regen|sonne/.test(q)) return BUDDY_RESPONSES.wetter;
-    if (/fang|gefangen|beute|fische/.test(q)) return BUDDY_RESPONSES.fang;
-    if (/spot|angelplatz|wo|location|stelle/.test(q)) return BUDDY_RESPONSES.spot;
-    if (/köder|köder|ködern|aas|wurm|fliege|spinner/.test(q)) return BUDDY_RESPONSES.koeder;
-    if (/technik|technik|angeln|werfen|technik|methode/.test(q)) return BUDDY_RESPONSES.technik;
+    if (/wetter|temperatur|wind|regen|sonne|wolke|bewölkung/.test(q)) category = "wetter";
+    else if (/fang|gefangen|beute|fische|fische/.test(q)) category = "fang";
+    else if (/spot|angelplatz|wo|location|stelle|wasser|see|fluss|bach/.test(q)) category = "spot";
+    else if (/köder|köder|ködern|aas|wurm|fliege|spinner|kunstköder|gummi/.test(q)) category = "koeder";
+    else if (/technik|angeln|werfen|methode|spinnen|fliegen|spinnfischen|fliegenfischen/.test(q)) category = "technik";
 
-    return BUDDY_RESPONSES.default;
+    // Get random response from category
+    const responses = BUDDY_KNOWLEDGE[category];
+    return responses[Math.floor(Math.random() * responses.length)];
   }
 
   function sendText() {
