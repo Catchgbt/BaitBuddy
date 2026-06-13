@@ -39,19 +39,6 @@
     "beschreibung": "Echte Tiefenkarte der Wümme mit Tiefenmarkierungen"
   },
   {
-    "id": "bundeswasserstrassen",
-    "name": "Bundeswasserstraßen Übersicht",
-    "fluss": "Bundeswasserstraßen",
-    "region": "Deutschland",
-    "bundesland": "Deutschland",
-    "url": "/assets/tiefenkarten/Uebersichtskarte_Bundeswasserstrassen_echt.pdf",
-    "koordinaten": {
-      "lat": 51.1657,
-      "lng": 10.4515
-    },
-    "beschreibung": "Übersichtskarte aller Bundeswasserstraßen in Deutschland"
-  },
-  {
     "id": "nok_borgstedter_see",
     "name": "NOK Borgstedter See Tiefenkarte",
     "fluss": "Nord-Ostsee-Kanal (Borgstedter See)",
@@ -76,18 +63,5 @@
       "lng": 9.95
     },
     "beschreibung": "Echte Tiefenkarte des Flemhuder Sees am Nord-Ostsee-Kanal"
-  },
-  {
-    "id": "weser",
-    "name": "Weser Tiefenkarte",
-    "fluss": "Weser",
-    "region": "Norddeutschland",
-    "bundesland": "Bremen/Niedersachsen",
-    "url": "/assets/tiefenkarten/Tiefenkarte_Weser_echt.pdf",
-    "koordinaten": {
-      "lat": 53.0,
-      "lng": 8.8
-    },
-    "beschreibung": "Echte Tiefenkarte der Weser mit Angelinformationen"
   }
 ]
