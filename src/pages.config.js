@@ -75,6 +75,7 @@ import KiBuddyBeta from './pages/KiBuddyBeta';
 import Licenses from './pages/Licenses';
 import Log from './pages/Log';
 import Logbook from './pages/Logbook';
+import LiveTripPage from './pages/LiveTripPage';
 import Map from './pages/Map';
 import MapPage from './pages/MapPage';
 import Match3Game from './pages/Match3Game';
@@ -129,6 +130,7 @@ export const PAGES = {
     "Licenses": Licenses,
     "Log": Log,
     "Logbook": Logbook,
+    "LiveTrip": LiveTripPage,
     "Map": Map,
     "MapPage": MapPage,
     "Match3Game": Match3Game,
