@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { speakWithElevenLabs } from '@/components/utils/elevenLabsTTS';
 
 const KNOTS = {
   "Palomar": {
@@ -126,12 +127,10 @@ export default function ARKnotenAssistent() {
   }, []);
 
   const speakText = (text) => {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'de-DE';
-    u.rate = ttsSpeed;
-    window.speechSynthesis.speak(u);
+    if (!text) return;
+    speakWithElevenLabs(text).catch(error => {
+      console.warn('ElevenLabs speech failed:', error);
+    });
   };
 
   const startCamera = async () => {

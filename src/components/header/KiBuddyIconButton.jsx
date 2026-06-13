@@ -1,6 +1,7 @@
 import React from "react";
 import { useHaptic } from "@/components/utils/HapticFeedback";
 import { motion } from "framer-motion";
+import { cancelElevenLabs } from "@/components/utils/elevenLabsTTS";
 
 export default function KiBuddyIconButton({ chatbotOpen, onToggleChatbot }) {
   const { triggerHaptic } = useHaptic();
@@ -13,9 +14,7 @@ export default function KiBuddyIconButton({ chatbotOpen, onToggleChatbot }) {
     
     // Wenn Chatbot geschlossen wird, Sprachausgabe stoppen
     if (chatbotOpen) {
-      if (typeof window !== "undefined" && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-      }
+      cancelElevenLabs();
     }
     
     console.log("KI Buddy Icon clicked, toggling chatbot");

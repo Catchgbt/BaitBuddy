@@ -5,6 +5,7 @@ import { Mic } from "lucide-react";
 // Removed: Coins, WifiOff, Wifi imports as they are no longer used
 import { useHaptic } from "@/components/utils/HapticFeedback";
 import { motion, AnimatePresence } from "framer-motion";
+import { cancelElevenLabs } from "@/components/utils/elevenLabsTTS";
 
 export default function KiBuddyBar({ onToggleChatbot, chatbotOpen, onOpenVoice }) {
   const [user, setUser] = useState(null);
@@ -61,13 +62,11 @@ export default function KiBuddyBar({ onToggleChatbot, chatbotOpen, onOpenVoice }
 
   const handleBuddyClick = () => {
     triggerHaptic('heavy');
-    
+
     if (chatbotOpen) {
-      if (typeof window !== "undefined" && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-      }
+      cancelElevenLabs();
     }
-    
+
     onToggleChatbot();
   };
 

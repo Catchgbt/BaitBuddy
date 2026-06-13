@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { User } from "@/entities/User";
 import { BrainCircuit } from "lucide-react";
+import { speakWithElevenLabs } from "@/components/utils/elevenLabsTTS";
 
 export default function KiBuddyStatus() {
   const [text, setText] = useState("");
@@ -22,17 +23,10 @@ export default function KiBuddyStatus() {
       if (responseText) {
         setText(responseText.slice(0, 100) + "...");
 
-        // Speak text only in browser environment
-        if (typeof window !== 'undefined' && window.speechSynthesis) {
-          try {
-            const utterance = new SpeechSynthesisUtterance(responseText);
-            utterance.lang = "de-DE";
-            utterance.rate = 0.9;
-            speechSynthesis.speak(utterance);
-          } catch (error) {
-            console.warn("Speech synthesis failed in KiBuddyStatus:", error);
-          }
-        }
+        // Speak with ElevenLabs
+        speakWithElevenLabs(responseText).catch(error => {
+          console.warn("ElevenLabs speech failed in KiBuddyStatus:", error);
+        });
 
         setTimeout(() => setText(""), 15000);
       }

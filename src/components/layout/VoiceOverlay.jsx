@@ -78,7 +78,7 @@ const VoiceOverlay = ({ isOpen, onClose, currentPageName }) => {
       setChatHistory(prev => [...prev, { role: 'assistant', content: aiResponse }]);
       setOrbState('speaking');
       
-      // TTS — primär ElevenLabs, Browser-TTS nur als Fallback
+      // TTS — ElevenLabs only
       const afterSpeech = () => {
         setOrbState('listening');
         setIsListening(true);
@@ -89,11 +89,8 @@ const VoiceOverlay = ({ isOpen, onClose, currentPageName }) => {
           onError: afterSpeech,
         });
       } catch (ttsError) {
-        console.warn('[VoiceOverlay] ElevenLabs fehlgeschlagen, Browser-TTS:', ttsError?.message);
-        const utterance = new SpeechSynthesisUtterance(aiResponse);
-        utterance.lang = 'de-DE';
-        utterance.onend = afterSpeech;
-        window.speechSynthesis.speak(utterance);
+        console.error('[VoiceOverlay] ElevenLabs failed:', ttsError?.message);
+        afterSpeech();
       }
     } catch (error) {
       console.error('Chat error:', error);
