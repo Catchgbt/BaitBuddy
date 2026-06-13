@@ -1,0 +1,91 @@
+{
+  "version": "GEBCO 2026 (Demo)",
+  "resolution": "15 arcseconds (~500m)",
+  "bundeslaender": 16,
+  "status": "⏳ Download vorbereitet - externe URLs verfügbar",
+  "files_ready": true,
+  "map_integration": true,
+  "bundeslaender_list": [
+    {
+      "name": "Baden-Württemberg",
+      "bounds": {"lon_min": 7.5, "lon_max": 10.3, "lat_min": 47.5, "lat_max": 49.6},
+      "file": "Bathymetrie_Baden-Württemberg.tif"
+    },
+    {
+      "name": "Bayern",
+      "bounds": {"lon_min": 8.9, "lon_max": 13.8, "lat_min": 47.3, "lat_max": 50.6},
+      "file": "Bathymetrie_Bayern.tif"
+    },
+    {
+      "name": "Berlin",
+      "bounds": {"lon_min": 13.1, "lon_max": 13.8, "lat_min": 52.3, "lat_max": 52.7},
+      "file": "Bathymetrie_Berlin.tif"
+    },
+    {
+      "name": "Brandenburg",
+      "bounds": {"lon_min": 11.3, "lon_max": 14.8, "lat_min": 51.4, "lat_max": 53.6},
+      "file": "Bathymetrie_Brandenburg.tif"
+    },
+    {
+      "name": "Bremen",
+      "bounds": {"lon_min": 8.5, "lon_max": 9.0, "lat_min": 53.0, "lat_max": 53.6},
+      "file": "Bathymetrie_Bremen.tif"
+    },
+    {
+      "name": "Hamburg",
+      "bounds": {"lon_min": 9.7, "lon_max": 10.4, "lat_min": 53.4, "lat_max": 53.6},
+      "file": "Bathymetrie_Hamburg.tif"
+    },
+    {
+      "name": "Hessen",
+      "bounds": {"lon_min": 8.0, "lon_max": 10.3, "lat_min": 49.0, "lat_max": 51.6},
+      "file": "Bathymetrie_Hessen.tif"
+    },
+    {
+      "name": "Mecklenburg-Vorpommern",
+      "bounds": {"lon_min": 11.7, "lon_max": 14.4, "lat_min": 53.5, "lat_max": 55.0},
+      "file": "Bathymetrie_Mecklenburg-Vorpommern.tif"
+    },
+    {
+      "name": "Niedersachsen",
+      "bounds": {"lon_min": 6.4, "lon_max": 11.6, "lat_min": 51.4, "lat_max": 54.0},
+      "file": "Bathymetrie_Niedersachsen.tif"
+    },
+    {
+      "name": "Nordrhein-Westfalen",
+      "bounds": {"lon_min": 5.8, "lon_max": 9.2, "lat_min": 50.3, "lat_max": 52.5},
+      "file": "Bathymetrie_Nordrhein-Westfalen.tif"
+    },
+    {
+      "name": "Rheinland-Pfalz",
+      "bounds": {"lon_min": 6.1, "lon_max": 8.5, "lat_min": 49.0, "lat_max": 50.9},
+      "file": "Bathymetrie_Rheinland-Pfalz.tif"
+    },
+    {
+      "name": "Saarland",
+      "bounds": {"lon_min": 6.4, "lon_max": 7.2, "lat_min": 49.1, "lat_max": 49.6},
+      "file": "Bathymetrie_Saarland.tif"
+    },
+    {
+      "name": "Sachsen",
+      "bounds": {"lon_min": 12.0, "lon_max": 15.0, "lat_min": 50.2, "lat_max": 51.7},
+      "file": "Bathymetrie_Sachsen.tif"
+    },
+    {
+      "name": "Sachsen-Anhalt",
+      "bounds": {"lon_min": 10.5, "lon_max": 13.8, "lat_min": 50.8, "lat_max": 53.0},
+      "file": "Bathymetrie_Sachsen-Anhalt.tif"
+    },
+    {
+      "name": "Schleswig-Holstein",
+      "bounds": {"lon_min": 8.4, "lon_max": 11.6, "lat_min": 53.4, "lat_max": 55.1},
+      "file": "Bathymetrie_Schleswig-Holstein.tif"
+    },
+    {
+      "name": "Thüringen",
+      "bounds": {"lon_min": 9.2, "lon_max": 12.6, "lat_min": 50.2, "lat_max": 51.7},
+      "file": "Bathymetrie_Thüringen.tif"
+    }
+  ],
+  "instructions": "Führe scripts/download_bathymetry_simple.py aus um die echten GEBCO 2026 Daten herunterzuladen und zu extrahieren"
+}
