@@ -43,10 +43,13 @@ export default function Help() {
   const loadTickets = async () => {
     setLoadingTickets(true);
     try {
-      const data = await entities.SupportTicket.list("-created_date", 50);
-      setTickets(data);
+      if (user?.email) {
+        const data = await entities.SupportTicket.filter({ user_email: user.email });
+        setTickets(data?.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)) || []);
+      }
     } catch (e) {
-      console.error(e);
+      console.error("Fehler beim Laden der Tickets:", e);
+      toast.error("Tickets konnten nicht geladen werden");
     }
     setLoadingTickets(false);
   };
