@@ -191,61 +191,75 @@ export default function MapPage() {
     setLoading(true);
     try {
       const userSpots = await Spot.list();
-      setSpots(userSpots);
+      const safeUserSpots = Array.isArray(userSpots) ? userSpots : [];
+      setSpots(safeUserSpots);
 
       try {
-        let allLocations = [];
+        const response = await functions.invoke('angelspotsGeojson');
 
-        // Versuche GeoJSON von API zu laden
-        try {
-          const response = await functions.invoke('angelspotsGeojson');
+        // Der Backend-Endpunkt /api/fishing/hotspots liefert
+        // { hotspots: [{ id, name, latitude, longitude, water_type }] }.
+        // Zusätzlich unterstützen wir echtes GeoJSON ({ features: [...] }),
+        // falls die Datenquelle später wechselt.
+        let locations = [];
 
-          if (response && response.data && response.data.features && Array.isArray(response.data.features)) {
-            allLocations = response.data.features.map(feature => ({
-              id: feature.properties.id,
-              name: feature.properties.name,
-              category: feature.properties.category,
+        if (Array.isArray(response?.features)) {
+          locations = response.features
+            .filter(f => f?.geometry?.coordinates?.length >= 2)
+            .map(feature => ({
+              id: feature.properties?.id,
+              name: feature.properties?.name,
+              category: feature.properties?.category,
               coordinates: {
                 lng: feature.geometry.coordinates[0],
                 lat: feature.geometry.coordinates[1]
               },
-              address: feature.properties.address,
-              website: feature.properties.website,
-              source: feature.properties.source
+              address: feature.properties?.address,
+              website: feature.properties?.website,
+              source: feature.properties?.source
             }));
-          }
-        } catch (geoError) {
-          console.warn("GeoJSON konnte nicht geladen werden, versuche FishingClub Entität:", geoError);
+        } else if (Array.isArray(response?.hotspots)) {
+          locations = response.hotspots
+            .filter(h => h.latitude != null && h.longitude != null)
+            .map(h => ({
+              id: h.id,
+              name: h.name,
+              category: h.category || 'spot',
+              water_type: h.water_type,
+              coordinates: {
+                lat: Number(h.latitude),
+                lng: Number(h.longitude)
+              }
+            }));
         }
 
-        // Fallback: Lade Angelvereine und Parks über Entitäten
-        if (allLocations.length === 0) {
+        // Fallback: Wenn keine öffentlichen Orte geliefert wurden, lade
+        // Angelvereine & Parks über die FishingClub-Entität.
+        if (locations.length === 0) {
           try {
             const clubs = await entities.FishingClub.list() || [];
-            const transformedClubs = clubs.map(club => ({
-              id: club.id,
-              name: club.name || club.club_name,
-              category: 'club',
-              coordinates: {
-                lat: club.latitude || club.lat,
-                lng: club.longitude || club.lon
-              },
-              address: {
-                city: club.city || club.location
-              },
-              website: club.website
-            }));
-            allLocations = transformedClubs;
+            locations = clubs
+              .filter(club => (club.latitude ?? club.lat) != null && (club.longitude ?? club.lon) != null)
+              .map(club => ({
+                id: club.id,
+                name: club.name || club.club_name,
+                category: 'club',
+                coordinates: {
+                  lat: Number(club.latitude ?? club.lat),
+                  lng: Number(club.longitude ?? club.lon)
+                },
+                address: { city: club.city || club.location },
+                website: club.website
+              }));
           } catch (clubError) {
             console.warn("FishingClub konnte nicht geladen werden:", clubError);
           }
         }
 
-        setPublicLocations(allLocations);
+        setPublicLocations(locations);
 
-        const locationCount = allLocations.length;
         toast.success("Karte geladen", {
-          description: `${userSpots.length} eigene Spots${locationCount > 0 ? `, ${locationCount} Angelvereine & Parks` : ''}`,
+          description: `${safeUserSpots.length} eigene Spots${locations.length > 0 ? `, ${locations.length} Angelvereine & Parks` : ''}`,
           duration: 2000
         });
       } catch (error) {
@@ -253,7 +267,7 @@ export default function MapPage() {
         setPublicLocations([]);
 
         toast.success("Karte geladen", {
-          description: `${userSpots.length} eigene Spots gefunden`,
+          description: `${safeUserSpots.length} eigene Spots gefunden`,
           duration: 2000
         });
       }
@@ -344,19 +358,17 @@ export default function MapPage() {
         {/* Removed: NewFeaturesNotification - Alle Infos sind jetzt im MapNavigationHub */}
         {/* Removed: MapFeaturesInfo - Integriert in MapNavigationHub */}
 
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]">
-              🗺️ Karte & Spots — Komplett mit 6 Advanced Features
-            </h1>
-            <p className="text-sm text-gray-400 mt-1">
-              🎣 Klicke unten rechts auf den 🟦 Hub um alle neuen Features zu entdecken
-            </p>
-          </div>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]">
+            🗺️ Karte & Spots — Komplett mit 6 Advanced Features
+          </h1>
+          <p className="text-sm text-gray-400 mt-1">
+            🎣 Klicke unten rechts auf den 🟦 Hub um alle neuen Features zu entdecken
+          </p>
         </div>
 
         {/* Simplified Info Cards - nur essenzielle Infos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <Card className="glass-morphism border-cyan-700 bg-cyan-900/20">
             <CardContent className="p-4">
               <div className="text-xs text-cyan-400 mb-2 font-semibold">✨ NEU: 6 ADVANCED FEATURES</div>
@@ -403,7 +415,7 @@ export default function MapPage() {
           </Card>
         </div>
 
-        <div className="h-[600px] rounded-2xl overflow-hidden border-2 border-gray-800 shadow-2xl">
+        <div className="h-[600px] rounded-2xl overflow-hidden border-2 border-gray-800 shadow-2xl relative z-10">
           <MapContainer
             center={mapCenter}
             zoom={mapZoom}
@@ -462,10 +474,10 @@ export default function MapPage() {
               </Marker>
             )}
 
-            {spots.map((spot) => (
+            {spots.filter(spot => spot.latitude != null && spot.longitude != null).map((spot) => (
               <Marker
                 key={spot.id}
-                position={[spot.latitude, spot.longitude]}
+                position={[Number(spot.latitude), Number(spot.longitude)]}
                 icon={defaultIcon}
                 eventHandlers={{
                   click: () => setSelectedLocation({ ...spot, type: 'spot' })
@@ -489,12 +501,17 @@ export default function MapPage() {
 
             {publicLocations.map((location) => {
               const coords = location.coordinates || {};
-              if (!coords.lat || !coords.lng) return null;
-              
+              if (coords.lat == null || coords.lng == null) return null;
+
+              const categoryLabel =
+                location.category === 'club' ? 'Angelverein'
+                : location.category === 'spot' ? (location.water_type ? location.water_type.charAt(0).toUpperCase() + location.water_type.slice(1) : 'Angelspot')
+                : 'Angelpark';
+
               return (
                 <Marker
                   key={location.id}
-                  position={[coords.lat, coords.lng]}
+                  position={[Number(coords.lat), Number(coords.lng)]}
                   icon={greenIcon}
                   eventHandlers={{
                     click: () => setSelectedLocation({ ...location, type: location.category || 'club' })
@@ -504,7 +521,7 @@ export default function MapPage() {
                     <div className="min-w-[200px]">
                       <div className="font-semibold text-base mb-1">{location.name}</div>
                       <div className="text-sm text-gray-600">
-                        {location.category === 'club' ? 'Angelverein' : 'Angelpark'}
+                        {categoryLabel}
                       </div>
                       {location.address && (
                         <div className="text-xs text-gray-500 mt-1">
