@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { functions } from "@/api/frontendClient";
+import { entities } from "@/api/frontendClient";
 import { Spot } from "@/entities/Spot";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
@@ -232,14 +233,37 @@ export default function MapPage() {
             }));
         }
 
+        // Fallback: Wenn keine öffentlichen Orte geliefert wurden, lade
+        // Angelvereine & Parks über die FishingClub-Entität.
+        if (locations.length === 0) {
+          try {
+            const clubs = await entities.FishingClub.list() || [];
+            locations = clubs
+              .filter(club => (club.latitude ?? club.lat) != null && (club.longitude ?? club.lon) != null)
+              .map(club => ({
+                id: club.id,
+                name: club.name || club.club_name,
+                category: 'club',
+                coordinates: {
+                  lat: Number(club.latitude ?? club.lat),
+                  lng: Number(club.longitude ?? club.lon)
+                },
+                address: { city: club.city || club.location },
+                website: club.website
+              }));
+          } catch (clubError) {
+            console.warn("FishingClub konnte nicht geladen werden:", clubError);
+          }
+        }
+
         setPublicLocations(locations);
 
         toast.success("Karte geladen", {
-          description: `${safeUserSpots.length} eigene Spots, ${locations.length} öffentliche Orte`,
+          description: `${safeUserSpots.length} eigene Spots${locations.length > 0 ? `, ${locations.length} Angelvereine & Parks` : ''}`,
           duration: 2000
         });
       } catch (error) {
-        console.warn("Öffentliche Locations konnten nicht geladen werden:", error);
+        console.error("Fehler beim Laden öffentlicher Locations:", error);
         setPublicLocations([]);
 
         toast.success("Karte geladen", {
@@ -321,7 +345,7 @@ export default function MapPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 pb-32">
+    <div className="bg-gray-950 pb-32 overflow-y-auto">
       {/* Mode Manager & Guided Tour */}
       <MapModeManager
         mapMode={mapMode}
@@ -330,7 +354,7 @@ export default function MapPage() {
         onTourComplete={() => setIsFirstTime(false)}
       />
 
-      <div className="max-w-7xl mx-auto p-4">
+      <div className="max-w-7xl mx-auto p-4 space-y-4 min-h-screen">
         {/* Removed: NewFeaturesNotification - Alle Infos sind jetzt im MapNavigationHub */}
         {/* Removed: MapFeaturesInfo - Integriert in MapNavigationHub */}
 

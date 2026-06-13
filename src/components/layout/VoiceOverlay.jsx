@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mic, Camera, Waves, ChevronRight, ChevronLeft, Zap, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { speakWithElevenLabs } from '@/components/utils/elevenLabsTTS';
 
 const VoiceOverlay = ({ isOpen, onClose, currentPageName }) => {
   const [activeTab, setActiveTab] = useState('voice');
@@ -77,32 +78,22 @@ const VoiceOverlay = ({ isOpen, onClose, currentPageName }) => {
       setChatHistory(prev => [...prev, { role: 'assistant', content: aiResponse }]);
       setOrbState('speaking');
       
-      // TTS
+      // TTS — primär ElevenLabs, Browser-TTS nur als Fallback
+      const afterSpeech = () => {
+        setOrbState('listening');
+        setIsListening(true);
+      };
       try {
-        const ttsResponse = await fetch('/api/functions/backendTextToSpeech', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: aiResponse })
+        await speakWithElevenLabs(aiResponse, {
+          onEnd: afterSpeech,
+          onError: afterSpeech,
         });
-        
-        const ttsData = await ttsResponse.json();
-        if (ttsData.audioUrl) {
-          const audio = new Audio(ttsData.audioUrl);
-          await audio.play();
-          audio.onended = () => {
-            setOrbState('listening');
-            setIsListening(true);
-          };
-        }
-      } catch {
-        // Fallback Browser TTS
+      } catch (ttsError) {
+        console.warn('[VoiceOverlay] ElevenLabs fehlgeschlagen, Browser-TTS:', ttsError?.message);
         const utterance = new SpeechSynthesisUtterance(aiResponse);
         utterance.lang = 'de-DE';
+        utterance.onend = afterSpeech;
         window.speechSynthesis.speak(utterance);
-        utterance.onend = () => {
-          setOrbState('listening');
-          setIsListening(true);
-        };
       }
     } catch (error) {
       console.error('Chat error:', error);

@@ -7,6 +7,7 @@ import { auth } from "@/api/auth";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
+import { speakWithElevenLabs, cancelElevenLabs } from "@/components/utils/elevenLabsTTS";
 
 const ALLOWED_PAGES = ["Dashboard","Logbook","Map","Weather","Community","Gear","AIAssistant","TripPlanner","Profile","Settings","Rank","WaterAnalysis","AngelscheinPruefungSchonzeiten","Quiz","Licenses","Events","BaitMixer","CatchStats","ARKnotenAssistent","Shop","Premium","PremiumPlans","VoiceControl","Help","Tutorials","Devices","DeviceIntegration","StartFishing","Start","WeatherAlerts","UsedGear","BathymetricCrowdsourcing"];
 
@@ -237,15 +238,13 @@ export default function MiniKiVoiceBuddy() {
       || vs[0];
   }
 
-  function speak(text) {
-    if (!synthRef.current || !text) return;
+  // Browser-TTS nur als Fallback, wenn ElevenLabs nicht verfügbar ist.
+  function speakBrowser(text) {
+    if (!synthRef.current || !text) { setStatus(""); stopWave(); return; }
     try {
       synthRef.current.cancel();
-      // kleiner Delay damit cancel() sauber durchläuft (Chrome-Bug)
       setTimeout(() => {
         if (!synthRef.current) return;
-        setStatus("speaking");
-        startWave();
         const u = new SpeechSynthesisUtterance(text);
         u.lang = "de-DE";
         u.pitch = 1.1;
@@ -274,7 +273,24 @@ export default function MiniKiVoiceBuddy() {
     }
   }
 
+  // Primär: ElevenLabs. Bei Fehler (z. B. fehlender API-Key) → Browser-TTS.
+  async function speak(text) {
+    if (!text) return;
+    setStatus("speaking");
+    startWave();
+    try {
+      await speakWithElevenLabs(text, {
+        onEnd: () => { setStatus(""); stopWave(); },
+        onError: () => { setStatus(""); stopWave(); },
+      });
+    } catch (err) {
+      console.warn("[MiniKiVoiceBuddy] ElevenLabs fehlgeschlagen, Browser-TTS:", err?.message);
+      speakBrowser(text);
+    }
+  }
+
   function stopSpeaking() {
+    cancelElevenLabs();
     synthRef.current?.cancel();
     stopWave();
     setStatus("");
@@ -393,7 +409,7 @@ export default function MiniKiVoiceBuddy() {
           <span style={{ marginLeft: 8, fontSize: 11, color: "#4455aa", fontWeight: 500, background: "#0d1a33", border: "1px solid #1e2f55", borderRadius: 8, padding: "2px 7px" }}>BETA</span>
         </div>
         <button
-          onClick={() => { setTonAn(t => !t); if (tonAn) synthRef.current?.cancel(); }}
+          onClick={() => { setTonAn(t => !t); if (tonAn) { cancelElevenLabs(); synthRef.current?.cancel(); } }}
           style={{ display: "flex", alignItems: "center", gap: 6, background: tonAn ? "#22d3c8" : "#0d2020", border: "1px solid #22d3c8", borderRadius: 20, padding: "4px 12px", fontSize: 12, color: tonAn ? "#060d1a" : "#22d3c8", fontWeight: 500, cursor: "pointer" }}
         >
           <span style={{ width: 7, height: 7, borderRadius: "50%", background: tonAn ? "#060d1a" : "#22d3c8", display: "inline-block" }} />

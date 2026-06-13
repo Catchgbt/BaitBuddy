@@ -1,28 +1,19 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { functions } from "@/api/frontendClient";
+import { speakWithElevenLabs, cancelElevenLabs } from '@/components/utils/elevenLabsTTS';
 
 /**
  * Hook für ElevenLabs Text-to-Speech Voice Output
- * Nutzt die Backend-Integrationsroute /api/ai/tts
- * Unterstützt Audio-Streaming und Kontrollfunktionen
+ * Nutzt die zentrale elevenLabsTTS-Utility (Backend /api/ai/tts)
  */
 export function useElevenLabsVoice() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const audioRef = useRef(null);
-  const urlRef = useRef(null);
 
   const stop = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.src = '';
-      audioRef.current = null;
-    }
-    if (urlRef.current) {
-      URL.revokeObjectURL(urlRef.current);
-      urlRef.current = null;
-    }
+    cancelElevenLabs();
+    audioRef.current = null;
     setIsSpeaking(false);
     setError(null);
   }, []);
@@ -38,47 +29,20 @@ export function useElevenLabsVoice() {
     setError(null);
 
     try {
-      const response = await functions.invoke('textToSpeech', { text });
-
-      // Backend gibt audioBase64 zurück
-      const audioBase64 = response?.audioBase64;
-      if (!audioBase64) {
-        throw new Error('Keine Audio-Daten erhalten');
-      }
-
-      // Base64 in Blob konvertieren
-      const binaryString = atob(audioBase64);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      const blob = new Blob([bytes], { type: 'audio/mpeg' });
-
-      // Blob-URL erstellen und Audio abspielen
-      const url = URL.createObjectURL(blob);
-      urlRef.current = url;
-
-      const audio = new Audio(url);
+      const audio = await speakWithElevenLabs(text, {
+        onEnd: () => {
+          setIsSpeaking(false);
+          options.onEnd?.();
+        },
+        onError: (err) => {
+          setIsSpeaking(false);
+          setError('Audio playback error');
+          options.onError?.(err);
+        },
+      });
       audioRef.current = audio;
-
-      audio.onended = () => {
-        setIsSpeaking(false);
-        URL.revokeObjectURL(url);
-        urlRef.current = null;
-        options.onEnd?.();
-      };
-
-      audio.onerror = (err) => {
-        setIsSpeaking(false);
-        setError('Audio playback error');
-        URL.revokeObjectURL(url);
-        urlRef.current = null;
-        options.onError?.(err);
-      };
-
       setIsLoading(false);
       setIsSpeaking(true);
-      await audio.play();
       return true;
     } catch (err) {
       setIsLoading(false);
