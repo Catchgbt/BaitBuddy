@@ -1,26 +1,22 @@
 import React, { useState } from 'react';
-import PikeSvg, { PIKE_BASE_CSS } from '@/components/fish/PikeSvg';
-import CarpSvg from '@/components/fish/CarpSvg';
-import PerchSvg from '@/components/fish/PerchSvg';
-import TroutSvg from '@/components/fish/TroutSvg';
-import ZanderSvg from '@/components/fish/ZanderSvg';
-import CatfishSvg from '@/components/fish/CatfishSvg';
 
 // Unterwasser-Szene (app-weiter Hintergrund): Tiefenverlauf wie in einem See,
 // Lichtstrahlen von der Oberfläche mit gelegentlichen hellen Einstrahlungen,
 // viele aufsteigende, seitlich pendelnde Blasen, Schwebeteilchen und
 // Süßwasserfische, die ruhig durch das Bild ziehen. Sobald ein Fisch das Bild
 // verlassen hat, schwimmt die nächste Art herein (Karpfen → Barsch → Forelle
-// → Hecht → Zander → Wels → …). Realistische, animierte Vektor-Fische
-// (Schuppen, Flossen, Schwanzschlag) statt flacher Platzhalter-Bilder.
-// Rein dekorativ (pointer-events: none).
+// → Hecht → Zander → Wels → …). Rein dekorativ (pointer-events: none).
+//
+// Echte, freigestellte Fischfotos (Wikimedia Commons, alle PD/CC0 — Quellen &
+// Lizenzen siehe public/fish/CREDITS.md). Alle Motive blicken nach rechts; beim
+// Schwimmen nach links spiegelt .bb-fish-flip. WebP mit Alpha, je Datei < 80 KB.
 const FISH_SPECIES = [
-  { id: 'carp', Component: CarpSvg, size: 1.0 },
-  { id: 'perch', Component: PerchSvg, size: 0.6 },
-  { id: 'trout', Component: TroutSvg, size: 0.75 },
-  { id: 'pike', Component: PikeSvg, size: 1.05 },
-  { id: 'zander', Component: ZanderSvg, size: 0.85 },
-  { id: 'catfish', Component: CatfishSvg, size: 1.3 },
+  { id: 'carp', name: 'Karpfen', size: 1.0, image: '/fish/carp.webp' },
+  { id: 'perch', name: 'Barsch', size: 0.6, image: '/fish/perch.webp' },
+  { id: 'trout', name: 'Forelle', size: 0.75, image: '/fish/trout.webp' },
+  { id: 'pike', name: 'Hecht', size: 1.05, image: '/fish/pike.webp' },
+  { id: 'zander', name: 'Zander', size: 0.85, image: '/fish/zander.webp' },
+  { id: 'catfish', name: 'Wels', size: 1.3, image: '/fish/catfish.webp' },
 ];
 
 // Deterministisch „gewürfelte“ Blasen: gut verteilt, sofort gefüllt (negative
@@ -74,7 +70,7 @@ function RoamingFish({ layer, startIndex = 0, startDir = 1 }) {
   }));
 
   const { idx, count, dir, top, dur, delay } = run;
-  const { id, Component, size } = FISH_SPECIES[idx];
+  const { id, size, image } = FISH_SPECIES[idx];
 
   return (
     <div
@@ -94,9 +90,14 @@ function RoamingFish({ layer, startIndex = 0, startDir = 1 }) {
     >
       <div className="bb-fish-flip" style={{ transform: dir === -1 ? 'scaleX(-1)' : 'none' }}>
         <div className="bb-fish-bob">
-          <svg viewBox="0 0 460 170" xmlns="http://www.w3.org/2000/svg">
-            <Component uid={`${layer}-${id}`} />
-          </svg>
+          <img
+            src={image}
+            alt={id}
+            loading="lazy"
+            decoding="async"
+            draggable="false"
+            style={{ display: 'block', width: '100%', height: 'auto' }}
+          />
         </div>
       </div>
     </div>
@@ -228,10 +229,6 @@ export default function WaterScene() {
           from { transform: translateY(-9px) rotate(-1.6deg); }
           to   { transform: translateY(9px) rotate(1.6deg); }
         }
-
-        ${PIKE_BASE_CSS}
-        .bb-fish-near .pk-tail { animation-duration: 1.4s; }
-        .bb-fish-far .pk-tail { animation-duration: 2.1s; }
 
         /* Vignette für Tiefenwirkung */
         .bb-vignette {
