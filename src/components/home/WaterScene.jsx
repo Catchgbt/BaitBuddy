@@ -1,24 +1,13 @@
 import React, { useState } from 'react';
-import PikeSvg, { PIKE_BASE_CSS } from '@/components/fish/PikeSvg';
-import CarpSvg from '@/components/fish/CarpSvg';
-import PerchSvg from '@/components/fish/PerchSvg';
-import TroutSvg from '@/components/fish/TroutSvg';
-import ZanderSvg from '@/components/fish/ZanderSvg';
-import CatfishSvg from '@/components/fish/CatfishSvg';
 
-// Unterwasser-Szene (app-weiter Hintergrund): Tiefenverlauf wie in einem See,
-// Lichtstrahlen von der Oberfläche mit gelegentlichen hellen Einstrahlungen,
-// viele aufsteigende, seitlich pendelnde Blasen, Schwebeteilchen und
-// Süßwasserfische, die ruhig durch das Bild ziehen. Sobald ein Fisch das Bild
-// verlassen hat, schwimmt die nächste Art herein (Karpfen → Barsch → Forelle
-// → Hecht → Zander → Wels → …). Rein dekorativ (pointer-events: none).
+// Echte Fischbilder statt SVG — lizenzfrei mit transparentem Hintergrund
 const FISH_SPECIES = [
-  { id: 'carp', Component: CarpSvg, size: 1.0 },
-  { id: 'perch', Component: PerchSvg, size: 0.6 },
-  { id: 'trout', Component: TroutSvg, size: 0.75 },
-  { id: 'pike', Component: PikeSvg, size: 1.05 },
-  { id: 'zander', Component: ZanderSvg, size: 0.85 },
-  { id: 'catfish', Component: CatfishSvg, size: 1.3 },
+  { id: 'carp', name: 'Karpfen', size: 1.0, image: '/fish/carp.png' },
+  { id: 'perch', name: 'Barsch', size: 0.6, image: '/fish/perch.png' },
+  { id: 'trout', name: 'Forelle', size: 0.75, image: '/fish/trout.png' },
+  { id: 'pike', name: 'Hecht', size: 1.05, image: '/fish/pike.png' },
+  { id: 'zander', name: 'Zander', size: 0.85, image: '/fish/zander.png' },
+  { id: 'catfish', name: 'Wels', size: 1.3, image: '/fish/catfish.png' },
 ];
 
 // Deterministisch „gewürfelte“ Blasen: gut verteilt, sofort gefüllt (negative
@@ -72,7 +61,7 @@ function RoamingFish({ layer, startIndex = 0, startDir = 1 }) {
   }));
 
   const { idx, count, dir, top, dur, delay } = run;
-  const { id, Component, size } = FISH_SPECIES[idx];
+  const { id, size, image } = FISH_SPECIES[idx];
 
   return (
     <div
@@ -92,9 +81,11 @@ function RoamingFish({ layer, startIndex = 0, startDir = 1 }) {
     >
       <div className="bb-fish-flip" style={{ transform: dir === -1 ? 'scaleX(-1)' : 'none' }}>
         <div className="bb-fish-bob">
-          <svg viewBox="0 0 460 170" xmlns="http://www.w3.org/2000/svg">
-            <Component uid={`${layer}-${id}`} />
-          </svg>
+          <img
+            src={image}
+            alt={id}
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+          />
         </div>
       </div>
     </div>
@@ -227,9 +218,6 @@ export default function WaterScene() {
           to   { transform: translateY(9px) rotate(1.6deg); }
         }
 
-        ${PIKE_BASE_CSS}
-        .bb-fish-near .pk-tail { animation-duration: 1.4s; }
-        .bb-fish-far .pk-tail { animation-duration: 2.1s; }
 
         /* Vignette für Tiefenwirkung */
         .bb-vignette {

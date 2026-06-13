@@ -66,7 +66,11 @@ export default function BuddyTextAvatar({
 
   return (
     <div className={`buddy-text ${animationClass}`}>
-      HilfeBuddy
+      <img
+        src="/avatars/default-avatar.png"
+        alt="HilfeBuddy Avatar"
+        className="w-full h-full object-cover rounded-full"
+      />
     </div>
   );
 }
