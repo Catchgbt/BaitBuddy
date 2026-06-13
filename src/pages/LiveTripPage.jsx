@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Polyline, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import { Play, Pause, X, Plus, Navigation, Zap, Droplets, Moon, Sparkles } from 'lucide-react';
+import { Play, Pause, X, Plus, Navigation, Zap, Droplets, Moon, Sparkles, Bell } from 'lucide-react';
 import { toast } from 'sonner';
 import TideWidget from '../components/LiveTrip/TideWidget';
 import SolunarWidget from '../components/LiveTrip/SolunarWidget';
 import PredictionWidget from '../components/LiveTrip/PredictionWidget';
+import NotificationSettings from '../components/LiveTrip/NotificationSettings';
 
 /**
  * LiveTripPage - Live-Angeltour mit GPS-Tracking
@@ -33,6 +34,7 @@ function LiveTripPage() {
   const [currentLocation, setCurrentLocation] = useState(null);
   const [watchId, setWatchId] = useState(null);
   const [showCatchModal, setShowCatchModal] = useState(false);
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
   const [mapCenter, setMapCenter] = useState([51.1657, 10.4515]);
   const [infoTab, setInfoTab] = useState('tides'); // 'tides', 'solunar', 'prediction'
   const routeRef = useRef([]);
@@ -270,11 +272,21 @@ function LiveTripPage() {
     <div className="min-h-screen bg-gray-950">
       {/* Header */}
       <div className="sticky top-0 z-20 bg-gray-900/95 border-b border-cyan-700 p-4">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl font-bold text-cyan-400">🎣 Live-Tour</h1>
-          <p className="text-xs text-gray-400 mt-1">
-            GPS-Tracking, Fang-Logging & Echtzeit-Statistiken
-          </p>
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-cyan-400">🎣 Live-Tour</h1>
+            <p className="text-xs text-gray-400 mt-1">
+              GPS-Tracking, Fang-Logging & Echtzeit-Statistiken
+            </p>
+          </div>
+          <button
+            onClick={() => setShowNotificationSettings(true)}
+            className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition border border-gray-700 flex items-center gap-2"
+            title="Benachrichtigungseinstellungen"
+          >
+            <Bell className="w-5 h-5 text-yellow-400" />
+            <span className="text-xs text-gray-300">Benachrichtigungen</span>
+          </button>
         </div>
       </div>
 
@@ -526,6 +538,12 @@ function LiveTripPage() {
           onSave={addCatch}
         />
       )}
+
+      {/* Benachrichtigungen-Einstellungen */}
+      <NotificationSettings
+        isOpen={showNotificationSettings}
+        onClose={() => setShowNotificationSettings(false)}
+      />
     </div>
   );
 }
