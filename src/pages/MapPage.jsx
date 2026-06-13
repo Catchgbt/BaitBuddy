@@ -12,6 +12,7 @@ import AddSpotModal from "@/components/map/v2/AddSpotModal";
 import SpotDetailPanel from "@/components/map/SpotDetailPanel";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
 import NewFeaturesNotification from "@/components/map/NewFeaturesNotification";
+import MapFeaturesInfo from "@/components/map/MapFeaturesInfo";
 import MapLayerControls from "@/components/map/v2/MapLayerControls";
 import HillshadeLayer from "@/components/map/v2/HillshadeLayer";
 import Terrain3DLayer from "@/components/map/v2/Terrain3DLayer";
@@ -272,6 +273,7 @@ export default function MapPage() {
     <div className="min-h-screen bg-gray-950 pb-32">
       <div className="max-w-7xl mx-auto p-4 space-y-4">
         <NewFeaturesNotification />
+        <MapFeaturesInfo />
 
         <div className="flex items-center justify-between">
           <div>
