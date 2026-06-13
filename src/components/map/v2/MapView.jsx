@@ -37,6 +37,10 @@ const angelshopIcon = createCustomIcon("#eab308", "🛒", 28);
 const angelParkEuIcon = createCustomIcon("#ea580c", "🌍", 28);
 const locationIcon = createCustomIcon("#ef4444", "📌");
 const newSpotIcon = createCustomIcon("#f59e0b", "⭐");
+const tiefenkartenIcon = createCustomIcon("#a855f7", "🗻", 36);
+const forellenIcon = createCustomIcon("#ec4899", "🎣", 32);
+const bathymetrieIcon = createCustomIcon("#0ea5e9", "🌊", 34);
+const flussIcon = createCustomIcon("#06b6d4", "🏞️", 34);
 
 function MapEvents({ onMapClick }) {
   useMapEvents({
@@ -151,6 +155,10 @@ export default function MapView({
   angelshops = [],
   angelparksEu = [],
   waterBodies = [],
+  tiefenkarten = [],
+  forellenseen = [],
+  bathymetrie = [],
+  fluesse = [],
   currentLocation,
   newSpotMarker,
   onMapClick,
@@ -430,6 +438,147 @@ export default function MapView({
                   📮 {park.address}
                 </p>
               )}
+            </div>
+          </Popup>
+        </Marker>
+      ))}
+
+      {/* Deutsche Flüsse */}
+      {fluesse.map((fluss) => (
+        <Marker
+          key={fluss.id}
+          position={[fluss.koordinaten.lat, fluss.koordinaten.lng]}
+          icon={flussIcon}
+          eventHandlers={{
+            click: () => onLocationClick && onLocationClick(fluss, 'fluss')
+          }}
+          alt={`Fluss: ${fluss.name}`}
+          aria-label={`${fluss.name} Angelgewässer`}
+        >
+          <Popup>
+            <div className="text-sm max-w-xs">
+              <strong className="text-base text-cyan-300">🏞️ {fluss.name}</strong>
+              <p className="text-xs text-gray-400 mt-1">
+                📏 {fluss.laenge_km} km • {fluss.verlauf}
+              </p>
+              <p className="text-xs text-gray-300 mt-2">
+                <strong>🎣 Fischarten:</strong><br/>
+                {fluss.fischarten}
+              </p>
+              <p className="text-xs text-gray-300 mt-1">
+                <strong>📍 Angelplätze:</strong><br/>
+                {fluss.angelgewaesser}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                Schwierigkeit: {fluss.schwierigkeit}
+              </p>
+            </div>
+          </Popup>
+        </Marker>
+      ))}
+
+      {/* Bathymetrie Bundesländer */}
+      {bathymetrie.map((bd) => (
+        <Marker
+          key={bd.name}
+          position={[bd.bounds.lat_min + (bd.bounds.lat_max - bd.bounds.lat_min) / 2,
+                     bd.bounds.lon_min + (bd.bounds.lon_max - bd.bounds.lon_min) / 2]}
+          icon={bathymetrieIcon}
+          eventHandlers={{
+            click: () => onLocationClick && onLocationClick(bd, 'bathymetrie')
+          }}
+          alt={`Bathymetrie: ${bd.name}`}
+          aria-label={`Bathymetrie für ${bd.name}`}
+        >
+          <Popup>
+            <div className="text-sm max-w-xs">
+              <strong className="text-base text-cyan-400">🌊 {bd.name}</strong>
+              <p className="text-xs text-gray-400 mt-1">
+                Bathymetrie (Tiefenkarte)
+              </p>
+              <p className="text-xs text-gray-300 mt-2">
+                📊 GEBCO 2026 Daten<br/>
+                📏 ~500m Auflösung<br/>
+                🗺️ Bounding Box verfügbar
+              </p>
+              <p className="text-xs text-gray-500 mt-2">
+                <em>Daten verfügbar sobald GeoTIFF heruntergeladen</em>
+              </p>
+            </div>
+          </Popup>
+        </Marker>
+      ))}
+
+      {/* Forellenseen */}
+      {forellenseen.map((fs) => (
+        <Marker
+          key={fs.id}
+          position={[fs.lat, fs.lng]}
+          icon={forellenIcon}
+          eventHandlers={{
+            click: () => onLocationClick && onLocationClick(fs, 'forellensee')
+          }}
+          alt={`Forellensee: ${fs.name}`}
+          aria-label={`Forellensee ${fs.name}`}
+        >
+          <Popup>
+            <div className="text-sm max-w-xs">
+              <strong className="text-base text-pink-400">{fs.name}</strong>
+              <p className="text-xs text-gray-400 mt-1">
+                🌍 {fs.land} • {fs.region}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                🎣 {fs.forellenarten}
+              </p>
+              {fs.bemerkungen && (
+                <p className="text-xs text-gray-300 mt-1">
+                  💡 {fs.bemerkungen}
+                </p>
+              )}
+              {fs.website && (
+                <a
+                  href={`https://${fs.website}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-pink-400 underline mt-2 inline-block hover:text-pink-300"
+                >
+                  🌐 Website
+                </a>
+              )}
+            </div>
+          </Popup>
+        </Marker>
+      ))}
+
+      {/* Tiefenkarten */}
+      {tiefenkarten.map((tk) => (
+        <Marker
+          key={tk.id}
+          position={[tk.koordinaten.lat, tk.koordinaten.lng]}
+          icon={tiefenkartenIcon}
+          eventHandlers={{
+            click: () => window.open(tk.url, '_blank')
+          }}
+          alt={`Tiefenkarte: ${tk.name}`}
+          aria-label={`Tiefenkarte für ${tk.fluss}`}
+        >
+          <Popup>
+            <div className="text-sm max-w-xs">
+              <strong className="text-base text-violet-400">{tk.name}</strong>
+              <p className="text-xs text-gray-400 mt-1">
+                📍 {tk.region}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                {tk.beschreibung}
+              </p>
+              <a
+                href={tk.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-violet-400 underline mt-2 inline-block hover:text-violet-300"
+              >
+                📄 PDF öffnen
+              </a>
             </div>
           </Popup>
         </Marker>
