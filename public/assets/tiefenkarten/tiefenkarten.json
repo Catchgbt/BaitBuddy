@@ -50,5 +50,44 @@
       "lng": 10.4515
     },
     "beschreibung": "Übersichtskarte aller Bundeswasserstraßen in Deutschland"
+  },
+  {
+    "id": "nok_borgstedter_see",
+    "name": "NOK Borgstedter See Tiefenkarte",
+    "fluss": "Nord-Ostsee-Kanal (Borgstedter See)",
+    "region": "Schleswig-Holstein",
+    "bundesland": "Schleswig-Holstein",
+    "url": "/assets/tiefenkarten/Tiefenkarte_NOK_Borgstedter_See_echt.pdf",
+    "koordinaten": {
+      "lat": 54.3,
+      "lng": 10.0
+    },
+    "beschreibung": "Echte Tiefenkarte des Borgstedter Sees am Nord-Ostsee-Kanal"
+  },
+  {
+    "id": "nok_flemhuder_see",
+    "name": "NOK Flemhuder See Tiefenkarte",
+    "fluss": "Nord-Ostsee-Kanal (Flemhuder See)",
+    "region": "Schleswig-Holstein",
+    "bundesland": "Schleswig-Holstein",
+    "url": "/assets/tiefenkarten/Tiefenkarte_NOK_Flemhuder_See_echt.pdf",
+    "koordinaten": {
+      "lat": 54.25,
+      "lng": 9.95
+    },
+    "beschreibung": "Echte Tiefenkarte des Flemhuder Sees am Nord-Ostsee-Kanal"
+  },
+  {
+    "id": "weser",
+    "name": "Weser Tiefenkarte",
+    "fluss": "Weser",
+    "region": "Norddeutschland",
+    "bundesland": "Bremen/Niedersachsen",
+    "url": "/assets/tiefenkarten/Tiefenkarte_Weser_echt.pdf",
+    "koordinaten": {
+      "lat": 53.0,
+      "lng": 8.8
+    },
+    "beschreibung": "Echte Tiefenkarte der Weser mit Angelinformationen"
   }
 ]
