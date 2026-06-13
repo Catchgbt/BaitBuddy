@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Volume2, VolumeX, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/api/auth";
-import { planMeetsRequirement } from "@/components/premium/planHierarchy";
+import { speakWithElevenLabs, cancelElevenLabs } from "@/components/utils/elevenLabsTTS";
 
 const cleanTextForSpeech = (text) => {
   if (!text || typeof text !== 'string') return '';
@@ -75,33 +75,6 @@ const playTextWithBrowserTTS = (text, speechRate = 1.0) => {
   });
 };
 
-const playAudio = async (audioData) => {
-  try {
-    if (!audioData || !(audioData instanceof ArrayBuffer)) {
-      throw new Error("Invalid audio data");
-    }
-    
-    const blob = new Blob([audioData], { type: 'audio/mpeg' });
-    const url = URL.createObjectURL(blob);
-    const audio = new Audio(url);
-    
-    return new Promise((resolve, reject) => {
-      audio.onended = () => {
-        URL.revokeObjectURL(url);
-        resolve();
-      };
-      audio.onerror = (e) => {
-        URL.revokeObjectURL(url);
-        reject(e);
-      };
-      audio.play().catch(reject);
-    });
-  } catch (error) {
-    console.error("Audio playback error:", error);
-    throw error;
-  }
-};
-
 export default function BuddyOutput({ text, autoPlay = true }) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -136,47 +109,20 @@ export default function BuddyOutput({ text, autoPlay = true }) {
       }
 
       const speechRate = user?.settings?.speech_speed || 1.0;
-      const voiceId = user?.settings?.voice_id || "alloy";
-      const planId = user?.premium_plan_id || 'free';
-      const quality = planMeetsRequirement(planId, 'pro') ? 'hd' : 'standard';
 
-      console.log("BuddyOutput: Attempting backend TTS with quality:", quality);
+      console.log("BuddyOutput: Attempting ElevenLabs TTS");
 
+      // Primär: ElevenLabs. Bei Fehler (z. B. fehlender API-Key) → Browser-TTS.
       try {
-        const { backendTextToSpeech } = await import('@/functions/backendTextToSpeech');
-        const response = await backendTextToSpeech({ 
-          text: cleanText,
-          speechRate,
-          voiceId,
-          quality
-        }, {
-          responseType: 'arraybuffer'
+        await new Promise((resolve, reject) => {
+          speakWithElevenLabs(cleanText, {
+            onEnd: resolve,
+            onError: reject,
+          }).catch(reject);
         });
-
-        const contentType = response.headers?.['content-type'] || '';
-        console.log("BuddyOutput: Backend response content-type:", contentType);
-
-        if (contentType.includes('application/json')) {
-          const decoder = new TextDecoder();
-          const jsonData = JSON.parse(decoder.decode(response.data));
-          
-          if (jsonData.fallback_to_browser) {
-            console.log("BuddyOutput: Backend requested browser fallback");
-            await playTextWithBrowserTTS(cleanText, speechRate);
-            return;
-          }
-        }
-
-        if (response.data && response.data instanceof ArrayBuffer && response.data.byteLength > 0) {
-          console.log("BuddyOutput: Playing backend audio, size:", response.data.byteLength);
-          await playAudio(response.data);
-          console.log("BuddyOutput: Backend audio finished");
-        } else {
-          console.log("BuddyOutput: Invalid audio data, using browser TTS");
-          await playTextWithBrowserTTS(cleanText, speechRate);
-        }
+        console.log("BuddyOutput: ElevenLabs audio finished");
       } catch (backendError) {
-        console.error("BuddyOutput: Backend TTS failed, using browser fallback:", backendError);
+        console.warn("BuddyOutput: ElevenLabs failed, using browser fallback:", backendError?.message);
         await playTextWithBrowserTTS(cleanText, speechRate);
       }
     } catch (error) {
@@ -197,8 +143,11 @@ export default function BuddyOutput({ text, autoPlay = true }) {
 
   const handleToggleMute = () => {
     setIsMuted(!isMuted);
-    if (isSpeaking && typeof window !== "undefined" && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
+    if (isSpeaking) {
+      cancelElevenLabs();
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
       setIsSpeaking(false);
     }
   };
