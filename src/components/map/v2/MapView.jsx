@@ -5,6 +5,11 @@ import "leaflet/dist/leaflet.css";
 import { entities } from "@/api/frontendClient";
 import OfflineMapLayer from "./OfflineMapLayer";
 import OfflineMapManager from "./OfflineMapManager";
+import HillshadeLayer from "./HillshadeLayer";
+import Terrain3DLayer from "./Terrain3DLayer";
+import HydrographicAnalysis from "./HydrographicAnalysis";
+import SatelliteOverlayLayer from "./SatelliteOverlayLayer";
+import AdvancedCacheManager from "./AdvancedCacheManager";
 import "leaflet.markercluster";
 
 // Fix default marker icons
@@ -170,7 +175,11 @@ export default function MapView({
   onAngelParkEuClick,
   onWaterBodiesLoad,
   onReviewsLoad,
-  isOnline
+  isOnline,
+  showHillshade = false,
+  show3DTerrain = false,
+  showHydrographic = false,
+  showSatellite = false
 }) {
   if (!center) {
     return (
@@ -190,6 +199,12 @@ export default function MapView({
       aria-label="Interactive fishing map showing user spots, fishing clubs, and water bodies. Click locations to view details or add new spots."
     >
       <OfflineMapLayer isOnline={isOnline} />
+
+      {/* Advanced Map Layers */}
+      <HillshadeLayer visible={showHillshade} opacity={0.4} blendMode="multiply" />
+      <Terrain3DLayer visible={show3DTerrain} mode="canvas" />
+      <HydrographicAnalysis visible={showHydrographic} bounds={center ? L.latLngBounds([[center.lat - 0.5, center.lng - 0.5], [center.lat + 0.5, center.lng + 0.5]]) : null} />
+      <SatelliteOverlayLayer visible={showSatellite} opacity={0.6} />
 
       <MapEvents onMapClick={onMapClick} />
       <RecenterMap center={center} />
@@ -604,6 +619,9 @@ export default function MapView({
 
       {/* Offline Tile Caching Manager */}
       <OfflineMapManager autoCache={true} showStats={false} />
+
+      {/* Advanced Cache Optimization Manager */}
+      <AdvancedCacheManager visible={true} />
     </MapContainer>
   );
 }

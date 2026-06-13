@@ -12,6 +12,12 @@ import AddSpotModal from "@/components/map/v2/AddSpotModal";
 import SpotDetailPanel from "@/components/map/SpotDetailPanel";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
 import NewFeaturesNotification from "@/components/map/NewFeaturesNotification";
+import MapLayerControls from "@/components/map/v2/MapLayerControls";
+import HillshadeLayer from "@/components/map/v2/HillshadeLayer";
+import Terrain3DLayer from "@/components/map/v2/Terrain3DLayer";
+import HydrographicAnalysis from "@/components/map/v2/HydrographicAnalysis";
+import SatelliteOverlayLayer from "@/components/map/v2/SatelliteOverlayLayer";
+import AdvancedCacheManager from "@/components/map/v2/AdvancedCacheManager";
 
 // Leaflet CSS laden
 if (typeof document !== "undefined") {
@@ -96,6 +102,10 @@ export default function MapPage() {
   const [mapZoom, setMapZoom] = useState(6);
   const [nearestSpot, setNearestSpot] = useState(null);
   const [travelInfo, setTravelInfo] = useState(null);
+  const [showHillshade, setShowHillshade] = useState(false);
+  const [show3DTerrain, setShow3DTerrain] = useState(false);
+  const [showHydrographic, setShowHydrographic] = useState(false);
+  const [showSatellite, setShowSatellite] = useState(false);
 
   useEffect(() => {
     loadMapData();
@@ -352,7 +362,35 @@ export default function MapPage() {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            
+
+            {/* Advanced Map Layers */}
+            <HillshadeLayer visible={showHillshade} opacity={0.4} blendMode="multiply" />
+            <Terrain3DLayer visible={show3DTerrain} mode="canvas" />
+            <HydrographicAnalysis
+              visible={showHydrographic}
+              bounds={mapCenter ? L.latLngBounds([[mapCenter[0] - 0.5, mapCenter[1] - 0.5], [mapCenter[0] + 0.5, mapCenter[1] + 0.5]]) : null}
+            />
+            <SatelliteOverlayLayer visible={showSatellite} opacity={0.6} />
+
+            {/* Layer Controls */}
+            <MapLayerControls
+              showHillshade={showHillshade}
+              show3DTerrain={show3DTerrain}
+              showHydrographic={showHydrographic}
+              showSatellite={showSatellite}
+              onHillshadeToggle={setShowHillshade}
+              on3DTerrainToggle={setShow3DTerrain}
+              onHydrographicToggle={setShowHydrographic}
+              onSatelliteToggle={setShowSatellite}
+              hillshadeEnabled={showHillshade}
+              terrain3DEnabled={show3DTerrain}
+              hydrographicEnabled={showHydrographic}
+              satelliteEnabled={showSatellite}
+            />
+
+            {/* Advanced Cache Manager */}
+            <AdvancedCacheManager visible={true} />
+
             <MapController center={mapCenter} zoom={mapZoom} />
             <MapClickHandler onMapClick={handleMapClick} />
 
