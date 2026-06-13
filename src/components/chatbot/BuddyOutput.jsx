@@ -6,7 +6,7 @@ import { speakWithElevenLabs, cancelElevenLabs } from "@/components/utils/eleven
 
 const cleanTextForSpeech = (text) => {
   if (!text || typeof text !== 'string') return '';
-  
+
   let cleaned = text.replace(/[\u{1F600}-\u{1F64F}]/gu, '');
   cleaned = cleaned.replace(/[\u{1F300}-\u{1F5FF}]/gu, '');
   cleaned = cleaned.replace(/[\u{1F680}-\u{1F6FF}]/gu, '');
@@ -20,59 +20,8 @@ const cleanTextForSpeech = (text) => {
   cleaned = cleaned.replace(/[\u{2700}-\u{27BF}]/gu, '');
   cleaned = cleaned.replace(/[\*#_~`]/g, '');
   cleaned = cleaned.replace(/\s+/g, ' ');
-  
+
   return cleaned.trim();
-};
-
-const playTextWithBrowserTTS = (text, speechRate = 1.0) => {
-  return new Promise((resolve) => {
-    try {
-      if (typeof window === "undefined" || !window.speechSynthesis) {
-        console.log("Browser TTS not available");
-        return resolve();
-      }
-
-      window.speechSynthesis.cancel();
-
-      const speak = () => {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'de-DE';
-        utterance.rate = Math.min(2.0, Math.max(0.1, speechRate));
-        utterance.pitch = 1.0;
-        utterance.volume = 0.8;
-
-        const voices = window.speechSynthesis.getVoices();
-        const germanVoice = voices.find(voice => voice.lang.startsWith('de'));
-        if (germanVoice) {
-          utterance.voice = germanVoice;
-        }
-
-        utterance.onend = () => {
-          console.log("Browser TTS finished");
-          resolve();
-        };
-        utterance.onerror = (e) => {
-          console.error("Browser TTS error:", e);
-          resolve();
-        };
-
-        console.log("Starting Browser TTS:", text.substring(0, 50));
-        window.speechSynthesis.speak(utterance);
-      };
-
-      if (window.speechSynthesis.getVoices().length === 0) {
-        window.speechSynthesis.onvoiceschanged = () => {
-          speak();
-        };
-        setTimeout(speak, 500);
-      } else {
-        speak();
-      }
-    } catch (error) {
-      console.error("Browser TTS error:", error);
-      resolve();
-    }
-  });
 };
 
 export default function BuddyOutput({ text, autoPlay = true }) {
@@ -108,23 +57,15 @@ export default function BuddyOutput({ text, autoPlay = true }) {
         return;
       }
 
-      const speechRate = user?.settings?.speech_speed || 1.0;
-
       console.log("BuddyOutput: Attempting ElevenLabs TTS");
 
-      // Primär: ElevenLabs. Bei Fehler (z. B. fehlender API-Key) → Browser-TTS.
-      try {
-        await new Promise((resolve, reject) => {
-          speakWithElevenLabs(cleanText, {
-            onEnd: resolve,
-            onError: reject,
-          }).catch(reject);
-        });
-        console.log("BuddyOutput: ElevenLabs audio finished");
-      } catch (backendError) {
-        console.warn("BuddyOutput: ElevenLabs failed, using browser fallback:", backendError?.message);
-        await playTextWithBrowserTTS(cleanText, speechRate);
-      }
+      await new Promise((resolve, reject) => {
+        speakWithElevenLabs(cleanText, {
+          onEnd: resolve,
+          onError: reject,
+        }).catch(reject);
+      });
+      console.log("BuddyOutput: ElevenLabs audio finished");
     } catch (error) {
       console.error("BuddyOutput: Speech error:", error);
     } finally {
@@ -145,9 +86,6 @@ export default function BuddyOutput({ text, autoPlay = true }) {
     setIsMuted(!isMuted);
     if (isSpeaking) {
       cancelElevenLabs();
-      if (typeof window !== "undefined" && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-      }
       setIsSpeaking(false);
     }
   };

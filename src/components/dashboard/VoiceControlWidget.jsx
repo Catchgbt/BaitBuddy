@@ -7,6 +7,7 @@ import { Catch } from '@/entities/Catch';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { useLocation } from '@/components/location/LocationManager';
+import { speakWithElevenLabs } from '@/components/utils/elevenLabsTTS';
 
 const WAKE_WORD_VARIANTS = ['hey buddy', 'hei buddy', 'hey budy', 'hey baddy', 'heybuddy', 'hey body', 'hallo buddy'];
 const LANGUAGE = 'de-DE';
@@ -53,55 +54,16 @@ async function executeVoiceAction(action, navigate) {
   return null;
 }
 
-function speakBrowser(text) {
-  if (!('speechSynthesis' in window) || !text) return Promise.resolve();
-  return new Promise((resolve) => {
-    try {
-      window.speechSynthesis.cancel();
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = LANGUAGE;
-      const germanVoice = window.speechSynthesis.getVoices().find(v => v.lang.startsWith('de'));
-      if (germanVoice) utter.voice = germanVoice;
-      utter.rate = 0.95;
-      let done = false;
-      const finish = () => { if (!done) { done = true; resolve(); } };
-      const timeout = setTimeout(finish, 30000);
-      utter.onend = () => { clearTimeout(timeout); finish(); };
-      utter.onerror = () => { clearTimeout(timeout); finish(); };
-      window.speechSynthesis.speak(utter);
-    } catch {
-      resolve();
-    }
-  });
-}
-
-async function speakElevenLabs(text) {
-  const token = localStorage.getItem('bb_token');
-  const res = await fetch('/api/ai/tts', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {})
-    },
-    body: JSON.stringify({ text })
-  });
-  if (!res.ok) throw new Error('ElevenLabs TTS failed');
-  const data = await res.json();
-  const audioSrc = `data:${data.contentType};base64,${data.audioBase64}`;
-  return new Promise((resolve) => {
-    const audio = new Audio(audioSrc);
-    audio.onended = resolve;
-    audio.onerror = resolve;
-    audio.play().catch(resolve);
-  });
-}
-
 async function speak(text) {
   if (!text || !text.trim()) return;
   try {
-    await speakElevenLabs(text);
-  } catch {
-    await speakBrowser(text);
+    await speakWithElevenLabs(text, {
+      onEnd: () => { /* done */ },
+      onError: (err) => { console.error('TTS error:', err); }
+    });
+  } catch (error) {
+    console.error('ElevenLabs failed:', error);
+    throw error;
   }
 }
 
@@ -192,7 +154,6 @@ export default function VoiceControlWidget() {
     isRunningRef.current = false;
     awaitingCommandRef.current = false;
     try { recognitionRef.current?.stop(); } catch {}
-    if (window.speechSynthesis) window.speechSynthesis.cancel();
     setVoiceState('off');
     setTranscript('');
     toast.info('Voice Control beendet');

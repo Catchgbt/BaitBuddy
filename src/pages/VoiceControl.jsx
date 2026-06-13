@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { speakWithElevenLabs } from "@/components/utils/elevenLabsTTS";
 
 const ALLOWED_PAGES = ["Dashboard","Logbook","Map","Weather","Community","Gear","AIAssistant","TripPlanner","Profile","Settings","Ranking","WaterAnalysis","AngelscheinPruefungSchonzeiten","Quiz","Licenses","Events","BaitMixer","CatchStats","ARKnotenAssistent","Shop","Premium","PremiumPlans","Help","Tutorials","Devices","DeviceIntegration","StartFishing","Start"];
 
@@ -79,81 +80,24 @@ const LANGUAGE = 'de-DE';
 // Konversations-Session ID (pro App-Sitzung)
 const SESSION_ID = `voice_${Date.now()}`;
 
-// TTS Helper - mit Browser und Gemini Fallback
-async function speakWithBrowserFirst(text, { rate = 1, pitch = 1 } = {}) {
-  if (!text || text.trim().length === 0) return Promise.resolve();
-  
-  try {
-    console.log('[TTS] Browser Speech Synthesis: Starting...');
-    return await speakBrowser(text, rate, pitch);
-  } catch (error) {
-    console.error('[TTS] Browser TTS failed:', error);
-    // Kein Gemini Fallback - Browser ist zuverlässiger
-    return Promise.resolve();
-  }
-}
-
-function speakBrowser(text, rate = 1, pitch = 1) {
-  if (!('speechSynthesis' in window)) {
-    console.warn('[TTS] Browser Speech Synthesis not available');
-    return Promise.resolve();
-  }
-  if (!text || text.trim().length === 0) return Promise.resolve();
-  
-  return new Promise((resolve) => {
-    try {
-      // Nutze deutsche Stimme wenn verfügbar
-      const voices = window.speechSynthesis.getVoices();
-      const germanVoice = voices.find(v => v.lang.startsWith('de'));
-      
-      // Cancel pending speech
-      window.speechSynthesis.cancel();
-      
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = LANGUAGE;
-      if (germanVoice) utter.voice = germanVoice;
-      utter.rate = Math.max(0.5, Math.min(2, rate));
-      utter.pitch = Math.max(0.5, Math.min(2, pitch));
-      utter.volume = 1;
-      
-      let hasEnded = false;
-      const timeout = setTimeout(() => {
-        if (!hasEnded) {
-          console.warn('[TTS] Speech did not end after 30s, forcing resolve');
-          hasEnded = true;
-          resolve();
-        }
-      }, 30000);
-      
-      utter.onend = () => {
-        if (!hasEnded) {
-          hasEnded = true;
-          clearTimeout(timeout);
-          console.log('[TTS] Speech ended normally');
-          resolve();
-        }
-      };
-      
-      utter.onerror = (event) => {
-        if (!hasEnded) {
-          hasEnded = true;
-          clearTimeout(timeout);
-          console.error('[TTS] Speech error:', event.error);
-          resolve();
-        }
-      };
-      
-      console.log('[TTS] Speaking:', text.substring(0, 60) + '...');
-      window.speechSynthesis.speak(utter);
-    } catch (error) {
-      console.error('[TTS] Exception:', error);
-      resolve();
-    }
-  });
-}
-
+// TTS via ElevenLabs
 async function speak(text, options = {}) {
-  return speakWithBrowserFirst(text, options);
+  if (!text || text.trim().length === 0) return Promise.resolve();
+
+  try {
+    console.log('[TTS] ElevenLabs: Starting...');
+    return await speakWithElevenLabs(text, {
+      onEnd: () => {
+        console.log('[TTS] Speech ended normally');
+      },
+      onError: (err) => {
+        console.error('[TTS] ElevenLabs error:', err);
+      },
+    });
+  } catch (error) {
+    console.error('[TTS] ElevenLabs failed:', error);
+    throw error;
+  }
 }
 
 // Wetterdaten von Open-Meteo abrufen
@@ -897,7 +841,6 @@ function VoiceBuddy() {
     setStatus('idle');
     isWaitingForCommandRef.current = false;
     setTranscript('');
-    if (window.speechSynthesis) window.speechSynthesis.cancel();
     toast.info('Voice Control beendet');
   };
 

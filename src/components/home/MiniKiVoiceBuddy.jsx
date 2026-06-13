@@ -196,28 +196,10 @@ export default function MiniKiVoiceBuddy() {
   const chatRef = useRef();
   const recRef = useRef(null);
   const waveRef = useRef(null);
-  const synthRef = useRef(typeof window !== "undefined" ? window.speechSynthesis : null);
-  const voicesLoadedRef = useRef(false);
 
   useEffect(() => {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
   }, [messages]);
-
-  // Stimmen vorab laden (Browser-Quirk: getVoices() ist initial leer)
-  useEffect(() => {
-    if (!synthRef.current) return;
-    const loadVoices = () => {
-      const vs = synthRef.current.getVoices();
-      if (vs && vs.length > 0) voicesLoadedRef.current = true;
-    };
-    loadVoices();
-    if (synthRef.current.onvoiceschanged !== undefined) {
-      synthRef.current.onvoiceschanged = loadVoices;
-    }
-    return () => {
-      if (synthRef.current) synthRef.current.cancel();
-    };
-  }, []);
 
   function startWave() {
     waveRef.current = setInterval(() => {
@@ -230,50 +212,6 @@ export default function MiniKiVoiceBuddy() {
     setWaveBars([4, 4, 4, 4, 4]);
   }
 
-  function getFemaleVoice() {
-    if (!synthRef.current) return null;
-    const vs = synthRef.current.getVoices();
-    return vs.find(v => /Helena|Marlene|Katja|Anna/i.test(v.name))
-      || vs.find(v => v.lang === "de-DE" || v.lang === "de-AT")
-      || vs[0];
-  }
-
-  // Browser-TTS nur als Fallback, wenn ElevenLabs nicht verfügbar ist.
-  function speakBrowser(text) {
-    if (!synthRef.current || !text) { setStatus(""); stopWave(); return; }
-    try {
-      synthRef.current.cancel();
-      setTimeout(() => {
-        if (!synthRef.current) return;
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = "de-DE";
-        u.pitch = 1.1;
-        u.rate = 1.0;
-        u.volume = 1.0;
-        const v = getFemaleVoice();
-        if (v) u.voice = v;
-        u.onend = () => { setStatus(""); stopWave(); };
-        u.onerror = (e) => {
-          console.warn("TTS error:", e.error);
-          setStatus("");
-          stopWave();
-        };
-        try {
-          synthRef.current.speak(u);
-        } catch (err) {
-          console.warn("speak failed:", err);
-          setStatus("");
-          stopWave();
-        }
-      }, 80);
-    } catch (err) {
-      console.warn("speak outer error:", err);
-      setStatus("");
-      stopWave();
-    }
-  }
-
-  // Primär: ElevenLabs. Bei Fehler (z. B. fehlender API-Key) → Browser-TTS.
   async function speak(text) {
     if (!text) return;
     setStatus("speaking");
@@ -284,14 +222,14 @@ export default function MiniKiVoiceBuddy() {
         onError: () => { setStatus(""); stopWave(); },
       });
     } catch (err) {
-      console.warn("[MiniKiVoiceBuddy] ElevenLabs fehlgeschlagen, Browser-TTS:", err?.message);
-      speakBrowser(text);
+      console.error("[MiniKiVoiceBuddy] ElevenLabs failed:", err?.message);
+      setStatus("");
+      stopWave();
     }
   }
 
   function stopSpeaking() {
     cancelElevenLabs();
-    synthRef.current?.cancel();
     stopWave();
     setStatus("");
   }
@@ -409,7 +347,7 @@ export default function MiniKiVoiceBuddy() {
           <span style={{ marginLeft: 8, fontSize: 11, color: "#4455aa", fontWeight: 500, background: "#0d1a33", border: "1px solid #1e2f55", borderRadius: 8, padding: "2px 7px" }}>BETA</span>
         </div>
         <button
-          onClick={() => { setTonAn(t => !t); if (tonAn) { cancelElevenLabs(); synthRef.current?.cancel(); } }}
+          onClick={() => { setTonAn(t => !t); if (tonAn) { cancelElevenLabs(); } }}
           style={{ display: "flex", alignItems: "center", gap: 6, background: tonAn ? "#22d3c8" : "#0d2020", border: "1px solid #22d3c8", borderRadius: 20, padding: "4px 12px", fontSize: 12, color: tonAn ? "#060d1a" : "#22d3c8", fontWeight: 500, cursor: "pointer" }}
         >
           <span style={{ width: 7, height: 7, borderRadius: "50%", background: tonAn ? "#060d1a" : "#22d3c8", display: "inline-block" }} />
