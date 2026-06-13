@@ -1,7 +1,7 @@
 // Trip Synchronisation Service - Synct Offline-Daten mit Supabase
 // Ermöglicht Offline-First Angeltour-Tracking mit Cloud-Backup
 
-import { frontendClient } from '../api/frontendClient';
+import { entities } from '../api/frontendClient';
 
 class TripSyncService {
   constructor() {
@@ -102,8 +102,8 @@ class TripSyncService {
   async uploadTripToCloud(trip, authToken) {
     try {
       // Nutze die entities API um Trip zu speichern
-      if (frontendClient.entities && frontendClient.entities.LiveTrip) {
-        const result = await frontendClient.entities.LiveTrip.create({
+      if (entities && entities.LiveTrip) {
+        const result = await entities.LiveTrip.create({
           id: trip.id,
           userId: trip.userId,
           startTime: trip.startTime,
@@ -193,8 +193,8 @@ class TripSyncService {
   // Lade Touren von Cloud
   async loadTripsFromCloud(authToken) {
     try {
-      if (frontendClient.entities && frontendClient.entities.LiveTrip) {
-        const trips = await frontendClient.entities.LiveTrip.list();
+      if (entities && entities.LiveTrip) {
+        const trips = await entities.LiveTrip.list();
         return trips;
       } else {
         const response = await fetch('/api/trips', {
