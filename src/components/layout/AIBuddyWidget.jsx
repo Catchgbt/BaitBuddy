@@ -118,53 +118,13 @@ export default function AIBuddyWidget() {
     }
   }, [pos]);
 
-  // Handle drag
+  // Handle drag - DISABLED (fixed position)
   const handleMouseDown = (e) => {
-    if (isOpen) return;
-    setIsDragging(true);
-    const rect = widgetRef.current?.getBoundingClientRect();
-    setDragOffset({
-      x: e.clientX - (rect?.left || 0),
-      y: e.clientY - (rect?.top || 0),
-    });
+    // Drag disabled - widget is fixed
+    return;
   };
 
-  useEffect(() => {
-    if (!isDragging) return;
-
-    const handleMouseMove = (e) => {
-      const viewport = {
-        width: window.innerWidth,
-        height: window.innerHeight,
-      };
-      const size = { width: 92, height: 52 };
-
-      let newX = e.clientX - dragOffset.x;
-      let newY = e.clientY - dragOffset.y;
-
-      // Constrain to viewport
-      newX = Math.max(0, Math.min(newX, viewport.width - size.width));
-      newY = Math.max(0, Math.min(newY, viewport.height - size.height));
-
-      // Calculate as bottom-right distance
-      const distFromRight = viewport.width - (newX + size.width);
-      const distFromBottom = viewport.height - (newY + size.height);
-
-      setPos({ x: Math.max(distFromRight, 0), y: Math.max(distFromBottom, 0) });
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, dragOffset]);
+  // Drag disabled - no drag listener needed
 
   // Handle send message
   const handleSendMessage = useCallback(
@@ -250,13 +210,7 @@ export default function AIBuddyWidget() {
       {/* Avatar Widget + Chat Bubble */}
       <div
         ref={widgetRef}
-        className="fixed z-50 select-none"
-        style={{
-          right: `${pos.x}px`,
-          bottom: `${pos.y}px`,
-          transition: isDragging ? 'none' : 'right 0.3s ease, bottom 0.3s ease',
-          cursor: isDragging ? 'grabbing' : 'grab',
-        }}
+        className="fixed z-50 select-none bottom-6 right-6"
       >
         {/* Animated Bubble Container */}
         <div className="flex flex-col items-end gap-3">
@@ -268,7 +222,7 @@ export default function AIBuddyWidget() {
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                className="w-96 max-h-96 rounded-2xl shadow-2xl overflow-hidden flex flex-col bg-white border-2 border-blue-200"
+                className="w-96 max-h-96 rounded-3xl shadow-2xl overflow-hidden flex flex-col bg-white border-2 border-blue-200"
               >
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
@@ -407,11 +361,8 @@ export default function AIBuddyWidget() {
 
           {/* Avatar Button */}
           <motion.button
-            onClick={() => {
-              if (!isDragging) setIsOpen(!isOpen);
-            }}
-            onMouseDown={handleMouseDown}
-            className="relative group cursor-move"
+            onClick={() => setIsOpen(!isOpen)}
+            className="relative group cursor-pointer"
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.95 }}
           >
