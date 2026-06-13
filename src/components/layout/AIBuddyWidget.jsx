@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import FemaleFisherSvg, { BUDDY_FISH_CSS } from '@/components/fish/FemaleFisherSvg';
+import BuddyTextAvatar, { BUDDY_TEXT_CSS } from '@/components/layout/BuddyTextAvatar';
 import { getTipForPage } from '@/lib/buddyTips';
 import { useAuth } from '@/lib/AuthContext';
 import { ai } from '@/api/frontendClient';
@@ -13,7 +13,7 @@ const STORAGE_KEY = 'buddy-widget-pos';
 const VISITED_PAGES_KEY = 'buddy-visited-pages';
 
 /**
- * AI-Buddy Widget — weiblicher Avatar mit Chat und Voice-Unterstützung
+ * AI-Buddy Widget — animierter "HilfeBuddy" Text mit Chat und Voice-Unterstützung
  * Position: Fixed unten rechts (draggbar)
  * Features:
  * - Seiten-spezifische Hinweise (Auto-Show on first visit)
@@ -252,7 +252,7 @@ export default function AIBuddyWidget() {
   return (
     <>
       {/* Buddy-spezifische SVG-Animationen (einmalig global injiziert) */}
-      <style>{BUDDY_FISH_CSS}</style>
+      <style>{BUDDY_TEXT_CSS}</style>
 
       {/* Avatar Widget */}
       <div
@@ -292,11 +292,9 @@ export default function AIBuddyWidget() {
             }}
           >
             <div className="absolute inset-0 flex items-center justify-center p-1">
-              <FemaleFisherSvg
-                uid="buddy"
+              <BuddyTextAvatar
                 isTalking={isTalking}
-                isNodding={isNodding}
-                showBubble={isTalking || isListening}
+                isListening={isListening}
               />
             </div>
           </div>
