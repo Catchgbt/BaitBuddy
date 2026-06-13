@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { functions } from "@/api/frontendClient";
-import { entities } from "@/api/frontendClient";
 import { Spot } from "@/entities/Spot";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
@@ -191,46 +190,60 @@ export default function MapPage() {
     setLoading(true);
     try {
       const userSpots = await Spot.list();
-      setSpots(userSpots);
+      const safeUserSpots = Array.isArray(userSpots) ? userSpots : [];
+      setSpots(safeUserSpots);
 
       try {
         const response = await functions.invoke('angelspotsGeojson');
-        
-        if (response.data && response.data.features) {
-          const locations = response.data.features.map(feature => ({
-            id: feature.properties.id,
-            name: feature.properties.name,
-            category: feature.properties.category,
-            coordinates: {
-              lng: feature.geometry.coordinates[0],
-              lat: feature.geometry.coordinates[1]
-            },
-            address: feature.properties.address,
-            website: feature.properties.website,
-            source: feature.properties.source
-          }));
-          
-          setPublicLocations(locations);
-          
-          toast.success("Karte geladen", {
-            description: `${userSpots.length} eigene Spots, ${locations.length} öffentliche Orte`,
-            duration: 2000
-          });
-        } else {
-          const clubs = await entities.FishingClub.list();
-          setPublicLocations(clubs);
-          
-          toast.success("Karte geladen", {
-            description: `${userSpots.length} eigene Spots gefunden`,
-            duration: 2000
-          });
+
+        // Der Backend-Endpunkt /api/fishing/hotspots liefert
+        // { hotspots: [{ id, name, latitude, longitude, water_type }] }.
+        // Zusätzlich unterstützen wir echtes GeoJSON ({ features: [...] }),
+        // falls die Datenquelle später wechselt.
+        let locations = [];
+
+        if (Array.isArray(response?.features)) {
+          locations = response.features
+            .filter(f => f?.geometry?.coordinates?.length >= 2)
+            .map(feature => ({
+              id: feature.properties?.id,
+              name: feature.properties?.name,
+              category: feature.properties?.category,
+              coordinates: {
+                lng: feature.geometry.coordinates[0],
+                lat: feature.geometry.coordinates[1]
+              },
+              address: feature.properties?.address,
+              website: feature.properties?.website,
+              source: feature.properties?.source
+            }));
+        } else if (Array.isArray(response?.hotspots)) {
+          locations = response.hotspots
+            .filter(h => h.latitude != null && h.longitude != null)
+            .map(h => ({
+              id: h.id,
+              name: h.name,
+              category: h.category || 'spot',
+              water_type: h.water_type,
+              coordinates: {
+                lat: Number(h.latitude),
+                lng: Number(h.longitude)
+              }
+            }));
         }
+
+        setPublicLocations(locations);
+
+        toast.success("Karte geladen", {
+          description: `${safeUserSpots.length} eigene Spots, ${locations.length} öffentliche Orte`,
+          duration: 2000
+        });
       } catch (error) {
         console.warn("Öffentliche Locations konnten nicht geladen werden:", error);
         setPublicLocations([]);
-        
+
         toast.success("Karte geladen", {
-          description: `${userSpots.length} eigene Spots gefunden`,
+          description: `${safeUserSpots.length} eigene Spots gefunden`,
           duration: 2000
         });
       }
@@ -437,10 +450,10 @@ export default function MapPage() {
               </Marker>
             )}
 
-            {spots.map((spot) => (
+            {spots.filter(spot => spot.latitude != null && spot.longitude != null).map((spot) => (
               <Marker
                 key={spot.id}
-                position={[spot.latitude, spot.longitude]}
+                position={[Number(spot.latitude), Number(spot.longitude)]}
                 icon={defaultIcon}
                 eventHandlers={{
                   click: () => setSelectedLocation({ ...spot, type: 'spot' })
@@ -464,12 +477,17 @@ export default function MapPage() {
 
             {publicLocations.map((location) => {
               const coords = location.coordinates || {};
-              if (!coords.lat || !coords.lng) return null;
-              
+              if (coords.lat == null || coords.lng == null) return null;
+
+              const categoryLabel =
+                location.category === 'club' ? 'Angelverein'
+                : location.category === 'spot' ? (location.water_type ? location.water_type.charAt(0).toUpperCase() + location.water_type.slice(1) : 'Angelspot')
+                : 'Angelpark';
+
               return (
                 <Marker
                   key={location.id}
-                  position={[coords.lat, coords.lng]}
+                  position={[Number(coords.lat), Number(coords.lng)]}
                   icon={greenIcon}
                   eventHandlers={{
                     click: () => setSelectedLocation({ ...location, type: location.category || 'club' })
@@ -479,7 +497,7 @@ export default function MapPage() {
                     <div className="min-w-[200px]">
                       <div className="font-semibold text-base mb-1">{location.name}</div>
                       <div className="text-sm text-gray-600">
-                        {location.category === 'club' ? 'Angelverein' : 'Angelpark'}
+                        {categoryLabel}
                       </div>
                       {location.address && (
                         <div className="text-xs text-gray-500 mt-1">
