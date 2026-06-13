@@ -115,6 +115,7 @@ export default function MapPage() {
   const [isFirstTime, setIsFirstTime] = useState(() => {
     return !localStorage.getItem('mapTourCompleted');
   });
+  const [showPublicSpots, setShowPublicSpots] = useState(false);
 
   useEffect(() => {
     loadMapData();
@@ -194,90 +195,66 @@ export default function MapPage() {
       const safeUserSpots = Array.isArray(userSpots) ? userSpots : [];
       setSpots(safeUserSpots);
 
-      try {
-        const response = await functions.invoke('angelspotsGeojson');
-
-        // Der Backend-Endpunkt /api/fishing/hotspots liefert
-        // { hotspots: [{ id, name, latitude, longitude, water_type }] }.
-        // Zusätzlich unterstützen wir echtes GeoJSON ({ features: [...] }),
-        // falls die Datenquelle später wechselt.
-        let locations = [];
-
-        if (Array.isArray(response?.features)) {
-          locations = response.features
-            .filter(f => f?.geometry?.coordinates?.length >= 2)
-            .map(feature => ({
-              id: feature.properties?.id,
-              name: feature.properties?.name,
-              category: feature.properties?.category,
-              coordinates: {
-                lng: feature.geometry.coordinates[0],
-                lat: feature.geometry.coordinates[1]
-              },
-              address: feature.properties?.address,
-              website: feature.properties?.website,
-              source: feature.properties?.source
-            }));
-        } else if (Array.isArray(response?.hotspots)) {
-          locations = response.hotspots
-            .filter(h => h.latitude != null && h.longitude != null)
-            .map(h => ({
-              id: h.id,
-              name: h.name,
-              category: h.category || 'spot',
-              water_type: h.water_type,
-              coordinates: {
-                lat: Number(h.latitude),
-                lng: Number(h.longitude)
-              }
-            }));
-        }
-
-        // Fallback: Wenn keine öffentlichen Orte geliefert wurden, lade
-        // Angelvereine & Parks über die FishingClub-Entität.
-        if (locations.length === 0) {
-          try {
-            const clubs = await entities.FishingClub.list() || [];
-            locations = clubs
-              .filter(club => (club.latitude ?? club.lat) != null && (club.longitude ?? club.lon) != null)
-              .map(club => ({
-                id: club.id,
-                name: club.name || club.club_name,
-                category: 'club',
-                coordinates: {
-                  lat: Number(club.latitude ?? club.lat),
-                  lng: Number(club.longitude ?? club.lon)
-                },
-                address: { city: club.city || club.location },
-                website: club.website
-              }));
-          } catch (clubError) {
-            console.warn("FishingClub konnte nicht geladen werden:", clubError);
-          }
-        }
-
-        setPublicLocations(locations);
-
-        toast.success("Karte geladen", {
-          description: `${safeUserSpots.length} eigene Spots${locations.length > 0 ? `, ${locations.length} Angelvereine & Parks` : ''}`,
-          duration: 2000
-        });
-      } catch (error) {
-        console.error("Fehler beim Laden öffentlicher Locations:", error);
-        setPublicLocations([]);
-
-        toast.success("Karte geladen", {
-          description: `${safeUserSpots.length} eigene Spots gefunden`,
-          duration: 2000
-        });
-      }
+      toast.success("Karte geladen", {
+        description: `${safeUserSpots.length} eigene Spots gefunden`,
+        duration: 2000
+      });
     } catch (error) {
       console.error("Fehler beim Laden der Karten-Daten:", error);
       toast.error("Fehler beim Laden der Spots");
       setSpots([]);
-      setPublicLocations([]);
     }
     setLoading(false);
+  };
+
+  const loadPublicSpots = async () => {
+    try {
+      const response = await functions.invoke('angelspotsGeojson');
+
+      let locations = [];
+
+      if (Array.isArray(response?.features)) {
+        locations = response.features
+          .filter(f => f?.geometry?.coordinates?.length >= 2)
+          .map(feature => ({
+            id: feature.properties?.id,
+            name: feature.properties?.name,
+            category: feature.properties?.category,
+            coordinates: {
+              lng: feature.geometry.coordinates[0],
+              lat: feature.geometry.coordinates[1]
+            },
+            address: feature.properties?.address,
+            website: feature.properties?.website,
+            source: feature.properties?.source
+          }));
+      } else if (Array.isArray(response?.hotspots)) {
+        locations = response.hotspots
+          .filter(h => h.latitude != null && h.longitude != null)
+          .map(h => ({
+            id: h.id,
+            name: h.name,
+            category: h.category || 'spot',
+            water_type: h.water_type,
+            coordinates: {
+              lat: Number(h.latitude),
+              lng: Number(h.longitude)
+            }
+          }));
+      }
+
+      setPublicLocations(locations);
+      setShowPublicSpots(true);
+
+      toast.success("Öffentliche Spots geladen", {
+        description: `${locations.length} Angelvereine & Parks`,
+        duration: 2000
+      });
+    } catch (error) {
+      console.error("Fehler beim Laden öffentlicher Spots:", error);
+      toast.error("Fehler beim Laden der öffentlichen Spots");
+      setPublicLocations([]);
+    }
   };
 
   const handleMapClick = (latlng) => {
@@ -394,10 +371,26 @@ export default function MapPage() {
                   <span className="text-gray-300">📍 Deine Spots:</span>
                   <span className="text-cyan-400 font-semibold">{spots.length}</span>
                 </div>
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-sm items-center">
                   <span className="text-gray-300">🏛️ Angelvereine & Parks:</span>
-                  <span className="text-green-400 font-semibold">{publicLocations.length}</span>
+                  <span className="text-green-400 font-semibold">{showPublicSpots ? publicLocations.length : '0'}</span>
                 </div>
+                {!showPublicSpots && (
+                  <button
+                    onClick={loadPublicSpots}
+                    className="w-full mt-2 px-3 py-1 text-xs bg-green-900/50 hover:bg-green-800 text-green-300 rounded border border-green-700 transition-colors"
+                  >
+                    → Öffentliche Spots laden (~700)
+                  </button>
+                )}
+                {showPublicSpots && (
+                  <button
+                    onClick={() => setShowPublicSpots(false)}
+                    className="w-full mt-2 px-3 py-1 text-xs bg-red-900/50 hover:bg-red-800 text-red-300 rounded border border-red-700 transition-colors"
+                  >
+                    ← Öffentliche Spots verbergen
+                  </button>
+                )}
                 {nearestSpot && travelInfo && (
                   <>
                     <div className="border-t border-gray-700 pt-2 mt-2">
@@ -499,7 +492,7 @@ export default function MapPage() {
               </Marker>
             ))}
 
-            {publicLocations.map((location) => {
+            {showPublicSpots && publicLocations.map((location) => {
               const coords = location.coordinates || {};
               if (coords.lat == null || coords.lng == null) return null;
 

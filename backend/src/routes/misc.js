@@ -63,7 +63,7 @@ router.delete('/fishing/plans/:id', requireAuth, async (req, res) => {
 });
 
 router.get('/fishing/hotspots', optionalAuth, async (req, res) => {
-  const { data, error } = await supabase.from('spots').select('id,name,latitude,longitude,water_type').limit(100);
+  const { data, error } = await supabase.from('spots').select('id,name,latitude,longitude,water_type');
   if (error) return res.status(500).json({ error: error.message });
   return res.json({ hotspots: data || [] });
 });
