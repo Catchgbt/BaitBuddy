@@ -28,7 +28,7 @@ export default function Dashboard() {
   const [greetingPlayed, setGreetingPlayed] = useState(false);
   const statusAnnouncementRef = React.useRef(null);
   const [weather, setWeather] = useState(null);
-  const [nearestSpot, setNearestSpot] = useState(null);
+  const [nearestSpots, setNearestSpots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullStart, setPullStart] = useState(0);
@@ -193,34 +193,31 @@ export default function Dashboard() {
         }
 
         if (spots.length > 0) {
-          let nearest = null;
-          let minDist = 999999;
-          
+          const spotsWithDist = [];
+
           spots.forEach(spot => {
             if (spot.latitude != null && spot.longitude != null) {
               const R = 6371;
               const dLat = (spot.latitude - userLocation.lat) * Math.PI / 180;
               const dLon = (spot.longitude - userLocation.lon) * Math.PI / 180;
-              const a = 
+              const a =
                 Math.sin(dLat/2) * Math.sin(dLat/2) +
                 Math.cos(userLocation.lat * Math.PI / 180) * Math.cos(spot.latitude * Math.PI / 180) *
                 Math.sin(dLon/2) * Math.sin(dLon/2);
               const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
               const dist = R * c;
-              
-              if (dist < minDist) {
-                minDist = dist;
-                nearest = { ...spot, distance: dist };
-              }
+              spotsWithDist.push({ ...spot, distance: dist });
             }
           });
-          
-          if (nearest) {
-            setNearestSpot(nearest);
+
+          spotsWithDist.sort((a, b) => a.distance - b.distance);
+          const topTwo = spotsWithDist.slice(0, 2);
+          if (topTwo.length > 0) {
+            setNearestSpots(topTwo);
           }
         }
       } else if (spots.length > 0) {
-        setNearestSpot(spots[0]);
+        setNearestSpots(spots.slice(0, 2));
       }
     } catch (error) {
       console.error("Fehler beim Laden:", error);
@@ -481,19 +478,25 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900/80 to-gray-900/40 backdrop-blur-sm p-6 sm:p-8 border border-gray-800/50">
             <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl" />
             <div className="relative">
-              <h3 className="text-sm font-semibold text-emerald-400/70 uppercase tracking-wider mb-4 sm:mb-6">Naechster Spot</h3>
-              {nearestSpot ? (
-                <div className="space-y-3" role="region" aria-live="polite" aria-atomic="false" aria-label="Naechster Angelspot: Name, Gewassertyp, Entfernung">
-                  <div className="text-xl sm:text-2xl font-bold text-white" aria-label={`Spotname: ${nearestSpot.name}`}>{nearestSpot.name}</div>
-                  <div className="text-xs sm:text-sm text-gray-400 capitalize" aria-label={`Gewassertyp: ${nearestSpot.water_type}`}>{nearestSpot.water_type}</div>
-                  {nearestSpot.distance && (
-                    <div className="text-xs text-gray-500 pt-2 border-t border-gray-800/50" aria-label={`Entfernung: ${nearestSpot.distance < 1 ? Math.round(nearestSpot.distance * 1000) + ' Meter' : nearestSpot.distance.toFixed(1) + ' Kilometer'}`}>
-                      {nearestSpot.distance < 1 
-                        ? `${Math.round(nearestSpot.distance * 1000)}m entfernt`
-                        : `${nearestSpot.distance.toFixed(1)}km entfernt`
-                      }
+              <h3 className="text-sm font-semibold text-emerald-400/70 uppercase tracking-wider mb-4 sm:mb-6">Naechste Spots</h3>
+              {nearestSpots.length > 0 ? (
+                <div className="space-y-4" role="region" aria-live="polite" aria-atomic="false" aria-label="Naechste Angelspots">
+                  {nearestSpots.map((spot, index) => (
+                    <div key={spot.id} className="pb-4 last:pb-0 last:border-b-0 border-b border-gray-800/50">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <div className="text-lg sm:text-xl font-bold text-white" aria-label={`Spot ${index + 1}: ${spot.name}`}>{spot.name}</div>
+                          <div className="text-xs sm:text-sm text-gray-400 capitalize" aria-label={`Gewassertyp: ${spot.water_type}`}>{spot.water_type}</div>
+                        </div>
+                        <div className="text-xs font-medium text-emerald-300 whitespace-nowrap ml-2">
+                          {spot.distance < 1
+                            ? `${Math.round(spot.distance * 1000)}m`
+                            : `${spot.distance.toFixed(1)}km`
+                          }
+                        </div>
+                      </div>
                     </div>
-                  )}
+                  ))}
                   <Link to={createPageUrl('Map')} className="inline-block text-xs sm:text-sm text-cyan-400 hover:text-cyan-300 transition-colors pt-2">
                     Auf Karte anzeigen
                   </Link>
