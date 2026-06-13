@@ -252,3 +252,143 @@ input.input-sm,
 select.select-sm {
   min-height: 40px;
 }
+
+/* ===== THEME MODES ===== */
+
+/* Light Mode */
+html.light {
+  color-scheme: light;
+}
+
+html.light,
+html.light body {
+  @apply bg-gray-50 text-gray-900;
+}
+
+html.light .bg-gray-950 {
+  @apply bg-white;
+}
+
+html.light .bg-gray-900 {
+  @apply bg-gray-100;
+}
+
+html.light .bg-gray-800 {
+  @apply bg-gray-200;
+}
+
+html.light .bg-gray-800\/50 {
+  @apply bg-gray-200/50;
+}
+
+html.light .bg-gray-800\/30 {
+  @apply bg-gray-200/30;
+}
+
+html.light .bg-gray-800\/40 {
+  @apply bg-gray-200/40;
+}
+
+html.light .text-gray-950 {
+  @apply text-white;
+}
+
+html.light .text-gray-400 {
+  @apply text-gray-600;
+}
+
+html.light .text-gray-300 {
+  @apply text-gray-700;
+}
+
+html.light .text-gray-200 {
+  @apply text-gray-800;
+}
+
+html.light .border-gray-800 {
+  @apply border-gray-300;
+}
+
+html.light .border-gray-700 {
+  @apply border-gray-400;
+}
+
+html.light .glass-morphism {
+  @apply bg-white/80 backdrop-blur-md border-gray-200;
+}
+
+/* Battery Mode - Reduced animations and optimizations */
+html.battery-mode,
+html.battery-mode * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 100ms !important;
+  transition-timing-function: linear !important;
+}
+
+/* Disable animations when battery mode is active */
+html.battery-mode [data-animated],
+html.battery-mode .transition-all,
+html.battery-mode .animate-in,
+html.battery-mode .animate-out {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Disable gradients in battery mode */
+html.battery-mode [style*="gradient"],
+html.battery-mode .bg-gradient-to-r,
+html.battery-mode .bg-gradient-to-l,
+html.battery-mode .bg-gradient-to-t,
+html.battery-mode .bg-gradient-to-b {
+  background: var(--battery-mode-bg, inherit) !important;
+}
+
+/* Optimize rendering in battery mode */
+html.battery-mode {
+  --battery-mode-bg: #0f172a;
+  scroll-behavior: auto !important;
+}
+
+html.battery-mode * {
+  will-change: auto !important;
+}
+
+html.battery-mode [data-animated],
+html.battery-mode .transition-all {
+  will-change: auto !important;
+}
+
+/* No animations class */
+html.no-animations,
+html.no-animations * {
+  animation: none !important;
+  transition: none !important;
+}
+
+html.no-animations [data-animated] {
+  animation: none !important;
+}
+
+html.no-animations .transition-all {
+  transition: none !important;
+}
+
+/* Reduce motion for battery mode */
+html.battery-mode {
+  scroll-behavior: auto;
+}
+
+html.battery-mode *::selection {
+  background-color: #22d3ee;
+  color: #0f172a;
+}
+
+/* Performance optimizations for battery mode */
+html.battery-mode img {
+  image-rendering: crisp-edges;
+}
+
+html.battery-mode svg {
+  shape-rendering: crispEdges;
+}
