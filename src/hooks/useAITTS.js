@@ -2,7 +2,6 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { usePlan } from '@/components/premium/PlanContext';
 import { planMeetsRequirement } from '@/components/premium/planHierarchy';
 import { speakWithElevenLabs, cancelElevenLabs } from '@/components/utils/elevenLabsTTS';
-import { speakWithBrowserTTS, cancelBrowserTTS, isBrowserTTSAvailable } from '@/components/utils/browserTTS';
 
 export function useAITTS() {
   const { plan } = usePlan();
@@ -10,14 +9,12 @@ export function useAITTS() {
   const audioRef = useRef(null);
 
   const planId = plan?.id || 'free';
-  // ElevenLabs ist der Standard-Sprachausgabe-Pfad. Browser-TTS dient nur noch
-  // als Fallback, wenn ElevenLabs nicht verfügbar ist (z. B. API-Key fehlt).
+  // ElevenLabs ist der einzige Sprachausgabe-Pfad (kein Browser-TTS Fallback mehr)
   const isPremiumVoice = planMeetsRequirement(planId, 'elite');
 
   const stop = useCallback(() => {
     cancelElevenLabs();
     audioRef.current = null;
-    cancelBrowserTTS();
     setIsSpeaking(false);
   }, []);
 
@@ -25,7 +22,6 @@ export function useAITTS() {
     if (!text || typeof text !== 'string') return;
     stop();
 
-    // Primär: ElevenLabs (für alle Pläne)
     try {
       setIsSpeaking(true);
       const audio = await speakWithElevenLabs(text, {
@@ -33,22 +29,10 @@ export function useAITTS() {
         onError: () => setIsSpeaking(false),
       });
       audioRef.current = audio;
-      return;
     } catch (err) {
-      console.warn('[useAITTS] ElevenLabs fehlgeschlagen, fallback Browser-TTS:', err?.message);
-      // Fallthrough zu Browser-TTS
-    }
-
-    // Fallback: Browser-TTS
-    if (!isBrowserTTSAvailable()) {
+      console.error('[useAITTS] ElevenLabs TTS failed:', err?.message);
       setIsSpeaking(false);
-      return;
     }
-    setIsSpeaking(true);
-    await speakWithBrowserTTS(text, {
-      onEnd: () => setIsSpeaking(false),
-      onError: () => setIsSpeaking(false),
-    });
   }, [stop]);
 
   useEffect(() => {

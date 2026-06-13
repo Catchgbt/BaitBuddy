@@ -5,7 +5,6 @@ import { getTipForPage } from '@/lib/buddyTips';
 import { useAuth } from '@/lib/AuthContext';
 import { ai } from '@/api/frontendClient';
 import { useElevenLabsVoice } from '@/hooks/useElevenLabsVoice';
-import { speakWithBrowserTTS } from '@/components/utils/browserTTS';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Mic, Send, X, ChevronUp, Phone } from 'lucide-react';
 
@@ -192,12 +191,8 @@ export default function AIBuddyWidget() {
         // Speak response
         try {
           await speak(botMessage);
-        } catch {
-          // Fallback to browser TTS
-          await speakWithBrowserTTS(botMessage, {
-            lang: 'de-DE',
-            rate: 1.0,
-          });
+        } catch (err) {
+          console.warn('ElevenLabs TTS failed:', err?.message);
         }
       } catch (err) {
         console.error('Chat error:', err);
