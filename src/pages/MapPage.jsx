@@ -317,23 +317,21 @@ export default function MapPage() {
         onTourComplete={() => setIsFirstTime(false)}
       />
 
-      <div className="max-w-7xl mx-auto p-4 space-y-4">
+      <div className="max-w-7xl mx-auto p-4">
         {/* Removed: NewFeaturesNotification - Alle Infos sind jetzt im MapNavigationHub */}
         {/* Removed: MapFeaturesInfo - Integriert in MapNavigationHub */}
 
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]">
-              🗺️ Karte & Spots — Komplett mit 6 Advanced Features
-            </h1>
-            <p className="text-sm text-gray-400 mt-1">
-              🎣 Klicke unten rechts auf den 🟦 Hub um alle neuen Features zu entdecken
-            </p>
-          </div>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]">
+            🗺️ Karte & Spots — Komplett mit 6 Advanced Features
+          </h1>
+          <p className="text-sm text-gray-400 mt-1">
+            🎣 Klicke unten rechts auf den 🟦 Hub um alle neuen Features zu entdecken
+          </p>
         </div>
 
         {/* Simplified Info Cards - nur essenzielle Infos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <Card className="glass-morphism border-cyan-700 bg-cyan-900/20">
             <CardContent className="p-4">
               <div className="text-xs text-cyan-400 mb-2 font-semibold">✨ NEU: 6 ADVANCED FEATURES</div>
@@ -380,7 +378,7 @@ export default function MapPage() {
           </Card>
         </div>
 
-        <div className="h-[600px] rounded-2xl overflow-hidden border-2 border-gray-800 shadow-2xl">
+        <div className="h-[600px] rounded-2xl overflow-hidden border-2 border-gray-800 shadow-2xl relative z-10">
           <MapContainer
             center={mapCenter}
             zoom={mapZoom}
