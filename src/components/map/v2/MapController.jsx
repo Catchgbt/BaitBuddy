@@ -16,6 +16,7 @@ import { useOptimisticMutation } from "@/lib/useOptimisticMutation";
 import MapView from "./MapView";
 import AddSpotModal from "./AddSpotModal";
 import LocationDetailPanel from "./LocationDetailPanel";
+import MarkerDetailCardContainer from "./MarkerDetailCard/MarkerDetailCardContainer";
 
 
 function MapController() {
@@ -27,6 +28,7 @@ function MapController() {
   const [mapCenter, setMapCenter] = useState(null);
   const [mapZoom, setMapZoom] = useState(13);
   const [selectedLocation, setSelectedLocation] = useState(null);
+  const [selectedMarkerType, setSelectedMarkerType] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newSpotCoords, setNewSpotCoords] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -281,7 +283,8 @@ function MapController() {
   }, []);
 
   const handleLocationClick = useCallback((location, type) => {
-    setSelectedLocation({ ...location, type });
+    setSelectedLocation(location);
+    setSelectedMarkerType(type);
     triggerHaptic('light');
     playSound('selection');
   }, [triggerHaptic, playSound]);
@@ -619,8 +622,21 @@ function MapController() {
            isOnline={isOnline}
          />
 
-        {/* Location Detail Panel */}
-        {selectedLocation && (
+        {/* Marker Detail Card (new UI) */}
+        {selectedLocation && selectedMarkerType && (
+          <MarkerDetailCardContainer
+            marker={selectedLocation}
+            markerType={selectedMarkerType}
+            isVisible={!!selectedLocation}
+            onClose={() => {
+              setSelectedLocation(null);
+              setSelectedMarkerType(null);
+            }}
+          />
+        )}
+
+        {/* Legacy Location Detail Panel (fallback for unmapped types) */}
+        {selectedLocation && !selectedMarkerType && (
           <LocationDetailPanel
             location={selectedLocation}
             onClose={() => setSelectedLocation(null)}
