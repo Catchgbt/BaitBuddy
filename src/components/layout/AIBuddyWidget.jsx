@@ -85,8 +85,6 @@ export default function AIBuddyWidget() {
 
   // Auto-show bubble on first visit to page
   useEffect(() => {
-    if (!user) return;
-
     try {
       const visitedPages = JSON.parse(localStorage.getItem(VISITED_PAGES_KEY) || '[]');
       const hasVisited = visitedPages.includes(currentPage);
@@ -107,7 +105,7 @@ export default function AIBuddyWidget() {
     } catch {
       // Ignore localStorage errors
     }
-  }, [currentPage, user, isOpen]);
+  }, [currentPage, isOpen]);
 
   // Persist position to localStorage
   useEffect(() => {
@@ -193,8 +191,6 @@ export default function AIBuddyWidget() {
     setIsOpen(false);
     stop();
   };
-
-  if (!user) return null;
 
   const bubbleVariants = {
     hidden: { opacity: 0, scale: 0.85, x: 20 },
