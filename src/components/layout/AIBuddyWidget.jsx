@@ -118,53 +118,13 @@ export default function AIBuddyWidget() {
     }
   }, [pos]);
 
-  // Handle drag
+  // Handle drag - DISABLED (fixed position)
   const handleMouseDown = (e) => {
-    if (isOpen) return;
-    setIsDragging(true);
-    const rect = widgetRef.current?.getBoundingClientRect();
-    setDragOffset({
-      x: e.clientX - (rect?.left || 0),
-      y: e.clientY - (rect?.top || 0),
-    });
+    // Drag disabled - widget is fixed
+    return;
   };
 
-  useEffect(() => {
-    if (!isDragging) return;
-
-    const handleMouseMove = (e) => {
-      const viewport = {
-        width: window.innerWidth,
-        height: window.innerHeight,
-      };
-      const size = { width: 92, height: 52 };
-
-      let newX = e.clientX - dragOffset.x;
-      let newY = e.clientY - dragOffset.y;
-
-      // Constrain to viewport
-      newX = Math.max(0, Math.min(newX, viewport.width - size.width));
-      newY = Math.max(0, Math.min(newY, viewport.height - size.height));
-
-      // Calculate as bottom-right distance
-      const distFromRight = viewport.width - (newX + size.width);
-      const distFromBottom = viewport.height - (newY + size.height);
-
-      setPos({ x: Math.max(distFromRight, 0), y: Math.max(distFromBottom, 0) });
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, dragOffset]);
+  // Drag disabled - no drag listener needed
 
   // Handle send message
   const handleSendMessage = useCallback(
@@ -250,13 +210,7 @@ export default function AIBuddyWidget() {
       {/* Avatar Widget + Chat Bubble */}
       <div
         ref={widgetRef}
-        className="fixed z-50 select-none"
-        style={{
-          right: `${pos.x}px`,
-          bottom: `${pos.y}px`,
-          transition: isDragging ? 'none' : 'right 0.3s ease, bottom 0.3s ease',
-          cursor: isDragging ? 'grabbing' : 'grab',
-        }}
+        className="fixed z-50 select-none bottom-6 right-6"
       >
         {/* Animated Bubble Container */}
         <div className="flex flex-col items-end gap-3">
@@ -268,16 +222,21 @@ export default function AIBuddyWidget() {
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                className="w-96 max-h-96 rounded-2xl shadow-2xl overflow-hidden flex flex-col bg-white border-2 border-blue-200"
+                className="w-96 max-h-96 rounded-3xl shadow-2xl overflow-hidden flex flex-col bg-white border-2 border-blue-200"
               >
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-white text-xs font-bold">M</span>
+                    <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-blue-300 bg-blue-100">
+                      <img
+                        src="/assets/buddy/marina-avatar.png"
+                        alt="Sabrina"
+                        className="w-full h-full object-cover object-top"
+                        draggable={false}
+                      />
                     </div>
                     <div>
-                      <h2 className="text-sm font-bold text-gray-800">Marina</h2>
+                      <h2 className="text-sm font-bold text-gray-800">Sabrina</h2>
                       <p className="text-xs text-gray-500">Dein Angel-Buddy</p>
                     </div>
                   </div>
@@ -407,36 +366,37 @@ export default function AIBuddyWidget() {
 
           {/* Avatar Button */}
           <motion.button
-            onClick={() => {
-              if (!isDragging) setIsOpen(!isOpen);
-            }}
-            onMouseDown={handleMouseDown}
-            className="relative group cursor-move"
+            onClick={() => setIsOpen(!isOpen)}
+            className="relative group cursor-pointer"
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.95 }}
           >
-            {/* Avatar in Wasserlinse */}
+            {/* Runder Foto-Avatar Sabrina */}
             <div
-              className="relative w-[92px] h-[52px] rounded-full shadow-lg hover:shadow-xl transition-shadow overflow-hidden"
-              style={{
-                background:
-                  'radial-gradient(120% 130% at 35% 25%, rgba(186,230,253,0.85) 0%, rgba(56,150,200,0.55) 55%, rgba(12,74,110,0.65) 100%)',
-              }}
+              className={`relative w-16 h-16 rounded-full shadow-lg hover:shadow-xl transition-all overflow-hidden bg-gradient-to-br from-blue-100 to-blue-300 ring-2 ${
+                isSpeaking
+                  ? 'ring-green-400'
+                  : isListening
+                  ? 'ring-red-400'
+                  : 'ring-white'
+              }`}
             >
-              <div className="absolute inset-0 flex items-center justify-center p-1">
-                <BuddyTextAvatar
-                  isTalking={isTalking}
-                  isListening={isListening}
-                />
-              </div>
+              <img
+                src="/assets/buddy/marina-avatar.png"
+                alt="Sabrina – dein Angel-Buddy"
+                className={`w-full h-full object-cover object-top ${
+                  isTalking ? 'buddy-text-speaking' : isListening ? 'buddy-text-listening' : 'buddy-text-breathing'
+                }`}
+                draggable={false}
+              />
             </div>
 
             {/* Voice indicator */}
             {isSpeaking && (
-              <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full ring-2 ring-white animate-pulse" />
+              <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full ring-2 ring-white animate-pulse" />
             )}
             {isListening && (
-              <div className="absolute -bottom-0.5 -left-0.5 w-3.5 h-3.5 bg-red-500 rounded-full ring-2 ring-white animate-pulse" />
+              <div className="absolute bottom-0 left-0 w-4 h-4 bg-red-500 rounded-full ring-2 ring-white animate-pulse" />
             )}
           </motion.button>
         </div>
