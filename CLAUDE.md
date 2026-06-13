@@ -8,9 +8,9 @@
 
 **Nur Vercel (Hosting/Deploy/Serverless) und Supabase (DB/Auth/Storage) verwenden.** Keine anderen externen Dienste/Backends einführen (kein base44, kein Render, keine sonstigen MCP-Services für Produktionslogik).
 
-## Projektziel: Unabhängigkeit von base44 — ✅ ERREICHT
+## Projektziel: Neue Web-App ersetzt bestehende PlayStore Version
 
-**BaitBuddy ist vollständig unabhängig von base44.** Das `base44`-Objekt/-Shim wurde komplett entfernt (Domänen 1–7, PRs #27–#33).
+**BaitBuddy Web-App ersetzt die bisherige Mobile-App.** Die neue Webanwendung in `src/` ist das Produktions-Frontend. Die PlayStore-Version wird durch diese Web-App auf https://bait-buddy.vercel.app ersetzt.
 
 Native API-Clients (alle aus `src/api/`):
 - `auth` (`@/api/auth`) — Login/Logout/Registrierung, aktueller Benutzer
@@ -20,7 +20,7 @@ Native API-Clients (alle aus `src/api/`):
 - `analytics`, `appLogs` (`@/api/frontendClient`) — No-op-Clients
 - spezialisierte Module: `catches`, `spots`, `ai`, `community`, `premium`, `fishing`, `events`, `gear`, `water`, `user`
 
-**Regel:** Niemals wieder `base44.*` einführen — immer die nativen Clients nutzen. Das `base44/`-Verzeichnis (config.jsonc, entities/, functions/) ist nur Altmetadaten und wird vom Code nicht verwendet.
+**Regel:** Immer mit den nativen Clients arbeiten. Das `base44/`-Verzeichnis ist nur Altmetadaten und wird vom Code nicht verwendet.
 
 ## WICHTIG: Es gibt NUR EINE App
 
