@@ -39,6 +39,7 @@ const locationIcon = createCustomIcon("#ef4444", "📌");
 const newSpotIcon = createCustomIcon("#f59e0b", "⭐");
 const tiefenkartenIcon = createCustomIcon("#a855f7", "🗻", 36);
 const forellenIcon = createCustomIcon("#ec4899", "🎣", 32);
+const bathymetrieIcon = createCustomIcon("#0ea5e9", "🌊", 34);
 
 function MapEvents({ onMapClick }) {
   useMapEvents({
@@ -155,6 +156,7 @@ export default function MapView({
   waterBodies = [],
   tiefenkarten = [],
   forellenseen = [],
+  bathymetrie = [],
   currentLocation,
   newSpotMarker,
   onMapClick,
@@ -434,6 +436,38 @@ export default function MapView({
                   📮 {park.address}
                 </p>
               )}
+            </div>
+          </Popup>
+        </Marker>
+      ))}
+
+      {/* Bathymetrie Bundesländer */}
+      {bathymetrie.map((bd) => (
+        <Marker
+          key={bd.name}
+          position={[bd.bounds.lat_min + (bd.bounds.lat_max - bd.bounds.lat_min) / 2,
+                     bd.bounds.lon_min + (bd.bounds.lon_max - bd.bounds.lon_min) / 2]}
+          icon={bathymetrieIcon}
+          eventHandlers={{
+            click: () => onLocationClick && onLocationClick(bd, 'bathymetrie')
+          }}
+          alt={`Bathymetrie: ${bd.name}`}
+          aria-label={`Bathymetrie für ${bd.name}`}
+        >
+          <Popup>
+            <div className="text-sm max-w-xs">
+              <strong className="text-base text-cyan-400">🌊 {bd.name}</strong>
+              <p className="text-xs text-gray-400 mt-1">
+                Bathymetrie (Tiefenkarte)
+              </p>
+              <p className="text-xs text-gray-300 mt-2">
+                📊 GEBCO 2026 Daten<br/>
+                📏 ~500m Auflösung<br/>
+                🗺️ Bounding Box verfügbar
+              </p>
+              <p className="text-xs text-gray-500 mt-2">
+                <em>Daten verfügbar sobald GeoTIFF heruntergeladen</em>
+              </p>
             </div>
           </Popup>
         </Marker>
