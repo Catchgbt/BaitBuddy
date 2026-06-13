@@ -11,6 +11,7 @@ import ReactMarkdown from "react-markdown";
 import { getPersonalizedGreeting } from "@/components/utils/greetings";
 import { Volume2 } from "lucide-react";
 import { getRandomDemoResponse } from "@/components/utils/guestMode";
+import { speakWithElevenLabs } from "@/components/utils/elevenLabsTTS";
 
 import PremiumGuard from "@/components/premium/PremiumGuard";
 
@@ -61,28 +62,18 @@ function AIAssistantInner() {
         return;
       }
 
-      if (typeof window !== 'undefined' && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-        
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.lang = 'de-DE';
-        utterance.rate = 1.0;
-        utterance.pitch = 1;
-        utterance.volume = 1.0;
-
-        const voices = window.speechSynthesis.getVoices();
-        const germanVoice = voices.find(voice => voice.lang.startsWith('de'));
-        if (germanVoice) utterance.voice = germanVoice;
-
-        utterance.onend = () => {
-          setIsSpeaking(false);
-        };
-        utterance.onerror = () => {
-          setIsSpeaking(false);
-          toast.error('Vorlesen fehlgeschlagen');
-        };
-
-        window.speechSynthesis.speak(utterance);
+      try {
+        await speakWithElevenLabs(cleanText, {
+          onEnd: () => setIsSpeaking(false),
+          onError: () => {
+            setIsSpeaking(false);
+            toast.error('Vorlesen fehlgeschlagen');
+          }
+        });
+      } catch (err) {
+        console.error('ElevenLabs TTS error:', err);
+        setIsSpeaking(false);
+        toast.error('Vorlesen fehlgeschlagen');
       }
     } catch (error) {
       console.error('TTS Error:', error);

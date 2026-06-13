@@ -6,7 +6,7 @@ import { useLocation } from "@/components/location/LocationManager";
 import { InvokeLLM } from "@/integrations/Core";
 import WeatherAlertsSettings from "@/components/settings/WeatherAlertsSettings";
 import { toast } from "sonner";
-import { backendTextToSpeech } from "@/functions/backendTextToSpeech";
+import { speakWithElevenLabs } from "@/components/utils/elevenLabsTTS";
 import { MapPin, AlertCircle } from "lucide-react";
 
 import PremiumGuard from "@/components/premium/PremiumGuard";
@@ -119,63 +119,17 @@ Sei konkret, praktisch und detailliert!`;
         .replace(/\s+/g, ' ')
         .trim();
 
-      const response = await backendTextToSpeech({
-        text: cleanText,
-        speechRate: 1.0,
-        voiceId: "alloy",
-        quality: "standard"
-      });
-
-      const contentType = response.headers?.get?.('content-type') || response.headers?.['content-type'] || '';
-
-      if (contentType.includes('application/json')) {
-        const jsonData = response.data;
-        
-        if (jsonData.fallback_to_browser) {
-          const utterance = new SpeechSynthesisUtterance(cleanText);
-          utterance.lang = 'de-DE';
-          utterance.rate = 1.0;
-          utterance.pitch = 1;
-          utterance.volume = 0.8;
-
-          utterance.onend = () => setIsReadingAloud(false);
-          utterance.onerror = (e) => {
-            console.error("Browser TTS error:", e);
-            setIsReadingAloud(false);
-            toast.error("Vorlesen fehlgeschlagen");
-          };
-
-          window.speechSynthesis.speak(utterance);
-          return;
+      await speakWithElevenLabs(cleanText, {
+        onEnd: () => setIsReadingAloud(false),
+        onError: () => {
+          setIsReadingAloud(false);
+          toast.error("Vorlesen fehlgeschlagen");
         }
-      }
-
-      if (contentType.includes('audio/mpeg')) {
-        const blob = new Blob([response.data], { type: 'audio/mpeg' });
-        const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
-
-        audio.onended = () => {
-          URL.revokeObjectURL(url);
-          setIsReadingAloud(false);
-        };
-
-        audio.onerror = (e) => {
-          console.error("Audio playback error:", e);
-          URL.revokeObjectURL(url);
-          setIsReadingAloud(false);
-          toast.error("Abspielen fehlgeschlagen");
-        };
-
-        await audio.play();
-      } else {
-        console.warn("Unexpected content type:", contentType);
-        setIsReadingAloud(false);
-        toast.error("Unerwartetes Datenformat");
-      }
+      });
 
     } catch (error) {
       console.error("Fehler beim Vorlesen:", error);
+      setIsReadingAloud(false);
       toast.error("Vorlesen fehlgeschlagen");
       setIsReadingAloud(false);
     }
