@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Bell, ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
+import { Bell, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useHaptic } from "@/components/utils/HapticFeedback";
@@ -14,8 +14,6 @@ import EventTimer from "@/components/header/EventTimer";
 import LastBuddyMessage from "@/components/header/LastBuddyMessage";
 import MapFeaturesBadge from "@/components/layout/MapFeaturesBadge";
 import { functions } from "@/api/frontendClient";
-import { entities } from "@/api/frontendClient";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { mobileStack } from "@/lib/MobileStackManager";
 
 export default function Header({
@@ -31,8 +29,6 @@ export default function Header({
   const [user, setUser] = useState(null);
   const [currentPlan, setCurrentPlan] = useState(null);
   const [planLoading, setPlanLoading] = useState(true);
-  const [recentPosts, setRecentPosts] = useState([]);
-  const [postIndex, setPostIndex] = useState(0);
   const [canGoBack, setCanGoBack] = useState(false);
 
   const loadInitialData = async () => {
@@ -70,7 +66,6 @@ export default function Header({
 
   useEffect(() => {
     loadInitialData();
-    loadRecentPosts();
 
     window.addEventListener('weather-alerts-updated', loadInitialData);
     window.addEventListener('active-trips-updated', loadInitialData);
@@ -98,16 +93,6 @@ export default function Header({
     };
   }, []);
 
-  const loadRecentPosts = async () => {
-    try {
-      const posts = await entities.Post.list('-created_date', 20);
-      const postsWithImages = posts.filter(p => p.photo_url);
-      setRecentPosts(postsWithImages);
-    } catch (error) {
-      console.error("Fehler beim Laden der Posts:", error);
-    }
-  };
-
   const handleLeftSidebarToggle = () => {
     triggerHaptic('selection');
     playSound('click');
@@ -130,25 +115,6 @@ export default function Header({
       }}
     >
       <div className="px-4 h-16 flex items-center justify-between">
-        
-        {/* Aktiver Plan statisch zentriert im Hintergrund */}
-        {!planLoading && currentPlan && (
-          <div
-            className="absolute inset-0 z-0 pointer-events-none overflow-hidden flex items-center justify-center"
-            aria-hidden="true"
-          >
-            <span
-              className={`whitespace-nowrap text-5xl font-bold tracking-wider ${
-                currentPlan.id === 'free' ? 'text-gray-300/40 drop-shadow-[0_0_20px_rgba(209,213,219,0.3)]' :
-                currentPlan.id === 'basic' ? 'text-blue-400/50 drop-shadow-[0_0_20px_rgba(96,165,250,0.4)]' :
-                currentPlan.id === 'pro' ? 'text-purple-400/50 drop-shadow-[0_0_20px_rgba(192,132,252,0.4)]' :
-                'text-amber-400/50 drop-shadow-[0_0_20px_rgba(251,191,36,0.4)]'
-              }`}
-            >
-              {currentPlan.name} Plan
-            </span>
-          </div>
-        )}
 
         {/* Left Side - Back/Menu Button + Event Timer */}
         <div className="flex items-center gap-3 relative z-20">
@@ -204,6 +170,21 @@ export default function Header({
               />
             </Button>
           </motion.div>
+
+          {/* Plan Status Badge */}
+          {!planLoading && currentPlan && (
+            <Badge
+              className={`text-[10px] font-semibold whitespace-nowrap ${
+                currentPlan.id === 'free' ? 'bg-gray-700 text-gray-200' :
+                currentPlan.id === 'basic' ? 'bg-blue-600 text-white' :
+                currentPlan.id === 'pro' ? 'bg-purple-600 text-white' :
+                'bg-amber-600 text-white'
+              }`}
+            >
+              {currentPlan.name}
+            </Badge>
+          )}
+
           <EventTimer />
         </div>
 
@@ -282,78 +263,6 @@ export default function Header({
                 </Button>
               </motion.div>
             </Link>
-          )}
-
-          {recentPosts.length > 0 && (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                   variant="ghost"
-                   size="icon"
-                   aria-label="Neueste Community Beitraege anzeigen"
-                   className="text-cyan-400 active:scale-95 active:bg-cyan-500/10 focus:ring-2 focus:ring-cyan-400 min-h-[44px] min-w-[44px]"
-                   onClick={() => {
-                     triggerHaptic('light');
-                     playSound('click');
-                   }}
-                >
-                  <motion.div
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-emerald-500 to-cyan-500" />
-                  </motion.div>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 bg-gray-900 border-gray-800">
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-cyan-400">Neueste Beitraege</h3>
-                  {recentPosts[postIndex] && (
-                    <div className="space-y-2">
-                      <img 
-                        src={recentPosts[postIndex].photo_url}
-                        alt={`Community Post ${postIndex + 1}`}
-                        loading="lazy"
-                        className="w-full rounded-lg max-h-48 object-cover"
-                      />
-                      <p className="text-xs text-gray-300 line-clamp-2">
-                        {recentPosts[postIndex].text}
-                      </p>
-                      <Link to={createPageUrl('Community')}>
-                        <Button size="sm" className="w-full bg-cyan-600 active:scale-95 active:bg-cyan-700 focus:ring-2 focus:ring-cyan-400 text-xs" aria-label="Zur Community gehen">
-                          Zur Community
-                        </Button>
-                      </Link>
-                    </div>
-                  )}
-                  {recentPosts.length > 1 && (
-                    <div className="flex justify-between items-center">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        aria-label="Vorheriger Beitrag"
-                        onClick={() => setPostIndex(Math.max(0, postIndex - 1))}
-                        disabled={postIndex === 0}
-                      >
-                        <ChevronLeft className="w-4 h-4" aria-hidden="true" />
-                      </Button>
-                      <span className="text-xs text-gray-400">
-                        {postIndex + 1} / {recentPosts.length}
-                      </span>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        aria-label="Naechster Beitrag"
-                        onClick={() => setPostIndex(Math.min(recentPosts.length - 1, postIndex + 1))}
-                        disabled={postIndex === recentPosts.length - 1}
-                      >
-                        <ChevronRight className="w-4 h-4" aria-hidden="true" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </PopoverContent>
-            </Popover>
           )}
 
           <MapFeaturesBadge />
