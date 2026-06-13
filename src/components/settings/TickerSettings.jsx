@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { auth } from "@/api/auth";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Save, Newspaper } from 'lucide-react';
@@ -25,7 +26,13 @@ export default function TickerSettings() {
 
     const tickerMutation = useOptimisticMutation({
         mutationFn: async (newSpeed) => {
-            await auth.updateMe({ settings: { ticker_speed: newSpeed } });
+            const user = await auth.me();
+            await auth.updateMe({
+                settings: {
+                    ...user?.settings,
+                    ticker_speed: newSpeed
+                }
+            });
             return newSpeed;
         },
         optimisticUpdate: () => speed,
@@ -43,21 +50,29 @@ export default function TickerSettings() {
     const handleSave = () => {
         tickerMutation.mutate(speed);
     };
-    
+
     const hasChanges = speed !== initialSpeed;
 
     return (
-        <div className="border-t border-gray-800 pt-6">
-            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <Newspaper className="w-5 h-5 text-gray-400" />
-                Nachrichten-Ticker
-            </h3>
-            <div className="space-y-2">
-                <label htmlFor="ticker-speed" className="text-sm text-gray-400">
-                    Scroll-Geschwindigkeit
-                </label>
-                <div className="flex items-center gap-3">
-                     <input
+        <Card className="glass-morphism border-gray-800 rounded-2xl">
+            <CardHeader>
+                <CardTitle className="text-cyan-400 drop-shadow-[0_0_12px_rgba(34,211,238,0.7)] flex items-center gap-2">
+                    <Newspaper className="w-5 h-5 text-emerald-400" />
+                    Nachrichten-Ticker
+                </CardTitle>
+                <p className="text-gray-400 text-sm mt-2">
+                    Passe die Geschwindigkeit des News-Tickers an
+                </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                        <label htmlFor="ticker-speed" className="text-sm font-medium text-gray-300">
+                            Scroll-Geschwindigkeit
+                        </label>
+                        <span className="text-sm text-cyan-400 font-semibold">{speed}%</span>
+                    </div>
+                    <input
                         id="ticker-speed"
                         type="range"
                         min="25"
@@ -65,22 +80,31 @@ export default function TickerSettings() {
                         step="5"
                         value={speed}
                         onChange={(e) => setSpeed(Number(e.target.value))}
-                        className="w-full accent-emerald-500"
+                        className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan-500"
                     />
-                    <span className="text-sm text-gray-300 w-16 text-center">{speed}%</span>
+                    <div className="flex justify-between text-xs text-gray-500">
+                        <span>25% (Langsam)</span>
+                        <span>200% (Schnell)</span>
+                    </div>
                 </div>
-            </div>
-             <div className="mt-4 flex justify-end">
-                <Button 
-                  onClick={handleSave} 
-                  disabled={tickerMutation.isPending || !hasChanges}
-                  className="active:scale-95 focus:ring-2 focus:ring-emerald-400"
-                  aria-label="Ticker Einstellungen speichern"
-                >
-                    <Save className="w-4 h-4 mr-2" aria-hidden="true" />
-                    {tickerMutation.isPending ? 'Speichert...' : 'Änderungen speichern'}
-                </Button>
-             </div>
-        </div>
+
+                {hasChanges && (
+                    <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-lg text-sm text-cyan-300">
+                        ⚠️ <span className="ml-2">Du hast ungespeicherte Änderungen</span>
+                    </div>
+                )}
+
+                <div className="flex justify-end pt-4">
+                    <Button
+                        onClick={handleSave}
+                        disabled={tickerMutation.isPending || !hasChanges}
+                        className="bg-cyan-600 hover:bg-cyan-700 active:scale-95"
+                    >
+                        <Save className="w-4 h-4 mr-2" />
+                        {tickerMutation.isPending ? 'Speichert...' : 'Änderungen speichern'}
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
     );
 }
