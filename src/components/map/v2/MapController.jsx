@@ -39,13 +39,15 @@ function MapController() {
     waters: true,
     angelshops: false,
     angelparksEu: false,
-    tiefenkarten: false
+    tiefenkarten: false,
+    forellenseen: false
   });
   const [waterBodies, setWaterBodies] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [searchQuery, setSearchQuery] = useState('');
   const [tiefenkarten, setTiefenkarten] = useState([]);
+  const [forellenseen, setForellenseen] = useState([]);
 
   // Query data with react-query
   const { data: spots = [] } = useQuery({
@@ -109,7 +111,20 @@ function MapController() {
         console.warn('Tiefenkarten konnten nicht geladen werden:', error);
       }
     };
+
+    // Lade Forellenseen
+    const loadForellenseen = async () => {
+      try {
+        const response = await fetch('/assets/forellenseen/forellenseen.json');
+        const data = await response.json();
+        setForellenseen(data);
+      } catch (error) {
+        console.warn('Forellenseen konnten nicht geladen werden:', error);
+      }
+    };
+
     loadTiefenkarten();
+    loadForellenseen();
 
     return () => {
       window.removeEventListener('online', handleOnline);
@@ -279,6 +294,9 @@ function MapController() {
   const filteredTiefenkarten = filters.tiefenkarten
     ? tiefenkarten.filter(tk => matchesSearch(tk.name))
     : [];
+  const filteredForellenseen = filters.forellenseen
+    ? forellenseen.filter(fs => matchesSearch(fs.name))
+    : [];
 
   if (!isInitialized || !mapCenter) {
     return (
@@ -372,12 +390,12 @@ function MapController() {
 
            <div aria-live="polite" aria-atomic="true">
              <div className="text-xs text-gray-300 px-2 py-1 bg-gray-900/50 rounded" role="status">
-               🗺️ {filteredSpots.length} Spots • 🏛️ {filteredClubs.length} Vereine • 🛒 {filteredAngelshops.length} Shops • 🌍 {filteredAngelparksEu.length} EU Parks • 💧 {filteredWaters.length} Gewässer • 🗻 {filteredTiefenkarten.length} Tiefenkarten
+               🗺️ {filteredSpots.length} Spots • 🏛️ {filteredClubs.length} Vereine • 🛒 {filteredAngelshops.length} Shops • 🌍 {filteredAngelparksEu.length} EU Parks • 💧 {filteredWaters.length} Gewässer • 🗻 {filteredTiefenkarten.length} Tiefenkarten • 🎣 {filteredForellenseen.length} Forellenseen
              </div>
            </div>
 
            {/* Filter Buttons */}
-           <div className="grid grid-cols-2 sm:grid-cols-6 gap-1.5">
+           <div className="grid grid-cols-2 sm:grid-cols-7 gap-1.5">
              <button
                onClick={() => setFilters({ ...filters, spots: !filters.spots })}
                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
@@ -447,6 +465,16 @@ function MapController() {
                }`}
              >
                🗻 Tiefenkarten
+             </button>
+             <button
+               onClick={() => setFilters({ ...filters, forellenseen: !filters.forellenseen })}
+               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                 filters.forellenseen
+                   ? 'bg-pink-600 text-white ring-2 ring-pink-400/50'
+                   : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+               }`}
+             >
+               🎣 Forellenseen
              </button>
            </div>
           </div>
@@ -521,6 +549,7 @@ function MapController() {
            angelparksEu={filteredAngelparksEu}
            waterBodies={filteredWaters}
            tiefenkarten={filteredTiefenkarten}
+           forellenseen={filteredForellenseen}
            currentLocation={currentLocation}
            newSpotMarker={newSpotCoords}
            onMapClick={handleMapClick}

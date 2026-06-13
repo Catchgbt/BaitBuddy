@@ -38,6 +38,7 @@ const angelParkEuIcon = createCustomIcon("#ea580c", "🌍", 28);
 const locationIcon = createCustomIcon("#ef4444", "📌");
 const newSpotIcon = createCustomIcon("#f59e0b", "⭐");
 const tiefenkartenIcon = createCustomIcon("#a855f7", "🗻", 36);
+const forellenIcon = createCustomIcon("#ec4899", "🎣", 32);
 
 function MapEvents({ onMapClick }) {
   useMapEvents({
@@ -153,6 +154,7 @@ export default function MapView({
   angelparksEu = [],
   waterBodies = [],
   tiefenkarten = [],
+  forellenseen = [],
   currentLocation,
   newSpotMarker,
   onMapClick,
@@ -431,6 +433,47 @@ export default function MapView({
                 <p className="text-xs text-gray-400 mt-1">
                   📮 {park.address}
                 </p>
+              )}
+            </div>
+          </Popup>
+        </Marker>
+      ))}
+
+      {/* Forellenseen */}
+      {forellenseen.map((fs) => (
+        <Marker
+          key={fs.id}
+          position={[fs.lat, fs.lng]}
+          icon={forellenIcon}
+          eventHandlers={{
+            click: () => onLocationClick && onLocationClick(fs, 'forellensee')
+          }}
+          alt={`Forellensee: ${fs.name}`}
+          aria-label={`Forellensee ${fs.name}`}
+        >
+          <Popup>
+            <div className="text-sm max-w-xs">
+              <strong className="text-base text-pink-400">{fs.name}</strong>
+              <p className="text-xs text-gray-400 mt-1">
+                🌍 {fs.land} • {fs.region}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                🎣 {fs.forellenarten}
+              </p>
+              {fs.bemerkungen && (
+                <p className="text-xs text-gray-300 mt-1">
+                  💡 {fs.bemerkungen}
+                </p>
+              )}
+              {fs.website && (
+                <a
+                  href={`https://${fs.website}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-pink-400 underline mt-2 inline-block hover:text-pink-300"
+                >
+                  🌐 Website
+                </a>
               )}
             </div>
           </Popup>
