@@ -37,8 +37,7 @@ export default function AIBuddyWidget() {
 
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [showBubble, setShowBubble] = useState(false);
-  const [showChat, setShowChat] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [isTalking, setIsTalking] = useState(false);
   const [isNodding, setIsNodding] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -92,15 +91,15 @@ export default function AIBuddyWidget() {
       const visitedPages = JSON.parse(localStorage.getItem(VISITED_PAGES_KEY) || '[]');
       const hasVisited = visitedPages.includes(currentPage);
 
-      if (!hasVisited) {
-        setShowBubble(true);
+      if (!hasVisited && !isOpen) {
+        setIsOpen(true);
         // Mark page as visited
         visitedPages.push(currentPage);
         localStorage.setItem(VISITED_PAGES_KEY, JSON.stringify(visitedPages));
 
         // Auto-hide after 5 seconds
         const timer = setTimeout(() => {
-          setShowBubble(false);
+          setIsOpen(false);
         }, 5000);
 
         return () => clearTimeout(timer);
@@ -108,7 +107,7 @@ export default function AIBuddyWidget() {
     } catch {
       // Ignore localStorage errors
     }
-  }, [currentPage, user]);
+  }, [currentPage, user, isOpen]);
 
   // Persist position to localStorage
   useEffect(() => {
@@ -121,7 +120,7 @@ export default function AIBuddyWidget() {
 
   // Handle drag
   const handleMouseDown = (e) => {
-    if (showChat) return;
+    if (isOpen) return;
     setIsDragging(true);
     const rect = widgetRef.current?.getBoundingClientRect();
     setDragOffset({
@@ -229,24 +228,18 @@ export default function AIBuddyWidget() {
     }
   };
 
-  // Handle close chat
-  const handleCloseChat = () => {
-    setShowChat(false);
+  // Handle close bubble
+  const handleCloseBubble = () => {
+    setIsOpen(false);
     stop();
   };
 
   if (!user) return null;
 
   const bubbleVariants = {
-    hidden: { opacity: 0, scale: 0.8, y: 20 },
-    visible: { opacity: 1, scale: 1, y: 0 },
-    exit: { opacity: 0, scale: 0.8, y: 20 },
-  };
-
-  const chatVariants = {
-    hidden: { y: '100%' },
-    visible: { y: 0 },
-    exit: { y: '100%' },
+    hidden: { opacity: 0, scale: 0.85, x: 20 },
+    visible: { opacity: 1, scale: 1, x: 0 },
+    exit: { opacity: 0, scale: 0.85, x: 20 },
   };
 
   return (
@@ -254,87 +247,119 @@ export default function AIBuddyWidget() {
       {/* Buddy-spezifische SVG-Animationen (einmalig global injiziert) */}
       <style>{BUDDY_TEXT_CSS}</style>
 
-      {/* Avatar Widget */}
+      {/* Avatar Widget + Chat Bubble */}
       <div
         ref={widgetRef}
-        className="fixed z-50 cursor-move select-none"
+        className="fixed z-50 select-none"
         style={{
           right: `${pos.x}px`,
           bottom: `${pos.y}px`,
           transition: isDragging ? 'none' : 'right 0.3s ease, bottom 0.3s ease',
+          cursor: isDragging ? 'grabbing' : 'grab',
         }}
-        onMouseDown={handleMouseDown}
       >
-        {/* Avatar Button */}
-        <motion.button
-          onClick={() => {
-            if (!isDragging) setShowChat(!showChat);
-          }}
-          className="relative group"
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          {/* Glow-Ring beim Hover / aktiv */}
-          <div
-            className={`absolute -inset-1 rounded-full blur-md transition-opacity ${
-              isSpeaking || isListening
-                ? 'bg-cyan-300 opacity-40'
-                : 'bg-cyan-400 opacity-0 group-hover:opacity-25'
-            }`}
-          />
+        {/* Animated Bubble Container */}
+        <div className="flex flex-col items-end gap-3">
+          {/* Chat Bubble */}
+          <AnimatePresence>
+            {isOpen && (
+              <motion.div
+                variants={bubbleVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                className="w-96 max-h-96 rounded-2xl shadow-2xl overflow-hidden flex flex-col bg-white border-2 border-blue-200"
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-white text-xs font-bold">M</span>
+                    </div>
+                    <div>
+                      <h2 className="text-sm font-bold text-gray-800">Marina</h2>
+                      <p className="text-xs text-gray-500">Dein Angel-Buddy</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleCloseBubble}
+                    className="p-1 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0"
+                  >
+                    <X size={18} className="text-gray-600" />
+                  </button>
+                </div>
 
-          {/* Avatar in Wasserlinse */}
-          <div
-            className="relative w-[92px] h-[52px] rounded-full shadow-lg hover:shadow-xl transition-shadow ring-1 ring-cyan-200/50 overflow-hidden"
-            style={{
-              background:
-                'radial-gradient(120% 130% at 35% 25%, rgba(186,230,253,0.85) 0%, rgba(56,150,200,0.55) 55%, rgba(12,74,110,0.65) 100%)',
-            }}
-          >
-            <div className="absolute inset-0 flex items-center justify-center p-1">
-              <BuddyTextAvatar
-                isTalking={isTalking}
-                isListening={isListening}
-              />
-            </div>
-          </div>
+                {/* Messages */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gradient-to-b from-white to-blue-50">
+                  {messages.length === 0 ? (
+                    <div className="flex flex-col items-start justify-start h-full gap-3">
+                      <div className="text-sm">
+                        <p className="text-lg mb-2">👋</p>
+                        <p className="font-semibold text-gray-800 mb-1">{tip?.title || 'Hallo!'}</p>
+                        <p className="text-xs text-gray-600 leading-relaxed">{tip?.message || 'Wie kann ich dir helfen?'}</p>
+                      </div>
 
-          {/* Voice indicator */}
-          {isSpeaking && (
-            <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full ring-2 ring-white animate-pulse" />
-          )}
-          {isListening && (
-            <div className="absolute -bottom-0.5 -left-0.5 w-3.5 h-3.5 bg-red-500 rounded-full ring-2 ring-white animate-pulse" />
-          )}
-        </motion.button>
+                      {tip?.suggestions && tip.suggestions.length > 0 && (
+                        <div className="w-full space-y-2">
+                          <p className="text-xs font-semibold text-gray-500 px-2">Schnelle Fragen:</p>
+                          {tip.suggestions.map((suggestion, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => {
+                                setInputValue(suggestion);
+                                setTimeout(() => handleSendMessage(suggestion), 50);
+                              }}
+                              disabled={isLoading}
+                              className="w-full text-left px-3 py-2 bg-blue-100 hover:bg-blue-200 disabled:bg-gray-200 text-blue-900 text-xs rounded-lg transition-colors truncate"
+                            >
+                              💡 {suggestion}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    messages.map((msg, idx) => (
+                      <div
+                        key={idx}
+                        className={`flex ${
+                          msg.role === 'user' ? 'justify-end' : 'justify-start'
+                        }`}
+                      >
+                        <div
+                          className={`max-w-xs px-4 py-2 rounded-lg text-sm break-words ${
+                            msg.role === 'user'
+                              ? 'bg-blue-500 text-white rounded-br-none'
+                              : 'bg-gray-200 text-gray-900 rounded-bl-none'
+                          }`}
+                        >
+                          {msg.content}
+                        </div>
+                      </div>
+                    ))
+                  )}
 
-        {/* Sprechblase mit Tipps & Input */}
-        <AnimatePresence>
-          {showBubble && !showChat && (
-            <motion.div
-              variants={bubbleVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="absolute bottom-full right-0 mb-4 w-72"
-            >
-              <div className="bg-white rounded-2xl shadow-2xl p-4 border-2 border-blue-200">
-                {/* Close Button */}
-                <button
-                  onClick={() => setShowBubble(false)}
-                  className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
-                >
-                  <X size={16} />
-                </button>
+                  {isLoading && (
+                    <div className="flex justify-start">
+                      <div className="bg-gray-200 px-4 py-3 rounded-lg">
+                        <div className="flex gap-1">
+                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" />
+                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-100" />
+                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-200" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
-                {/* Header with Tip */}
-                <h3 className="font-bold text-sm text-gray-800 mb-2 pr-6">{tip.title}</h3>
-                <p className="text-xs text-gray-600 mb-4 leading-relaxed">
-                  {tip.message}
-                </p>
+                  {chatError && (
+                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded-lg text-xs">
+                      {chatError}
+                    </div>
+                  )}
+                </div>
 
                 {/* Input Section */}
-                <div className="space-y-3">
+                <div className="border-t border-gray-200 bg-white p-3 space-y-2">
                   {/* Text Input */}
                   <div className="flex gap-2">
                     <input
@@ -344,37 +369,24 @@ export default function AIBuddyWidget() {
                       onKeyPress={(e) => {
                         if (e.key === 'Enter') {
                           handleSendMessage();
-                          setShowBubble(false);
-                          setShowChat(true);
                         }
                       }}
-                      placeholder="Frag hier..."
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
+                      placeholder="Schreib eine Frage..."
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                       disabled={isLoading}
                     />
                     <button
-                      onClick={() => {
-                        if (inputValue.trim()) {
-                          handleSendMessage();
-                          setShowBubble(false);
-                          setShowChat(true);
-                        }
-                      }}
+                      onClick={() => handleSendMessage()}
                       disabled={isLoading || !inputValue.trim()}
-                      className="p-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-lg transition-colors"
+                      className="p-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-lg transition-colors flex-shrink-0"
                     >
-                      <Send size={14} />
+                      <Send size={16} />
                     </button>
                   </div>
 
-                  {/* Voice Button - Large */}
+                  {/* Voice Button */}
                   <button
-                    onClick={() => {
-                      handleVoiceInput();
-                      if (!isListening) {
-                        setShowBubble(false);
-                      }
-                    }}
+                    onClick={handleVoiceInput}
                     disabled={isLoading}
                     className={`w-full py-2 px-4 rounded-lg font-semibold text-xs flex items-center justify-center gap-2 transition-colors ${
                       isListening
@@ -383,153 +395,52 @@ export default function AIBuddyWidget() {
                     }`}
                   >
                     <Mic size={14} />
-                    {isListening ? 'Höre zu...' : 'Jetzt sprechen'}
+                    {isListening ? 'Höre zu...' : 'Sprich'}
                   </button>
-
-                  {/* Loading Indicator */}
-                  {isLoading && (
-                    <div className="flex justify-center">
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" />
-                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-100" />
-                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-200" />
-                      </div>
-                    </div>
-                  )}
                 </div>
-              </div>
 
-              {/* Bubble Tail */}
-              <div className="absolute bottom-[-8px] right-6 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-white" />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+                {/* Bubble Tail */}
+                <div className="absolute -bottom-2 right-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-blue-200" />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-      {/* Chat Panel Slide-up */}
-      <AnimatePresence>
-        {showChat && (
-          <motion.div
-            variants={chatVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed inset-0 z-40 pointer-events-none flex items-end"
+          {/* Avatar Button */}
+          <motion.button
+            onClick={() => {
+              if (!isDragging) setIsOpen(!isOpen);
+            }}
+            onMouseDown={handleMouseDown}
+            className="relative group cursor-move"
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <motion.div
-              className="w-full h-[60vh] max-h-[600px] bg-white rounded-t-3xl shadow-2xl overflow-hidden flex flex-col pointer-events-auto"
-              ref={chatPanelRef}
+            {/* Avatar in Wasserlinse */}
+            <div
+              className="relative w-[92px] h-[52px] rounded-full shadow-lg hover:shadow-xl transition-shadow overflow-hidden"
+              style={{
+                background:
+                  'radial-gradient(120% 130% at 35% 25%, rgba(186,230,253,0.85) 0%, rgba(56,150,200,0.55) 55%, rgba(12,74,110,0.65) 100%)',
+              }}
             >
-              {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
-                <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">M</span>
-                  </div>
-                  <div>
-                    <h2 className="text-sm font-bold text-gray-800">Marina</h2>
-                    <p className="text-xs text-gray-500">Dein Angel-Buddy</p>
-                  </div>
-                </div>
-                <button
-                  onClick={handleCloseChat}
-                  className="p-2 hover:bg-gray-200 rounded-full transition-colors"
-                >
-                  <ChevronUp size={20} />
-                </button>
+              <div className="absolute inset-0 flex items-center justify-center p-1">
+                <BuddyTextAvatar
+                  isTalking={isTalking}
+                  isListening={isListening}
+                />
               </div>
+            </div>
 
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
-                {messages.length === 0 ? (
-                  <div className="text-center text-gray-500 text-sm mt-4">
-                    <p className="font-semibold mb-1">👋 Hallo!</p>
-                    <p>Wie kann ich dir heute helfen?</p>
-                  </div>
-                ) : (
-                  messages.map((msg, idx) => (
-                    <div
-                      key={idx}
-                      className={`flex ${
-                        msg.role === 'user' ? 'justify-end' : 'justify-start'
-                      }`}
-                    >
-                      <div
-                        className={`max-w-xs px-4 py-2 rounded-lg text-sm ${
-                          msg.role === 'user'
-                            ? 'bg-blue-500 text-white rounded-br-none'
-                            : 'bg-gray-200 text-gray-900 rounded-bl-none'
-                        }`}
-                      >
-                        {msg.content}
-                      </div>
-                    </div>
-                  ))
-                )}
-
-                {isLoading && (
-                  <div className="flex justify-start">
-                    <div className="bg-gray-200 px-4 py-3 rounded-lg">
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" />
-                        <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-100" />
-                        <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-200" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {chatError && (
-                  <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded-lg text-sm">
-                    {chatError}
-                  </div>
-                )}
-              </div>
-
-              {/* Input */}
-              <div className="border-t border-gray-200 bg-white p-4 space-y-2">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSendMessage();
-                      }
-                    }}
-                    placeholder="Schreib eine Frage..."
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    disabled={isLoading}
-                  />
-                  <button
-                    onClick={() => handleSendMessage()}
-                    disabled={isLoading || !inputValue.trim()}
-                    className="p-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-lg transition-colors"
-                  >
-                    <Send size={18} />
-                  </button>
-                </div>
-
-                {/* Voice Button */}
-                <button
-                  onClick={handleVoiceInput}
-                  disabled={isLoading}
-                  className={`w-full py-2 px-4 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-colors ${
-                    isListening
-                      ? 'bg-red-500 hover:bg-red-600 text-white'
-                      : 'bg-green-500 hover:bg-green-600 text-white disabled:bg-gray-300'
-                  }`}
-                >
-                  <Mic size={18} />
-                  {isListening ? 'Höre zu...' : 'Sprich'}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            {/* Voice indicator */}
+            {isSpeaking && (
+              <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full ring-2 ring-white animate-pulse" />
+            )}
+            {isListening && (
+              <div className="absolute -bottom-0.5 -left-0.5 w-3.5 h-3.5 bg-red-500 rounded-full ring-2 ring-white animate-pulse" />
+            )}
+          </motion.button>
+        </div>
+      </div>
     </>
   );
 }
