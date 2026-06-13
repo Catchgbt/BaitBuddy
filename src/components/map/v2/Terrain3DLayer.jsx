@@ -3,8 +3,8 @@ import { useMap } from 'react-leaflet';
 import L from 'leaflet';
 
 /**
- * Terrain3DLayer - 3D Terrain Visualisierung mit Cesium
- * oder alternativ mit Canvas-basierter Höhenvisualisierung
+ * Terrain3DLayer - 3D Terrain Visualisierung mit Canvas
+ * Gradient-basierte Höhenvisualisierung mit Konturlinien
  */
 function Terrain3DLayer({ visible = false, mode = 'canvas' }) {
   const map = useMap();
@@ -14,54 +14,9 @@ function Terrain3DLayer({ visible = false, mode = 'canvas' }) {
   React.useEffect(() => {
     if (!map || !visible) return;
 
-    if (mode === 'cesium') {
-      // Cesium 3D Terrain (requires external library)
-      loadCesium3D(map);
-    } else {
-      // Canvas-based terrain overlay
-      loadCanvasTerrain(map);
-    }
-  }, [map, visible, mode]);
-
-  const loadCesium3D = async (map) => {
-    try {
-      // Load Cesium library dynamically
-      const cesium = await import('cesium');
-
-      // Setup Cesium container
-      const cesiumContainer = document.createElement('div');
-      cesiumContainer.id = 'cesium-container';
-      cesiumContainer.style.cssText = `
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 10;
-        opacity: 0.7;
-      `;
-
-      // Initialize Cesium viewer with terrain
-      const viewer = new cesium.Viewer(cesiumContainer, {
-        terrainProvider: await cesium.CesiumTerrainProvider.fromUrl(
-          'https://assets.cesium.com/1/',
-          {
-            requestWaterMask: true,
-            requestVertexNormals: true,
-          }
-        ),
-        baseLayerPicker: false,
-        animation: false,
-        timeline: false,
-      });
-
-      setTerrain(viewer);
-      return viewer;
-    } catch (error) {
-      console.warn('Cesium 3D not available:', error);
-      loadCanvasTerrain(map);
-    }
-  };
+    // Canvas-based terrain overlay (only mode)
+    loadCanvasTerrain(map);
+  }, [map, visible]);
 
   const loadCanvasTerrain = (map) => {
     // Canvas-based elevation visualization
