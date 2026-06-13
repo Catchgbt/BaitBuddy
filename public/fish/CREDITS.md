@@ -1,17 +1,18 @@
 # Bildnachweise — Hintergrund-Fische (`public/fish/`)
 
 Die animierten Fische in der Unterwasser-Szene (`src/components/home/WaterScene.jsx`)
-sind freigestellte Fotos von **Wikimedia Commons**. Alle Motive stehen unter
-**Public Domain** oder **CC0** und erfordern damit keine Namensnennung — die Quellen
-sind hier dennoch zur Nachvollziehbarkeit dokumentiert.
+sind freigestellte Fotos von **Wikimedia Commons**.
 
-Bearbeitung: Hintergrund automatisch freigestellt (rembg), auf das Motiv
-zugeschnitten, einheitlich nach rechts ausgerichtet und als WebP (Alpha) optimiert.
+Bearbeitung: Hintergrund automatisch freigestellt (rembg), zugeschnitten,
+einheitlich nach rechts ausgerichtet, als WebP (Alpha) optimiert. Bei den
+CC-BY-SA-Motiven steht das **bearbeitete Bild unter derselben Lizenz**.
+
+Die sichtbare Namensnennung erfolgt zusätzlich im Impressum der App.
 
 ## Karpfen → `carp.webp`
-- Quelle: [Cyprinus carpio by Ellen Edmondson.jpg](https://commons.wikimedia.org/wiki/File%3ACyprinus_carpio_by_Ellen_Edmondson.jpg)
-- Urheber: Painting by Ellen Edmonson
-- Lizenz: Public domain
+- Quelle: [Cyprinus carpio 2008 G1 (cropped).jpg](https://commons.wikimedia.org/wiki/File%3ACyprinus_carpio_2008_G1_%28cropped%29.jpg)
+- Urheber: George Chernilevsky
+- Lizenz: CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0)
 
 ## Barsch → `perch.webp`
 - Quelle: [Perca fluviatilis 2008 G1.jpg](https://commons.wikimedia.org/wiki/File%3APerca_fluviatilis_2008_G1.jpg)
@@ -34,6 +35,6 @@ zugeschnitten, einheitlich nach rechts ausgerichtet und als WebP (Alpha) optimie
 - Lizenz: Public domain
 
 ## Wels → `catfish.webp`
-- Quelle: [Silurus glanis Linnaeus, 1758 2599925104.jpg](https://commons.wikimedia.org/wiki/File%3ASilurus_glanis_Linnaeus%2C_1758_2599925104.jpg)
-- Urheber: Naturalis Biodiversity Center
-- Lizenz: CC0
+- Quelle: [European Catfish (Silurus glanis) (13532570755).jpg](https://commons.wikimedia.org/wiki/File%3AEuropean_Catfish_%28Silurus_glanis%29_%2813532570755%29.jpg)
+- Urheber: Bernard DUPONT from FRANCE
+- Lizenz: CC BY-SA 2.0 (https://creativecommons.org/licenses/by-sa/2.0)

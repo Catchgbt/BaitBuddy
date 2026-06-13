@@ -7,8 +7,9 @@ import React, { useState } from 'react';
 // verlassen hat, schwimmt die nächste Art herein (Karpfen → Barsch → Forelle
 // → Hecht → Zander → Wels → …). Rein dekorativ (pointer-events: none).
 //
-// Echte, freigestellte Fischfotos (Wikimedia Commons, alle PD/CC0 — Quellen &
-// Lizenzen siehe public/fish/CREDITS.md). Alle Motive blicken nach rechts; beim
+// Echte, freigestellte Fischfotos (Wikimedia Commons; Barsch/Forelle/Hecht/Zander
+// Public Domain, Karpfen & Wels CC-BY-SA mit Namensnennung im Impressum — Quellen
+// & Lizenzen siehe public/fish/CREDITS.md). Alle Motive blicken nach rechts; beim
 // Schwimmen nach links spiegelt .bb-fish-flip. WebP mit Alpha, je Datei < 80 KB.
 const FISH_SPECIES = [
   { id: 'carp', name: 'Karpfen', size: 1.0, image: '/fish/carp.webp' },
