@@ -37,6 +37,7 @@ const angelshopIcon = createCustomIcon("#eab308", "🛒", 28);
 const angelParkEuIcon = createCustomIcon("#ea580c", "🌍", 28);
 const locationIcon = createCustomIcon("#ef4444", "📌");
 const newSpotIcon = createCustomIcon("#f59e0b", "⭐");
+const tiefenkartenIcon = createCustomIcon("#a855f7", "🗻", 36);
 
 function MapEvents({ onMapClick }) {
   useMapEvents({
@@ -151,6 +152,7 @@ export default function MapView({
   angelshops = [],
   angelparksEu = [],
   waterBodies = [],
+  tiefenkarten = [],
   currentLocation,
   newSpotMarker,
   onMapClick,
@@ -430,6 +432,40 @@ export default function MapView({
                   📮 {park.address}
                 </p>
               )}
+            </div>
+          </Popup>
+        </Marker>
+      ))}
+
+      {/* Tiefenkarten */}
+      {tiefenkarten.map((tk) => (
+        <Marker
+          key={tk.id}
+          position={[tk.koordinaten.lat, tk.koordinaten.lng]}
+          icon={tiefenkartenIcon}
+          eventHandlers={{
+            click: () => window.open(tk.url, '_blank')
+          }}
+          alt={`Tiefenkarte: ${tk.name}`}
+          aria-label={`Tiefenkarte für ${tk.fluss}`}
+        >
+          <Popup>
+            <div className="text-sm max-w-xs">
+              <strong className="text-base text-violet-400">{tk.name}</strong>
+              <p className="text-xs text-gray-400 mt-1">
+                📍 {tk.region}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                {tk.beschreibung}
+              </p>
+              <a
+                href={tk.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-violet-400 underline mt-2 inline-block hover:text-violet-300"
+              >
+                📄 PDF öffnen
+              </a>
             </div>
           </Popup>
         </Marker>

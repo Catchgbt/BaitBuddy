@@ -38,12 +38,14 @@ function MapController() {
     parks: true,
     waters: true,
     angelshops: false,
-    angelparksEu: false
+    angelparksEu: false,
+    tiefenkarten: false
   });
   const [waterBodies, setWaterBodies] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [searchQuery, setSearchQuery] = useState('');
+  const [tiefenkarten, setTiefenkarten] = useState([]);
 
   // Query data with react-query
   const { data: spots = [] } = useQuery({
@@ -93,9 +95,21 @@ function MapController() {
 
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
-    
+
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+
+    // Lade Tiefenkarten
+    const loadTiefenkarten = async () => {
+      try {
+        const response = await fetch('/assets/tiefenkarten/tiefenkarten.json');
+        const data = await response.json();
+        setTiefenkarten(data);
+      } catch (error) {
+        console.warn('Tiefenkarten konnten nicht geladen werden:', error);
+      }
+    };
+    loadTiefenkarten();
 
     return () => {
       window.removeEventListener('online', handleOnline);
@@ -262,6 +276,9 @@ function MapController() {
     ? allAngelparksEu.filter(park => matchesSearch(park.name))
     : [];
   const filteredWaters = filters.waters ? waterBodies : [];
+  const filteredTiefenkarten = filters.tiefenkarten
+    ? tiefenkarten.filter(tk => matchesSearch(tk.name))
+    : [];
 
   if (!isInitialized || !mapCenter) {
     return (
@@ -355,7 +372,7 @@ function MapController() {
 
            <div aria-live="polite" aria-atomic="true">
              <div className="text-xs text-gray-300 px-2 py-1 bg-gray-900/50 rounded" role="status">
-               🗺️ {filteredSpots.length} Spots • 🏛️ {filteredClubs.length} Vereine • 🛒 {filteredAngelshops.length} Shops • 🌍 {filteredAngelparksEu.length} EU Parks • 💧 {filteredWaters.length} Gewässer
+               🗺️ {filteredSpots.length} Spots • 🏛️ {filteredClubs.length} Vereine • 🛒 {filteredAngelshops.length} Shops • 🌍 {filteredAngelparksEu.length} EU Parks • 💧 {filteredWaters.length} Gewässer • 🗻 {filteredTiefenkarten.length} Tiefenkarten
              </div>
            </div>
 
@@ -420,6 +437,16 @@ function MapController() {
                }`}
              >
                💧 Gewässer
+             </button>
+             <button
+               onClick={() => setFilters({ ...filters, tiefenkarten: !filters.tiefenkarten })}
+               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                 filters.tiefenkarten
+                   ? 'bg-violet-600 text-white ring-2 ring-violet-400/50'
+                   : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+               }`}
+             >
+               🗻 Tiefenkarten
              </button>
            </div>
           </div>
@@ -493,6 +520,7 @@ function MapController() {
            angelshops={filteredAngelshops}
            angelparksEu={filteredAngelparksEu}
            waterBodies={filteredWaters}
+           tiefenkarten={filteredTiefenkarten}
            currentLocation={currentLocation}
            newSpotMarker={newSpotCoords}
            onMapClick={handleMapClick}
