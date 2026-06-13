@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { auth } from "@/api/auth";
 import { api } from "@/api/frontendClient";
 
@@ -31,6 +32,7 @@ function Avatar({ name, initials }) {
 }
 
 export default function Events() {
+  const navigate = useNavigate();
   const [competitions, setCompetitions] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -112,11 +114,21 @@ export default function Events() {
     <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 px-4 py-8 max-w-2xl mx-auto pb-32">
       <div className="space-y-6">
         {/* Header */}
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-black bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-            🏆 Wettbewerbe
-          </h1>
-          <p className="text-gray-400 text-sm">Tritt Wettbewerben bei und sammle Punkte für Premium-Zugang</p>
+        <div className="text-center space-y-4">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-black bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+              🏆 Wettbewerbe
+            </h1>
+            <p className="text-gray-400 text-sm">Tritt Wettbewerben bei und sammle Punkte für Premium-Zugang</p>
+          </div>
+          {currentUser && (
+            <button
+              onClick={() => navigate('/events/create')}
+              className="inline-block px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-bold rounded-lg transition text-sm"
+            >
+              ➕ Neues Event erstellen
+            </button>
+          )}
         </div>
 
         {/* Competition Cards */}
