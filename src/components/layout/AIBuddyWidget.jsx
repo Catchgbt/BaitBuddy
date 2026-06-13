@@ -366,10 +366,24 @@ export default function AIBuddyWidget() {
 
           {/* Avatar Button */}
           <motion.button
+            key={currentPage}
             onClick={() => setIsOpen(!isOpen)}
             className="relative group cursor-pointer"
-            whileHover={{ scale: 1.08 }}
+            whileHover={{ scale: 1.15 }}
             whileTap={{ scale: 0.95 }}
+            initial={{ scale: 0.5, rotate: -12, opacity: 0 }}
+            animate={{
+              scale: 1,
+              opacity: 1,
+              rotate: [0, -6, 6, -4, 4, 0],
+              y: [0, -6, 0, -3, 0],
+            }}
+            transition={{
+              scale: { type: 'spring', stiffness: 300, damping: 12 },
+              opacity: { duration: 0.3 },
+              rotate: { duration: 2.4, repeat: Infinity, ease: 'easeInOut' },
+              y: { duration: 2.4, repeat: Infinity, ease: 'easeInOut' },
+            }}
           >
             {/* Runder Foto-Avatar Sabrina */}
             <div
