@@ -318,85 +318,66 @@ export default function MapPage() {
       />
 
       <div className="max-w-7xl mx-auto p-4 space-y-4">
-        <NewFeaturesNotification />
-        {mapMode === 'guided' && <MapFeaturesInfo />}
+        {/* Removed: NewFeaturesNotification - Alle Infos sind jetzt im MapNavigationHub */}
+        {/* Removed: MapFeaturesInfo - Integriert in MapNavigationHub */}
 
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]">
-              Karte & Spots
+              🗺️ Karte & Spots — Komplett mit 6 Advanced Features
             </h1>
             <p className="text-sm text-gray-400 mt-1">
-              Klicke auf die Karte, um einen neuen Spot hinzuzufügen
+              🎣 Klicke unten rechts auf den 🟦 Hub um alle neuen Features zu entdecken
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="glass-morphism border-gray-800">
+        {/* Simplified Info Cards - nur essenzielle Infos */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className="glass-morphism border-cyan-700 bg-cyan-900/20">
             <CardContent className="p-4">
-              <div className="text-xs text-gray-400 mb-2">KARTENFUNKTIONEN</div>
-              <div className="space-y-2 text-sm text-gray-300">
-                <div className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-red-500 rounded-full mt-1.5"></div>
-                  <span>Rote Marker = Deine Spots</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5"></div>
-                  <span>Grüne Marker = Angelvereine & Parks</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5"></div>
-                  <span>Blauer Marker = Dein Standort</span>
-                </div>
-                <div className="text-xs text-gray-500 mt-2">
-                  💡 Klicke auf Marker für Details & Fahrzeit
-                </div>
-                <div className="text-xs text-cyan-400 mt-2 font-semibold">
-                  📍 Klicke auf die Karte zum Hinzufügen
-                </div>
+              <div className="text-xs text-cyan-400 mb-2 font-semibold">✨ NEU: 6 ADVANCED FEATURES</div>
+              <div className="space-y-1 text-xs text-cyan-200">
+                <div>✅ Offline Tile-Caching (Phase 1)</div>
+                <div>✅ Relief-Shading (Phase 2)</div>
+                <div>✅ 3D-Terrain (Phase 3)</div>
+                <div>✅ Hydrographische Daten (Phase 4)</div>
+                <div>✅ Satelliten-Bilder (Phase 5)</div>
+                <div>✅ Cache-Optimierung (Phase 6)</div>
+              </div>
+              <div className="text-xs text-cyan-600 mt-2 italic">
+                → Klick den Hub rechts unten um Features zu aktivieren
               </div>
             </CardContent>
           </Card>
 
           <Card className="glass-morphism border-gray-800">
             <CardContent className="p-4">
-              <div className="text-xs text-gray-400 mb-2">ÜBERSICHT</div>
+              <div className="text-xs text-gray-400 mb-2">DEINE SPOTS & ORTE</div>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-300">Deine Spots:</span>
+                  <span className="text-gray-300">📍 Deine Spots:</span>
                   <span className="text-cyan-400 font-semibold">{spots.length}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-300">Öffentliche Orte:</span>
+                  <span className="text-gray-300">🏛️ Angelvereine & Parks:</span>
                   <span className="text-green-400 font-semibold">{publicLocations.length}</span>
                 </div>
+                {nearestSpot && travelInfo && (
+                  <>
+                    <div className="border-t border-gray-700 pt-2 mt-2">
+                      <div className="text-xs text-gray-500 mb-1">🎯 Nächster Spot:</div>
+                      <div className="font-semibold text-white text-sm">{nearestSpot.name}</div>
+                      <div className="flex gap-2 text-xs text-gray-400 mt-1">
+                        <span>📏 {travelInfo.distance_km?.toFixed(1)} km</span>
+                        <span>⏱️ {travelInfo.duration_min} min</span>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>
-
-          {nearestSpot && travelInfo && (
-            <Card className="glass-morphism border-cyan-800 bg-cyan-900/10">
-              <CardContent className="p-4">
-                <div className="text-xs text-cyan-400 mb-2">NÄCHSTER SPOT</div>
-                <div className="space-y-2">
-                  <div className="text-sm font-semibold text-white truncate">
-                    {nearestSpot.name}
-                  </div>
-                  <div className="flex items-center gap-3 text-xs text-gray-300">
-                    <div className="flex items-center gap-1">
-                      <Ruler className="w-3 h-3" />
-                      <span>{travelInfo.distance_km?.toFixed(1)} km</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      <span>{travelInfo.duration_min} Min</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
 
         <div className="h-[600px] rounded-2xl overflow-hidden border-2 border-gray-800 shadow-2xl">
