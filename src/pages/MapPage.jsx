@@ -408,7 +408,7 @@ export default function MapPage() {
           </Card>
         </div>
 
-        <div className="h-[600px] rounded-2xl overflow-hidden border-2 border-gray-800 shadow-2xl relative z-10">
+        <div className="h-[400px] rounded-2xl overflow-hidden border-2 border-gray-800 shadow-2xl relative z-10">
           <MapContainer
             center={mapCenter}
             zoom={mapZoom}
