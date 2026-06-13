@@ -9,7 +9,7 @@
   "crons": [
     {
       "path": "/api/admin/events/auto-archive",
-      "schedule": "0 * * * *"
+      "schedule": "0 2 * * *"
     },
     {
       "path": "/api/admin/rewards/auto-activate",

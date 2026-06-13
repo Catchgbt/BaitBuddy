@@ -147,12 +147,12 @@ PATCH  /api/admin/events/auto-archive            -- Abgelaufene Events archivier
 
 ## 🤖 Cron-Jobs (Serverless)
 
-### 1. Monatliche Leaderboard-Generierung
-**Zeitplan**: 1. des Monats, 00:00 UTC
+**Hobby-Plan Anpassung**: Cron-Jobs sind täglich auf max. 1x begrenzt. Pro-Plan und höher haben keine Limits.
+
+### 1. Leaderboard-Generierung (1. des Monats, 00:00 UTC)
 **Handler**: `POST /api/admin/leaderboards/monthly/generate`
 
 ```bash
-# curl beispiel:
 curl -X POST https://bait-buddy.vercel.app/api/admin/leaderboards/monthly/generate \
   -H "x-api-key: $ADMIN_API_KEY"
 ```
@@ -164,8 +164,7 @@ curl -X POST https://bait-buddy.vercel.app/api/admin/leaderboards/monthly/genera
 4. Setzt `reward_status = 'pending'` für Rank 1
 5. Speichert in `monthly_leaderboards` Tabelle
 
-### 2. Auto-Reward-Aktivierung
-**Zeitplan**: Täglich 01:00 UTC
+### 2. Auto-Reward-Aktivierung (Täglich 01:00 UTC)
 **Handler**: `POST /api/admin/rewards/auto-activate`
 
 ```bash
@@ -179,8 +178,7 @@ curl -X POST https://bait-buddy.vercel.app/api/admin/rewards/auto-activate \
 3. Ruft Supabase Auth Admin API auf: `updateUserById(user_id, { premium_plan_id: 'basic', premium_expires_at: now() + 30d })`
 4. Setzt `reward_status = 'claimed'`
 
-### 3. Event-Archivierung
-**Zeitplan**: Stündlich
+### 3. Event-Archivierung (Täglich 02:00 UTC)
 **Handler**: `PATCH /api/admin/events/auto-archive`
 
 ```bash
@@ -195,7 +193,7 @@ curl -X PATCH https://bait-buddy.vercel.app/api/admin/events/auto-archive \
 
 ## 📦 Vercel Cron-Konfiguration
 
-Ergänze `vercel.json`:
+**Hinweis**: Hobby-Plan ist auf max. 1x täglich begrenzt. Pro-Plan und höher können mehrmals täglich laufen.
 
 ```json
 {
@@ -210,11 +208,16 @@ Ergänze `vercel.json`:
     },
     {
       "path": "/api/admin/events/auto-archive",
-      "schedule": "0 * * * *"
+      "schedule": "0 2 * * *"
     }
   ]
 }
 ```
+
+**Zeitpläne (Hobby-Plan optimiert)**:
+- 00:00 UTC - Leaderboard-Generierung (1. des Monats)
+- 01:00 UTC - Reward-Aktivierung (täglich)
+- 02:00 UTC - Event-Archivierung (täglich)
 
 ## 🧪 Testing
 
