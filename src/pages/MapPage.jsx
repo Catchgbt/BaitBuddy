@@ -19,6 +19,8 @@ import Terrain3DLayer from "@/components/map/v2/Terrain3DLayer";
 import HydrographicAnalysis from "@/components/map/v2/HydrographicAnalysis";
 import SatelliteOverlayLayer from "@/components/map/v2/SatelliteOverlayLayer";
 import AdvancedCacheManager from "@/components/map/v2/AdvancedCacheManager";
+import MapNavigationHub from "@/components/map/MapNavigationHub";
+import MapModeManager from "@/components/map/MapModeManager";
 
 // Leaflet CSS laden
 if (typeof document !== "undefined") {
@@ -107,6 +109,12 @@ export default function MapPage() {
   const [show3DTerrain, setShow3DTerrain] = useState(false);
   const [showHydrographic, setShowHydrographic] = useState(false);
   const [showSatellite, setShowSatellite] = useState(false);
+  const [mapMode, setMapMode] = useState(() => {
+    return localStorage.getItem('mapMode') || 'guided';
+  });
+  const [isFirstTime, setIsFirstTime] = useState(() => {
+    return !localStorage.getItem('mapTourCompleted');
+  });
 
   useEffect(() => {
     loadMapData();
@@ -258,6 +266,36 @@ export default function MapPage() {
     setClickedCoords(null);
   };
 
+  const handleModeChange = (newMode) => {
+    setMapMode(newMode);
+    localStorage.setItem('mapMode', newMode);
+    toast.success(`Modus gewechselt zu ${newMode === 'guided' ? 'Geführt' : newMode === 'simple' ? 'Einfach' : 'Erweitert'}`);
+  };
+
+  const handleFeatureSelect = (featureId) => {
+    // Feature-Aktivierung basierend auf auswahl
+    switch(featureId) {
+      case 'relief-shading':
+        setShowHillshade(!showHillshade);
+        toast.success(showHillshade ? 'Relief-Shading deaktiviert' : 'Relief-Shading aktiviert');
+        break;
+      case '3d-terrain':
+        setShow3DTerrain(!show3DTerrain);
+        toast.success(show3DTerrain ? '3D-Terrain deaktiviert' : '3D-Terrain aktiviert');
+        break;
+      case 'satellite':
+        setShowSatellite(!showSatellite);
+        toast.success(showSatellite ? 'Satelliten-Bilder deaktiviert' : 'Satelliten-Bilder aktiviert');
+        break;
+      case 'hydrographic':
+        setShowHydrographic(!showHydrographic);
+        toast.success(showHydrographic ? 'Hydrographische Daten deaktiviert' : 'Hydrographische Daten aktiviert');
+        break;
+      default:
+        toast.info(`Feature "${featureId}" wurde selektiert`);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
@@ -271,9 +309,17 @@ export default function MapPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 pb-32">
+      {/* Mode Manager & Guided Tour */}
+      <MapModeManager
+        mapMode={mapMode}
+        onModeChange={handleModeChange}
+        isFirstTime={isFirstTime}
+        onTourComplete={() => setIsFirstTime(false)}
+      />
+
       <div className="max-w-7xl mx-auto p-4 space-y-4">
         <NewFeaturesNotification />
-        <MapFeaturesInfo />
+        {mapMode === 'guided' && <MapFeaturesInfo />}
 
         <div className="flex items-center justify-between">
           <div>
@@ -486,6 +532,13 @@ export default function MapPage() {
           onUpdate={loadMapData}
         />
       )}
+
+      {/* Map Navigation Hub - Zentrale Steuerstelle */}
+      <MapNavigationHub
+        onFeatureSelect={handleFeatureSelect}
+        onModeChange={handleModeChange}
+        currentMode={mapMode}
+      />
     </div>
   );
 }
