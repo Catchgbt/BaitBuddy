@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Polyline, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import { Play, Pause, X, Plus, Navigation, Zap, Droplets } from 'lucide-react';
+import { Play, Pause, X, Plus, Navigation, Zap, Droplets, Moon } from 'lucide-react';
 import { toast } from 'sonner';
 import TideWidget from '../components/LiveTrip/TideWidget';
+import SolunarWidget from '../components/LiveTrip/SolunarWidget';
 
 /**
  * LiveTripPage - Live-Angeltour mit GPS-Tracking
@@ -32,6 +33,7 @@ function LiveTripPage() {
   const [watchId, setWatchId] = useState(null);
   const [showCatchModal, setShowCatchModal] = useState(false);
   const [mapCenter, setMapCenter] = useState([51.1657, 10.4515]);
+  const [infoTab, setInfoTab] = useState('tides'); // 'tides' oder 'solunar'
   const routeRef = useRef([]);
   const startTimeRef = useRef(null);
   const pauseStartRef = useRef(null);
@@ -406,15 +408,55 @@ function LiveTripPage() {
                 )}
               </div>
 
-              {/* Gezeiten-Widget */}
-              <div className="h-[400px] overflow-y-auto">
-                {currentLocation && (
-                  <TideWidget
-                    latitude={currentLocation.latitude}
-                    longitude={currentLocation.longitude}
-                    isActive={isRecording}
-                  />
-                )}
+              {/* Gezeiten + Solunar Widgets mit Tabs */}
+              <div className="h-[400px] flex flex-col">
+                {/* Tab-Navigation */}
+                <div className="flex gap-2 border-b border-gray-700 p-2 bg-gray-800/50">
+                  <button
+                    onClick={() => setInfoTab('tides')}
+                    className={`flex items-center gap-1 px-3 py-1 rounded text-xs font-semibold transition ${
+                      infoTab === 'tides'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                  >
+                    <Droplets className="w-3 h-3" />
+                    Gezeiten
+                  </button>
+                  <button
+                    onClick={() => setInfoTab('solunar')}
+                    className={`flex items-center gap-1 px-3 py-1 rounded text-xs font-semibold transition ${
+                      infoTab === 'solunar'
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                  >
+                    <Moon className="w-3 h-3" />
+                    Solunar
+                  </button>
+                </div>
+
+                {/* Tab-Content */}
+                <div className="flex-1 overflow-y-auto p-3">
+                  {currentLocation && (
+                    <>
+                      {infoTab === 'tides' && (
+                        <TideWidget
+                          latitude={currentLocation.latitude}
+                          longitude={currentLocation.longitude}
+                          isActive={isRecording}
+                        />
+                      )}
+                      {infoTab === 'solunar' && (
+                        <SolunarWidget
+                          latitude={currentLocation.latitude}
+                          longitude={currentLocation.longitude}
+                          isActive={isRecording}
+                        />
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
