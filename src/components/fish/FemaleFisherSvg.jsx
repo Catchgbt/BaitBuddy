@@ -1,86 +1,31 @@
 import React from 'react';
+import CarpSvg from '@/components/fish/CarpSvg';
 
-// Karpfen-Avatar - Kompakter, animierter Karpfen als Buddy
-// Koordinatenraum: 0–200 (x) × 0–120 (y)
-
+// KI-Buddy-Avatar: verwendet denselben hochwertigen Karpfen wie der Hintergrund
+// (CarpSvg, Koordinatenraum 0–460 × 0–170, blickt nach rechts) und setzt ihn in
+// eine schwimmende "Wassertropfen"-Linse. Die Flossen-Animationen (.pk-tail,
+// .pk-dorsal, …) kommen aus PIKE_BASE_CSS, das von WaterScene global injiziert
+// wird; hier kommen nur die Buddy-spezifischen Animationen dazu.
 export const BUDDY_FISH_CSS = `
-  .bf-fish { }
-
-  /* Body Animation - subtile Atmung */
-  .bf-body {
-    transform-box: fill-box;
-    transform-origin: 50% 50%;
-    animation: bfBreathing 2.5s ease-in-out infinite;
+  /* sanftes Schwimm-Wippen des ganzen Karpfens */
+  .bf-swim { transform-box: fill-box; transform-origin: 50% 50%; animation: bfSwimBob 5s ease-in-out infinite; }
+  .bf-swim-active { animation-duration: 2.4s; }
+  @keyframes bfSwimBob {
+    0%, 100% { transform: translateY(0) rotate(-1.2deg); }
+    50%      { transform: translateY(-3px) rotate(1.2deg); }
   }
 
-  /* Tail Animation */
-  .bf-tail {
-    transform-box: fill-box;
-    transform-origin: 5% 50%;
-    animation: bfTailWag 1.2s ease-in-out infinite alternate;
-  }
-
-  .bf-tail-talking {
-    animation: bfTailWagFast 0.6s ease-in-out infinite alternate;
-  }
-
-  /* Fins */
-  .bf-fin-dorsal {
-    transform-box: fill-box;
-    transform-origin: 45% 100%;
-    animation: bfFinSway 2.2s ease-in-out infinite alternate;
-  }
-
-  .bf-fin-pect {
-    transform-box: fill-box;
-    transform-origin: 30% 50%;
-    animation: bfFinFlutter 1.8s ease-in-out infinite alternate;
-  }
-
-  /* Mouth Animation */
-  .bf-mouth {
-    transform-box: fill-box;
-    transform-origin: 50% 50%;
-  }
-
-  .bf-mouth-talking {
-    animation: bfMouthTalk 0.3s ease-in-out infinite;
-  }
-
-  @keyframes bfBreathing {
-    0%, 100% { transform: translateY(0px) scaleX(1); }
-    50% { transform: translateY(-1px) scaleX(1.02); }
-  }
-
-  @keyframes bfTailWag {
-    from { transform: rotateZ(-2deg); }
-    to { transform: rotateZ(2deg); }
-  }
-
-  @keyframes bfTailWagFast {
-    from { transform: rotateZ(-3deg); }
-    to { transform: rotateZ(3deg); }
-  }
-
-  @keyframes bfFinSway {
-    from { transform: rotateZ(-1deg); }
-    to { transform: rotateZ(1deg); }
-  }
-
-  @keyframes bfFinFlutter {
-    from { transform: rotateZ(-2deg); }
-    to { transform: rotateZ(2deg); }
-  }
-
-  @keyframes bfMouthTalk {
-    0%, 100% { transform: scaleY(1); }
-    50% { transform: scaleY(1.3); }
+  /* aufsteigende Luftblasen am Maul (nur sichtbar wenn Buddy "spricht"/zuhört) */
+  .bf-bubble { transform-box: fill-box; opacity: 0; animation: bfBubbleRise 2.2s ease-in-out infinite; }
+  @keyframes bfBubbleRise {
+    0%   { transform: translate(0, 0) scale(0.6); opacity: 0; }
+    20%  { opacity: 0.9; }
+    80%  { opacity: 0.5; }
+    100% { transform: translate(6px, -34px) scale(1.15); opacity: 0; }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .bf-body, .bf-tail, .bf-fin-dorsal, .bf-fin-pect, .bf-mouth-talking {
-      animation: none;
-    }
+    .bf-swim, .bf-bubble { animation: none; }
   }
 `;
 
@@ -88,134 +33,59 @@ export default function FemaleFisherSvg({
   uid = 'bf',
   isTalking = false,
   isNodding = false,
-  showBubble = false
+  showBubble = false,
 }) {
-  const bodyGradId = `${uid}-body-grad`;
-  const finGradId = `${uid}-fin-grad`;
-  const tailGradId = `${uid}-tail-grad`;
-
-  const bodyClass = `bf-body`;
-  const tailClass = `bf-tail ${isTalking ? 'bf-tail-talking' : ''}`;
-  const mouthClass = `bf-mouth ${isTalking ? 'bf-mouth-talking' : ''}`;
+  const active = isTalking || isNodding;
+  const haloId = `${uid}-halo`;
+  const lensId = `${uid}-lens`;
 
   return (
-    <svg viewBox="0 0 200 120" width="65" height="40">
+    <svg
+      viewBox="0 0 240 100"
+      width="100%"
+      height="100%"
+      role="img"
+      aria-label="KI-Buddy Karpfen"
+      style={{ overflow: 'visible' }}
+    >
       <defs>
-        {/* Karpfen-Farben: Gold/Braun */}
-        <linearGradient id={bodyGradId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#8b6914" />
-          <stop offset="50%" stopColor="#c9a84a" />
-          <stop offset="100%" stopColor="#a0824a" />
-        </linearGradient>
-
-        <linearGradient id={finGradId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#8a5a24" />
-          <stop offset="100%" stopColor="#5f3c16" />
-        </linearGradient>
-
-        <linearGradient id={tailGradId} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#a0824a" />
-          <stop offset="50%" stopColor="#c9a84a" />
-          <stop offset="100%" stopColor="#8b6914" />
+        {/* sanfter Lichthof hinter dem Fisch (Tiefe/Glanz) */}
+        <radialGradient id={haloId} cx="50%" cy="45%" r="60%">
+          <stop offset="0%" stopColor="#dff3ff" stopOpacity="0.55" />
+          <stop offset="55%" stopColor="#bfe6ff" stopOpacity="0.18" />
+          <stop offset="100%" stopColor="#bfe6ff" stopOpacity="0" />
+        </radialGradient>
+        {/* Glasreflex oben (Wassertropfen-Look) */}
+        <linearGradient id={lensId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.45" />
+          <stop offset="35%" stopColor="#ffffff" stopOpacity="0.06" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
         </linearGradient>
       </defs>
 
-      <g className="bf-fish">
-        {/* Karpfen Body */}
-        <g className={bodyClass}>
-          {/* Rückenlinie */}
-          <path
-            d="M 20,35 Q 45,25 90,25 Q 130,25 160,35"
-            stroke="#6b4914"
-            strokeWidth="1.5"
-            fill="none"
-            opacity="0.4"
-          />
+      {/* Lichthof */}
+      <ellipse cx="120" cy="52" rx="116" ry="46" fill={`url(#${haloId})`} />
 
-          {/* Hauptkörper - Ellipse */}
-          <ellipse cx="85" cy="55" rx="50" ry="28" fill={`url(#${bodyGradId})`} />
-
-          {/* Bauchseite - heller */}
-          <ellipse cx="85" cy="65" rx="45" ry="15" fill="#e2cf9a" opacity="0.4" />
-
-          {/* Schuppen-Andeutung */}
-          <g fill="none" stroke="#6b4914" strokeWidth="0.6" opacity="0.3">
-            <circle cx="50" cy="48" r="3" />
-            <circle cx="65" cy="44" r="3" />
-            <circle cx="80" cy="42" r="3" />
-            <circle cx="95" cy="42" r="3" />
-            <circle cx="110" cy="44" r="3" />
-            <circle cx="125" cy="48" r="3" />
-
-            <circle cx="45" cy="62" r="2.5" />
-            <circle cx="60" cy="60" r="2.5" />
-            <circle cx="75" cy="59" r="2.5" />
-            <circle cx="90" cy="59" r="2.5" />
-            <circle cx="105" cy="60" r="2.5" />
-            <circle cx="120" cy="62" r="2.5" />
-          </g>
-
-          {/* Kiemen */}
-          <path
-            d="M 130,45 C 128,55 128,65 130,72"
-            stroke="#8b6914"
-            strokeWidth="1"
-            fill="none"
-            opacity="0.3"
-          />
-        </g>
-
-        {/* Schwanzflosse */}
-        <g className={tailClass}>
-          <path
-            d="M 30,48 L 5,35 L 8,55 L 5,75 L 30,62 Z"
-            fill={`url(#${tailGradId})`}
-            opacity="0.9"
-          />
-          {/* Tail Details */}
-          <g stroke="#6b4914" strokeWidth="0.5" opacity="0.3" fill="none">
-            <line x1="18" y1="40" x2="8" y2="32" />
-            <line x1="18" y1="62" x2="8" y2="70" />
-          </g>
-        </g>
-
-        {/* Rückenflosse */}
-        <g className="bf-fin-dorsal">
-          <path
-            d="M 80,32 L 75,18 L 70,32 Z"
-            fill={`url(#${finGradId})`}
-            opacity="0.85"
-          />
-        </g>
-
-        {/* Brustflosse */}
-        <g className="bf-fin-pect">
-          <path
-            d="M 60,62 Q 50,70 45,75 Q 50,70 60,68 Z"
-            fill={`url(#${finGradId})`}
-            opacity="0.8"
-          />
-        </g>
-
-        {/* Kopf & Auge */}
-        <g>
-          {/* Auge */}
-          <circle cx="145" cy="48" r="3.5" fill="#ffffff" />
-          <circle cx="145" cy="48" r="2.5" fill="#8b6914" />
-          <circle cx="146" cy="47" r="1" fill="#000000" />
-          <circle cx="146.5" cy="46.5" r="0.5" fill="#ffffff" opacity="0.8" />
-
-          {/* Mund */}
-          <g className={mouthClass}>
-            <ellipse cx="155" cy="58" rx="2.5" ry="2" fill="#4a3012" />
-          </g>
-
-          {/* Lichtreflex */}
-          <ellipse cx="140" cy="45" rx="2" ry="1.5" fill="#ffffff" opacity="0.4" />
-        </g>
+      {/* Der echte Karpfen, skaliert in die Linse */}
+      <g
+        className={`bf-swim ${active ? 'bf-swim-active' : ''}`}
+        transform="translate(-2,8) scale(0.53)"
+        style={{ filter: 'drop-shadow(0 6px 10px rgba(2, 18, 32, 0.45))' }}
+      >
+        <CarpSvg uid={`buddy-${uid}`} />
       </g>
+
+      {/* Glasreflex-Sheen oben */}
+      <ellipse cx="110" cy="26" rx="92" ry="18" fill={`url(#${lensId})`} opacity="0.8" />
+
+      {/* aufsteigende Luftblasen am Maul (rechts oben), nur beim Sprechen/Zuhören */}
+      {showBubble && (
+        <g fill="#eaf7ff" stroke="#bfe6ff" strokeWidth="0.8">
+          <circle className="bf-bubble" style={{ animationDelay: '0s' }} cx="206" cy="42" r="3.2" />
+          <circle className="bf-bubble" style={{ animationDelay: '0.5s' }} cx="214" cy="46" r="2.2" />
+          <circle className="bf-bubble" style={{ animationDelay: '1s' }} cx="200" cy="40" r="1.8" />
+        </g>
+      )}
     </svg>
   );
 }
-
-

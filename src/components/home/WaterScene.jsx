@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import PikeSvg, { PIKE_BASE_CSS } from '@/components/fish/PikeSvg';
-import { FEMALE_FISHER_CSS } from '@/components/fish/FemaleFisherSvg';
 import CarpSvg from '@/components/fish/CarpSvg';
 import PerchSvg from '@/components/fish/PerchSvg';
 import TroutSvg from '@/components/fish/TroutSvg';
@@ -229,7 +228,6 @@ export default function WaterScene() {
         }
 
         ${PIKE_BASE_CSS}
-        ${FEMALE_FISHER_CSS}
         .bb-fish-near .pk-tail { animation-duration: 1.4s; }
         .bb-fish-far .pk-tail { animation-duration: 2.1s; }
 
