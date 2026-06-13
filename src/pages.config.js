@@ -93,6 +93,7 @@ import TripPlanner from './pages/TripPlanner';
 import Tutorials from './pages/Tutorials';
 import UsedGear from './pages/UsedGear';
 import VoiceControl from './pages/VoiceControl';
+import VoiceLecture from './pages/VoiceLecture';
 import WaterAnalysis from './pages/WaterAnalysis';
 import Weather from './pages/Weather';
 import WeatherAlerts from './pages/WeatherAlerts';
@@ -146,6 +147,7 @@ export const PAGES = {
     "Tutorials": Tutorials,
     "UsedGear": UsedGear,
     "VoiceControl": VoiceControl,
+    "VoiceLecture": VoiceLecture,
     "WaterAnalysis": WaterAnalysis,
     "Weather": Weather,
     "WeatherAlerts": WeatherAlerts,
