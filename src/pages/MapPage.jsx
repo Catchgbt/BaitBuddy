@@ -194,41 +194,64 @@ export default function MapPage() {
       setSpots(userSpots);
 
       try {
-        const response = await functions.invoke('angelspotsGeojson');
-        
-        if (response.data && response.data.features) {
-          const locations = response.data.features.map(feature => ({
-            id: feature.properties.id,
-            name: feature.properties.name,
-            category: feature.properties.category,
-            coordinates: {
-              lng: feature.geometry.coordinates[0],
-              lat: feature.geometry.coordinates[1]
-            },
-            address: feature.properties.address,
-            website: feature.properties.website,
-            source: feature.properties.source
-          }));
-          
-          setPublicLocations(locations);
-          
-          toast.success("Karte geladen", {
-            description: `${userSpots.length} eigene Spots, ${locations.length} öffentliche Orte`,
-            duration: 2000
-          });
-        } else {
-          const clubs = await entities.FishingClub.list();
-          setPublicLocations(clubs);
-          
-          toast.success("Karte geladen", {
-            description: `${userSpots.length} eigene Spots gefunden`,
-            duration: 2000
-          });
+        let allLocations = [];
+
+        // Versuche GeoJSON von API zu laden
+        try {
+          const response = await functions.invoke('angelspotsGeojson');
+
+          if (response && response.data && response.data.features && Array.isArray(response.data.features)) {
+            allLocations = response.data.features.map(feature => ({
+              id: feature.properties.id,
+              name: feature.properties.name,
+              category: feature.properties.category,
+              coordinates: {
+                lng: feature.geometry.coordinates[0],
+                lat: feature.geometry.coordinates[1]
+              },
+              address: feature.properties.address,
+              website: feature.properties.website,
+              source: feature.properties.source
+            }));
+          }
+        } catch (geoError) {
+          console.warn("GeoJSON konnte nicht geladen werden, versuche FishingClub Entität:", geoError);
         }
+
+        // Fallback: Lade Angelvereine und Parks über Entitäten
+        if (allLocations.length === 0) {
+          try {
+            const clubs = await entities.FishingClub.list() || [];
+            const transformedClubs = clubs.map(club => ({
+              id: club.id,
+              name: club.name || club.club_name,
+              category: 'club',
+              coordinates: {
+                lat: club.latitude || club.lat,
+                lng: club.longitude || club.lon
+              },
+              address: {
+                city: club.city || club.location
+              },
+              website: club.website
+            }));
+            allLocations = transformedClubs;
+          } catch (clubError) {
+            console.warn("FishingClub konnte nicht geladen werden:", clubError);
+          }
+        }
+
+        setPublicLocations(allLocations);
+
+        const locationCount = allLocations.length;
+        toast.success("Karte geladen", {
+          description: `${userSpots.length} eigene Spots${locationCount > 0 ? `, ${locationCount} Angelvereine & Parks` : ''}`,
+          duration: 2000
+        });
       } catch (error) {
-        console.warn("Öffentliche Locations konnten nicht geladen werden:", error);
+        console.error("Fehler beim Laden öffentlicher Locations:", error);
         setPublicLocations([]);
-        
+
         toast.success("Karte geladen", {
           description: `${userSpots.length} eigene Spots gefunden`,
           duration: 2000
@@ -308,7 +331,7 @@ export default function MapPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 pb-32">
+    <div className="bg-gray-950 pb-32 overflow-y-auto">
       {/* Mode Manager & Guided Tour */}
       <MapModeManager
         mapMode={mapMode}
@@ -317,7 +340,7 @@ export default function MapPage() {
         onTourComplete={() => setIsFirstTime(false)}
       />
 
-      <div className="max-w-7xl mx-auto p-4 space-y-4">
+      <div className="max-w-7xl mx-auto p-4 space-y-4 min-h-screen">
         {/* Removed: NewFeaturesNotification - Alle Infos sind jetzt im MapNavigationHub */}
         {/* Removed: MapFeaturesInfo - Integriert in MapNavigationHub */}
 
