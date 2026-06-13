@@ -218,12 +218,20 @@ function TripPlannerContent() {
               <p className="text-gray-400 mb-6">
                 Erstelle deinen ersten Angelplan mit der KI-Ausruestungsanalyse
               </p>
-              <Link to={createPageUrl("Gear")}>
-                <Button className="bg-emerald-600 hover:bg-emerald-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Ersten Plan erstellen
-                </Button>
-              </Link>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link to={createPageUrl("Gear")}>
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 w-full sm:w-auto">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Ersten Plan erstellen
+                  </Button>
+                </Link>
+                <Link to={createPageUrl("LiveTrip")}>
+                  <Button className="bg-red-600 hover:bg-red-700 w-full sm:w-auto">
+                    <Navigation className="w-4 h-4 mr-2" />
+                    Live-Trip starten
+                  </Button>
+                </Link>
+              </div>
             </CardContent>
           </Card>
         ) : (
