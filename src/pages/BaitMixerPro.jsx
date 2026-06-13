@@ -21,7 +21,9 @@ import {
   Heart,
   Zap,
   BarChart3,
-  BookOpen
+  BookOpen,
+  Download,
+  Share2
 } from "lucide-react";
 import { toast } from "sonner";
 import { useHaptic } from "@/components/utils/HapticFeedback";
@@ -61,6 +63,12 @@ export default function BaitMixerPro() {
   const [season, setSeason] = useState("allround");
   const [waterType, setWaterType] = useState("lake");
   const [prognosis, setPrognosis] = useState(null);
+
+  // Favoriten
+  const [favorites, setFavorites] = useState(() => {
+    const saved = localStorage.getItem("baitMixerFavorites");
+    return saved ? JSON.parse(saved) : [];
+  });
 
   // ──────────────────────────────────────────────────────────────────────────
   // INIT
@@ -216,10 +224,10 @@ Sei konkret und praktisch!`;
     queryKey: "baitRecipes",
     mutationFn: data => entities.BaitRecipe.create(data),
     optimisticUpdate: (old = [], data) => [
-      { id: `tmp-${Date.now()}`, ...data },
+      { id: `tmp-${Date.now()}`, ...data, isFavorite: false },
       ...old
     ],
-    onSuccess: () => {
+    onSuccess: (_, data) => {
       triggerHaptic("success");
       toast.success("Rezept gespeichert!");
       setRecipeName("");
@@ -244,6 +252,72 @@ Sei konkret und praktisch!`;
     setRecipeName("");
     setAiAnalysis("");
     triggerHaptic("light");
+  };
+
+  const toggleFavorite = (recipeId) => {
+    const updated = favorites.includes(recipeId)
+      ? favorites.filter(id => id !== recipeId)
+      : [...favorites, recipeId];
+    setFavorites(updated);
+    localStorage.setItem("baitMixerFavorites", JSON.stringify(updated));
+    triggerHaptic("light");
+  };
+
+  const exportRecipe = () => {
+    const totalPercentage = Object.values(mix).reduce((sum, val) => sum + val, 0);
+    const exportData = {
+      name: recipeName || "Rezept",
+      fish: targetFish,
+      category: mode,
+      season,
+      waterTemp,
+      ingredients: Object.entries(mix)
+        .filter(([_, val]) => val > 0)
+        .map(([name, val]) => `${name}: ${val}%`)
+        .join("\n"),
+      totalPercentage,
+      successRate: prognosis?.successRate || 0,
+      exportDate: new Date().toLocaleString("de-DE")
+    };
+
+    const text = `
+═══════════════════════════════════════
+  KI-Köder-Mischer Pro Rezept-Export
+═══════════════════════════════════════
+
+Rezept: ${exportData.name}
+Zielfisch: ${exportData.fish} | Typ: ${exportData.category}
+Jahreszeit: ${exportData.season}
+Wassertemperatur: ${exportData.waterTemp}°C
+Success-Rate Prognose: ${exportData.successRate}%
+
+───────────────────────────────────────
+ZUTATEN (Gesamtmix: ${exportData.totalPercentage}%)
+───────────────────────────────────────
+${exportData.ingredients}
+
+───────────────────────────────────────
+TIPPS ZUM AUSMISCHEN:
+───────────────────────────────────────
+1. Wiege alle Zutaten sorgfältig ab
+2. Mische Trockenzutaten zuerst
+3. Füge Öle langsam hinzu
+4. Knete die Masse gründlich durch
+5. Lagere kühl und trocken
+
+Exportiert: ${exportData.exportDate}
+═══════════════════════════════════════
+    `;
+
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `rezept-${recipeName.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Rezept exportiert!");
+    triggerHaptic("success");
   };
 
   const saveRecipe = () => {
@@ -311,21 +385,16 @@ Sei konkret und praktisch!`;
           <div className="text-center space-y-2">
             <div className="flex items-center justify-center gap-2 mb-2">
               <Sparkles className="w-8 h-8 text-cyan-400" />
-              <div className="relative">
-                <h1 className="text-3xl sm:text-4xl font-bold text-cyan-400 drop-shadow-[0_0_20px_rgba(34,211,238,0.8)]">
-                  KI-Köder-Mischer Pro
-                </h1>
-                <span className="absolute -top-2 -right-12 inline-block px-2 py-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold rounded-full animate-pulse">
-                  BETA
-                </span>
-              </div>
+              <h1 className="text-3xl sm:text-4xl font-bold text-cyan-400 drop-shadow-[0_0_20px_rgba(34,211,238,0.8)]">
+                KI-Köder-Mischer Pro
+              </h1>
               <Zap className="w-8 h-8 text-yellow-400" />
             </div>
             <p className="text-gray-400">
               Erstelle optimierte Boilies & Anfütterung mit KI-Prognose
             </p>
-            <p className="text-xs text-purple-400 mt-2">
-              🚀 Neue Funktion: Erweiterte Prognose mit 24 vordefinierten Rezepten
+            <p className="text-xs text-green-400 mt-2">
+              ✨ 48 vordefinierte Premium-Rezepte • Favoriten • Export • Vollständig optimiert
             </p>
           </div>
 
@@ -484,12 +553,21 @@ Sei konkret und praktisch!`;
                           Speichern
                         </Button>
                         <Button
+                          onClick={exportRecipe}
+                          disabled={!recipeName.trim() || totalPercentage === 0}
+                          variant="outline"
+                          className="border-gray-700 text-gray-400 hover:text-cyan-400"
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Exportieren
+                        </Button>
+                        <Button
                           onClick={resetMix}
                           variant="outline"
                           className="border-gray-700"
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
-                          Zurücksetzen
+                          Reset
                         </Button>
                       </div>
                     </CardContent>
@@ -566,45 +644,78 @@ Sei konkret und praktisch!`;
                   </div>
                 ) : (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {recipes.map(recipe => (
-                      <Card
-                        key={recipe.id}
-                        className="glass-morphism border-gray-800 hover:border-cyan-600/50 transition-all cursor-pointer group"
-                        onClick={() => handleLoadRecipe(recipe)}
-                      >
-                        <CardContent className="pt-6 space-y-3">
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <h3 className="text-white font-semibold text-sm group-hover:text-cyan-400">
-                                {recipe.name}
-                              </h3>
-                              <p className="text-xs text-gray-400 mt-1">
-                                {recipe.target_fish} • {recipe.category}
-                              </p>
+                    {recipes.map(recipe => {
+                      const isFav = favorites.includes(recipe.id);
+                      return (
+                        <Card
+                          key={recipe.id}
+                          className="glass-morphism border-gray-800 hover:border-cyan-600/50 transition-all cursor-pointer group"
+                          onClick={() => handleLoadRecipe(recipe)}
+                        >
+                          <CardContent className="pt-6 space-y-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1">
+                                <h3 className="text-white font-semibold text-sm group-hover:text-cyan-400">
+                                  {recipe.name}
+                                </h3>
+                                <p className="text-xs text-gray-400 mt-1">
+                                  {recipe.target_fish} • {recipe.category}
+                                </p>
+                              </div>
+                              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className={`h-7 w-7 ${
+                                    isFav
+                                      ? "text-red-400"
+                                      : "text-gray-400 hover:text-red-400"
+                                  }`}
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    toggleFavorite(recipe.id);
+                                  }}
+                                >
+                                  <Heart className={`w-4 h-4 ${isFav ? "fill-current" : ""}`} />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-7 w-7 text-gray-400 hover:text-cyan-400"
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    setMix(recipe.ingredients);
+                                    setRecipeName(recipe.name);
+                                    exportRecipe();
+                                  }}
+                                >
+                                  <Download className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-7 w-7 text-red-400 hover:text-red-300"
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    deleteRecipeMutation.mutate(recipe.id);
+                                  }}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
                             </div>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="opacity-0 group-hover:opacity-100 h-7 w-7 text-red-400 hover:text-red-300"
-                              onClick={e => {
-                                e.stopPropagation();
-                                deleteRecipeMutation.mutate(recipe.id);
-                              }}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="text-gray-400">
-                              Score: {recipe.attractiveness_score}
-                            </span>
-                            {recipe.ai_generated && (
-                              <Sparkles className="w-3 h-3 text-purple-400" />
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-gray-400">
+                                Score: {recipe.attractiveness_score}
+                              </span>
+                              {recipe.ai_generated && (
+                                <Sparkles className="w-3 h-3 text-purple-400" />
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
