@@ -7,6 +7,7 @@ import TideWidget from '../components/LiveTrip/TideWidget';
 import SolunarWidget from '../components/LiveTrip/SolunarWidget';
 import PredictionWidget from '../components/LiveTrip/PredictionWidget';
 import NotificationSettings from '../components/LiveTrip/NotificationSettings';
+import TripHistory from '../components/LiveTrip/TripHistory';
 
 /**
  * LiveTripPage - Live-Angeltour mit GPS-Tracking
@@ -319,15 +320,9 @@ function LiveTripPage() {
               </button>
             </div>
 
-            {/* Kürzlich gespeicherte Touren */}
+            {/* Touren-Verlauf */}
             <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
-              <h2 className="text-xl font-bold text-gray-300 mb-4">📋 Gespeicherte Touren</h2>
-              <div className="space-y-2 text-sm">
-                <p className="text-gray-400">Hier werden deine abgeschlossenen Touren angezeigt.</p>
-                <p className="text-xs text-gray-500 mt-4">
-                  💾 Daten werden offline lokal gespeichert
-                </p>
-              </div>
+              <TripHistory />
             </div>
           </div>
         ) : (
