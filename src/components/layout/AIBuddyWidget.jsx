@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import FemaleFisherSvg from '@/components/fish/FemaleFisherSvg';
+import FemaleFisherSvg, { BUDDY_FISH_CSS } from '@/components/fish/FemaleFisherSvg';
 import { getTipForPage } from '@/lib/buddyTips';
 import { useAuth } from '@/lib/AuthContext';
 import { ai } from '@/api/frontendClient';
 import { useElevenLabsVoice } from '@/hooks/useElevenLabsVoice';
 import { speakWithBrowserTTS } from '@/components/utils/browserTTS';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Mic, Send, X, ChevronUp, Phone } from 'lucide-react';
+import { Mic, Send, X, ChevronUp } from 'lucide-react';
 
 const STORAGE_KEY = 'buddy-widget-pos';
 const VISITED_PAGES_KEY = 'buddy-visited-pages';
@@ -138,7 +138,7 @@ export default function AIBuddyWidget() {
         width: window.innerWidth,
         height: window.innerHeight,
       };
-      const size = { width: 100, height: 120 };
+      const size = { width: 92, height: 52 };
 
       let newX = e.clientX - dragOffset.x;
       let newY = e.clientY - dragOffset.y;
@@ -251,6 +251,9 @@ export default function AIBuddyWidget() {
 
   return (
     <>
+      {/* Buddy-spezifische SVG-Animationen (einmalig global injiziert) */}
+      <style>{BUDDY_FISH_CSS}</style>
+
       {/* Avatar Widget */}
       <div
         ref={widgetRef}
@@ -268,31 +271,46 @@ export default function AIBuddyWidget() {
             if (!isDragging) setShowChat(!showChat);
           }}
           className="relative group"
-          whileHover={{ scale: 1.1 }}
+          whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.95 }}
         >
-          {/* Glow effect */}
-          <div className="absolute inset-0 bg-blue-400 rounded-full opacity-0 group-hover:opacity-20 blur-lg transition-opacity" />
+          {/* Glow-Ring beim Hover / aktiv */}
+          <div
+            className={`absolute -inset-1 rounded-full blur-md transition-opacity ${
+              isSpeaking || isListening
+                ? 'bg-cyan-300 opacity-40'
+                : 'bg-cyan-400 opacity-0 group-hover:opacity-25'
+            }`}
+          />
 
-          {/* Avatar */}
-          <div className="relative w-[100px] h-[120px] bg-gradient-to-b from-sky-50 to-blue-100 rounded-full shadow-lg hover:shadow-xl transition-shadow">
-            <FemaleFisherSvg
-              uid="buddy"
-              isTalking={isTalking}
-              isNodding={isNodding}
-            />
+          {/* Avatar in Wasserlinse */}
+          <div
+            className="relative w-[92px] h-[52px] rounded-full shadow-lg hover:shadow-xl transition-shadow ring-1 ring-cyan-200/50 overflow-hidden"
+            style={{
+              background:
+                'radial-gradient(120% 130% at 35% 25%, rgba(186,230,253,0.85) 0%, rgba(56,150,200,0.55) 55%, rgba(12,74,110,0.65) 100%)',
+            }}
+          >
+            <div className="absolute inset-0 flex items-center justify-center p-1">
+              <FemaleFisherSvg
+                uid="buddy"
+                isTalking={isTalking}
+                isNodding={isNodding}
+                showBubble={isTalking || isListening}
+              />
+            </div>
           </div>
 
           {/* Voice indicator */}
           {isSpeaking && (
-            <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full animate-pulse" />
+            <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full ring-2 ring-white animate-pulse" />
           )}
           {isListening && (
-            <div className="absolute bottom-0 left-0 w-4 h-4 bg-red-500 rounded-full animate-pulse" />
+            <div className="absolute -bottom-0.5 -left-0.5 w-3.5 h-3.5 bg-red-500 rounded-full ring-2 ring-white animate-pulse" />
           )}
         </motion.button>
 
-        {/* Sprechblase mit Tipps */}
+        {/* Sprechblase mit Tipps & Input */}
         <AnimatePresence>
           {showBubble && !showChat && (
             <motion.div
@@ -300,7 +318,7 @@ export default function AIBuddyWidget() {
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="absolute bottom-full right-0 mb-4 w-64"
+              className="absolute bottom-full right-0 mb-4 w-72"
             >
               <div className="bg-white rounded-2xl shadow-2xl p-4 border-2 border-blue-200">
                 {/* Close Button */}
@@ -311,33 +329,75 @@ export default function AIBuddyWidget() {
                   <X size={16} />
                 </button>
 
-                {/* Tip Content */}
-                <h3 className="font-bold text-sm text-gray-800 mb-2">{tip.title}</h3>
-                <p className="text-xs text-gray-600 mb-3 leading-relaxed">
+                {/* Header with Tip */}
+                <h3 className="font-bold text-sm text-gray-800 mb-2 pr-6">{tip.title}</h3>
+                <p className="text-xs text-gray-600 mb-4 leading-relaxed">
                   {tip.message}
                 </p>
 
-                {/* Buttons */}
-                <div className="flex gap-2">
+                {/* Input Section */}
+                <div className="space-y-3">
+                  {/* Text Input */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleSendMessage();
+                          setShowBubble(false);
+                          setShowChat(true);
+                        }
+                      }}
+                      placeholder="Frag hier..."
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
+                      disabled={isLoading}
+                    />
+                    <button
+                      onClick={() => {
+                        if (inputValue.trim()) {
+                          handleSendMessage();
+                          setShowBubble(false);
+                          setShowChat(true);
+                        }
+                      }}
+                      disabled={isLoading || !inputValue.trim()}
+                      className="p-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-lg transition-colors"
+                    >
+                      <Send size={14} />
+                    </button>
+                  </div>
+
+                  {/* Voice Button - Large */}
                   <button
                     onClick={() => {
-                      setShowBubble(false);
-                      setShowChat(true);
+                      handleVoiceInput();
+                      if (!isListening) {
+                        setShowBubble(false);
+                      }
                     }}
-                    className="flex-1 bg-blue-500 hover:bg-blue-600 text-white text-xs py-2 rounded-lg font-semibold transition-colors flex items-center justify-center gap-1"
+                    disabled={isLoading}
+                    className={`w-full py-2 px-4 rounded-lg font-semibold text-xs flex items-center justify-center gap-2 transition-colors ${
+                      isListening
+                        ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse'
+                        : 'bg-green-500 hover:bg-green-600 text-white disabled:bg-gray-300'
+                    }`}
                   >
-                    <Send size={12} /> Frage
+                    <Mic size={14} />
+                    {isListening ? 'Höre zu...' : 'Jetzt sprechen'}
                   </button>
-                  <button
-                    onClick={() => {
-                      setShowBubble(false);
-                      setShowChat(true);
-                      setTimeout(() => handleVoiceInput(), 100);
-                    }}
-                    className="flex-1 bg-green-500 hover:bg-green-600 text-white text-xs py-2 rounded-lg font-semibold transition-colors flex items-center justify-center gap-1"
-                  >
-                    <Phone size={12} /> Voice
-                  </button>
+
+                  {/* Loading Indicator */}
+                  {isLoading && (
+                    <div className="flex justify-center">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" />
+                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-100" />
+                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-200" />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
