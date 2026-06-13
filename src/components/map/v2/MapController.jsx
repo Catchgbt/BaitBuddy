@@ -54,6 +54,8 @@ function MapController() {
   const [forellenseen, setForellenseen] = useState([]);
   const [bathymetryData, setBathymetryData] = useState([]);
   const [deutscheFluesse, setDeutscheFluesse] = useState([]);
+  const [europeanRivers, setEuropeanRivers] = useState([]);
+  const [europeanBathymetry, setEuropeanBathymetry] = useState([]);
 
   // Query data with react-query
   const { data: spots = [] } = useQuery({
@@ -151,10 +153,34 @@ function MapController() {
       }
     };
 
+    // Lade europäische Flüsse
+    const loadEuropeanRivers = async () => {
+      try {
+        const response = await fetch('/assets/rivers/european_rivers.json');
+        const data = await response.json();
+        setEuropeanRivers(data);
+      } catch (error) {
+        console.warn('Europäische Flüsse konnten nicht geladen werden:', error);
+      }
+    };
+
+    // Lade europäische Bathymetrie
+    const loadEuropeanBathymetry = async () => {
+      try {
+        const response = await fetch('/assets/bathymetry/european_bathymetry_metadata.json');
+        const data = await response.json();
+        setEuropeanBathymetry(data);
+      } catch (error) {
+        console.warn('Europäische Bathymetrie konnten nicht geladen werden:', error);
+      }
+    };
+
     loadTiefenkarten();
     loadForellenseen();
     loadBathymetry();
     loadDeutscheFluesse();
+    loadEuropeanRivers();
+    loadEuropeanBathymetry();
 
     return () => {
       window.removeEventListener('online', handleOnline);
@@ -329,10 +355,10 @@ function MapController() {
     ? forellenseen.filter(fs => matchesSearch(fs.name))
     : [];
   const filteredBathymetrie = filters.bathymetrie
-    ? bathymetryData.filter(bd => matchesSearch(bd.name))
+    ? [...bathymetryData, ...europeanBathymetry].filter(bd => matchesSearch(bd.name))
     : [];
   const filteredFluesse = filters.fluesse
-    ? deutscheFluesse.filter(df => matchesSearch(df.name))
+    ? [...deutscheFluesse, ...europeanRivers].filter(f => matchesSearch(f.name))
     : [];
 
   if (!isInitialized || !mapCenter) {
