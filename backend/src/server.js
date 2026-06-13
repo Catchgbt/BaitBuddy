@@ -10,6 +10,7 @@ import communityRoutes from './routes/community.js';
 import premiumRoutes from './routes/premium.js';
 import miscRoutes from './routes/misc.js';
 import mapsRoutes from './routes/maps.js';
+import supportRoutes from './routes/support.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -36,6 +37,7 @@ app.use('/api', communityRoutes);
 app.use('/api', premiumRoutes);
 app.use('/api', miscRoutes);
 app.use('/api', mapsRoutes);
+app.use('/api', supportRoutes);
 
 app.use((req, res) => res.status(404).json({ error: `Not found: ${req.method} ${req.path}` }));
 app.use((err, req, res, next) => res.status(500).json({ error: err.message }));
