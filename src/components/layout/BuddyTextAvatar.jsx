@@ -15,34 +15,35 @@ export const BUDDY_TEXT_CSS = `
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   }
 
-  /* Sanfte Atmungs-Animation */
+  /* Sanfte Atmungs-Animation (echtes Heben/Senken, keine Rotation) */
   .buddy-text-breathing {
-    animation: buddyBreathing 2.5s ease-in-out infinite;
+    animation: buddyBreathing 3s ease-in-out infinite;
   }
 
   @keyframes buddyBreathing {
-    0%, 100% { transform: scale(1) translateY(0); opacity: 1; }
-    50% { transform: scale(1.05) translateY(-1px); opacity: 0.95; }
+    0%, 100% { transform: scale(1) translateY(0); }
+    50% { transform: scale(1.04) translateY(-2px); }
   }
 
-  /* Aktive Sprechanimation - schnelleres Pulsing */
+  /* Aktive Sprechanimation - lebendiges Nicken/Wippen */
   .buddy-text-speaking {
-    animation: buddySpeaking 0.5s ease-in-out infinite;
+    animation: buddySpeaking 0.6s ease-in-out infinite;
   }
 
   @keyframes buddySpeaking {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.08); }
+    0%, 100% { transform: scale(1) translateY(0); }
+    35% { transform: scale(1.05) translateY(-3px); }
+    70% { transform: scale(1.02) translateY(1px); }
   }
 
-  /* Zuhör-Animation */
+  /* Zuhör-Animation - aufmerksames Vorlehnen (keine Rotation) */
   .buddy-text-listening {
-    animation: buddyListening 0.6s ease-in-out infinite;
+    animation: buddyListening 1.4s ease-in-out infinite;
   }
 
   @keyframes buddyListening {
-    0%, 100% { transform: rotate(0deg) scale(1); }
-    50% { transform: rotate(1deg) scale(1.03); }
+    0%, 100% { transform: scale(1) translateY(0); }
+    50% { transform: scale(1.03) translateY(-2px); }
   }
 
   @media (prefers-reduced-motion: reduce) {
