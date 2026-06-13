@@ -4,6 +4,7 @@ import { Settings as SettingsIcon, Volume2, VolumeX, Shield, FileText } from "lu
 import VoiceSettings from "./VoiceSettings";
 import GeneralSettings from "./GeneralSettings";
 import TickerSettings from "./TickerSettings";
+import BatterySaverSettings from "./BatterySaverSettings";
 import DeleteAccountSection from "./DeleteAccountSection";
 import { useSound } from "@/components/utils/SoundManager";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ export default function SettingsSection() {
           <GeneralSettings />
           <VoiceSettings />
           <TickerSettings />
+          <BatterySaverSettings />
         </CardContent>
       </Card>
 

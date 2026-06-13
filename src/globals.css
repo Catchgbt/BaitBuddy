@@ -252,3 +252,40 @@ input.input-sm,
 select.select-sm {
   min-height: 40px;
 }
+
+/* Battery Saver Mode — aggressive dark mode for OLED screens */
+body.battery-saver-mode {
+  background-color: #000000 !important;
+  color: #ffffff;
+}
+
+body.battery-saver-mode * {
+  background-color: transparent !important;
+}
+
+body.battery-saver-mode .bg-gray-950,
+body.battery-saver-mode .bg-gray-900 {
+  background-color: #0a0a0a !important;
+}
+
+body.battery-saver-mode .bg-gray-800 {
+  background-color: #1a1a1a !important;
+}
+
+body.battery-saver-mode .transition-all,
+body.battery-saver-mode .transition,
+body.battery-saver-mode *:not(.battery-saver-disabled-animation) {
+  transition: none !important;
+}
+
+body.battery-saver-mode .animate-spin,
+body.battery-saver-mode .animate-bounce,
+body.battery-saver-mode .animate-pulse,
+body.battery-saver-mode [class*="animate-"] {
+  animation: none !important;
+}
+
+body.battery-saver-mode img,
+body.battery-saver-mode [loading="lazy"] {
+  loading: lazy;
+}
