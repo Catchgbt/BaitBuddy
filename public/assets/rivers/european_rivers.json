@@ -1,0 +1,182 @@
+[
+  {
+    "id": "danube",
+    "name": "Donau",
+    "land": "Österreich/Ungarn/Rumänien",
+    "laenge_km": 2857,
+    "verlauf": "Schwarzwald → Schwarzes Meer",
+    "fischarten": "Huchen, Äsche, Barbe, Nase, Zander",
+    "angelgewaesser": "Obere Donau (Österreich)",
+    "schwierigkeit": "Mittel",
+    "koordinaten": {
+      "lat": 48.5,
+      "lng": 10.8
+    },
+    "beschreibung": "Europas wichtigste Wasserstraße mit exzellenter Fischerei, besonders in Österreich und Ungarn"
+  },
+  {
+    "id": "rhone",
+    "name": "Rhône",
+    "land": "Schweiz/Frankreich",
+    "laenge_km": 812,
+    "verlauf": "Schweizer Alpen → Mittelmeer",
+    "fischarten": "Hecht, Barsch, Forelle, Zander",
+    "angelgewaesser": "Lac Léman (Genfer See), französische Seen",
+    "schwierigkeit": "Mittel bis schwer (Strömung)",
+    "koordinaten": {
+      "lat": 46.2,
+      "lng": 4.8
+    },
+    "beschreibung": "Wilde alpine Fluss mit schneller Strömung, ideal für erfahrene Angler"
+  },
+  {
+    "id": "po",
+    "name": "Po",
+    "land": "Italien",
+    "laenge_km": 652,
+    "verlauf": "Cottische Alpen → Adria",
+    "fischarten": "Hecht, Barsch, Forelle, Silberkarausche",
+    "angelgewaesser": "Oberitalienische Ebene",
+    "schwierigkeit": "Leicht bis mittel",
+    "koordinaten": {
+      "lat": 45.3,
+      "lng": 12.1
+    },
+    "beschreibung": "Italieniens größter Fluss mit großem Fischbestand"
+  },
+  {
+    "id": "severn",
+    "name": "Severn",
+    "land": "Wales/Großbritannien",
+    "laenge_km": 354,
+    "verlauf": "Cambrian Mountains → Bristol Channel",
+    "fischarten": "Lachs, Meerforelle, Hecht, Barsch",
+    "angelgewaesser": "Wye Valley",
+    "schwierigkeit": "Mittel (Lachsfluss)",
+    "koordinaten": {
+      "lat": 51.5,
+      "lng": -2.8
+    },
+    "beschreibung": "Berühmter Lachsfluss mit beeindruckender Lachsfischerei"
+  },
+  {
+    "id": "spey",
+    "name": "River Spey",
+    "land": "Schottland",
+    "laenge_km": 172,
+    "verlauf": "Grampian Mountains → Moray Firth",
+    "fischarten": "Atlantischer Lachs, Meerforelle",
+    "angelgewaesser": "Speyside",
+    "schwierigkeit": "Schwer (Klasse I-II Gewässer)",
+    "koordinaten": {
+      "lat": 57.2,
+      "lng": -3.5
+    },
+    "beschreibung": "Britischer Klassiker für Lachsfischerei, nur für erfahrene Angler"
+  },
+  {
+    "id": "dordogne",
+    "name": "Dordogne",
+    "land": "Frankreich",
+    "laenge_km": 483,
+    "verlauf": "Südliches Zentralmassiv → Garonne",
+    "fischarten": "Hecht, Barsch, Karpfen, Forelle",
+    "angelgewaesser": "Périgord-Region",
+    "schwierigkeit": "Leicht bis mittel",
+    "koordinaten": {
+      "lat": 44.8,
+      "lng": 0.4
+    },
+    "beschreibung": "Malerischer Fluss in Südwestfrankreich mit guten Angelplätzen"
+  },
+  {
+    "id": "vistula",
+    "name": "Weichsel (Vistula)",
+    "land": "Polen",
+    "laenge_km": 1047,
+    "verlauf": "Besedin Mountains → Ostsee",
+    "fischarten": "Hecht, Zander, Barsch, Brasse",
+    "angelgewaesser": "Masuren-Region",
+    "schwierigkeit": "Leicht bis mittel",
+    "koordinaten": {
+      "lat": 54.4,
+      "lng": 19.0
+    },
+    "beschreibung": "Polens längster Fluss mit vielen Seen und Angelplätzen"
+  },
+  {
+    "id": "tagus",
+    "name": "Tejo (Tagus)",
+    "land": "Spanien/Portugal",
+    "laenge_km": 1038,
+    "verlauf": "Zentralspanien → Atlantik",
+    "fischarten": "Forelle, Hecht, Zander, Barsch",
+    "angelgewaesser": "Spanische Stauseen",
+    "schwierigkeit": "Leicht bis mittel",
+    "koordinaten": {
+      "lat": 39.1,
+      "lng": -8.7
+    },
+    "beschreibung": "Europas längstes Fluss-Talsperrensystem mit exzellenter Hechter"
+  },
+  {
+    "id": "slovenia",
+    "name": "Soča (Isonzo)",
+    "land": "Slowenien",
+    "laenge_km": 138,
+    "verlauf": "Julian Alps → Adria",
+    "fischarten": "Marmorkarpfen, Huchen, Bachforelle",
+    "angelgewaesser": "Alpine Flussabschnitte",
+    "schwierigkeit": "Schwer (Wildwasser)",
+    "koordinaten": {
+      "lat": 45.8,
+      "lng": 13.6
+    },
+    "beschreibung": "Kristallklarer alpiner Fluss, ideal für Fliegenfischerei"
+  },
+  {
+    "id": "dee",
+    "name": "River Dee",
+    "land": "Schottland",
+    "laenge_km": 147,
+    "verlauf": "Cairngorms → North Sea",
+    "fischarten": "Atlantischer Lachs, Seelachs, Forelle",
+    "angelgewaesser": "Royal Deeside",
+    "schwierigkeit": "Mittel bis schwer",
+    "koordinaten": {
+      "lat": 57.1,
+      "lng": -2.9
+    },
+    "beschreibung": "Königlicher Lachsfluss mit langer Angelgeschichte"
+  },
+  {
+    "id": "vardar",
+    "name": "Vardar",
+    "land": "Mazedonien/Griechenland",
+    "laenge_km": 388,
+    "verlauf": "Šar Mountains → Aegean Sea",
+    "fischarten": "Balkan-Hecht, Barsch, Salmoniden",
+    "angelgewaesser": "Südbalkan-Seen",
+    "schwierigkeit": "Leicht bis mittel",
+    "koordinaten": {
+      "lat": 40.9,
+      "lng": 22.2
+    },
+    "beschreibung": "Südeuropäischer Fluss mit modernem Fischbestand"
+  },
+  {
+    "id": "neretva",
+    "name": "Neretva",
+    "land": "Kroatien/Bosnien",
+    "laenge_km": 225,
+    "verlauf": "Bjelašnica → Adriatisches Meer",
+    "fischarten": "Forelle, Huchen, Barsch",
+    "angelgewaesser": "Dalmatische Alpen",
+    "schwierigkeit": "Mittel (Wildwasser)",
+    "koordinaten": {
+      "lat": 43.2,
+      "lng": 17.9
+    },
+    "beschreibung": "Wilder Balkan-Fluss mit smaragdgrünem Wasser"
+  }
+]
