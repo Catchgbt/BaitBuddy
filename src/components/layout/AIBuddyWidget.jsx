@@ -230,13 +230,13 @@ export default function AIBuddyWidget() {
                     <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-blue-300 bg-blue-100">
                       <img
                         src="/assets/buddy/marina-avatar.png"
-                        alt="Marina"
+                        alt="Sabrina"
                         className="w-full h-full object-cover object-top"
                         draggable={false}
                       />
                     </div>
                     <div>
-                      <h2 className="text-sm font-bold text-gray-800">Marina</h2>
+                      <h2 className="text-sm font-bold text-gray-800">Sabrina</h2>
                       <p className="text-xs text-gray-500">Dein Angel-Buddy</p>
                     </div>
                   </div>
@@ -371,7 +371,7 @@ export default function AIBuddyWidget() {
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.95 }}
           >
-            {/* Runder Foto-Avatar Marina */}
+            {/* Runder Foto-Avatar Sabrina */}
             <div
               className={`relative w-16 h-16 rounded-full shadow-lg hover:shadow-xl transition-all overflow-hidden bg-gradient-to-br from-blue-100 to-blue-300 ring-2 ${
                 isSpeaking
@@ -383,7 +383,7 @@ export default function AIBuddyWidget() {
             >
               <img
                 src="/assets/buddy/marina-avatar.png"
-                alt="Marina – dein Angel-Buddy"
+                alt="Sabrina – dein Angel-Buddy"
                 className={`w-full h-full object-cover object-top ${
                   isTalking ? 'buddy-text-speaking' : isListening ? 'buddy-text-listening' : 'buddy-text-breathing'
                 }`}

@@ -15,7 +15,7 @@ export default function KiBuddyBeta() {
 
 function KiBuddyBetaInner() {
   useFeatureTracking("ai_buddy");
-  const [messages, setMessages] = useState([{ role: "system", text: "Hallo! Ich bin Marina, deine KI-Angelexpertin. Stelle mir eine Frage!" }]);
+  const [messages, setMessages] = useState([{ role: "system", text: "Hallo! Ich bin Sabrina, deine KI-Angelexpertin. Stelle mir eine Frage!" }]);
   const [input, setInput] = useState("");
   const [status, setStatus] = useState("");
   const [tonAn, setTonAn] = useState(true);
@@ -135,7 +135,7 @@ function KiBuddyBetaInner() {
 
   const statusLabels = {
     listening: "Ich höre zu...",
-    speaking: "Marina spricht...",
+    speaking: "Sabrina spricht...",
     thinking: "Denke nach...",
     "": "Tippe oder aktiviere das Mikrofon"
   };
@@ -183,7 +183,7 @@ function KiBuddyBetaInner() {
               M
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: "#e0f0ff" }}>Marina</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: "#e0f0ff" }}>Sabrina</div>
               <div style={{ fontSize: 12, color: "#556677", marginTop: 2 }}>Deine KI-Angelexpertin</div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 3, height: 24, opacity: isSpeaking ? 1 : 0, transition: "opacity 0.3s" }}>
@@ -221,7 +221,7 @@ function KiBuddyBetaInner() {
                   <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#7adba0", animation: "bbDot 1s infinite", animationDelay: "0.2s" }} />
                   <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#7adba0", animation: "bbDot 1s infinite", animationDelay: "0.4s" }} />
                 </span>
-                <span>Marina denkt nach – das kann einen Moment dauern…</span>
+                <span>Sabrina denkt nach – das kann einen Moment dauern…</span>
               </div>
             )}
           </div>
