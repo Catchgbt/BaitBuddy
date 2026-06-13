@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth, optionalAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
+import { Buffer } from 'buffer';
 
 const router = Router();
 
@@ -62,7 +63,7 @@ router.delete('/fishing/plans/:id', requireAuth, async (req, res) => {
 });
 
 router.get('/fishing/hotspots', optionalAuth, async (req, res) => {
-  const { data, error } = await supabase.from('spots').select('id,name,latitude,longitude,water_type').limit(100);
+  const { data, error } = await supabase.from('spots').select('id,name,latitude,longitude,water_type');
   if (error) return res.status(500).json({ error: error.message });
   return res.json({ hotspots: data || [] });
 });
@@ -141,6 +142,39 @@ router.get('/exams', optionalAuth, async (req, res) => {
   const { data, error } = await supabase.from('exam_questions').select('*').limit(200);
   if (error) return res.status(500).json({ error: error.message });
   return res.json(data || []);
+});
+
+router.post('/files/upload', requireAuth, async (req, res) => {
+  try {
+    const { file_base64, file_name, file_type } = req.body;
+
+    if (!file_base64 || !file_name) {
+      return res.status(400).json({ error: 'file_base64 und file_name erforderlich' });
+    }
+
+    const buffer = Buffer.from(file_base64, 'base64');
+    const bucket = 'catches';
+    const filePath = `${req.user.email}/${Date.now()}-${file_name}`;
+
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, buffer, {
+        contentType: file_type || 'application/octet-stream',
+        upsert: false,
+      });
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(data.path);
+
+    return res.json({ file_url: publicUrl });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 export default router;

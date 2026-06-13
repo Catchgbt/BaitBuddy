@@ -45,6 +45,37 @@ const MOTES = Array.from({ length: 18 }, (_, i) => ({
 
 const randBetween = (a, b) => a + Math.random() * (b - a);
 
+// Eindeutige, stabile Filter-IDs pro Caustic-Layer (mehrere WaterScene-Instanzen
+// dürfen sich nicht denselben SVG-Filter teilen).
+let causticIdSeq = 0;
+
+// Caustic-Lichtnetz: feTurbulence erzeugt ein organisches Rauschen, feColorMatrix
+// färbt es wasserblau und hebt nur die hellen Spitzen in den Alpha-Kanal (tanzende
+// Lichtflecken). Inline-SVG (nicht als Data-URI-Bild!) wird zuverlässig gerendert;
+// das Muster wird einmal berechnet und nur per CSS-Transform bewegt — daher günstig.
+function CausticLayer({ baseFrequency, numOctaves = 2, alpha, seed, blur, opacity, dur, delay = '0s', reverse = false }) {
+  const [fid] = useState(() => `bbcaust${causticIdSeq++}`);
+  return (
+    <svg
+      className="bb-caustic-net"
+      preserveAspectRatio="xMidYMid slice"
+      style={{
+        filter: `blur(${blur}px) contrast(1.15)`,
+        opacity,
+        animationDuration: dur,
+        animationDelay: delay,
+        animationDirection: reverse ? 'reverse' : 'normal',
+      }}
+    >
+      <filter id={fid} x="-10%" y="-10%" width="120%" height="120%">
+        <feTurbulence type="turbulence" baseFrequency={baseFrequency} numOctaves={numOctaves} seed={seed} stitchTiles="stitch" />
+        <feColorMatrix values={`0 0 0 0 0.66  0 0 0 0 0.9  0 0 0 0 1  ${alpha}`} />
+      </filter>
+      <rect width="100%" height="100%" filter={`url(#${fid})`} />
+    </svg>
+  );
+}
+
 // Ein Fisch zieht einmal quer durchs Bild; nach jeder Querung wird auf die
 // nächste Art gewechselt und Richtung, Höhe, Tempo neu gewürfelt.
 function RoamingFish({ layer, startIndex = 0, startDir = 1 }) {
@@ -73,6 +104,10 @@ function RoamingFish({ layer, startIndex = 0, startDir = 1 }) {
   const { idx, count, dir, top, dur, delay } = run;
   const { id, size, image } = FISH_SPECIES[idx];
 
+  // Schwanzschlag-Frequenz: kleine Fische schlagen schneller, große langsamer;
+  // Tiefen-Fische (far) wirken träger. Steuert Undulation + Vortriebs-Schub.
+  const beat = (near ? 1.05 : 1.5) * (0.72 + 0.5 * size);
+
   return (
     <div
       key={count}
@@ -84,21 +119,28 @@ function RoamingFish({ layer, startIndex = 0, startDir = 1 }) {
           : `calc(clamp(100px, 13vw, 180px) * ${size})`,
         '--from': dir === 1 ? 'calc(-100% - 4vw)' : 'calc(100vw + 4vw)',
         '--to': dir === 1 ? 'calc(100vw + 4vw)' : 'calc(-100% - 4vw)',
+        '--beat': `${beat}s`,
         animationDuration: `${dur}s`,
         animationDelay: `${delay}s`,
       }}
       onAnimationEnd={(e) => { if (e.animationName === 'bbSwimAcross') next(); }}
     >
+      {/* flip = Schwimmrichtung; thrust = Vortriebs-Schub aus dem Schwanzschlag;
+          bob = Steigen/Sinken + Nicken; undulate = Körperwelle (Schwanz schwingt) */}
       <div className="bb-fish-flip" style={{ transform: dir === -1 ? 'scaleX(-1)' : 'none' }}>
-        <div className="bb-fish-bob">
-          <img
-            src={image}
-            alt={id}
-            loading="lazy"
-            decoding="async"
-            draggable="false"
-            style={{ display: 'block', width: '100%', height: 'auto' }}
-          />
+        <div className="bb-fish-thrust">
+          <div className="bb-fish-bob">
+            <div className="bb-fish-undulate">
+              <img
+                src={image}
+                alt={id}
+                loading="lazy"
+                decoding="async"
+                draggable="false"
+                style={{ display: 'block', width: '100%', height: 'auto' }}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -139,7 +181,7 @@ export default function WaterScene() {
         /* Lichtstrahlen (permanent, sanft schwingend) */
         .bb-ray {
           position: absolute; top: -15vh; height: 140vh;
-          background: linear-gradient(180deg, rgba(150,210,240,.17) 0%, rgba(150,210,240,.05) 45%, transparent 75%);
+          background: linear-gradient(180deg, rgba(155,212,242,.22) 0%, rgba(150,210,240,.07) 45%, transparent 78%);
           filter: blur(14px); transform-origin: top center; mix-blend-mode: screen;
           animation: bbRaySway ease-in-out infinite alternate;
         }
@@ -172,6 +214,21 @@ export default function WaterScene() {
         @keyframes bbCausticDrift {
           from { transform: translate(0, 0) scale(1); }
           to   { transform: translate(4vw, 3vh) scale(1.12); }
+        }
+
+        /* tanzendes Wasserlicht (Caustics): zwei prozedurale Rausch-Layer, die
+           langsam gegeneinander driften — oben am hellsten, nach unten ausgeblendet */
+        .bb-caustic-net {
+          position: absolute; left: -12%; top: -8%; width: 124%; height: 80vh;
+          mix-blend-mode: screen; will-change: transform; transform-origin: center;
+          -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,.95) 0%, rgba(0,0,0,.5) 50%, transparent 90%);
+          mask-image: linear-gradient(180deg, rgba(0,0,0,.95) 0%, rgba(0,0,0,.5) 50%, transparent 90%);
+          animation: bbCausticNet ease-in-out infinite;
+        }
+        @keyframes bbCausticNet {
+          0%   { transform: translate(0, 0) scale(1); }
+          50%  { transform: translate(-3vw, 1.6vh) scale(1.08); }
+          100% { transform: translate(2.2vw, -1vh) scale(1); }
         }
 
         /* aufsteigende Blasen: außen Aufstieg, innen seitliches Pendeln */
@@ -223,12 +280,39 @@ export default function WaterScene() {
         .bb-fish-near { filter: drop-shadow(0 14px 22px rgba(1, 12, 22, .45)); }
         .bb-fish-far { opacity: .45; filter: blur(1.4px) brightness(.62) saturate(.75); }
 
-        /* sanftes Auf und Ab beim Schwimmen */
-        .bb-fish-bob { animation: bbFishBob 6.5s ease-in-out infinite alternate; }
-        .bb-fish-far .bb-fish-bob { animation-duration: 8.5s; }
+        /* Steigen/Sinken + leichtes Nicken (Nase folgt der Vertikalbewegung) */
+        .bb-fish-bob { animation: bbFishBob 6s ease-in-out infinite alternate; }
+        .bb-fish-far .bb-fish-bob { animation-duration: 8s; }
         @keyframes bbFishBob {
-          from { transform: translateY(-9px) rotate(-1.6deg); }
-          to   { transform: translateY(9px) rotate(1.6deg); }
+          0%   { transform: translateY(-10px) rotate(-1.8deg); }
+          100% { transform: translateY(10px) rotate(1.8deg); }
+        }
+
+        /* Vortriebs-Schub: kurzer Vorwärtsruck pro Schwanzschlag, dann Gleiten.
+           Periode = --beat (Schlagfrequenz). Bewegung im Körper-Koordinatensystem
+           (innerhalb .bb-fish-flip), also relativ zur Schwimmrichtung nach vorn. */
+        .bb-fish-thrust { animation: bbFishThrust var(--beat, 1.2s) cubic-bezier(.36,.66,.4,1) infinite; }
+        @keyframes bbFishThrust {
+          0%   { transform: translateX(-0.5%); }
+          28%  { transform: translateX(0.55%); }
+          100% { transform: translateX(-0.5%); }
+        }
+
+        /* Körperundulation: skewY mit Drehpunkt am Kopf (rechts) — der Kopf bleibt
+           ruhig, die Welle läuft nach hinten, der Schwanz schwingt am stärksten.
+           Halbe Schlagperiode für den Rückschwung. */
+        .bb-fish-undulate {
+          transform-origin: 100% 50%;
+          animation: bbFishUndulate var(--beat, 1.2s) ease-in-out infinite;
+        }
+        @keyframes bbFishUndulate {
+          0%   { transform: skewY(1.5deg); }
+          50%  { transform: skewY(-1.5deg); }
+          100% { transform: skewY(1.5deg); }
+        }
+        .bb-fish-far .bb-fish-undulate { animation-name: bbFishUndulateFar; }
+        @keyframes bbFishUndulateFar {
+          0% { transform: skewY(1deg); } 50% { transform: skewY(-1deg); } 100% { transform: skewY(1deg); }
         }
 
         /* Vignette für Tiefenwirkung */
@@ -259,6 +343,10 @@ export default function WaterScene() {
       <div className="bb-caustic" style={{ width: '55vw', height: '38vh', left: '8%', top: '6%', background: 'radial-gradient(ellipse, rgba(56,180,220,.20), transparent 65%)', animationDuration: '26s' }} />
       <div className="bb-caustic" style={{ width: '48vw', height: '34vh', right: '4%', top: '30%', background: 'radial-gradient(ellipse, rgba(34,150,200,.14), transparent 65%)', animationDuration: '34s', animationDelay: '-12s' }} />
       <div className="bb-caustic" style={{ width: '40vw', height: '28vh', left: '30%', top: '55%', background: 'radial-gradient(ellipse, rgba(30,130,180,.10), transparent 65%)', animationDuration: '40s', animationDelay: '-20s' }} />
+
+      {/* tanzendes Wasserlicht – zwei gegenläufige Caustic-Layer (oben am hellsten) */}
+      <CausticLayer baseFrequency="0.012" alpha="1.3 1.3 1.3 0 -0.85" seed={8} blur={4} opacity={0.42} dur="19s" />
+      <CausticLayer baseFrequency="0.008" alpha="1.1 1.1 1.1 0 -0.6" seed={23} blur={6} opacity={0.28} dur="27s" delay="-8s" reverse />
 
       {MOTES.map((m, i) => (
         <span

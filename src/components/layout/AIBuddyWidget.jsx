@@ -365,31 +365,23 @@ export default function AIBuddyWidget() {
             key={currentPage}
             onClick={() => setIsOpen(!isOpen)}
             className="relative group cursor-pointer"
-            whileHover={{ scale: 1.15 }}
+            whileHover={{ scale: 1.12 }}
             whileTap={{ scale: 0.95 }}
-            initial={{ scale: 0.5, rotate: -12, opacity: 0 }}
+            initial={{ scale: 0.5, opacity: 0 }}
             animate={{
-              scale: (isSpeaking || isTalking || isListening) ? [1, 1.08, 1, 1.05, 1] : 1,
+              scale: (isSpeaking || isTalking || isListening) ? [1, 1.06, 1, 1.04, 1] : 1,
               opacity: 1,
-              rotate: (isSpeaking || isTalking || isListening)
-                ? [0, -10, 10, -8, 8, 0]
-                : [0, -6, 6, -4, 4, 0],
               y: (isSpeaking || isTalking || isListening)
-                ? [0, -9, 0, -5, 0]
-                : [0, -6, 0, -3, 0],
+                ? [0, -8, 0, -4, 0]
+                : [0, -6, 0],
             }}
             transition={{
               scale: (isSpeaking || isTalking || isListening)
                 ? { duration: 0.7, repeat: Infinity, ease: 'easeInOut' }
                 : { type: 'spring', stiffness: 300, damping: 12 },
               opacity: { duration: 0.3 },
-              rotate: {
-                duration: (isSpeaking || isTalking || isListening) ? 0.7 : 2.4,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              },
               y: {
-                duration: (isSpeaking || isTalking || isListening) ? 0.7 : 2.4,
+                duration: (isSpeaking || isTalking || isListening) ? 0.7 : 3,
                 repeat: Infinity,
                 ease: 'easeInOut',
               },
@@ -397,12 +389,12 @@ export default function AIBuddyWidget() {
           >
             {/* Runder Foto-Avatar Sabrina */}
             <div
-              className={`relative w-16 h-16 rounded-full shadow-lg hover:shadow-xl transition-all overflow-hidden bg-gradient-to-br from-blue-100 to-blue-300 ring-2 ${
+              className={`relative w-16 h-16 rounded-full overflow-hidden bg-transparent transition-all ${
                 isSpeaking
-                  ? 'ring-green-400'
+                  ? 'drop-shadow-[0_0_8px_rgba(74,222,128,0.7)]'
                   : isListening
-                  ? 'ring-red-400'
-                  : 'ring-white'
+                  ? 'drop-shadow-[0_0_8px_rgba(248,113,113,0.7)]'
+                  : 'drop-shadow-lg'
               }`}
             >
               <img
