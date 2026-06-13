@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { entities } from "@/api/frontendClient";
 import { Catch } from "@/entities/Catch";
-import { Loader2, Medal, User } from "lucide-react";
+import { User } from "@/entities/User";
+import { Loader2, Medal, User as UserIcon } from "lucide-react";
 
 export default function LeaderboardCard({ type, title, icon: Icon }) {
   const [leaderboard, setLeaderboard] = useState([]);
@@ -69,30 +70,27 @@ export default function LeaderboardCard({ type, title, icon: Icon }) {
 
       const allEmails = [...new Set(data.map(d => d.user_id))];
       const newCache = {};
-      
-      for (const email of allEmails) {
-        try {
-          const allUsers = await User.list('', 1000);
+
+      try {
+        const allUsers = await User.list('', 1000);
+        allEmails.forEach(email => {
           const foundUser = allUsers.find(u => u.email === email);
-          
-          if (foundUser) {
-            newCache[email] = foundUser;
-          } else {
-            newCache[email] = {
-              email: email,
-              full_name: null,
-              profile_picture_url: null
-            };
-          }
-        } catch (err) {
-          newCache[email] = {
-            email: email,
+          newCache[email] = foundUser ?? {
+            email,
             full_name: null,
             profile_picture_url: null
           };
-        }
+        });
+      } catch (err) {
+        allEmails.forEach(email => {
+          newCache[email] = {
+            email,
+            full_name: null,
+            profile_picture_url: null
+          };
+        });
       }
-      
+
       setUserCache(newCache);
       setLeaderboard(data);
     } catch (error) {
@@ -188,7 +186,7 @@ export default function LeaderboardCard({ type, title, icon: Icon }) {
                     />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center">
-                      <User className="w-4 h-4 text-white" />
+                      <UserIcon className="w-4 h-4 text-white" />
                     </div>
                   )}
                   
