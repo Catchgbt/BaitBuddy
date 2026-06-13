@@ -128,6 +128,19 @@ export default function Impressum() {
                 <p>
                   Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.
                 </p>
+
+                <h2 className="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">
+                  Bildnachweise
+                </h2>
+                <p>
+                  Die animierten Fische im App-Hintergrund sind freigestellte Fotos von
+                  Wikimedia Commons. Karpfen: George Chernilevsky,{' '}
+                  <a href="https://creativecommons.org/licenses/by-sa/3.0" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">CC BY-SA 3.0</a>;
+                  Wels: Bernard Dupont,{' '}
+                  <a href="https://creativecommons.org/licenses/by-sa/2.0" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">CC BY-SA 2.0</a>{' '}
+                  (freigestellt und zugeschnitten; bearbeitete Bilder stehen unter derselben Lizenz).
+                  Barsch, Forelle, Hecht und Zander: gemeinfrei (Public Domain).
+                </p>
               </div>
             </div>
           ) : (

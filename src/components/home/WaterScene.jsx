@@ -1,13 +1,23 @@
 import React, { useState } from 'react';
 
-// Echte Fischbilder statt SVG — lizenzfrei mit transparentem Hintergrund
+// Unterwasser-Szene (app-weiter Hintergrund): Tiefenverlauf wie in einem See,
+// Lichtstrahlen von der Oberfläche mit gelegentlichen hellen Einstrahlungen,
+// viele aufsteigende, seitlich pendelnde Blasen, Schwebeteilchen und
+// Süßwasserfische, die ruhig durch das Bild ziehen. Sobald ein Fisch das Bild
+// verlassen hat, schwimmt die nächste Art herein (Karpfen → Barsch → Forelle
+// → Hecht → Zander → Wels → …). Rein dekorativ (pointer-events: none).
+//
+// Echte, freigestellte Fischfotos (Wikimedia Commons; Barsch/Forelle/Hecht/Zander
+// Public Domain, Karpfen & Wels CC-BY-SA mit Namensnennung im Impressum — Quellen
+// & Lizenzen siehe public/fish/CREDITS.md). Alle Motive blicken nach rechts; beim
+// Schwimmen nach links spiegelt .bb-fish-flip. WebP mit Alpha, je Datei < 80 KB.
 const FISH_SPECIES = [
-  { id: 'carp', name: 'Karpfen', size: 1.0, image: '/fish/carp.png' },
-  { id: 'perch', name: 'Barsch', size: 0.6, image: '/fish/perch.png' },
-  { id: 'trout', name: 'Forelle', size: 0.75, image: '/fish/trout.png' },
-  { id: 'pike', name: 'Hecht', size: 1.05, image: '/fish/pike.png' },
-  { id: 'zander', name: 'Zander', size: 0.85, image: '/fish/zander.png' },
-  { id: 'catfish', name: 'Wels', size: 1.3, image: '/fish/catfish.png' },
+  { id: 'carp', name: 'Karpfen', size: 1.0, image: '/fish/carp.webp' },
+  { id: 'perch', name: 'Barsch', size: 0.6, image: '/fish/perch.webp' },
+  { id: 'trout', name: 'Forelle', size: 0.75, image: '/fish/trout.webp' },
+  { id: 'pike', name: 'Hecht', size: 1.05, image: '/fish/pike.webp' },
+  { id: 'zander', name: 'Zander', size: 0.85, image: '/fish/zander.webp' },
+  { id: 'catfish', name: 'Wels', size: 1.3, image: '/fish/catfish.webp' },
 ];
 
 // Deterministisch „gewürfelte“ Blasen: gut verteilt, sofort gefüllt (negative
@@ -84,7 +94,10 @@ function RoamingFish({ layer, startIndex = 0, startDir = 1 }) {
           <img
             src={image}
             alt={id}
-            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+            loading="lazy"
+            decoding="async"
+            draggable="false"
+            style={{ display: 'block', width: '100%', height: 'auto' }}
           />
         </div>
       </div>
@@ -217,7 +230,6 @@ export default function WaterScene() {
           from { transform: translateY(-9px) rotate(-1.6deg); }
           to   { transform: translateY(9px) rotate(1.6deg); }
         }
-
 
         /* Vignette für Tiefenwirkung */
         .bb-vignette {
