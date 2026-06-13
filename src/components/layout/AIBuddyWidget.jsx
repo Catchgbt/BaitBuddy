@@ -415,18 +415,9 @@ export default function AIBuddyWidget() {
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.95 }}
           >
-            {/* Glow-Ring beim Hover / aktiv */}
-            <div
-              className={`absolute -inset-1 rounded-full blur-md transition-opacity ${
-                isSpeaking || isListening
-                  ? 'bg-cyan-300 opacity-40'
-                  : 'bg-cyan-400 opacity-0 group-hover:opacity-25'
-              }`}
-            />
-
             {/* Avatar in Wasserlinse */}
             <div
-              className="relative w-[92px] h-[52px] rounded-full shadow-lg hover:shadow-xl transition-shadow ring-1 ring-cyan-200/50 overflow-hidden"
+              className="relative w-[92px] h-[52px] rounded-full shadow-lg hover:shadow-xl transition-shadow overflow-hidden"
               style={{
                 background:
                   'radial-gradient(120% 130% at 35% 25%, rgba(186,230,253,0.85) 0%, rgba(56,150,200,0.55) 55%, rgba(12,74,110,0.65) 100%)',
