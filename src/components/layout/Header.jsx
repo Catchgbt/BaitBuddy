@@ -12,6 +12,7 @@ import { createPageUrl } from "@/utils";
 import WakeWordIndicator from "@/components/header/WakeWordIndicator";
 import EventTimer from "@/components/header/EventTimer";
 import LastBuddyMessage from "@/components/header/LastBuddyMessage";
+import MapFeaturesBadge from "@/components/layout/MapFeaturesBadge";
 import { functions } from "@/api/frontendClient";
 import { entities } from "@/api/frontendClient";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -355,6 +356,7 @@ export default function Header({
             </Popover>
           )}
 
+          <MapFeaturesBadge />
           <WakeWordIndicator />
         </div>
       </div>

@@ -11,6 +11,7 @@ import { useLocation } from "@/components/location/LocationManager";
 import AddSpotModal from "@/components/map/v2/AddSpotModal";
 import SpotDetailPanel from "@/components/map/SpotDetailPanel";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
+import NewFeaturesNotification from "@/components/map/NewFeaturesNotification";
 
 // Leaflet CSS laden
 if (typeof document !== "undefined") {
@@ -260,7 +261,8 @@ export default function MapPage() {
   return (
     <div className="min-h-screen bg-gray-950 pb-32">
       <div className="max-w-7xl mx-auto p-4 space-y-4">
-        
+        <NewFeaturesNotification />
+
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]">
