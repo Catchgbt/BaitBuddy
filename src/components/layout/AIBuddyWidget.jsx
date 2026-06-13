@@ -227,8 +227,13 @@ export default function AIBuddyWidget() {
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-white text-xs font-bold">M</span>
+                    <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-blue-300 bg-blue-100">
+                      <img
+                        src="/assets/buddy/marina-avatar.png"
+                        alt="Marina"
+                        className="w-full h-full object-cover object-top"
+                        draggable={false}
+                      />
                     </div>
                     <div>
                       <h2 className="text-sm font-bold text-gray-800">Marina</h2>
@@ -366,28 +371,32 @@ export default function AIBuddyWidget() {
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.95 }}
           >
-            {/* Avatar in Wasserlinse */}
+            {/* Runder Foto-Avatar Marina */}
             <div
-              className="relative w-[92px] h-[52px] rounded-full shadow-lg hover:shadow-xl transition-shadow overflow-hidden"
-              style={{
-                background:
-                  'radial-gradient(120% 130% at 35% 25%, rgba(186,230,253,0.85) 0%, rgba(56,150,200,0.55) 55%, rgba(12,74,110,0.65) 100%)',
-              }}
+              className={`relative w-16 h-16 rounded-full shadow-lg hover:shadow-xl transition-all overflow-hidden bg-gradient-to-br from-blue-100 to-blue-300 ring-2 ${
+                isSpeaking
+                  ? 'ring-green-400'
+                  : isListening
+                  ? 'ring-red-400'
+                  : 'ring-white'
+              }`}
             >
-              <div className="absolute inset-0 flex items-center justify-center p-1">
-                <BuddyTextAvatar
-                  isTalking={isTalking}
-                  isListening={isListening}
-                />
-              </div>
+              <img
+                src="/assets/buddy/marina-avatar.png"
+                alt="Marina – dein Angel-Buddy"
+                className={`w-full h-full object-cover object-top ${
+                  isTalking ? 'buddy-text-speaking' : isListening ? 'buddy-text-listening' : 'buddy-text-breathing'
+                }`}
+                draggable={false}
+              />
             </div>
 
             {/* Voice indicator */}
             {isSpeaking && (
-              <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full ring-2 ring-white animate-pulse" />
+              <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full ring-2 ring-white animate-pulse" />
             )}
             {isListening && (
-              <div className="absolute -bottom-0.5 -left-0.5 w-3.5 h-3.5 bg-red-500 rounded-full ring-2 ring-white animate-pulse" />
+              <div className="absolute bottom-0 left-0 w-4 h-4 bg-red-500 rounded-full ring-2 ring-white animate-pulse" />
             )}
           </motion.button>
         </div>
