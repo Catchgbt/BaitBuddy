@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Heart, MessageCircle, Send, Camera, AlertTriangle, User as UserIcon, Loader2, X, Globe, Facebook, Trophy, Users, Activity, Fish, TrendingUp } from "lucide-react";
 import CompetitionCard from "@/components/community/CompetitionCard";
 import CompetitionLauncher from "@/components/community/CompetitionLauncher";
+import EventLauncher from "@/components/community/EventLauncher";
 import VotingEventCard from "@/components/community/VotingEventCard";
 import ClanLeaderboardCard from "@/components/community/ClanLeaderboardCard";
 import LeaderboardCard from "@/components/community/LeaderboardCard";
@@ -758,8 +759,17 @@ export default function Community() {
         </>)}
 
         {activeTab === "competitions" && (<PlanGuard requiredPlan="pro" featureName="Community-Wettbewerbe & Clans"><>
+        {/* Event Vorlagen */}
+        <EventLauncher
+          currentUser={currentUser}
+          onStarted={async () => {
+            await loadCompetitions();
+            await loadRecentActivity();
+          }}
+        />
+
         {/* Wettbewerbe starten */}
-        <CompetitionLauncher 
+        <CompetitionLauncher
           currentUser={currentUser}
           onStarted={async () => {
             await loadCompetitions();

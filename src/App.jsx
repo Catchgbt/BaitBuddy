@@ -25,6 +25,7 @@ import AdminTracking from '@/pages/AdminTracking';
 import Help from '@/pages/Help';
 import EventCatalog from '@/pages/EventCatalog';
 import EventDetails from '@/pages/EventDetails';
+import EventCreate from '@/pages/EventCreate';
 import MonthlyLeaderboard from '@/pages/MonthlyLeaderboard';
 import PageViewTracker from '@/components/utils/PageViewTracker';
 
@@ -98,6 +99,9 @@ const AnimatedRoutes = () => {
           } />
           <Route path="/events-catalog" element={
             <ErrorBoundary><EventCatalog /></ErrorBoundary>
+          } />
+          <Route path="/events/create" element={
+            <ErrorBoundary><EventCreate /></ErrorBoundary>
           } />
           <Route path="/events/:eventId" element={
             <ErrorBoundary><EventDetails /></ErrorBoundary>
