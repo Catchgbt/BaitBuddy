@@ -11,65 +11,10 @@ function MapNavigationHub({
   currentMode = 'guided' // 'guided' | 'simple' | 'advanced'
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [activeCategory, setActiveCategory] = useState('new-features'); // Zeige neue Features zuerst
+  const [activeCategory, setActiveCategory] = useState('quick-start');
   const [hideHints, setHideHints] = useState(false);
 
   const categories = {
-    'new-features': {
-      title: '✨ NEU: 6 Advanced Features',
-      icon: '🎉',
-      description: 'Alle neuen Funktionen in dieser Version',
-      features: [
-        {
-          id: 'offline-cache',
-          name: 'Phase 1: Offline Tile-Caching',
-          description: 'Automatisches Caching von Kartenkacheln für vollständig offline funktionierende Touren',
-          difficulty: 'easy',
-          icon: '📡',
-          tooltip: 'Aktiviert automatisch - speichert Tiles während du die Karte nutzt',
-        },
-        {
-          id: 'relief-shading',
-          name: 'Phase 2: Relief-Shading',
-          description: 'Mapzen Terrain Normal Maps für 3D-ähnliche Geländevisualisierung',
-          difficulty: 'easy',
-          icon: '🏔️',
-          tooltip: 'Gibt der Karte ein plastisches Aussehen - Klick auf Hub zum Aktivieren',
-        },
-        {
-          id: '3d-terrain',
-          name: 'Phase 3: 3D-Terrain',
-          description: 'Canvas-basierte Höhenvisualisierung mit Konturlinien',
-          difficulty: 'medium',
-          icon: '🗻',
-          tooltip: 'Immersive 3D-Ansicht - nutze mit Relief-Shading zusammen',
-        },
-        {
-          id: 'hydrographic',
-          name: 'Phase 4: Hydrographische Analyse',
-          description: 'Wasser-Temperatur (Heatmap), Strömungen, Tiefe & Qualitätsbewertung',
-          difficulty: 'medium',
-          icon: '💧',
-          tooltip: 'Zeigt optimale Fangzonen basierend auf Wasserparametern',
-        },
-        {
-          id: 'satellite',
-          name: 'Phase 5: Satelliten-Bilder',
-          description: 'USGS & Sentinel-2 Multi-spektrale Satellitendaten in Echtzeit',
-          difficulty: 'medium',
-          icon: '🛰️',
-          tooltip: 'Beste ab Zoom 10+ - zeigt präzise Luftaufnahmen',
-        },
-        {
-          id: 'cache-opt',
-          name: 'Phase 6: Cache-Optimierung',
-          description: 'LRU-Eviction, automatische Komprimierung & Hit-Rate-Tracking',
-          difficulty: 'hard',
-          icon: '⚡',
-          tooltip: 'Intelligent - passt Cache-Größe automatisch an',
-        },
-      ],
-    },
     'quick-start': {
       title: '⚡ Schnelleinstieg',
       icon: '🚀',
