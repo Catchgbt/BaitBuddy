@@ -21,9 +21,13 @@ function KiBuddyBetaInner() {
   const [tonAn, setTonAn] = useState(true);
   const [recording, setRecording] = useState(false);
   const [waveBars, setWaveBars] = useState([4, 4, 4, 4, 4]);
+  const [interimTranscript, setInterimTranscript] = useState("");
+  const [confidence, setConfidence] = useState(null);
   const chatRef = useRef();
   const recRef = useRef(null);
   const waveRef = useRef(null);
+  const timeoutRef = useRef(null);
+  const retryRef = useRef(0);
   const { speak, stop: stopVoice, isSpeaking } = useElevenLabsVoice();
 
   useEffect(() => {
@@ -66,7 +70,7 @@ function KiBuddyBetaInner() {
     setStatus("");
   }
 
-  async function ask(q) {
+  async function ask(q, isRetry = false) {
     setStatus("thinking");
     try {
       const chatMessages = messages
@@ -80,10 +84,19 @@ function KiBuddyBetaInner() {
       });
 
       const ans = res?.reply || res?.message || "Keine Antwort erhalten.";
+      retryRef.current = 0;
       setMessages(m => [...m, { role: "assistant", text: ans }]);
       if (tonAn) speakWithElevenLabs(ans);
       else setStatus("");
     } catch {
+      // Auto-Retry (bis zu 2x) bei Verbindungsfehlern
+      if (retryRef.current < 2) {
+        retryRef.current += 1;
+        setStatus("thinking");
+        await new Promise(r => setTimeout(r, 800));
+        return ask(q, true);
+      }
+      retryRef.current = 0;
       setStatus("");
       setMessages(m => [...m, { role: "system", text: "Verbindungsfehler – bitte erneut versuchen." }]);
     }
@@ -97,6 +110,14 @@ function KiBuddyBetaInner() {
     ask(q);
   }
 
+  const ERROR_LABELS = {
+    "no-speech": "Keine Sprache erkannt – bitte erneut versuchen.",
+    "audio-capture": "Mikrofon nicht verfügbar. Prüfe die Berechtigung.",
+    "not-allowed": "Mikrofon-Zugriff verweigert. Bitte erlauben.",
+    network: "Netzwerkfehler bei der Spracherkennung.",
+    "service-not-allowed": "Spracherkennungs-Dienst nicht verfügbar.",
+  };
+
   function toggleMic() {
     if (recording) { stopMic(); return; }
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -105,27 +126,70 @@ function KiBuddyBetaInner() {
       return;
     }
     const rec = new SR();
-    rec.lang = "de-DE"; rec.interimResults = false;
+    rec.lang = "de-DE";
+    rec.interimResults = true;
+    rec.continuous = false;
+    rec.maxAlternatives = 1;
+
     rec.onresult = e => {
-      const q = e.results[0][0].transcript;
-      stopMic();
-      setMessages(m => [...m, { role: "user", text: q }]);
-      ask(q);
+      let interim = "";
+      let finalText = "";
+      let finalConfidence = null;
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const result = e.results[i];
+        if (result.isFinal) {
+          finalText += result[0].transcript;
+          finalConfidence = result[0].confidence;
+        } else {
+          interim += result[0].transcript;
+        }
+      }
+      if (interim) setInterimTranscript(interim);
+      if (finalText.trim()) {
+        const q = finalText.trim();
+        if (typeof finalConfidence === "number" && finalConfidence > 0) {
+          setConfidence(Math.round(finalConfidence * 100));
+        }
+        stopMic();
+        setMessages(m => [...m, { role: "user", text: q }]);
+        ask(q);
+      }
     };
-    rec.onerror = () => stopMic();
+
+    rec.onerror = ev => {
+      const label = ERROR_LABELS[ev?.error];
+      if (label) setMessages(m => [...m, { role: "system", text: label }]);
+      stopMic();
+    };
     rec.onend = () => { if (recRef.current) stopMic(); };
+
     rec.start();
     recRef.current = rec;
     setRecording(true);
     setStatus("listening");
+    setInterimTranscript("");
+    setConfidence(null);
+
+    // Timeout: 8s ohne erkannte Sprache
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      if (recRef.current) {
+        setMessages(m => [...m, { role: "system", text: "Keine Sprache erkannt (Timeout). Bitte erneut versuchen." }]);
+        stopMic();
+      }
+    }, 8000);
   }
 
   function stopMic() {
+    clearTimeout(timeoutRef.current);
     try { recRef.current?.stop(); } catch {}
     recRef.current = null;
     setRecording(false);
+    setInterimTranscript("");
     if (status === "listening") setStatus("");
   }
+
+  useEffect(() => () => clearTimeout(timeoutRef.current), []);
 
   const avatarGlow = isSpeaking
     ? "0 0 0 3px rgba(34,211,200,0.45)"
@@ -153,7 +217,7 @@ function KiBuddyBetaInner() {
               <span style={{ marginLeft: 8, fontSize: 11, color: "#4455aa", fontWeight: 500, background: "#0d1a33", border: "1px solid #1e2f55", borderRadius: 8, padding: "2px 7px" }}>BETA</span>
             </div>
             <button
-              onClick={() => { setTonAn(t => !t); if (tonAn) synthRef.current.cancel(); }}
+              onClick={() => { setTonAn(t => !t); if (tonAn) stopSpeaking(); }}
               style={{ display: "flex", alignItems: "center", gap: 6, background: tonAn ? "#22d3c8" : "#0d2020", border: "1px solid #22d3c8", borderRadius: 20, padding: "4px 12px", fontSize: 12, color: tonAn ? "#060d1a" : "#22d3c8", fontWeight: 500, cursor: "pointer" }}
             >
               <span style={{ width: 7, height: 7, borderRadius: "50%", background: tonAn ? "#060d1a" : "#22d3c8", display: "inline-block" }} />
@@ -173,8 +237,11 @@ function KiBuddyBetaInner() {
           </div>
 
           {/* Status hint */}
-          <div style={{ padding: "6px 16px 10px", fontSize: 11, color: "#445566", fontStyle: "italic" }}>
-            {statusLabels[status] || statusLabels[""]}
+          <div style={{ padding: "6px 16px 10px", fontSize: 11, color: "#445566", fontStyle: "italic", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+            <span>{statusLabels[status] || statusLabels[""]}</span>
+            {confidence !== null && (
+              <span style={{ color: "#22d3c8", fontStyle: "normal", fontWeight: 500 }}>Erkennung: {confidence}%</span>
+            )}
           </div>
 
           {/* Avatar row */}
@@ -214,6 +281,11 @@ function KiBuddyBetaInner() {
                 {m.text}
               </div>
             ))}
+            {interimTranscript && (
+              <div style={{ alignSelf: "flex-end", background: "#0e1828", border: "1px dashed #1e2f44", borderRadius: 12, borderBottomRightRadius: 4, padding: "9px 12px", color: "#7788aa", fontSize: 13, fontStyle: "italic", maxWidth: "88%" }}>
+                {interimTranscript}
+              </div>
+            )}
             {status === "thinking" && (
               <div style={{ alignSelf: "flex-start", background: "#0d1e14", border: "1px solid #163025", borderRadius: 12, borderBottomLeftRadius: 4, padding: "9px 12px", color: "#7adba0", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ display: "inline-flex", gap: 3 }}>
