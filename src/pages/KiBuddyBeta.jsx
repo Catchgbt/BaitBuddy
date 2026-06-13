@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { catchgbtChat } from "@/functions/catchgbtChat";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
+import { useElevenLabsVoice } from "@/hooks/useElevenLabsVoice";
 
 import PremiumGuard from "@/components/premium/PremiumGuard";
 
@@ -23,7 +24,7 @@ function KiBuddyBetaInner() {
   const chatRef = useRef();
   const recRef = useRef(null);
   const waveRef = useRef(null);
-  const synthRef = useRef(window.speechSynthesis);
+  const { speak, stop: stopVoice, isSpeaking } = useElevenLabsVoice();
 
   useEffect(() => {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
@@ -40,28 +41,27 @@ function KiBuddyBetaInner() {
     setWaveBars([4, 4, 4, 4, 4]);
   }
 
-  function getFemaleVoice() {
-    const vs = synthRef.current.getVoices();
-    return vs.find(v => /Helena|Marlene|Katja|Anna/i.test(v.name))
-      || vs.find(v => v.lang === "de-DE" || v.lang === "de-AT")
-      || vs[0];
-  }
-
-  function speak(text) {
-    synthRef.current.cancel();
+  async function speakWithElevenLabs(text) {
     setStatus("speaking");
     startWave();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "de-DE"; u.pitch = 1.1; u.rate = 1.0;
-    const v = getFemaleVoice();
-    if (v) u.voice = v;
-    u.onend = () => { setStatus(""); stopWave(); };
-    u.onerror = () => { setStatus(""); stopWave(); };
-    synthRef.current.speak(u);
+    const success = await speak(text, {
+      onEnd: () => {
+        setStatus("");
+        stopWave();
+      },
+      onError: () => {
+        setStatus("");
+        stopWave();
+      },
+    });
+    if (!success) {
+      setStatus("");
+      stopWave();
+    }
   }
 
   function stopSpeaking() {
-    synthRef.current.cancel();
+    stopVoice();
     stopWave();
     setStatus("");
   }
@@ -81,7 +81,7 @@ function KiBuddyBetaInner() {
 
       const ans = res?.reply || res?.message || "Keine Antwort erhalten.";
       setMessages(m => [...m, { role: "assistant", text: ans }]);
-      if (tonAn) speak(ans);
+      if (tonAn) speakWithElevenLabs(ans);
       else setStatus("");
     } catch {
       setStatus("");
@@ -127,14 +127,14 @@ function KiBuddyBetaInner() {
     if (status === "listening") setStatus("");
   }
 
-  const avatarGlow = status === "speaking"
+  const avatarGlow = isSpeaking
     ? "0 0 0 3px rgba(34,211,200,0.45)"
     : status === "listening"
     ? "0 0 0 3px rgba(124,58,237,0.5)"
     : "none";
 
   const statusLabels = {
-    listening: "Ich hoere zu...",
+    listening: "Ich höre zu...",
     speaking: "Marina spricht...",
     thinking: "Denke nach...",
     "": "Tippe oder aktiviere das Mikrofon"
@@ -186,7 +186,7 @@ function KiBuddyBetaInner() {
               <div style={{ fontSize: 15, fontWeight: 600, color: "#e0f0ff" }}>Marina</div>
               <div style={{ fontSize: 12, color: "#556677", marginTop: 2 }}>Deine KI-Angelexpertin</div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 3, height: 24, opacity: status === "speaking" ? 1 : 0, transition: "opacity 0.3s" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 3, height: 24, opacity: isSpeaking ? 1 : 0, transition: "opacity 0.3s" }}>
               {waveBars.map((h, i) => (
                 <div key={i} style={{ width: 3, height: h, background: "#22d3c8", borderRadius: 2, transition: "height 0.1s" }} />
               ))}
