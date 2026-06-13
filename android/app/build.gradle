@@ -44,7 +44,6 @@ android {
     }
 
     bundle {
-        enableSplit = true
         language {
             enableSplit = true
         }
