@@ -21,7 +21,7 @@ export default function CommunityPostDialog({ isOpen, onOpenChange }) {
     setLoading(true);
     try {
       const result = await entities.Post.list("-created_date", 4);
-      setPosts(result || []);
+      setPosts(result ?? []);
     } catch (error) {
       console.error("Fehler beim Laden der Community-Posts:", error);
       setPosts([]);

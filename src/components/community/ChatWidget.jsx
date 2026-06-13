@@ -22,7 +22,7 @@ export default function ChatWidget({ topic = "Allgemein" }) {
         const currentUser = await auth.me();
         setUser(currentUser);
       } catch (e) {
-        console.log("User not authenticated");
+        console.log("Benutzer nicht authentifiziert");
       }
     };
     fetchUser();
@@ -54,22 +54,24 @@ export default function ChatWidget({ topic = "Allgemein" }) {
   const loadMessages = async () => {
     try {
       const data = await entities.ChatMessage.filter({ context: topic }, '-timestamp', 30);
-      
+
       const newCache = { ...userCache };
-      const uniqueEmails = [...new Set(data.map(m => m.created_by))];
-      
-      for (const email of uniqueEmails) {
-        if (!newCache[email]) {
-          try {
-            const allUsers = await User.list('', 1000);
+      const missingEmails = [...new Set(data.map(m => m.created_by))].filter(e => !newCache[e]);
+
+      if (missingEmails.length > 0) {
+        try {
+          const allUsers = await User.list('', 1000);
+          missingEmails.forEach(email => {
             const foundUser = allUsers.find(u => u.email === email);
             newCache[email] = foundUser?.full_name || email.split('@')[0];
-          } catch {
+          });
+        } catch {
+          missingEmails.forEach(email => {
             newCache[email] = email.split('@')[0];
-          }
+          });
         }
       }
-      
+
       setUserCache(newCache);
       setMessages(data);
     } catch (e) {
