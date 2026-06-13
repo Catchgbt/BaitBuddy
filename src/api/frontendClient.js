@@ -299,6 +299,17 @@ export const auth = {
 export const User = Object.assign(makeEntity('User'), auth);
 
 // ── Integrations ──────────────────────────────────────────────────────────────
+const fileToBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = reject;
+  });
+};
+
 export const integrations = {
   Core: {
     InvokeLLM: ({ prompt, response_json_schema, ...rest }) =>
@@ -309,7 +320,15 @@ export const integrations = {
       }),
     SendEmail:  () => Promise.resolve({ ok: true }),
     SendSMS:    () => Promise.resolve({ ok: true }),
-    UploadFile: () => Promise.resolve({ file_url: '' }),
+    UploadFile: async ({ file }) => {
+      if (!file) throw new Error('file erforderlich');
+      const file_base64 = await fileToBase64(file);
+      return api.post('/api/files/upload', {
+        file_base64,
+        file_name: file.name,
+        file_type: file.type,
+      });
+    },
     GenerateImage: () => Promise.resolve({ url: '' }),
     ExtractDataFromUploadedFile: () => Promise.resolve({}),
   },
