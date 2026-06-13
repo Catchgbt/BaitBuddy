@@ -59,19 +59,19 @@ export default function Sidebar({ isOpen, setIsOpen, currentPageName }) {
     { name: "KI Chat-Buddy", path: "AIAssistant", key: "nav.ai_chat" },
     { name: "KI-Kamera & Biss", path: "AI", key: "nav.ai_camera" },
     { name: "AR-Gewässer", path: "ARView", key: "nav.ar_view" },
-    { name: "AR Knoten AI", path: "ARKnotenAssistent", key: "nav.ar_knoten", isBeta: true },
-    { name: "KI Voice Control", path: "VoiceControl", key: "nav.ai_voice", isBeta: true },
+    { name: "AR Knoten AI", path: "ARKnotenAssistent", key: "nav.ar_knoten" },
+    { name: "KI Voice Control", path: "VoiceControl", key: "nav.ai_voice" },
     { name: "Satelliten-Analyse", path: "WaterAnalysis", key: "nav.water_analysis" },
-    { name: "KI-Köder-Mischer", path: "BaitMixer", key: "nav.bait_mixer", isBeta: true },
+    { name: "KI-Köder-Mischer", path: "BaitMixer", key: "nav.bait_mixer" },
   ];
 
   const moreItems = [
     { name: "Ausrüstung", path: "Gear", key: "nav.gear" },
     { name: "Meine Trips", path: "TripPlanner", key: "nav.trips" },
-    { name: "Community", path: "Community", key: "nav.community", isBeta: true },
+    { name: "Community", path: "Community", key: "nav.community" },
     { name: "Prüfung & Schonzeiten", path: "AngelscheinPruefungSchonzeiten", key: "nav.exam" },
     { name: "Lizenzen", path: "Licenses", key: "nav.licenses" },
-    { name: "Geräte", path: "Devices", key: "nav.devices", isBeta: true },
+    { name: "Geräte", path: "Devices", key: "nav.devices" },
     { name: "Premium", path: "PremiumPlans", key: "nav.premium" },
     { name: "Einstellungen", path: "Settings", key: "nav.settings" },
     { name: "Profil", path: "Profile", key: "nav.profile" },
@@ -227,12 +227,9 @@ export default function Sidebar({ isOpen, setIsOpen, currentPageName }) {
                 {mainItems.map(renderMenuItem)}
               </div>
 
-              <div className="pt-3 pb-1.5 px-1 flex items-center gap-2">
+              <div className="pt-3 pb-1.5 px-1">
                 <span className="text-xs font-bold uppercase tracking-wider text-cyan-400">
                   {t('nav.ai_tools')}
-                </span>
-                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-[0_0_10px_rgba(168,85,247,0.3)]">
-                  BETA
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-1">

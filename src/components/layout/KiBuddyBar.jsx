@@ -113,7 +113,7 @@ export default function KiBuddyBar({ onToggleChatbot, chatbotOpen, onOpenVoice }
             </button>
           </div>
 
-          {/* Center - KI Buddy Icon mit BETA Badge */}
+          {/* Center - KI Buddy Icon */}
           <div 
             className="flex-shrink-0 cursor-pointer select-none hover:scale-110 transition-transform mx-2 relative"
             onClick={handleBuddyClick}
@@ -141,11 +141,6 @@ export default function KiBuddyBar({ onToggleChatbot, chatbotOpen, onOpenVoice }
                 </div>
               </div>
               
-              <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-900 text-red-200 border border-red-700 whitespace-nowrap">
-                  BETA
-                </span>
-              </div>
             </div>
           </div>
 
