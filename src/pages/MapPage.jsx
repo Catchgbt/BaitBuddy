@@ -94,7 +94,7 @@ export default function MapPage() {
   const [mapCenter, setMapCenter] = useState([51.1657, 10.4515]);
   const [mapZoom, setMapZoom] = useState(6);
   const [baseLayer, setBaseLayer] = useState("standard");
-  const [filters, setFilters] = useState({ spots: true, parks: true, clubs: true, shops: false });
+  const [filters, setFilters] = useState({ spots: true, parks: false, clubs: false, shops: false });
 
   useEffect(() => {
     loadMapData();

@@ -195,12 +195,20 @@ function TripPlannerContent() {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]">Mein Trip planen</h1>
-          <Link to={createPageUrl("Gear")}>
-            <Button className="bg-emerald-600 hover:bg-emerald-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Neuen Plan erstellen
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link to={createPageUrl("LiveTrip")}>
+              <Button className="bg-red-600 hover:bg-red-700">
+                <Navigation className="w-4 h-4 mr-2" />
+                Live-Trip starten
+              </Button>
+            </Link>
+            <Link to={createPageUrl("Gear")}>
+              <Button className="bg-emerald-600 hover:bg-emerald-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Neuen Plan erstellen
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {plans.length === 0 ? (
