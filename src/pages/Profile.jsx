@@ -265,13 +265,17 @@ export default function ProfilePage() {
             <div className="relative flex-shrink-0">
               <div className="w-32 h-32 rounded-full bg-gray-800 border-4 border-gray-700 overflow-hidden flex items-center justify-center">
                 {user?.profile_picture_url ? (
-                  <img 
-                    src={user.profile_picture_url} 
+                  <img
+                    src={user.profile_picture_url}
                     alt="Profilbild"
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <UserIcon className="w-16 h-16 text-gray-500" />
+                  <img
+                    src="/avatars/default-avatar.png"
+                    alt="Standard Avatar"
+                    className="w-full h-full object-cover"
+                  />
                 )}
               </div>
               
