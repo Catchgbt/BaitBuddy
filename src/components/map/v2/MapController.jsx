@@ -41,7 +41,8 @@ function MapController() {
     angelparksEu: false,
     tiefenkarten: false,
     forellenseen: false,
-    bathymetrie: false
+    bathymetrie: false,
+    fluesse: false
   });
   const [waterBodies, setWaterBodies] = useState([]);
   const [reviews, setReviews] = useState([]);
@@ -50,6 +51,7 @@ function MapController() {
   const [tiefenkarten, setTiefenkarten] = useState([]);
   const [forellenseen, setForellenseen] = useState([]);
   const [bathymetryData, setBathymetryData] = useState([]);
+  const [deutscheFluesse, setDeutscheFluesse] = useState([]);
 
   // Query data with react-query
   const { data: spots = [] } = useQuery({
@@ -136,9 +138,21 @@ function MapController() {
       }
     };
 
+    // Lade deutsche Flüsse
+    const loadDeutscheFluesse = async () => {
+      try {
+        const response = await fetch('/assets/rivers/deutsche_fluesse.json');
+        const data = await response.json();
+        setDeutscheFluesse(data);
+      } catch (error) {
+        console.warn('Deutsche Flüsse konnten nicht geladen werden:', error);
+      }
+    };
+
     loadTiefenkarten();
     loadForellenseen();
     loadBathymetry();
+    loadDeutscheFluesse();
 
     return () => {
       window.removeEventListener('online', handleOnline);
@@ -314,6 +328,9 @@ function MapController() {
   const filteredBathymetrie = filters.bathymetrie
     ? bathymetryData.filter(bd => matchesSearch(bd.name))
     : [];
+  const filteredFluesse = filters.fluesse
+    ? deutscheFluesse.filter(df => matchesSearch(df.name))
+    : [];
 
   if (!isInitialized || !mapCenter) {
     return (
@@ -407,12 +424,12 @@ function MapController() {
 
            <div aria-live="polite" aria-atomic="true">
              <div className="text-xs text-gray-300 px-2 py-1 bg-gray-900/50 rounded" role="status">
-               🗺️ {filteredSpots.length} Spots • 🏛️ {filteredClubs.length} Vereine • 🛒 {filteredAngelshops.length} Shops • 🌍 {filteredAngelparksEu.length} EU Parks • 💧 {filteredWaters.length} Gewässer • 🗻 {filteredTiefenkarten.length} Tiefenkarten • 🎣 {filteredForellenseen.length} Seen • 🌊 {filteredBathymetrie.length} Bathymetrie
+               🗺️ {filteredSpots.length} Spots • 🏛️ {filteredClubs.length} Vereine • 🛒 {filteredAngelshops.length} Shops • 🌍 {filteredAngelparksEu.length} EU Parks • 💧 {filteredWaters.length} Gewässer • 🗻 {filteredTiefenkarten.length} Tiefenkarten • 🎣 {filteredForellenseen.length} Seen • 🌊 {filteredBathymetrie.length} Bathymetrie • 🏞️ {filteredFluesse.length} Flüsse
              </div>
            </div>
 
            {/* Filter Buttons */}
-           <div className="grid grid-cols-2 sm:grid-cols-8 gap-1.5">
+           <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-9 gap-1.5">
              <button
                onClick={() => setFilters({ ...filters, spots: !filters.spots })}
                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
@@ -503,6 +520,16 @@ function MapController() {
              >
                🌊 Bathymetrie
              </button>
+             <button
+               onClick={() => setFilters({ ...filters, fluesse: !filters.fluesse })}
+               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                 filters.fluesse
+                   ? 'bg-teal-600 text-white ring-2 ring-teal-400/50'
+                   : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+               }`}
+             >
+               🏞️ Flüsse
+             </button>
            </div>
           </div>
         )}
@@ -578,6 +605,7 @@ function MapController() {
            tiefenkarten={filteredTiefenkarten}
            forellenseen={filteredForellenseen}
            bathymetrie={filteredBathymetrie}
+           fluesse={filteredFluesse}
            currentLocation={currentLocation}
            newSpotMarker={newSpotCoords}
            onMapClick={handleMapClick}

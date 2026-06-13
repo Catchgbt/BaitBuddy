@@ -40,6 +40,7 @@ const newSpotIcon = createCustomIcon("#f59e0b", "⭐");
 const tiefenkartenIcon = createCustomIcon("#a855f7", "🗻", 36);
 const forellenIcon = createCustomIcon("#ec4899", "🎣", 32);
 const bathymetrieIcon = createCustomIcon("#0ea5e9", "🌊", 34);
+const flussIcon = createCustomIcon("#06b6d4", "🏞️", 34);
 
 function MapEvents({ onMapClick }) {
   useMapEvents({
@@ -157,6 +158,7 @@ export default function MapView({
   tiefenkarten = [],
   forellenseen = [],
   bathymetrie = [],
+  fluesse = [],
   currentLocation,
   newSpotMarker,
   onMapClick,
@@ -436,6 +438,40 @@ export default function MapView({
                   📮 {park.address}
                 </p>
               )}
+            </div>
+          </Popup>
+        </Marker>
+      ))}
+
+      {/* Deutsche Flüsse */}
+      {fluesse.map((fluss) => (
+        <Marker
+          key={fluss.id}
+          position={[fluss.koordinaten.lat, fluss.koordinaten.lng]}
+          icon={flussIcon}
+          eventHandlers={{
+            click: () => onLocationClick && onLocationClick(fluss, 'fluss')
+          }}
+          alt={`Fluss: ${fluss.name}`}
+          aria-label={`${fluss.name} Angelgewässer`}
+        >
+          <Popup>
+            <div className="text-sm max-w-xs">
+              <strong className="text-base text-cyan-300">🏞️ {fluss.name}</strong>
+              <p className="text-xs text-gray-400 mt-1">
+                📏 {fluss.laenge_km} km • {fluss.verlauf}
+              </p>
+              <p className="text-xs text-gray-300 mt-2">
+                <strong>🎣 Fischarten:</strong><br/>
+                {fluss.fischarten}
+              </p>
+              <p className="text-xs text-gray-300 mt-1">
+                <strong>📍 Angelplätze:</strong><br/>
+                {fluss.angelgewaesser}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                Schwierigkeit: {fluss.schwierigkeit}
+              </p>
             </div>
           </Popup>
         </Marker>
