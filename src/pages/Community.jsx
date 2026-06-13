@@ -245,19 +245,13 @@ export default function Community() {
 
     setUploading(true);
     let photoUrl = null;
-    
+
     try {
-      // FIXIERT: Nutze integrations.Core.UploadFile statt dynamischen Import
       if (newPostImage) {
-        toast.info("Lade Bild hoch...");
-        
         const response = await integrations.Core.UploadFile({ file: newPostImage });
         photoUrl = response.file_url;
-        
-        toast.success("Bild hochgeladen!");
       }
 
-      toast.info("Erstelle Post...");
       await entities.Post.create({
         text: newPostText.trim(),
         photo_url: photoUrl,
@@ -273,7 +267,7 @@ export default function Community() {
       window.scrollTo(0, 0);
     } catch (error) {
       console.error("Fehler beim Erstellen des Posts:", error);
-      toast.error("Fehler: " + (error.message || "Post konnte nicht erstellt werden"));
+      toast.error("Post konnte nicht erstellt werden");
     } finally {
       setUploading(false);
     }
@@ -304,7 +298,7 @@ export default function Community() {
     }
 
     if (!currentUser?.email) {
-      toast.error("Bitte melde dich an, um zu kommentieren");
+      toast.error("Bitte melde dich an");
       return;
     }
 
@@ -318,7 +312,6 @@ export default function Community() {
       created_date: new Date().toISOString()
     };
 
-    // Optimistic update mit functional setState (kein stale closure)
     setPosts(prev => prev.map(p =>
       p.id === postId
         ? { ...p, comments: [...(p.comments || []), optimisticComment] }
@@ -332,7 +325,6 @@ export default function Community() {
         text
       });
 
-      // Temp-Kommentar durch echten ersetzen
       setPosts(prev => prev.map(p =>
         p.id === postId
           ? { ...p, comments: (p.comments || []).map(c => c.id === tempId ? newComment : c) }
@@ -340,14 +332,13 @@ export default function Community() {
       ));
     } catch (error) {
       console.error("Fehler beim Kommentieren:", error);
-      // Bei Fehler: optimistic comment entfernen
       setPosts(prev => prev.map(p =>
         p.id === postId
           ? { ...p, comments: (p.comments || []).filter(c => c.id !== tempId) }
           : p
       ));
       setCommentText(text);
-      toast.error("Kommentar fehlgeschlagen: " + (error.message || "Unbekannter Fehler"));
+      toast.error("Kommentar fehlgeschlagen");
     }
   };
 
