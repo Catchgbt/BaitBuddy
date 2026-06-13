@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Polyline, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import { Play, Pause, X, Plus, Navigation, Zap, Droplets, Moon } from 'lucide-react';
+import { Play, Pause, X, Plus, Navigation, Zap, Droplets, Moon, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import TideWidget from '../components/LiveTrip/TideWidget';
 import SolunarWidget from '../components/LiveTrip/SolunarWidget';
+import PredictionWidget from '../components/LiveTrip/PredictionWidget';
 
 /**
  * LiveTripPage - Live-Angeltour mit GPS-Tracking
@@ -33,7 +34,7 @@ function LiveTripPage() {
   const [watchId, setWatchId] = useState(null);
   const [showCatchModal, setShowCatchModal] = useState(false);
   const [mapCenter, setMapCenter] = useState([51.1657, 10.4515]);
-  const [infoTab, setInfoTab] = useState('tides'); // 'tides' oder 'solunar'
+  const [infoTab, setInfoTab] = useState('tides'); // 'tides', 'solunar', 'prediction'
   const routeRef = useRef([]);
   const startTimeRef = useRef(null);
   const pauseStartRef = useRef(null);
@@ -434,6 +435,17 @@ function LiveTripPage() {
                     <Moon className="w-3 h-3" />
                     Solunar
                   </button>
+                  <button
+                    onClick={() => setInfoTab('prediction')}
+                    className={`flex items-center gap-1 px-3 py-1 rounded text-xs font-semibold transition ${
+                      infoTab === 'prediction'
+                        ? 'bg-cyan-600 text-white'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    KI-Vorhersage
+                  </button>
                 </div>
 
                 {/* Tab-Content */}
@@ -449,6 +461,13 @@ function LiveTripPage() {
                       )}
                       {infoTab === 'solunar' && (
                         <SolunarWidget
+                          latitude={currentLocation.latitude}
+                          longitude={currentLocation.longitude}
+                          isActive={isRecording}
+                        />
+                      )}
+                      {infoTab === 'prediction' && (
+                        <PredictionWidget
                           latitude={currentLocation.latitude}
                           longitude={currentLocation.longitude}
                           isActive={isRecording}
