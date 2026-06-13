@@ -292,10 +292,31 @@ export default function AIBuddyWidget() {
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gradient-to-b from-white to-blue-50">
                   {messages.length === 0 ? (
-                    <div className="text-center text-gray-500 text-sm flex flex-col items-center justify-center h-40">
-                      <p className="text-lg mb-2">👋</p>
-                      <p className="font-semibold mb-1">Hallo!</p>
-                      <p className="text-xs">{tip?.message || 'Wie kann ich dir helfen?'}</p>
+                    <div className="flex flex-col items-start justify-start h-full gap-3">
+                      <div className="text-sm">
+                        <p className="text-lg mb-2">👋</p>
+                        <p className="font-semibold text-gray-800 mb-1">{tip?.title || 'Hallo!'}</p>
+                        <p className="text-xs text-gray-600 leading-relaxed">{tip?.message || 'Wie kann ich dir helfen?'}</p>
+                      </div>
+
+                      {tip?.suggestions && tip.suggestions.length > 0 && (
+                        <div className="w-full space-y-2">
+                          <p className="text-xs font-semibold text-gray-500 px-2">Schnelle Fragen:</p>
+                          {tip.suggestions.map((suggestion, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => {
+                                setInputValue(suggestion);
+                                setTimeout(() => handleSendMessage(suggestion), 50);
+                              }}
+                              disabled={isLoading}
+                              className="w-full text-left px-3 py-2 bg-blue-100 hover:bg-blue-200 disabled:bg-gray-200 text-blue-900 text-xs rounded-lg transition-colors truncate"
+                            >
+                              💡 {suggestion}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     messages.map((msg, idx) => (
