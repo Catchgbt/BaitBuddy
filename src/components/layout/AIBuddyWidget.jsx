@@ -275,11 +275,12 @@ export default function AIBuddyWidget() {
           <div className="absolute inset-0 bg-blue-400 rounded-full opacity-0 group-hover:opacity-20 blur-lg transition-opacity" />
 
           {/* Avatar */}
-          <div className="relative w-[100px] h-[120px] bg-gradient-to-b from-sky-50 to-blue-100 rounded-full shadow-lg hover:shadow-xl transition-shadow">
+          <div className="relative w-[110px] h-[95px] bg-gradient-to-b from-sky-50 to-blue-100 rounded-full shadow-lg hover:shadow-xl transition-shadow">
             <FemaleFisherSvg
               uid="buddy"
               isTalking={isTalking}
               isNodding={isNodding}
+              showBubble={isTalking || isListening}
             />
           </div>
 

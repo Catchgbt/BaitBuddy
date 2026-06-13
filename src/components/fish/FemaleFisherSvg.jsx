@@ -1,197 +1,333 @@
 import React from 'react';
 
-// Weiblicher Angler-Avatar mit Angelhut
-// Koordinatenraum: 0–200 (x) × 0–240 (y)
-// Animierbare Gruppen:
-//   .fe-head         Kopf mit subtiler Atmungs-Animation
-//   .fe-mouth        Mund (öffnet/schließt bei Sprechen)
-//   .fe-eyes         Augen (für Ausdruckswechsel)
+// Buddy-Fisch mit integrierter Sprechblase
+// Ein freundlicher, animierter Fisch als KI-Buddy Avatar
+// Koordinatenraum: 0–280 (x) × 0–200 (y)
 
-export const FEMALE_FISHER_CSS = `
-  .fe-fisher { }
-  .fe-head {
+export const BUDDY_FISH_CSS = `
+  .bf-fish { }
+
+  /* Fisch-Body Animation - subtile Atmung */
+  .bf-body {
     transform-box: fill-box;
     transform-origin: 50% 50%;
-    animation: feBreathing 3s ease-in-out infinite;
+    animation: bfBreathing 3s ease-in-out infinite;
   }
-  .fe-mouth {
+
+  /* Tail-Animation */
+  .bf-tail {
+    transform-box: fill-box;
+    transform-origin: 8% 50%;
+    animation: bfTailWag 1.5s ease-in-out infinite alternate;
+  }
+
+  .bf-tail-talking {
+    animation: bfTailWagFast 0.8s ease-in-out infinite alternate;
+  }
+
+  /* Fins Animation */
+  .bf-fin-dorsal {
+    transform-box: fill-box;
+    transform-origin: 45% 100%;
+    animation: bfFinSway 2.8s ease-in-out infinite alternate;
+  }
+
+  .bf-fin-pect {
+    transform-box: fill-box;
+    transform-origin: 30% 50%;
+    animation: bfFinFlutter 2.2s ease-in-out infinite alternate;
+  }
+
+  /* Eye Animation - happy/thinking */
+  .bf-eye {
     transform-box: fill-box;
     transform-origin: 50% 50%;
   }
-  .fe-mouth-talking {
-    animation: feMouthTalk 0.5s ease-in-out infinite;
-  }
-  .fe-eyes { }
 
-  @keyframes feBreathing {
-    0%, 100% { transform: translateY(0px) scale(1); }
-    50% { transform: translateY(-2px) scale(1.02); }
+  .bf-eye-blinking {
+    animation: bfBlink 3s ease-in-out infinite;
   }
 
-  @keyframes feMouthTalk {
+  /* Mouth Animation - talking */
+  .bf-mouth {
+    transform-box: fill-box;
+    transform-origin: 50% 50%;
+  }
+
+  .bf-mouth-talking {
+    animation: bfMouthTalk 0.4s ease-in-out infinite;
+  }
+
+  /* Bubble Animation */
+  .bf-bubble {
+    transform-box: fill-box;
+    transform-origin: 50% 50%;
+    animation: bfBubbleFloat 0.8s ease-in-out infinite;
+  }
+
+  .bf-bubble-text {
+    animation: bfBubbleTextFade 2s ease-in-out infinite;
+  }
+
+  @keyframes bfBreathing {
+    0%, 100% { transform: translateY(0px) scaleX(1); }
+    50% { transform: translateY(-1.5px) scaleX(1.03); }
+  }
+
+  @keyframes bfTailWag {
+    from { transform: rotateZ(-3deg); }
+    to { transform: rotateZ(3deg); }
+  }
+
+  @keyframes bfTailWagFast {
+    from { transform: rotateZ(-5deg); }
+    to { transform: rotateZ(5deg); }
+  }
+
+  @keyframes bfFinSway {
+    from { transform: rotateZ(-2deg); }
+    to { transform: rotateZ(2deg); }
+  }
+
+  @keyframes bfFinFlutter {
+    from { transform: rotateZ(-4deg); }
+    to { transform: rotateZ(4deg); }
+  }
+
+  @keyframes bfBlink {
+    0%, 10%, 12%, 100% { transform: scaleY(1); }
+    11% { transform: scaleY(0.1); }
+  }
+
+  @keyframes bfMouthTalk {
     0%, 100% { transform: scaleY(1); }
-    50% { transform: scaleY(1.3); }
+    50% { transform: scaleY(1.4); }
   }
 
-  @keyframes feHeadNod {
-    0% { transform: rotateX(0deg); }
-    25% { transform: rotateX(-4deg); }
-    50% { transform: rotateX(0deg); }
-    75% { transform: rotateX(4deg); }
-    100% { transform: rotateX(0deg); }
+  @keyframes bfBubbleFloat {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-3px); }
   }
 
-  .fe-head-nodding {
-    animation: feHeadNod 0.8s ease-in-out infinite;
+  @keyframes bfBubbleTextFade {
+    0%, 10% { opacity: 0; }
+    20%, 80% { opacity: 1; }
+    90%, 100% { opacity: 0; }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .fe-head, .fe-mouth-talking, .fe-head-nodding { animation: none; }
+    .bf-body, .bf-tail, .bf-fin-dorsal, .bf-fin-pect,
+    .bf-eye-blinking, .bf-mouth-talking, .bf-bubble,
+    .bf-bubble-text { animation: none; }
   }
 `;
 
-export default function FemaleFisherSvg({ uid = 'fe', isTalking = false, isNodding = false }) {
-  const hatGradId = `${uid}-hat-grad`;
-  const skinGradId = `${uid}-skin-grad`;
-  const hairGradId = `${uid}-hair-grad`;
+export default function FemaleFisherSvg({
+  uid = 'bf',
+  isTalking = false,
+  isNodding = false,
+  showBubble = false
+}) {
+  const bodyGradId = `${uid}-body-grad`;
+  const scaleGradId = `${uid}-scale-grad`;
+  const finGradId = `${uid}-fin-grad`;
+  const tailGradId = `${uid}-tail-grad`;
+  const bubbleGradId = `${uid}-bubble-grad`;
 
-  const headClass = `fe-head ${isNodding ? 'fe-head-nodding' : ''}`;
-  const mouthClass = `fe-mouth ${isTalking ? 'fe-mouth-talking' : ''}`;
+  const bodyClass = `bf-body ${isNodding ? 'bf-body-nod' : ''}`;
+  const tailClass = `bf-tail ${isTalking ? 'bf-tail-talking' : ''}`;
+  const mouthClass = `bf-mouth ${isTalking ? 'bf-mouth-talking' : ''}`;
+  const eyeClass = `bf-eye bf-eye-blinking`;
 
   return (
-    <svg viewBox="0 0 200 240" width="100" height="120">
+    <svg viewBox="0 0 280 200" width="110" height="95">
       <defs>
-        {/* Hautfarbe Gradient */}
-        <linearGradient id={skinGradId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#f4c9a8" />
-          <stop offset="50%" stopColor="#e8b89a" />
-          <stop offset="100%" stopColor="#dba88a" />
+        {/* Body Gradient - Silberblau */}
+        <linearGradient id={bodyGradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#4a90e2" />
+          <stop offset="50%" stopColor="#357abd" />
+          <stop offset="100%" stopColor="#1a4d7a" />
         </linearGradient>
 
-        {/* Haarfarbe Gradient (Braun) */}
-        <linearGradient id={hairGradId} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#6b4423" />
-          <stop offset="50%" stopColor="#8b5a2b" />
-          <stop offset="100%" stopColor="#6b4423" />
+        {/* Scale Pattern Gradient */}
+        <linearGradient id={scaleGradId} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#5ba3f5" />
+          <stop offset="50%" stopColor="#9ecbff" />
+          <stop offset="100%" stopColor="#5ba3f5" />
         </linearGradient>
 
-        {/* Angelhut Gradient (Beige/Braun) */}
-        <linearGradient id={hatGradId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#d4a574" />
-          <stop offset="50%" stopColor="#c99858" />
-          <stop offset="100%" stopColor="#b88a48" />
+        {/* Fin Gradient */}
+        <linearGradient id={finGradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#6eb3ff" />
+          <stop offset="100%" stopColor="#2d5fa3" />
+        </linearGradient>
+
+        {/* Tail Gradient */}
+        <linearGradient id={tailGradId} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#357abd" />
+          <stop offset="50%" stopColor="#4a90e2" />
+          <stop offset="100%" stopColor="#2d5fa3" />
+        </linearGradient>
+
+        {/* Bubble Gradient */}
+        <linearGradient id={bubbleGradId} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="rgba(255,255,255,0.3)" />
+          <stop offset="100%" stopColor="rgba(74,144,226,0.1)" />
         </linearGradient>
       </defs>
 
-      <g className="fe-fisher">
-        {/* Angelhut */}
-        <ellipse cx="100" cy="20" rx="65" ry="18" fill={`url(#${hatGradId})`} />
-        {/* Hutrand */}
-        <path
-          d="M 40 25 Q 35 35 40 45 L 160 45 Q 165 35 160 25"
-          fill={`url(#${hatGradId})`}
-          opacity="0.9"
-        />
-        {/* Hutband */}
-        <rect x="50" y="32" width="100" height="6" fill="#8b4513" opacity="0.7" rx="2" />
-        {/* Hutband Schnalle */}
-        <rect x="155" y="31" width="8" height="8" fill="#c4a747" rx="1" />
-
-        {/* Kopf */}
-        <g className={headClass}>
-          {/* Haare */}
+      <g className="bf-fish">
+        {/* Main Body */}
+        <g className={bodyClass}>
+          {/* Back (Rücken) */}
           <path
-            d="M 50 55 Q 40 65 45 95 Q 50 110 75 115 L 125 115 Q 150 110 155 95 Q 160 65 150 55 Z"
-            fill={`url(#${hairGradId})`}
+            d="M 50,60 Q 85,45 130,42 Q 160,40 200,48 Q 220,52 240,62 Q 220,55 200,53 Q 160,48 130,50 Q 85,53 50,68 Z"
+            fill="url(#bodyGradId)"
+            opacity="0.4"
           />
 
-          {/* Gesicht/Kopf */}
-          <ellipse cx="100" cy="85" rx="45" ry="50" fill={`url(#${skinGradId})`} />
+          {/* Main Body Shape */}
+          <ellipse cx="115" cy="85" rx="70" ry="38" fill={`url(#${bodyGradId})`} />
 
-          {/* Ohren */}
-          <ellipse cx="57" cy="80" rx="8" ry="12" fill={`url(#${skinGradId})`} />
-          <ellipse cx="143" cy="80" rx="8" ry="12" fill={`url(#${skinGradId})`} />
-          <ellipse cx="60" cy="82" rx="4" ry="7" fill="#e8a080" opacity="0.6" />
-          <ellipse cx="140" cy="82" rx="4" ry="7" fill="#e8a080" opacity="0.6" />
+          {/* Belly (Bauch) - heller */}
+          <ellipse cx="115" cy="98" rx="65" ry="20" fill="#b8d7ff" opacity="0.5" />
 
-          {/* Augen */}
-          <g className="fe-eyes">
-            {/* Linkes Auge */}
-            <ellipse cx="80" cy="75" rx="6" ry="8" fill="#ffffff" />
-            <circle cx="80" cy="76" r="4" fill="#6b4423" />
-            <circle cx="81" cy="75" r="2" fill="#000000" />
-            <circle cx="82" cy="74" r="1" fill="#ffffff" opacity="0.8" />
+          {/* Scale Pattern */}
+          <g fill={`url(#${scaleGradId})`} opacity="0.6">
+            <circle cx="65" cy="70" r="5" />
+            <circle cx="80" cy="65" r="5" />
+            <circle cx="95" cy="62" r="5" />
+            <circle cx="110" cy="60" r="5" />
+            <circle cx="125" cy="60" r="5" />
+            <circle cx="140" cy="62" r="5" />
+            <circle cx="155" cy="65" r="5" />
+            <circle cx="170" cy="70" r="5" />
 
-            {/* Rechtes Auge */}
-            <ellipse cx="120" cy="75" rx="6" ry="8" fill="#ffffff" />
-            <circle cx="120" cy="76" r="4" fill="#6b4423" />
-            <circle cx="121" cy="75" r="2" fill="#000000" />
-            <circle cx="122" cy="74" r="1" fill="#ffffff" opacity="0.8" />
-
-            {/* Augenbrauen */}
-            <path d="M 72 68 Q 80 65 88 68" stroke="#6b4423" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-            <path d="M 112 68 Q 120 65 128 68" stroke="#6b4423" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+            <circle cx="60" cy="85" r="4.5" />
+            <circle cx="75" cy="83" r="4.5" />
+            <circle cx="90" cy="82" r="4.5" />
+            <circle cx="105" cy="81" r="4.5" />
+            <circle cx="120" cy="81" r="4.5" />
+            <circle cx="135" cy="81" r="4.5" />
+            <circle cx="150" cy="83" r="4.5" />
+            <circle cx="165" cy="85" r="4.5" />
           </g>
 
-          {/* Nase */}
+          {/* Kiemen (Gills) */}
           <path
-            d="M 100 75 L 98 92 L 102 92 Z"
-            fill={`url(#${skinGradId})`}
-            opacity="0.8"
+            d="M 150,70 C 148,80 148,95 150,105"
+            stroke="#357abd"
+            strokeWidth="1.5"
+            fill="none"
+            opacity="0.4"
           />
-          <path d="M 95 92 L 100 94 L 105 92" stroke="#d4a574" strokeWidth="0.8" fill="none" opacity="0.5" />
+          <path
+            d="M 158,72 C 156,82 156,97 158,107"
+            stroke="#357abd"
+            strokeWidth="1"
+            fill="none"
+            opacity="0.3"
+          />
+        </g>
 
-          {/* Mund */}
+        {/* Dorsal Fin (Rückenflosse) */}
+        <g className="bf-fin-dorsal">
+          <path
+            d="M 110,60 L 120,35 L 125,60 Z"
+            fill={`url(#${finGradId})`}
+            opacity="0.9"
+          />
+          <path
+            d="M 115,55 L 120,38 L 122,55"
+            stroke="#ffffff"
+            strokeWidth="0.5"
+            fill="none"
+            opacity="0.4"
+          />
+        </g>
+
+        {/* Pectoral Fin (Brustflosse) */}
+        <g className="bf-fin-pect">
+          <path
+            d="M 80,90 Q 70,100 65,105 Q 70,100 80,95 Z"
+            fill={`url(#${finGradId})`}
+            opacity="0.85"
+          />
+          <path
+            d="M 78,92 L 67,103"
+            stroke="#ffffff"
+            strokeWidth="0.5"
+            fill="none"
+            opacity="0.3"
+          />
+        </g>
+
+        {/* Tail (Schwanz) */}
+        <g className={tailClass}>
+          <path
+            d="M 185,75 L 240,55 L 245,85 L 240,115 L 185,95 Z"
+            fill={`url(#${tailGradId})`}
+          />
+          <path
+            d="M 240,70 L 250,60 L 245,85 L 250,110 L 240,100 Z"
+            fill={`url(#${tailGradId})`}
+            opacity="0.7"
+          />
+          {/* Tail Lines */}
+          <g stroke="#1a4d7a" strokeWidth="0.8" opacity="0.4" fill="none">
+            <line x1="205" y1="70" x2="240" y2="60" />
+            <line x1="210" y1="65" x2="245" y2="55" />
+            <line x1="210" y1="105" x2="245" y2="115" />
+            <line x1="205" y1="100" x2="240" y2="110" />
+          </g>
+        </g>
+
+        {/* Head Section */}
+        <g>
+          {/* Mouth (Mund) */}
           <g className={mouthClass}>
-            {/* Lippen */}
-            <ellipse cx="100" cy="105" rx="10" ry="6" fill="#c47b8a" />
-            <path d="M 90 105 Q 100 110 110 105" stroke="#a85970" strokeWidth="0.8" fill="none" />
+            <ellipse cx="35" cy="88" rx="6" ry="5" fill="#1a3a5a" />
+            <path
+              d="M 32,88 Q 35,92 38,88"
+              stroke="#ffffff"
+              strokeWidth="0.5"
+              fill="none"
+              opacity="0.6"
+            />
           </g>
 
-          {/* Wangen */}
-          <ellipse cx="65" cy="90" rx="8" ry="5" fill="#e8a080" opacity="0.4" />
-          <ellipse cx="135" cy="90" rx="8" ry="5" fill="#e8a080" opacity="0.4" />
+          {/* Eye */}
+          <g className={eyeClass}>
+            <circle cx="50" cy="72" r="6" fill="#ffffff" />
+            <circle cx="50" cy="72" r="4.5" fill="#4a90e2" />
+            <circle cx="51" cy="71" r="2.5" fill="#000000" />
+            <circle cx="52" cy="70" r="1" fill="#ffffff" opacity="0.8" />
+          </g>
+
+          {/* Light Reflection on Head */}
+          <ellipse cx="45" cy="68" rx="4" ry="2.5" fill="#ffffff" opacity="0.3" />
         </g>
 
-        {/* Körper */}
-        <ellipse cx="100" cy="160" rx="35" ry="45" fill={`url(#${skinGradId})`} opacity="0.9" />
-
-        {/* Jacke/Shirt */}
-        <path
-          d="M 65 125 Q 65 140 75 160 L 75 190 L 125 190 L 125 160 Q 135 140 135 125 Z"
-          fill="#3a6b4e"
-          opacity="0.85"
-        />
-        {/* Jacken-Kontrast */}
-        <path
-          d="M 100 130 L 100 190"
-          stroke="#2a4a38"
-          strokeWidth="1.5"
-          opacity="0.5"
-        />
-
-        {/* Arme */}
-        {/* Linker Arm */}
-        <ellipse cx="45" cy="145" rx="12" ry="28" fill={`url(#${skinGradId})`} transform="rotate(-25 45 145)" />
-        {/* Rechter Arm */}
-        <ellipse cx="155" cy="145" rx="12" ry="28" fill={`url(#${skinGradId})`} transform="rotate(25 155 145)" />
-
-        {/* Hände */}
-        <circle cx="28" cy="165" r="10" fill={`url(#${skinGradId})`} />
-        <circle cx="172" cy="165" r="10" fill={`url(#${skinGradId})`} />
-
-        {/* Einfache Finger-Andeutung */}
-        <g stroke={`url(#${skinGradId})`} strokeWidth="1" opacity="0.6">
-          <line x1="22" y1="162" x2="18" y2="155" />
-          <line x1="28" y1="158" x2="28" y2="150" />
-          <line x1="34" y1="162" x2="38" y2="155" />
-        </g>
-        <g stroke={`url(#${skinGradId})`} strokeWidth="1" opacity="0.6">
-          <line x1="166" y1="162" x2="162" y2="155" />
-          <line x1="172" y1="158" x2="172" y2="150" />
-          <line x1="178" y1="162" x2="182" y2="155" />
-        </g>
+        {/* Optional: Sprechblase mit Bubble-Punkte */}
+        {showBubble && (
+          <>
+            {/* Kleine Bubbles die aus dem Mund kommen */}
+            <g className="bf-bubble" style={{ animationDelay: '0s' }}>
+              <circle cx="28" cy="80" r="3" fill={`url(#${bubbleGradId})`} />
+              <circle cx="28" cy="80" r="2.8" fill="none" stroke="#6eb3ff" strokeWidth="0.5" opacity="0.6" />
+            </g>
+            <g className="bf-bubble" style={{ animationDelay: '0.3s' }}>
+              <circle cx="22" cy="75" r="2" fill={`url(#${bubbleGradId})`} />
+              <circle cx="22" cy="75" r="1.8" fill="none" stroke="#6eb3ff" strokeWidth="0.4" opacity="0.6" />
+            </g>
+            <g className="bf-bubble" style={{ animationDelay: '0.6s' }}>
+              <circle cx="18" cy="68" r="1.5" fill={`url(#${bubbleGradId})`} />
+              <circle cx="18" cy="68" r="1.3" fill="none" stroke="#6eb3ff" strokeWidth="0.3" opacity="0.6" />
+            </g>
+          </>
+        )}
       </g>
     </svg>
   );
 }
+
