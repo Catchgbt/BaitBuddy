@@ -5,5 +5,19 @@
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/[...path]" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ],
+  "crons": [
+    {
+      "path": "/api/admin/events/auto-archive",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/admin/rewards/auto-activate",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/admin/leaderboards/monthly/generate",
+      "schedule": "0 0 1 * *"
+    }
   ]
 }

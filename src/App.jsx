@@ -23,6 +23,9 @@ import ErrorBoundary from '@/lib/ErrorBoundary';
 import CatchStats from '@/pages/CatchStats';
 import AdminTracking from '@/pages/AdminTracking';
 import Help from '@/pages/Help';
+import EventCatalog from '@/pages/EventCatalog';
+import EventDetails from '@/pages/EventDetails';
+import MonthlyLeaderboard from '@/pages/MonthlyLeaderboard';
 import PageViewTracker from '@/components/utils/PageViewTracker';
 
 const LazyPageFallback = () => (
@@ -92,6 +95,15 @@ const AnimatedRoutes = () => {
           } />
           <Route path="/Help" element={
             <ErrorBoundary><Help /></ErrorBoundary>
+          } />
+          <Route path="/events-catalog" element={
+            <ErrorBoundary><EventCatalog /></ErrorBoundary>
+          } />
+          <Route path="/events/:eventId" element={
+            <ErrorBoundary><EventDetails /></ErrorBoundary>
+          } />
+          <Route path="/leaderboards/monthly" element={
+            <ErrorBoundary><MonthlyLeaderboard /></ErrorBoundary>
           } />
           <Route path="*" element={<PageNotFound />} />
         </Routes>

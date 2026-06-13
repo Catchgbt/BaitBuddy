@@ -227,6 +227,7 @@ const FUNCTION_MAP = {
   autoRenewPlans:         ()  => Promise.resolve({ ok: true }),
   verifyPlayIntegrity:    ()  => Promise.resolve({ valid: false }),
   recordWebVitals:        ()  => Promise.resolve({ ok: true }),
+  startCommunityCompetition: (d) => api.post('/api/community/competitions/start', { template_id: d?.template_id }),
 };
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
@@ -417,10 +418,49 @@ export const fishing = {
 };
 
 export const events = {
-  list:        ()          => api.get('/api/events'),
-  create:      (data)      => api.post('/api/events', data),
-  leaderboard: (id)        => api.get(`/api/events/${id}/leaderboard`),
-  submit:      (id, data)  => api.post(`/api/events/${id}/submit`, data),
+  // Event Management
+  list:              ()                => api.get('/api/events'),
+  get:               (id)              => api.get(`/api/events/${id}`),
+  create:            (data)            => api.post('/api/events', data),
+  update:            (id, data)        => api.patch(`/api/events/${id}`, data),
+  delete:            (id)              => api.del(`/api/events/${id}`),
+
+  // Templates
+  templates:         ()                => api.get('/api/events/templates'),
+  template:          (id)              => api.get(`/api/events/templates/${id}`),
+
+  // Participation
+  join:              (id)              => api.post(`/api/events/${id}/join`),
+  leave:             (id)              => api.post(`/api/events/${id}/leave`),
+  participants:      (id)              => api.get(`/api/events/${id}/participants`),
+  leaderboard:       (id)              => api.get(`/api/events/${id}/leaderboard`),
+
+  // Submissions
+  submit:            (id, data)        => api.post(`/api/events/${id}/submit`, data),
+
+  // Invitations
+  invite:            (id, emails)      => api.post(`/api/events/${id}/invite`, { invitee_emails: emails }),
+  myInvitations:     ()                => api.get('/api/events/invitations/me'),
+  acceptInvitation:  (id)              => api.post(`/api/events/invitations/${id}/accept`),
+  declineInvitation: (id)              => api.post(`/api/events/invitations/${id}/decline`),
+
+  // Activity Tracking (Trips, AI Interactions, KI Buddy)
+  trackActivity:     (eventId, type)   => api.post('/api/events/activities/track', { eventId, activityType: type }),
+  listActivities:    ()                => api.get('/api/events/activities/list'),
+  getCurrentPoints:  ()                => api.get('/api/events/user/current-points'),
+  getActiveEvent:    ()                => api.get('/api/events/user/active-event'),
+
+  // Community Competition Integration
+  startCompetition:  (templateId)      => api.post('/api/community/competitions/start', { template_id: templateId }),
+};
+
+export const leaderboards = {
+  monthly:           (year, month)     => api.get(`/api/leaderboards/monthly?year=${year}&month=${month}`),
+};
+
+export const rewards = {
+  myActivations:     ()                => api.get('/api/rewards/my-activations'),
+  claim:             (leaderboardId)   => api.post('/api/rewards/claim', { leaderboard_id: leaderboardId }),
 };
 
 export const gear = {
