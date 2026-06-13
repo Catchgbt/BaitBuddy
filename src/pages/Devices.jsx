@@ -108,54 +108,6 @@ export default function DevicesPage() {
       features: ['Live-Analyse', 'Fischerkennung', 'Foto-Speicherung'],
       color: 'blue',
       link: 'AI'
-    },
-    {
-      id: 'sonar',
-      name: 'Echolot',
-      icon: Waves,
-      status: 'offline',
-      battery: 0,
-      signal: 0,
-      type: 'sonar',
-      features: ['Tiefenmessung', 'Fischerkennung', 'Bodenkonturen', 'GPS-Mapping'],
-      color: 'cyan',
-      comingSoon: true
-    },
-    {
-      id: 'bait_boat',
-      name: 'Futterboot',
-      icon: Gamepad2,
-      status: 'offline',
-      battery: 0,
-      signal: 0,
-      type: 'bait_boat',
-      features: ['GPS-Navigation', 'Wegpunkte', 'Return-to-Home', 'Autopilot'],
-      color: 'purple',
-      comingSoon: true
-    },
-    {
-      id: 'scale',
-      name: 'Digital-Waage',
-      icon: Scale,
-      status: 'offline',
-      battery: 0,
-      signal: 0,
-      type: 'scale',
-      features: ['Gewichtsmessung', 'Foto-Integration', 'Fang-Logs', 'Statistiken'],
-      color: 'amber',
-      comingSoon: true
-    },
-    {
-      id: 'sensor',
-      name: 'Wasser-Sensor',
-      icon: Thermometer,
-      status: 'offline',
-      battery: 0,
-      signal: 0,
-      type: 'sensor',
-      features: ['Temperatur', 'pH-Wert', 'Trübung', 'Sauerstoff'],
-      color: 'teal',
-      comingSoon: true
     }
   ];
 
