@@ -17,6 +17,7 @@ import MapView from "./MapView";
 import AddSpotModal from "./AddSpotModal";
 import LocationDetailPanel from "./LocationDetailPanel";
 import MarkerDetailCardContainer from "./MarkerDetailCard/MarkerDetailCardContainer";
+import OfflineMapManager from "./OfflineMapManager";
 
 
 function MapController() {

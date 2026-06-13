@@ -4,6 +4,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { entities } from "@/api/frontendClient";
 import OfflineMapLayer from "./OfflineMapLayer";
+import OfflineMapManager from "./OfflineMapManager";
 import "leaflet.markercluster";
 
 // Fix default marker icons
@@ -600,6 +601,9 @@ export default function MapView({
           </Popup>
         </Marker>
       )}
+
+      {/* Offline Tile Caching Manager */}
+      <OfflineMapManager autoCache={true} showStats={false} />
     </MapContainer>
   );
 }
