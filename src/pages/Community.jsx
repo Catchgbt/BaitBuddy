@@ -5,19 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { integrations } from "@/api/frontendClient";
-import { entities } from "@/api/frontendClient";
-import { Catch } from "@/entities/Catch";
+import { integrations, entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
+import { User } from "@/entities/User";
 import { toast } from "sonner";
-import { Heart, MessageCircle, Send, Camera, AlertTriangle, User, Loader2, X, Globe, Facebook, Trophy, Users, Activity, Fish, TrendingUp } from "lucide-react";
+import { Heart, MessageCircle, Send, Camera, AlertTriangle, User as UserIcon, Loader2, X, Globe, Facebook, Trophy, Users, Activity, Fish, TrendingUp } from "lucide-react";
 import CompetitionCard from "@/components/community/CompetitionCard";
 import CompetitionLauncher from "@/components/community/CompetitionLauncher";
 import VotingEventCard from "@/components/community/VotingEventCard";
 import ClanLeaderboardCard from "@/components/community/ClanLeaderboardCard";
 import LeaderboardCard from "@/components/community/LeaderboardCard";
 import PlanGuard from "@/components/premium/PlanGuard";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import ChatWidget from "@/components/community/ChatWidget";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
 
@@ -42,9 +40,6 @@ export default function Community() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullStart, setPullStart] = useState(0);
   const [pullDistance, setPullDistance] = useState(0);
-  const [showCatchSelector, setShowCatchSelector] = useState(false);
-  const [userCatches, setUserCatches] = useState([]);
-  const [loadingCatches, setLoadingCatches] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showChat, setShowChat] = useState(false);
   const [activeUserCount, setActiveUserCount] = useState(0);
@@ -162,78 +157,61 @@ export default function Community() {
   const loadPosts = async () => {
     setLoading(true);
     try {
-      const postsData = await entities.Post.list("-created_date", 50);
-      
-      const newCache = {};
+      const [postsData, allComments] = await Promise.all([
+        entities.Post.list("-created_date", 50),
+        entities.Comment.list('', 1000)
+      ]);
+
+      const newCache = { ...userCache };
       const allEmails = new Set();
-      
+
       postsData.forEach(post => allEmails.add(post.created_by));
-      
-      for (const email of allEmails) {
+      allComments.forEach(comment => allEmails.add(comment.created_by));
+
+      const missingEmails = Array.from(allEmails).filter(email => !newCache[email]);
+
+      if (missingEmails.length > 0) {
         try {
           const allUsers = await User.list('', 1000);
-          const foundUser = allUsers.find(u => u.email === email);
-          
-          if (foundUser) {
-            newCache[email] = foundUser;
-          } else {
-            newCache[email] = {
-              email: email,
+
+          missingEmails.forEach(email => {
+            const foundUser = allUsers.find(u => u.email === email);
+            newCache[email] = foundUser || {
+              email,
               nickname: null,
               full_name: null,
               profile_picture_url: null
             };
-          }
+          });
         } catch (err) {
-          console.error("Fehler beim Laden des Users:", err);
-          newCache[email] = {
-            email: email,
-            nickname: null,
-            full_name: null,
-            profile_picture_url: null
-          };
+          console.error("Fehler beim Laden der Users:", err);
+          missingEmails.forEach(email => {
+            newCache[email] = {
+              email,
+              nickname: null,
+              full_name: null,
+              profile_picture_url: null
+            };
+          });
         }
       }
-      
+
       setUserCache(newCache);
 
-      const postsWithComments = await Promise.all(
-        postsData.map(async (post) => {
-          try {
-            const comments = await entities.Comment.filter({ post_id: post.id });
-            
-            for (const comment of comments) {
-              if (!newCache[comment.created_by]) {
-                try {
-                  const allUsers = await User.list('', 1000);
-                  const foundUser = allUsers.find(u => u.email === comment.created_by);
-                  
-                  if (foundUser) {
-                    newCache[comment.created_by] = foundUser;
-                  } else {
-                    newCache[comment.created_by] = {
-                      email: comment.created_by,
-                      nickname: null,
-                      full_name: null,
-                      profile_picture_url: null
-                    };
-                  }
-                } catch (err) {
-                  console.error("Fehler beim Laden des Comment-Users:", err);
-                }
-              }
-            }
-            
-            return { ...post, comments };
-          } catch (error) {
-            console.error("Fehler beim Laden der Kommentare:", error);
-            return { ...post, comments: [] };
-          }
-        })
-      );
+      const commentMap = {};
+      allComments.forEach(comment => {
+        if (!commentMap[comment.post_id]) {
+          commentMap[comment.post_id] = [];
+        }
+        commentMap[comment.post_id].push(comment);
+      });
+
+      const postsWithComments = postsData.map(post => ({
+        ...post,
+        comments: commentMap[post.id] || []
+      }));
 
       setPosts(postsWithComments);
-      setUserCache(newCache);
     } catch (error) {
       console.error("Fehler beim Laden der Posts:", error);
       toast.error("Posts konnten nicht geladen werden");
@@ -241,43 +219,6 @@ export default function Community() {
     setLoading(false);
   };
 
-  const loadUserCatches = async () => {
-    if (!currentUser) return;
-    
-    setLoadingCatches(true);
-    try {
-      const catches = await Catch.filter(
-        { created_by: currentUser.email },
-        '-catch_time',
-        20
-      );
-      setUserCatches(catches.filter(c => c.photo_url));
-    } catch (error) {
-      console.error("Fehler beim Laden der Fänge:", error);
-      toast.error("Fänge konnten nicht geladen werden");
-    } finally {
-      setLoadingCatches(false);
-    }
-  };
-
-  const handleSelectCatch = async (catchData) => {
-    setShowCatchSelector(false);
-    
-    const catchText = `Mein Fang: ${catchData.species}${catchData.length_cm ? ` (${catchData.length_cm}cm)` : ''}${catchData.weight_kg ? `, ${catchData.weight_kg}kg` : ''}${catchData.bait_used ? `\nKöder: ${catchData.bait_used}` : ''}${catchData.notes ? `\n\n${catchData.notes}` : ''}`;
-    
-    setNewPostText(catchText);
-    setImagePreview(catchData.photo_url);
-    
-    try {
-      const response = await fetch(catchData.photo_url);
-      const blob = await response.blob();
-      const file = new File([blob], "catch.jpg", { type: blob.type });
-      setNewPostImage(file);
-    } catch (error) {
-      console.error("Fehler beim Laden des Bildes:", error);
-      toast.error("Bild konnte nicht geladen werden");
-    }
-  };
 
   const handleImageSelect = (e) => {
     const file = e.target.files?.[0];
@@ -663,7 +604,7 @@ export default function Community() {
                           />
                         ) : (
                           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center border-2 border-emerald-400">
-                            <User className="w-5 h-5 text-white" />
+                            <UserIcon className="w-5 h-5 text-white" />
                           </div>
                         )}
                         <div>
@@ -760,7 +701,7 @@ export default function Community() {
                                 />
                               ) : (
                                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
-                                  <User className="w-4 h-4 text-white" />
+                                  <UserIcon className="w-4 h-4 text-white" />
                                 </div>
                               )}
                               <div className="flex-1 bg-gray-800/50 rounded-lg p-2">
@@ -1003,50 +944,6 @@ export default function Community() {
 
       </div>
 
-      <Dialog open={showCatchSelector} onOpenChange={setShowCatchSelector}>
-       <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-2xl max-h-[80vh] overflow-y-auto">
-         <DialogHeader>
-           <DialogTitle className="text-cyan-400">Wähle einen Fang zum Teilen</DialogTitle>
-         </DialogHeader>
-
-         {loadingCatches ? (
-           <div className="flex items-center justify-center py-8">
-             <Loader2 className="w-6 h-6 animate-spin text-cyan-400" />
-           </div>
-         ) : userCatches.length === 0 ? (
-           <div className="text-center py-8 text-gray-400">
-             <p>Keine Fänge mit Fotos gefunden</p>
-             <p className="text-sm mt-2">Logge zuerst einen Fang mit Foto ein</p>
-           </div>
-         ) : (
-           <div className="grid grid-cols-2 gap-4">
-             {userCatches.map((catchData) => (
-               <button
-                 key={catchData.id}
-                 onClick={() => handleSelectCatch(catchData)}
-                 className="relative group cursor-pointer rounded-lg overflow-hidden border-2 border-gray-700 hover:border-cyan-400 transition-all"
-               >
-                 <img 
-                   src={catchData.photo_url} 
-                   alt={catchData.species}
-                   className="w-full h-48 object-cover"
-                 />
-                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-3">
-                   <p className="text-white font-semibold">{catchData.species}</p>
-                   <p className="text-xs text-gray-300">
-                     {catchData.length_cm && `${catchData.length_cm}cm`}
-                     {catchData.weight_kg && ` • ${catchData.weight_kg}kg`}
-                   </p>
-                   <p className="text-xs text-gray-400 mt-1">
-                     {new Date(catchData.catch_time).toLocaleDateString('de-DE')}
-                   </p>
-                 </div>
-               </button>
-             ))}
-           </div>
-         )}
-       </DialogContent>
-      </Dialog>
       </div>
       </SwipeToRefresh>
       );
