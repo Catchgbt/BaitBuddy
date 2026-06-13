@@ -1,6 +1,70 @@
 // Punkte-Berechnung für Events
 // Basiert auf komplexem Multiplikator-System mit Boni
 
+// Punkte für verschiedene Aktivitäten
+export const ACTIVITY_POINTS = {
+  trip_completed: 50,           // Trip abgeschlossen
+  ai_chat_interaction: 10,      // KI-Chat Nachricht
+  bait_mixer_use: 25,           // BaitMixer Rezept erstellt
+  ai_analyze: 15,               // Foto-Analyse
+  fishing_recommendation: 20,   // Fisch-Empfehlung
+  weather_check: 5,             // Wetter-Info angesehen
+  spot_analysis: 15,            // Gewässer-Analyse
+};
+
+// Addiere Aktivitäts-Punkte zu Event
+export async function addActivityPoints(userId, eventId, activityType, supabase) {
+  const points = ACTIVITY_POINTS[activityType] || 0;
+  if (points === 0) return { ok: false, message: 'Unknown activity type' };
+
+  try {
+    // Finde oder erstelle Submission für diese Aktivität
+    const { data: submission, error: submissionError } = await supabase
+      .from('event_submissions')
+      .insert({
+        event_id: eventId,
+        user_id: userId,
+        species: `[${activityType}]`,
+        calculated_points: points,
+        points_breakdown: { activity: activityType, base: points },
+        verified: true,
+        submitted_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (submissionError) throw submissionError;
+
+    // Update event_participants total_points
+    const { data: participant } = await supabase
+      .from('event_participants')
+      .select('total_points')
+      .eq('event_id', eventId)
+      .eq('user_id', userId)
+      .single();
+
+    if (participant) {
+      await supabase
+        .from('event_participants')
+        .update({
+          total_points: (parseFloat(participant.total_points) || 0) + points,
+          submission_count: await supabase
+            .from('event_submissions')
+            .select('id', { count: 'exact', head: true })
+            .eq('event_id', eventId)
+            .eq('user_id', userId)
+        })
+        .eq('event_id', eventId)
+        .eq('user_id', userId);
+    }
+
+    return { ok: true, points, activity: activityType };
+  } catch (error) {
+    console.error('Error adding activity points:', error);
+    return { ok: false, error: error.message };
+  }
+}
+
 export async function calculateSubmissionPoints(submission, eventId, supabase) {
   try {
     // 1. Event-Konfiguration laden

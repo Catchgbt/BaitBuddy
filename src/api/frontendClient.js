@@ -444,6 +444,12 @@ export const events = {
   acceptInvitation:  (id)              => api.post(`/api/events/invitations/${id}/accept`),
   declineInvitation: (id)              => api.post(`/api/events/invitations/${id}/decline`),
 
+  // Activity Tracking (Trips, AI Interactions, KI Buddy)
+  trackActivity:     (eventId, type)   => api.post('/api/events/activities/track', { eventId, activityType: type }),
+  listActivities:    ()                => api.get('/api/events/activities/list'),
+  getCurrentPoints:  ()                => api.get('/api/events/user/current-points'),
+  getActiveEvent:    ()                => api.get('/api/events/user/active-event'),
+
   // Community Competition Integration
   startCompetition:  (templateId)      => api.post('/api/community/competitions/start', { template_id: templateId }),
 };

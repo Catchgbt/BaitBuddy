@@ -5,7 +5,9 @@ import {
   calculateSubmissionPoints,
   calculateEventFinalRankings,
   aggregateMonthlyLeaderboard,
-  autoActivateRewards
+  autoActivateRewards,
+  addActivityPoints,
+  ACTIVITY_POINTS
 } from '../lib/pointsCalculator.js';
 
 const router = Router();
@@ -725,6 +727,139 @@ router.post('/community/competitions/start', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Error starting competition:', error);
     res.status(500).json({ error: 'Fehler beim Starten des Wettbewerbs' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ACTIVITY TRACKING & POINTS (Trip Completions, AI Interactions)
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.post('/events/activities/track', requireAuth, async (req, res) => {
+  try {
+    const { activityType, eventId } = req.body;
+
+    if (!activityType || !eventId) {
+      return res.status(400).json({ error: 'activityType und eventId erforderlich' });
+    }
+
+    if (!ACTIVITY_POINTS[activityType]) {
+      return res.status(400).json({ error: `Unbekannter Activity Type: ${activityType}` });
+    }
+
+    // Prüfe ob User am Event teilnimmt
+    const { data: participant } = await supabase
+      .from('event_participants')
+      .select('id')
+      .eq('event_id', eventId)
+      .eq('user_id', req.user.email)
+      .single();
+
+    if (!participant) {
+      return res.status(403).json({ error: 'User ist nicht Teilnehmer des Events' });
+    }
+
+    // Addiere Punkte
+    const result = await addActivityPoints(req.user.email, eventId, activityType, supabase);
+
+    if (!result.ok) {
+      return res.status(500).json({ error: result.error });
+    }
+
+    return res.json(result);
+  } catch (error) {
+    console.error('Error tracking activity:', error);
+    res.status(500).json({ error: 'Fehler beim Tracken der Aktivität' });
+  }
+});
+
+router.get('/events/activities/list', optionalAuth, async (req, res) => {
+  try {
+    return res.json(ACTIVITY_POINTS);
+  } catch (error) {
+    console.error('Error listing activities:', error);
+    res.status(500).json({ error: 'Fehler beim Laden der Aktivitäten' });
+  }
+});
+
+// Get current month points for user
+router.get('/events/user/current-points', requireAuth, async (req, res) => {
+  try {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+
+    // Finde alle aktiven Events diesen Monat
+    const { data: events } = await supabase
+      .from('events')
+      .select('id')
+      .eq('status', 'active')
+      .gte('start_date', new Date(year, month - 1, 1).toISOString())
+      .lte('end_date', new Date(year, month, 0, 23, 59, 59).toISOString());
+
+    if (!events || events.length === 0) {
+      return res.json({ total_points: 0, events: [], month, year });
+    }
+
+    const eventIds = events.map(e => e.id);
+
+    // Aggregiere Punkte vom User für alle Events diesen Monat
+    const { data: participants } = await supabase
+      .from('event_participants')
+      .select('total_points, event_id')
+      .eq('user_id', req.user.email)
+      .in('event_id', eventIds);
+
+    const total = participants
+      ? participants.reduce((sum, p) => sum + (parseFloat(p.total_points) || 0), 0)
+      : 0;
+
+    return res.json({
+      total_points: Math.round(total * 100) / 100,
+      month: month,
+      year: year,
+      active_events: events.length,
+      participating_events: participants?.length || 0
+    });
+  } catch (error) {
+    console.error('Error getting current points:', error);
+    res.status(500).json({ error: 'Fehler beim Laden der Punkte' });
+  }
+});
+
+// Get active events with countdown
+router.get('/events/user/active-event', requireAuth, async (req, res) => {
+  try {
+    const now = new Date();
+
+    // Finde das nächste aktive Event für den User
+    const { data: activeEvent } = await supabase
+      .from('events')
+      .select('id, name, end_date, start_date')
+      .eq('status', 'active')
+      .gt('end_date', now.toISOString())
+      .order('end_date', { ascending: true })
+      .limit(1)
+      .single();
+
+    if (!activeEvent) {
+      return res.json({ active_event: null });
+    }
+
+    const endDate = new Date(activeEvent.end_date);
+    const timeLeft = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
+
+    return res.json({
+      active_event: {
+        id: activeEvent.id,
+        name: activeEvent.name,
+        days_left: timeLeft,
+        hours_left: Math.ceil((endDate - now) / (1000 * 60 * 60)),
+        end_date: activeEvent.end_date
+      }
+    });
+  } catch (error) {
+    console.error('Error getting active event:', error);
+    res.status(500).json({ error: 'Fehler beim Laden des aktiven Events' });
   }
 });
 
