@@ -112,7 +112,6 @@ function LayoutContent({ children, currentPageName }) {
       });
       window.dispatchEvent(new CustomEvent('user-refresh-request'));
     } catch (error) {
-      console.warn("User not logged in or error fetching user data:", error);
       startTransition(() => {
         setUser(null);
         setAuthLoading(false);
@@ -193,7 +192,6 @@ function LayoutContent({ children, currentPageName }) {
     const handleToggleVoiceControl = () => {
       // Deaktiviere WakeWordDetector auf VoiceControl Seite
       if (currentPageName === 'VoiceControl') {
-        console.log('On VoiceControl page - skipping WakeWordDetector');
         return;
       }
 
@@ -201,7 +199,6 @@ function LayoutContent({ children, currentPageName }) {
         const detector = new WakeWordDetector(
           'Hey Buddy',
           () => {
-            console.log('Wake word detected!');
             window.dispatchEvent(new CustomEvent('wake-word-detected'));
           },
           (status, error) => {
@@ -265,23 +262,19 @@ function LayoutContent({ children, currentPageName }) {
             scope: '/'
           })
           .then((registration) => {
-            console.log('[Catchly] Service Worker registriert:', registration.scope);
             
             // Prüfe auf Updates
             registration.addEventListener('updatefound', () => {
               const newWorker = registration.installing;
-              console.log('[Catchly] Neuer Service Worker gefunden');
               
               newWorker.addEventListener('statechange', () => {
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  console.log('[Catchly] Neuer Service Worker verfügbar - Update bereit');
                   window.dispatchEvent(new CustomEvent('sw-update-available'));
                 }
               });
             });
           })
           .catch((error) => {
-            console.error('[Catchly] Service Worker Registrierung fehlgeschlagen:', error);
           });
       });
     }
