@@ -6,6 +6,7 @@ import { angelparks } from "@/data/angelparks";
 import fishingClubsCSVExport from "@/data/fishingClubsCSVExport.json";
 import angelshopsCSVExport from "@/data/angelshops.json";
 import angelparksEuCSVExport from "@/data/angelparks_eu.json";
+import tiefenkartenData from "@/data/tiefenkarten.json";
 import { Button } from "@/components/ui/button";
 import { MapPin, Plus, Layers, Navigation, X, Loader2, Info, Search } from "lucide-react";
 import { useLocation } from "@/components/location/LocationManager";
@@ -39,9 +40,9 @@ function MapController() {
     clubs: true,
     parks: true,
     waters: true,
-    angelshops: false,
-    angelparksEu: false,
-    tiefenkarten: false,
+    angelshops: true,
+    angelparksEu: true,
+    tiefenkarten: true,
     forellenseen: false,
     bathymetrie: false,
     fluesse: false
@@ -109,16 +110,10 @@ function MapController() {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Lade Tiefenkarten
-    const loadTiefenkarten = async () => {
-      try {
-        const response = await fetch('/assets/tiefenkarten/tiefenkarten.json');
-        const data = await response.json();
-        setTiefenkarten(data);
-      } catch (error) {
-        console.warn('Tiefenkarten konnten nicht geladen werden:', error);
-      }
-    };
+    // Lade Tiefenkarten aus statischer JSON
+    if (tiefenkartenData && Array.isArray(tiefenkartenData)) {
+      setTiefenkarten(tiefenkartenData);
+    }
 
     // Lade Forellenseen
     const loadForellenseen = async () => {

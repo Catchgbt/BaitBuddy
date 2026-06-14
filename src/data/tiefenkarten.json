@@ -1,0 +1,54 @@
+[
+  {
+    "id": "tiefenkarte-001",
+    "name": "Tiefenkarte Ems",
+    "fluss": "Ems",
+    "region": "Nordrhein-Westfalen / Niedersachsen",
+    "beschreibung": "Detaillierte Tiefenkarte der Ems mit Angelpunkten und Tiefenprofilen",
+    "koordinaten": {
+      "lat": 53.5,
+      "lng": 7.5
+    },
+    "url": "/tiefenkarten/Tiefenkarte_Ems_echt.pdf",
+    "source": "tiefenkarten_deutschland_zip"
+  },
+  {
+    "id": "tiefenkarte-002",
+    "name": "Tiefenkarte Neckar",
+    "fluss": "Neckar",
+    "region": "Baden-Württemberg",
+    "beschreibung": "Umfassende Tiefenkarte des Neckar mit hydrografischen Daten",
+    "koordinaten": {
+      "lat": 49.0,
+      "lng": 9.0
+    },
+    "url": "/tiefenkarten/Tiefenkarte_Neckar_echt.pdf",
+    "source": "tiefenkarten_deutschland_zip"
+  },
+  {
+    "id": "tiefenkarte-003",
+    "name": "Tiefenkarte Wümme",
+    "fluss": "Wümme",
+    "region": "Niedersachsen",
+    "beschreibung": "Detaillierte Bathymetrie der Wümme für Angeler",
+    "koordinaten": {
+      "lat": 53.2,
+      "lng": 9.0
+    },
+    "url": "/tiefenkarten/Tiefenkarte_Wuemme_echt.pdf",
+    "source": "tiefenkarten_deutschland_zip"
+  },
+  {
+    "id": "tiefenkarte-004",
+    "name": "Übersichtskarte Bundeswasserstraßen",
+    "fluss": "Deutschland - Bundesweit",
+    "region": "Deutschland",
+    "beschreibung": "Übersichtskarte aller wichtigen deutschen Bundeswasserstraßen",
+    "koordinaten": {
+      "lat": 51.165,
+      "lng": 10.451
+    },
+    "url": "/tiefenkarten/Uebersichtskarte_Bundeswasserstrassen_echt.pdf",
+    "source": "tiefenkarten_deutschland_zip"
+  }
+]
