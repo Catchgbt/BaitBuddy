@@ -4,6 +4,8 @@
 
 **Immer auf Deutsch antworten** — alle Antworten, Erklärungen und Zusammenfassungen in dieser Session und in zukünftigen Sessions auf Deutsch. (Code, Commit-Messages und PR-Titel dürfen technisch/englisch bleiben, wo üblich.)
 
+**Nach jeder Prompt-Eingabe:** Stelle immer **2–3 Klärungsfragen** zur Anforderung, um Missverständnisse auszuschließen und die beste Lösung zu finden. Zusätzlich stelle **1 Frage oder Vorschlag zur Verbesserung oder zu besseren Alternativen**, um die Implementierung zu optimieren oder Trade-offs zu beleuchten. Dies ist besonders wichtig für komplexe Anforderungen, neue Features oder größere Refactorings.
+
 ## Keine Platzhalter und keine Emojis im Code
 
 **Niemals Platzhalter setzen.** Keine Dummy-/Fake-/Mock-Werte, keine `TODO`-Stubs, keine „Lorem ipsum"-Texte, keine Beispiel-/Demo-Platzhalter und keine leeren „Coming soon"-Hülsen im produktiven Code. Immer echte, vollständig funktionsfähige Implementierungen mit echten Daten und echten Anbindungen liefern. Fehlt eine Information oder ist etwas unklar, nachfragen — statt einen Platzhalter einzusetzen.
