@@ -58,7 +58,7 @@ function MapLayerControls({
   const enabledCount = layers.filter(l => l.enabled).length;
 
   return (
-    <div className="absolute top-4 left-4 z-30">
+    <div className="absolute top-3 right-3 z-[500]">
       {/* Collapsed button */}
       {!isExpanded && (
         <button
