@@ -222,7 +222,7 @@ export default function AIBuddyWidget() {
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                className="w-96 max-h-96 rounded-3xl shadow-2xl overflow-hidden flex flex-col bg-white border-2 border-blue-200"
+                className="w-80 max-h-80 rounded-3xl shadow-2xl overflow-hidden flex flex-col bg-white border-2 border-blue-200"
               >
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
@@ -393,7 +393,7 @@ export default function AIBuddyWidget() {
           >
             {/* Runder Foto-Avatar Sabrina */}
             <div
-              className={`relative w-16 h-16 rounded-full overflow-hidden bg-transparent transition-all ${
+              className={`relative w-24 h-24 rounded-full overflow-hidden bg-transparent transition-all ${
                 isSpeaking
                   ? 'drop-shadow-[0_0_8px_rgba(74,222,128,0.7)]'
                   : isListening
