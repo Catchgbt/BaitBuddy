@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import VoiceControlWidget from "@/components/dashboard/VoiceControlWidget";
 import MiniKarte from "@/components/home/MiniKarte";
-import { Brain, Mic, BookOpen, ArrowRight, MapPin, Cloud, BarChart2, MessageCircle, Camera, Waves, Wrench, Calendar, Users, Trophy, GraduationCap, Loader2 } from "lucide-react";
+import { Brain, Mic, BookOpen, ArrowRight, MapPin, Cloud, BarChart2, MessageCircle, Camera, Waves, Wrench, Calendar, Users, Trophy, GraduationCap, Loader2, Radio } from "lucide-react";
 import SchonzeitWarner from "@/components/dashboard/SchonzeitWarner";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -536,6 +536,7 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
               { name: "Trips", path: "TripPlanner", Icon: Calendar, color: "text-amber-400", bg: "from-amber-500/10 to-amber-600/5" },
               { name: "Community", path: "Community", Icon: Users, color: "text-cyan-400", bg: "from-cyan-500/10 to-cyan-600/5" },
               { name: "Ranking", path: "Ranking", Icon: Trophy, color: "text-yellow-400", bg: "from-yellow-500/10 to-yellow-600/5" },
+              { name: "Geräte", path: "Devices", Icon: Radio, color: "text-red-400", bg: "from-red-500/10 to-red-600/5" },
               { name: "Angelschein", path: "AngelscheinPruefungSchonzeiten", offline: true, Icon: GraduationCap, color: "text-indigo-400", bg: "from-indigo-500/10 to-indigo-600/5" }
             ].map((feature) => {
               const { Icon } = feature;
