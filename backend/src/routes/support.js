@@ -57,19 +57,24 @@ router.post('/support/tickets', async (req, res) => {
     // Email an Support versendet
     if (emailTransporter) {
       const supportEmail = process.env.SUPPORT_EMAIL || 'kaisaschnitt99@gmail.com';
+      const escapeHtml = (str) => {
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return String(str).replace(/[&<>"']/g, (c) => map[c]);
+      };
+
       const mailOptions = {
         from: process.env.SMTP_USER || 'BaitBuddy <noreply@baitbuddy.local>',
         to: supportEmail,
-        subject: `[${category?.toUpperCase() || 'TICKET'}] ${subject}`,
+        subject: `[${escapeHtml(category || 'TICKET')}] ${escapeHtml(subject)}`,
         html: `
           <h2>Neues Support-Ticket</h2>
-          <p><strong>ID:</strong> ${ticket?.id}</p>
-          <p><strong>Von:</strong> ${user_name} (${user_email})</p>
-          <p><strong>Kategorie:</strong> ${category}</p>
-          <p><strong>Betreff:</strong> ${subject}</p>
+          <p><strong>ID:</strong> ${escapeHtml(ticket?.id || '')}</p>
+          <p><strong>Von:</strong> ${escapeHtml(user_name)} (${escapeHtml(user_email)})</p>
+          <p><strong>Kategorie:</strong> ${escapeHtml(category || '')}</p>
+          <p><strong>Betreff:</strong> ${escapeHtml(subject)}</p>
           <hr />
           <p><strong>Nachricht:</strong></p>
-          <pre>${message}</pre>
+          <pre>${escapeHtml(message)}</pre>
           <hr />
           <p><em>Dieses Ticket wurde am ${new Date().toLocaleString('de-DE')} erstellt.</em></p>
         `,

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth, optionalAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
 import { Buffer } from 'buffer';
+import path from 'path';
 
 const router = Router();
 
@@ -161,9 +162,15 @@ router.post('/files/upload', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'file_base64 und file_name erforderlich' });
     }
 
+    // Sicherheit: file_name validieren, um Path Traversal zu verhindern
+    const sanitized = path.basename(file_name);
+    if (!sanitized || sanitized !== file_name) {
+      return res.status(400).json({ error: 'Ungültiger Dateiname' });
+    }
+
     const buffer = Buffer.from(file_base64, 'base64');
     const bucket = 'catches';
-    const filePath = `${req.user.email}/${Date.now()}-${file_name}`;
+    const filePath = `${req.user.email}/${Date.now()}-${sanitized}`;
 
     const { data, error } = await supabase.storage
       .from(bucket)
