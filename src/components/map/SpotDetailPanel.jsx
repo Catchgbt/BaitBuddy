@@ -11,6 +11,7 @@ import {
   Loader2,
   Droplets,
   Heart,
+  Trash2,
   ExternalLink
 } from 'lucide-react';
 import { functions } from "@/api/frontendClient";
@@ -84,6 +85,23 @@ export default function SpotDetailPanel({ spot, onClose, onUpdate }) {
     } catch (error) {
       console.error('Fehler beim Aktualisieren:', error);
       toast.error('Fehler beim Speichern');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!spot.id || spot.type !== 'spot') {
+      toast.warning('Nur eigene Spots können gelöscht werden');
+      return;
+    }
+    if (!window.confirm('Spot wirklich löschen?')) return;
+    try {
+      await Spot.delete(spot.id);
+      toast.success('Spot gelöscht');
+      if (onUpdate) onUpdate();
+      onClose();
+    } catch (error) {
+      console.error('Fehler beim Löschen:', error);
+      toast.error('Fehler beim Löschen');
     }
   };
 
@@ -333,6 +351,16 @@ export default function SpotDetailPanel({ spot, onClose, onUpdate }) {
                <Navigation className="w-4 h-4 mr-2" />
                Navigation starten
              </Button>
+             {isUserSpot && spot.id && (
+               <Button
+                 variant="outline"
+                 className="w-full border-red-500/50 text-red-400 hover:bg-red-500/10"
+                 onClick={handleDelete}
+               >
+                 <Trash2 className="w-4 h-4 mr-2" />
+                 Spot löschen
+               </Button>
+             )}
            </div>
         </CardContent>
       </Card>

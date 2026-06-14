@@ -15,9 +15,11 @@ export default function WebCheckoutButton({ planId, disabled }) {
         plan_id: planId
       });
 
-      const checkoutUrl = response?.data?.checkout_url;
+      // Der API-Client liefert die JSON-Antwort flach zurück (kein .data-Wrapper).
+      const data = response?.data ?? response;
+      const checkoutUrl = data?.checkout_url;
       if (!checkoutUrl) {
-        throw new Error(response?.data?.error || 'Checkout-Session konnte nicht erstellt werden.');
+        throw new Error(data?.error || 'Checkout-Session konnte nicht erstellt werden.');
       }
 
       window.location.href = checkoutUrl;
