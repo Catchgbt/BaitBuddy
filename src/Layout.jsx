@@ -129,34 +129,48 @@ function LayoutContent({ children, currentPageName }) {
 
     const sessionId = `app_general_${user.email}_${Date.now()}`;
     let sessionDbId = null;
+    let heartbeat = null;
 
-    entities.UsageSession.create({
-      session_id: sessionId,
-      user_id: user.email,
-      feature_id: 'app_general',
-      started_at: new Date().toISOString(),
-      status: 'active',
-      last_heartbeat: new Date().toISOString()
-    }).then(s => { sessionDbId = s.id; });
+    const initSession = async () => {
+      try {
+        const session = await entities.UsageSession.create({
+          session_id: sessionId,
+          user_id: user.email,
+          feature_id: 'app_general',
+          started_at: new Date().toISOString(),
+          status: 'active',
+          last_heartbeat: new Date().toISOString()
+        });
+        sessionDbId = session.id;
 
-    const heartbeat = setInterval(async () => {
-      if (!sessionDbId) return;
-      await entities.UsageSession.update(sessionDbId, {
-        last_heartbeat: new Date().toISOString()
-      });
-    }, 30000);
+        heartbeat = setInterval(async () => {
+          if (!sessionDbId) return;
+          try {
+            await entities.UsageSession.update(sessionDbId, {
+              last_heartbeat: new Date().toISOString()
+            });
+          } catch (e) {
+            // Heartbeat failure is non-critical
+          }
+        }, 30000);
+      } catch (e) {
+        // Session creation failed - continue anyway
+      }
+    };
+
+    initSession();
 
     const stopSession = () => {
       if (!sessionDbId) return;
       entities.UsageSession.update(sessionDbId, {
         status: 'stopped',
         stopped_at: new Date().toISOString()
-      });
+      }).catch(() => {});
     };
 
     window.addEventListener('beforeunload', stopSession);
     return () => {
-      clearInterval(heartbeat);
+      if (heartbeat) clearInterval(heartbeat);
       window.removeEventListener('beforeunload', stopSession);
       stopSession();
     };
