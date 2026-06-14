@@ -422,7 +422,8 @@ function LandingPageContent() {
             } catch {}
             window.location.href = createPageUrl('Dashboard');
         } catch (err) {
-            setLoginError(err.message || 'Anmeldung fehlgeschlagen. Bitte prüfe deine Zugangsdaten.');
+            const errorMsg = err.data?.error || err.message || 'Anmeldung fehlgeschlagen. Bitte prüfe deine Zugangsdaten.';
+            setLoginError(errorMsg);
         } finally {
             setLoginLoading(false);
         }

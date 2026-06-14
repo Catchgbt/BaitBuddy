@@ -282,9 +282,9 @@ export const auth = {
     }
   },
 
-  redirectToLogin: () => {
+  redirectToLogin: (redirectUrl) => {
     if (typeof window !== 'undefined') {
-      window.location.href = '/';
+      window.location.href = redirectUrl || '/';
     }
   },
 
