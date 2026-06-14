@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import EventLauncher from './EventLauncher';
 import CompetitionLauncher from './CompetitionLauncher';
 import VotingEventCard from './VotingEventCard';
+import RewardsInfo from './RewardsInfo';
 
 const PointsExplanation = () => (
   <motion.div
@@ -135,6 +136,9 @@ export default function CompetitionsSection({
     >
       {/* Points Explanation */}
       <PointsExplanation />
+
+      {/* Rewards Info */}
+      <RewardsInfo />
 
       {/* Competition Types Overview */}
       <motion.div variants={itemVariants}>

@@ -18,6 +18,38 @@ export const ACTIVITY_POINTS = {
   session_completed: 25,
 };
 
+// Reward-System für Platzierungen
+export const PLACEMENT_REWARDS = {
+  1: {
+    points: 5000,
+    reward_type: 'premium_plan',
+    duration_days: 30,
+    plan_type: 'pro',
+    description: '1 Monat Pro Plan'
+  },
+  2: {
+    points: 2500,
+    reward_type: 'premium_plan',
+    duration_days: 14,
+    plan_type: 'pro',
+    description: '2 Wochen Pro Plan'
+  },
+  3: {
+    points: 1000,
+    reward_type: 'premium_plan',
+    duration_days: 7,
+    plan_type: 'pro',
+    description: '1 Woche Pro Plan'
+  },
+  4: {
+    points: 500,
+    reward_type: 'ai_tool_choice',
+    duration_days: 30,
+    tool_type: 'choice', // Benutzer wählt KI-Tool
+    description: 'KI-Tool deiner Wahl für 1 Monat'
+  }
+};
+
 export async function addActivityPoints(userId, eventId, activityType, supabase) {
   const points = ACTIVITY_POINTS[activityType] || 0;
   if (points === 0) return { ok: false, message: 'Unknown activity type' };
