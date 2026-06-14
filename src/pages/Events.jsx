@@ -11,16 +11,23 @@ function getCountdown(endDate) {
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  if (days > 0) return `${days}T ${hours}h`;
-  if (hours > 0) return `${hours}h ${minutes}min`;
-  return `${minutes}min`;
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
 }
 
-function TrophyIcon({ rank }) {
-  if (rank === 1) return <span className="text-2xl">🥇</span>;
-  if (rank === 2) return <span className="text-2xl">🥈</span>;
-  if (rank === 3) return <span className="text-2xl">🥉</span>;
-  return <span className="text-sm font-bold text-gray-400">#{rank}</span>;
+function RankBadge({ rank }) {
+  const colors = {
+    1: "bg-amber-500/20 text-amber-400 border-amber-500/40",
+    2: "bg-gray-400/20 text-gray-300 border-gray-400/40",
+    3: "bg-orange-500/20 text-orange-400 border-orange-500/40",
+  };
+  const baseClass = colors[rank] || "bg-gray-700/20 text-gray-400 border-gray-700/40";
+  return (
+    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border ${baseClass}`}>
+      #{rank}
+    </span>
+  );
 }
 
 function Avatar({ name, initials }) {
@@ -90,7 +97,7 @@ export default function Events() {
       <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 flex items-center justify-center">
         <div className="text-center space-y-3">
           <div className="w-10 h-10 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin mx-auto"></div>
-          <p className="text-gray-400 text-sm">Wettbewerbe werden geladen...</p>
+          <p className="text-gray-400 text-sm">Lade Veranstaltungen...</p>
         </div>
       </div>
     );
@@ -99,10 +106,14 @@ export default function Events() {
   if (!competitions.length) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 flex items-center justify-center px-4">
-        <div className="text-center space-y-3 max-w-sm">
-          <div className="text-5xl">🎯</div>
-          <h2 className="text-xl font-bold text-white">Keine aktiven Wettbewerbe</h2>
-          <p className="text-gray-400 text-sm">Aktuell sind keine Wettbewerbe aktiv. Schau später wieder vorbei!</p>
+        <div className="text-center space-y-4 max-w-sm">
+          <div className="w-12 h-12 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mx-auto">
+            <span className="text-xl font-bold text-cyan-400">-</span>
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-white">Keine aktiven Veranstaltungen</h2>
+            <p className="text-gray-400 text-sm mt-1">Aktuell sind keine Wettbewerbe verfügbar. Komm später zurück.</p>
+          </div>
         </div>
       </div>
     );
@@ -112,19 +123,15 @@ export default function Events() {
     <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 px-4 py-8 max-w-2xl mx-auto pb-32">
       <div className="space-y-6">
         {/* Header */}
-        <div className="text-center space-y-4">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-black bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-              🏆 Wettbewerbe
-            </h1>
-            <p className="text-gray-400 text-sm">Tritt Wettbewerben bei und sammle Punkte für Premium-Zugang</p>
-          </div>
+        <div className="text-center space-y-3">
+          <h1 className="text-3xl font-bold text-white">Veranstaltungen</h1>
+          <p className="text-gray-400 text-sm">Nimm an Wettbewerben teil und sammle Punkte</p>
           {currentUser && (
             <button
               onClick={() => navigate('/events/create')}
-              className="inline-block px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-bold rounded-lg transition text-sm"
+              className="inline-block px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold rounded-lg transition text-sm"
             >
-              ➕ Neues Event erstellen
+              Neue Veranstaltung erstellen
             </button>
           )}
         </div>
@@ -141,10 +148,10 @@ export default function Events() {
             return (
               <div
                 key={comp.id}
-                className="bg-gray-900/50 border border-cyan-500/20 rounded-2xl overflow-hidden hover:border-cyan-500/40 transition backdrop-blur"
+                className="bg-gray-900/50 border border-cyan-500/20 rounded-xl overflow-hidden hover:border-cyan-500/30 transition backdrop-blur"
               >
                 {/* Header */}
-                <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border-b border-cyan-500/20 px-6 py-4">
+                <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border-b border-cyan-500/20 px-6 py-3">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <h3 className="text-lg font-bold text-white truncate">{comp.name}</h3>
@@ -153,38 +160,53 @@ export default function Events() {
                       )}
                     </div>
                     {!isEnded && (
-                      <span className="px-3 py-1 text-xs font-bold rounded-full bg-green-500/20 text-green-400 border border-green-500/40 whitespace-nowrap">
-                        LIVE
+                      <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-500/20 text-green-400 border border-green-500/40 whitespace-nowrap">
+                        Aktiv
+                      </span>
+                    )}
+                    {isEnded && (
+                      <span className="px-3 py-1 text-xs font-semibold rounded-full bg-gray-700/20 text-gray-400 border border-gray-700/40 whitespace-nowrap">
+                        Beendet
                       </span>
                     )}
                   </div>
                 </div>
 
                 {/* Content */}
-                <div className="p-6 space-y-5">
-                  {/* Time & Status */}
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="p-6 space-y-4">
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="bg-gray-950/50 rounded-lg p-3 border border-gray-800">
-                      <div className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-1">
-                        {isEnded ? "Endet am" : "Verbleibende Zeit"}
+                      <div className="text-xs text-gray-500 uppercase tracking-widest font-semibold mb-1">
+                        Verbleibende Zeit
                       </div>
-                      <div className="text-xl font-bold text-cyan-400">{countdown}</div>
+                      <div className="text-lg font-bold text-cyan-400">{countdown}</div>
                     </div>
                     <div className="bg-gray-950/50 rounded-lg p-3 border border-gray-800">
-                      <div className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-1">
+                      <div className="text-xs text-gray-500 uppercase tracking-widest font-semibold mb-1">
                         Teilnehmer
                       </div>
-                      <div className="text-xl font-bold text-blue-400">{lb.length}</div>
+                      <div className="text-lg font-bold text-blue-400">{lb.length}</div>
                     </div>
                   </div>
 
-                  {/* Prize */}
+                  {/* Prize Section */}
                   {comp.prize && (
                     <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
-                      <div className="text-xs font-bold text-amber-400 uppercase tracking-widest mb-1">
-                        🎁 Preis
+                      <div className="text-xs font-semibold text-amber-400 uppercase tracking-widest mb-1">
+                        Preis
                       </div>
-                      <div className="text-sm text-white font-semibold">{comp.prize}</div>
+                      <div className="text-sm text-white font-medium">{comp.prize}</div>
+                    </div>
+                  )}
+
+                  {/* User's Score */}
+                  {isUserJoined && userEntry && (
+                    <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-3 text-center">
+                      <div className="text-xs text-cyan-400 font-semibold uppercase tracking-widest mb-1">
+                        Deine Punkte
+                      </div>
+                      <div className="text-2xl font-bold text-cyan-400">{Math.round(userEntry.total_points || 0)}</div>
                     </div>
                   )}
 
@@ -193,34 +215,25 @@ export default function Events() {
                     <button
                       onClick={() => handleJoin(comp.id)}
                       disabled={joining.has(comp.id)}
-                      className="w-full py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:opacity-50 text-white font-bold rounded-lg transition text-sm"
+                      className="w-full py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:opacity-50 text-white font-semibold rounded-lg transition text-sm"
                     >
-                      {joining.has(comp.id) ? "Wird beigetreten..." : "➕ Beitreten"}
+                      {joining.has(comp.id) ? "Wird beigetreten..." : "Beitreten"}
                     </button>
-                  )}
-
-                  {isUserJoined && userEntry && (
-                    <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-3 text-center">
-                      <div className="text-xs text-cyan-400 font-bold uppercase tracking-widest mb-1">
-                        Deine Punkte
-                      </div>
-                      <div className="text-2xl font-black text-cyan-400">{Math.round(userEntry.total_points || 0)}</div>
-                    </div>
                   )}
 
                   {!currentUser && (
                     <div className="text-center text-gray-400 text-sm py-2">
-                      Bitte melde dich an zum Beitreten
+                      Melde dich an zum Beitreten
                     </div>
                   )}
 
                   {/* Leaderboard */}
                   {lb.length > 0 && (
-                    <div className="space-y-2">
-                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">
-                        📊 Top 5 Rangliste
+                    <div className="space-y-2 pt-2 border-t border-gray-800">
+                      <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
+                        Rangliste
                       </h4>
-                      <div className="space-y-1.5">
+                      <div className="space-y-2">
                         {lb.slice(0, 5).map((entry, idx) => {
                           const isMe = currentUser && entry.user_id === currentUser.email;
                           const userName = entry.created_by || entry.user_id;
@@ -228,21 +241,21 @@ export default function Events() {
                           return (
                             <div
                               key={entry.user_id}
-                              className={`flex items-center justify-between gap-3 p-2.5 rounded-lg ${
+                              className={`flex items-center justify-between gap-3 p-2 rounded-lg ${
                                 isMe
-                                  ? "bg-cyan-500/20 border border-cyan-500/40"
-                                  : "bg-gray-950/50 border border-gray-800"
+                                  ? "bg-cyan-500/15 border border-cyan-500/40"
+                                  : "bg-gray-950/30 border border-gray-800"
                               }`}
                             >
                               <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                <TrophyIcon rank={idx + 1} />
+                                <RankBadge rank={idx + 1} />
                                 <Avatar name={userName} initials={initials} />
                                 <div className="min-w-0 flex-1">
-                                  <div className="text-sm font-semibold text-gray-200 truncate">
+                                  <div className="text-sm font-medium text-gray-200 truncate">
                                     {userName.split("@")[0]}
                                   </div>
                                   {isMe && (
-                                    <span className="inline-block text-[9px] bg-cyan-500/30 text-cyan-300 rounded px-1 py-0.5 font-bold">
+                                    <span className="inline-block text-[9px] bg-cyan-500/40 text-cyan-300 rounded px-1.5 py-0.5 font-semibold">
                                       Du
                                     </span>
                                   )}
@@ -266,10 +279,23 @@ export default function Events() {
           })}
         </div>
 
-        {/* Info Footer */}
-        <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4 text-center text-xs text-gray-400">
-          <p>💡 Sammle Punkte in Wettbewerben für kostenlosen Premium-Zugang!</p>
-          <p className="mt-2 text-gray-600">1000 Punkte = 1 Woche | 4000 Punkte = 1 Monat</p>
+        {/* Info Section */}
+        <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4 space-y-2">
+          <div className="text-xs text-gray-500 uppercase tracking-widest font-semibold">Punkte-System</div>
+          <div className="text-sm text-gray-300 space-y-1">
+            <div className="flex justify-between">
+              <span>Fang-Einreichung</span>
+              <span className="text-cyan-400 font-semibold">+100 Basispunkte</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Längen-Bonus (pro cm)</span>
+              <span className="text-cyan-400 font-semibold">+5 Punkte</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Community-Likes</span>
+              <span className="text-cyan-400 font-semibold">+1 pro Like</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
