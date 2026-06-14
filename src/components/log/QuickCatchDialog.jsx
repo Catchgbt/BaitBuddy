@@ -308,7 +308,12 @@ export default function QuickCatchDialog() {
 
   useEffect(() => {
     if (!open) return;
-    RuleEntry.list().then(setAllRules).catch(() => {});
+    RuleEntry.list()
+      .then(setAllRules)
+      .catch(err => {
+        console.error('Fehler beim Laden der Regeln:', err);
+        setAllRules([]);
+      });
   }, [open]);
 
   useEffect(() => {

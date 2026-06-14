@@ -78,6 +78,7 @@ router.post('/premium/activate-demo', requireAuth, async (req, res) => {
 // Aktiviert einen gekauften Plan nach Zahlungsverifikation.
 // Verlangt purchase_token (Google Play) oder transaction_id (sonstige) zur Validierung.
 // Speichert Transaktionsdaten für Audit/Verifizierung.
+// Schützt vor Race Conditions durch Versionierung.
 router.post('/premium/activate', requireAuth, async (req, res) => {
   const { plan_id, purchase_token, product_id, transaction_id, payment_method } = req.body || {};
 
@@ -93,6 +94,20 @@ router.post('/premium/activate', requireAuth, async (req, res) => {
   const current = req.user.user_metadata || {};
   const isYearly = /friends$/.test(plan_id);
   const durationMs = (isYearly ? 365 : 30) * 24 * 60 * 60 * 1000;
+  const previousActivatedAt = current.premium_activated_at;
+
+  // Idempotenz: Wenn gleicher Plan in letzten 5 Sekunden aktiviert wurde, skip update
+  if (previousActivatedAt) {
+    const timeSinceLastActivation = Date.now() - new Date(previousActivatedAt).getTime();
+    if (timeSinceLastActivation < 5000 && current.premium_plan_id === plan_id) {
+      return res.json({
+        ok: true,
+        plan_id,
+        expires_at: current.premium_expires_at,
+        note: 'Plan bereits aktiviert (Idempotenz)'
+      });
+    }
+  }
 
   const merged = {
     ...current,
@@ -104,6 +119,7 @@ router.post('/premium/activate', requireAuth, async (req, res) => {
     premium_purchase_token: purchase_token,
     premium_transaction_id: transaction_id,
     premium_activated_at: new Date().toISOString(),
+    premium_activation_version: (current.premium_activation_version || 0) + 1,
   };
 
   const { error } = await supabase.auth.admin.updateUserById(req.user.id, {
