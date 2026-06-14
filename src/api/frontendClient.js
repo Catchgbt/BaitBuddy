@@ -126,6 +126,7 @@ const ENTITY_MAP = {
   ExamQuestion:   '/api/exams',
   User:           '/api/admin/users',
   ChatMessage:    '/api/ai/messages',
+  LiveTrip:       '/api/trips',
 };
 
 function makeEntity(entityName) {
