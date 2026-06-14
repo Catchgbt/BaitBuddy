@@ -101,7 +101,9 @@ export default function ShareCatchDialog({ catchItem, open, onOpenChange }) {
       toast.error('Kein Foto zum Teilen vorhanden.');
       return;
     }
-    await navigator.clipboard.writeText(caption).catch(() => {});
+    await navigator.clipboard.writeText(caption).catch(err => {
+      console.warn('Clipboard copy failed:', err);
+    });
     const ok = await downloadImage(catchItem.photo_url, `fang-${Date.now()}.jpg`);
     if (ok) {
       toast.success('Bild heruntergeladen, Text kopiert. Oeffne Instagram und fuege es ein.');
@@ -113,7 +115,9 @@ export default function ShareCatchDialog({ catchItem, open, onOpenChange }) {
       toast.error('Kein Foto zum Teilen vorhanden.');
       return;
     }
-    await navigator.clipboard.writeText(caption).catch(() => {});
+    await navigator.clipboard.writeText(caption).catch(err => {
+      console.warn('Clipboard copy failed:', err);
+    });
     const ok = await downloadImage(catchItem.photo_url, `fang-${Date.now()}.jpg`);
     if (ok) {
       toast.success('Bild heruntergeladen, Text kopiert. Oeffne TikTok und fuege es ein.');
