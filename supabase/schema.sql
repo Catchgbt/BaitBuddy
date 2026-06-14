@@ -205,12 +205,122 @@ create table if not exists event_point_configs (
 );
 
 -- ─────────────────────────────────────────────────────────────────────────────────
--- RLS
+-- FEHLENDE TABELLEN (für Community, Clans, Support, Gear, Lizenzen)
+-- ─────────────────────────────────────────────────────────────────────────────────
+
+create table if not exists clans (
+  id uuid primary key default uuid_generate_v4(),
+  name text not null,
+  description text,
+  founder_id text not null,
+  founded_at timestamptz default now(),
+  is_active boolean default true
+);
+
+create table if not exists clan_members (
+  id uuid primary key default uuid_generate_v4(),
+  clan_id uuid not null references clans(id) on delete cascade,
+  user_id text not null,
+  role text default 'member',
+  joined_at timestamptz default now(),
+  unique(clan_id, user_id)
+);
+
+create table if not exists community_posts (
+  id uuid primary key default uuid_generate_v4(),
+  author_id text not null,
+  title text not null,
+  content text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists community_comments (
+  id uuid primary key default uuid_generate_v4(),
+  post_id uuid not null references community_posts(id) on delete cascade,
+  author_id text not null,
+  content text not null,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists post_likes (
+  id uuid primary key default uuid_generate_v4(),
+  post_id uuid not null references community_posts(id) on delete cascade,
+  user_id text not null,
+  created_at timestamptz default now(),
+  unique(post_id, user_id)
+);
+
+create table if not exists support_tickets (
+  id uuid primary key default uuid_generate_v4(),
+  user_email text not null,
+  subject text not null,
+  message text not null,
+  status text default 'open',
+  priority text default 'normal',
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists gear (
+  id uuid primary key default uuid_generate_v4(),
+  user_id text not null,
+  type text not null,
+  name text,
+  notes text,
+  created_at timestamptz default now()
+);
+
+create table if not exists fishing_plans (
+  id uuid primary key default uuid_generate_v4(),
+  user_id text not null,
+  trip_name text,
+  location text,
+  planned_date date,
+  notes text,
+  created_at timestamptz default now()
+);
+
+create table if not exists licenses (
+  id uuid primary key default uuid_generate_v4(),
+  user_id text not null,
+  license_type text not null,
+  number text,
+  issue_date date,
+  expiry_date date,
+  created_at timestamptz default now()
+);
+
+create table if not exists exam_questions (
+  id uuid primary key default uuid_generate_v4(),
+  category text not null,
+  question text not null,
+  options jsonb not null,
+  correct_answer integer,
+  created_at timestamptz default now()
+);
+
+-- ─────────────────────────────────────────────────────────────────────────────────
+-- RLS (alle Tabellen)
 -- ─────────────────────────────────────────────────────────────────────────────────
 alter table catches enable row level security;
 alter table spots enable row level security;
 alter table event_invitations enable row level security;
 alter table reward_activations enable row level security;
+alter table events enable row level security;
+alter table event_participants enable row level security;
+alter table event_submissions enable row level security;
+alter table monthly_leaderboards enable row level security;
+alter table premium_wallets enable row level security;
+alter table voting_submissions enable row level security;
+alter table clan_members enable row level security;
+alter table community_posts enable row level security;
+alter table community_comments enable row level security;
+alter table support_tickets enable row level security;
+alter table gear enable row level security;
+alter table fishing_plans enable row level security;
+alter table licenses enable row level security;
 
 create policy "own_catches" on catches for all using (created_by = auth.jwt()->>'email');
 create policy "own_spots" on spots for all using (created_by = auth.jwt()->>'email');
@@ -218,6 +328,19 @@ create policy "own_invitations" on event_invitations for all using (
   invitee_id = auth.jwt()->>'email' or inviter_id = auth.jwt()->>'email'
 );
 create policy "own_rewards" on reward_activations for select using (user_id = auth.jwt()->>'email');
+create policy "public_events_read" on events for select using (true);
+create policy "own_events" on events for update using (created_by = auth.jwt()->>'email');
+create policy "own_event_submissions" on event_submissions for all using (user_id = auth.jwt()->>'email');
+create policy "public_monthly_leaderboard" on monthly_leaderboards for select using (true);
+create policy "own_premium_wallet" on premium_wallets for select using (user_id = auth.jwt()->>'email');
+create policy "public_voting" on voting_submissions for select using (true);
+create policy "own_clan_membership" on clan_members for select using (user_id = auth.jwt()->>'email');
+create policy "public_community_posts" on community_posts for select using (true);
+create policy "own_comments" on community_comments for all using (author_id = auth.jwt()->>'email');
+create policy "own_support_tickets" on support_tickets for select using (user_email = auth.jwt()->>'email');
+create policy "own_gear" on gear for all using (user_id = auth.jwt()->>'email');
+create policy "own_fishing_plans" on fishing_plans for all using (user_id = auth.jwt()->>'email');
+create policy "own_licenses" on licenses for all using (user_id = auth.jwt()->>'email');
 
 -- ─────────────────────────────────────────────────────────────────────────────────
 -- INDEXES
