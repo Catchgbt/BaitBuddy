@@ -103,25 +103,27 @@ export default function EventCreate() {
       <div className="space-y-8">
         {/* Header */}
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-black bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-            🏆 Neues Event erstellen
+          <h1 className="text-3xl font-bold text-white">
+            Neue Veranstaltung erstellen
           </h1>
-          <p className="text-gray-400 text-sm">Starten Sie einen Wettbewerb und laden Sie andere Angler ein!</p>
+          <p className="text-gray-400 text-sm">Starten Sie einen Wettbewerb und laden Sie andere Angler ein</p>
         </div>
 
         {/* Template Selection */}
         {!selectedTemplate && (
           <div className="space-y-4">
-            <h2 className="text-lg font-bold text-white">📋 Vorlagen auswählen</h2>
+            <h2 className="text-lg font-semibold text-white">Vorlagen auswählen</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {templates.map((template) => (
                 <button
                   key={template.id}
                   onClick={() => handleSelectTemplate(template)}
-                  className="p-4 bg-gray-900/50 border border-cyan-500/20 rounded-xl hover:border-cyan-500/50 transition text-left"
+                  className="p-4 bg-gray-900/50 border border-cyan-500/20 rounded-lg hover:border-cyan-500/40 transition text-left"
                 >
-                  <div className="text-2xl mb-2">{template.icon || "🏆"}</div>
-                  <h3 className="font-bold text-white">{template.name}</h3>
+                  <div className="h-8 w-8 rounded-lg bg-cyan-500/20 flex items-center justify-center mb-2">
+                    <span className="text-xs font-bold text-cyan-400">V</span>
+                  </div>
+                  <h3 className="font-semibold text-white">{template.name}</h3>
                   <p className="text-xs text-gray-400 mt-1">{template.description}</p>
                   <div className="text-xs text-cyan-400 mt-2">
                     {template.duration_days} Tage
@@ -132,10 +134,12 @@ export default function EventCreate() {
               {/* Custom Option */}
               <button
                 onClick={() => setSelectedTemplate({ id: "custom" })}
-                className="p-4 bg-gray-900/50 border border-cyan-500/20 rounded-xl hover:border-cyan-500/50 transition text-left"
+                className="p-4 bg-gray-900/50 border border-cyan-500/20 rounded-lg hover:border-cyan-500/40 transition text-left"
               >
-                <div className="text-2xl mb-2">✏️</div>
-                <h3 className="font-bold text-white">Eigenes Event</h3>
+                <div className="h-8 w-8 rounded-lg bg-blue-500/20 flex items-center justify-center mb-2">
+                  <span className="text-xs font-bold text-blue-400">+</span>
+                </div>
+                <h3 className="font-semibold text-white">Benutzerdefiniert</h3>
                 <p className="text-xs text-gray-400 mt-1">Ganz individuell konfigurieren</p>
               </button>
             </div>
@@ -152,24 +156,24 @@ export default function EventCreate() {
                 setSelectedTemplate(null);
                 setFormData({ name: "", description: "", template_id: "", duration_days: 14 });
               }}
-              className="text-cyan-400 hover:text-cyan-300 text-sm font-semibold flex items-center gap-1"
+              className="text-cyan-400 hover:text-cyan-300 text-sm font-semibold"
             >
-              ← Zurück zu Vorlagen
+              Zurück zu Vorlagen
             </button>
 
             {/* Template Info */}
             {selectedTemplate.id !== "custom" && (
-              <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-4">
+              <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4">
                 <p className="text-sm text-gray-300">
-                  <span className="font-bold">Gewählte Vorlage:</span> {selectedTemplate.name}
+                  <span className="font-semibold">Gewählte Vorlage:</span> {selectedTemplate.name}
                 </p>
               </div>
             )}
 
             {/* Event Name */}
             <div>
-              <label className="block text-sm font-bold text-gray-300 mb-2">
-                📝 Event-Name
+              <label className="block text-sm font-semibold text-gray-300 mb-2">
+                Veranstaltungsname
               </label>
               <input
                 type="text"
@@ -182,13 +186,13 @@ export default function EventCreate() {
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-bold text-gray-300 mb-2">
-                📄 Beschreibung (optional)
+              <label className="block text-sm font-semibold text-gray-300 mb-2">
+                Beschreibung (optional)
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Erzählen Sie mehr über das Event..."
+                placeholder="Erzählen Sie mehr über die Veranstaltung..."
                 rows="4"
                 className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg text-white placeholder-gray-600 focus:border-cyan-500 focus:outline-none transition"
               />
@@ -196,8 +200,8 @@ export default function EventCreate() {
 
             {/* Duration */}
             <div>
-              <label className="block text-sm font-bold text-gray-300 mb-2">
-                ⏱️ Dauer (Tage)
+              <label className="block text-sm font-semibold text-gray-300 mb-2">
+                Dauer (Tage)
               </label>
               <input
                 type="number"
@@ -214,9 +218,9 @@ export default function EventCreate() {
             <button
               type="submit"
               disabled={creating}
-              className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:opacity-50 text-white font-bold rounded-lg transition"
+              className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:opacity-50 text-white font-semibold rounded-lg transition"
             >
-              {creating ? "Wird erstellt..." : "🚀 Event erstellen"}
+              {creating ? "Wird erstellt..." : "Veranstaltung erstellen"}
             </button>
           </form>
         )}

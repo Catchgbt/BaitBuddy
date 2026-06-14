@@ -3,22 +3,58 @@
 
 // Punkte für verschiedene Aktivitäten
 export const ACTIVITY_POINTS = {
-  trip_completed: 50,           // Trip abgeschlossen
-  ai_chat_interaction: 10,      // KI-Chat Nachricht
-  bait_mixer_use: 25,           // BaitMixer Rezept erstellt
-  ai_analyze: 15,               // Foto-Analyse
-  fishing_recommendation: 20,   // Fisch-Empfehlung
-  weather_check: 5,             // Wetter-Info angesehen
-  spot_analysis: 15,            // Gewässer-Analyse
+  trip_completed: 50,
+  ai_chat_interaction: 10,
+  bait_mixer_use: 25,
+  ai_analyze: 15,
+  fishing_recommendation: 20,
+  weather_check: 5,
+  spot_analysis: 15,
+  water_quality_check: 10,
+  gear_logged: 15,
+  fish_identified: 20,
+  catch_logged: 30,
+  photo_shared: 10,
+  session_completed: 25,
 };
 
-// Addiere Aktivitäts-Punkte zu Event
+// Reward-System für Platzierungen
+export const PLACEMENT_REWARDS = {
+  1: {
+    points: 5000,
+    reward_type: 'premium_plan',
+    duration_days: 30,
+    plan_type: 'pro',
+    description: '1 Monat Pro Plan'
+  },
+  2: {
+    points: 2500,
+    reward_type: 'premium_plan',
+    duration_days: 14,
+    plan_type: 'pro',
+    description: '2 Wochen Pro Plan'
+  },
+  3: {
+    points: 1000,
+    reward_type: 'premium_plan',
+    duration_days: 7,
+    plan_type: 'pro',
+    description: '1 Woche Pro Plan'
+  },
+  4: {
+    points: 500,
+    reward_type: 'ai_tool_choice',
+    duration_days: 30,
+    tool_type: 'choice', // Benutzer wählt KI-Tool
+    description: 'KI-Tool deiner Wahl für 1 Monat'
+  }
+};
+
 export async function addActivityPoints(userId, eventId, activityType, supabase) {
   const points = ACTIVITY_POINTS[activityType] || 0;
   if (points === 0) return { ok: false, message: 'Unknown activity type' };
 
   try {
-    // Finde oder erstelle Submission für diese Aktivität
     const { data: submission, error: submissionError } = await supabase
       .from('event_submissions')
       .insert({
@@ -35,7 +71,6 @@ export async function addActivityPoints(userId, eventId, activityType, supabase)
 
     if (submissionError) throw submissionError;
 
-    // Update event_participants total_points
     const { data: participant } = await supabase
       .from('event_participants')
       .select('total_points')
@@ -69,7 +104,6 @@ export async function addActivityPoints(userId, eventId, activityType, supabase)
 
 export async function calculateSubmissionPoints(submission, eventId, supabase) {
   try {
-    // 1. Event-Konfiguration laden
     const { data: config, error: configError } = await supabase
       .from('event_point_configs')
       .select('*')
@@ -78,7 +112,6 @@ export async function calculateSubmissionPoints(submission, eventId, supabase) {
 
     if (configError && configError.code !== 'PGRST116') {
       console.error('Fehler beim Laden der Event-Konfiguration:', configError);
-      // Fallback auf Defaults
       return getDefaultPoints(submission);
     }
 
@@ -86,24 +119,16 @@ export async function calculateSubmissionPoints(submission, eventId, supabase) {
       return getDefaultPoints(submission);
     }
 
-    // 2. Basis-Punkte
     const basePoints = config.base_points || 100;
-
-    // 3. Längen-Bonus (cm * Multiplikator)
     const lengthCm = parseFloat(submission.length_cm) || 0;
     const lengthBonus = lengthCm > 0 ? lengthCm * (config.length_bonus_per_cm || 5.0) : 0;
-
-    // 4. Art-spezifischer Bonus aus JSONB
     const speciesBonus = config.species_bonus && submission.species
       ? parseFloat(config.species_bonus[submission.species]) || 0
       : 0;
-
-    // 5. Like-Multiplikator
     const communityLikes = parseInt(submission.community_likes) || 0;
     const likePointMultiplier = config.like_point_multiplier || 1.0;
     const likesPoints = communityLikes * likePointMultiplier;
 
-    // 6. Gesamt berechnen
     const totalPoints = basePoints + lengthBonus + speciesBonus + likesPoints;
 
     return {
@@ -141,7 +166,6 @@ function getDefaultPoints(submission) {
   };
 }
 
-// Ranglisten-Positions-Bonus (1., 2., 3. Platz)
 export function getPlacementBonus(rank, config) {
   if (rank === 1) return config?.first_place_bonus || 500;
   if (rank === 2) return config?.second_place_bonus || 300;
@@ -149,10 +173,8 @@ export function getPlacementBonus(rank, config) {
   return 0;
 }
 
-// Berechne neue Ranglisten, nachdem Event endet
 export async function calculateEventFinalRankings(eventId, supabase) {
   try {
-    // 1. Event-Infos laden
     const { data: event, error: eventError } = await supabase
       .from('events')
       .select('*')
@@ -164,14 +186,12 @@ export async function calculateEventFinalRankings(eventId, supabase) {
       return [];
     }
 
-    // 2. Event-Konfiguration laden
     const { data: config } = await supabase
       .from('event_point_configs')
       .select('*')
       .eq('event_id', eventId)
       .single();
 
-    // 3. Alle Einreichungen des Events mit Nutzer-Aggregation
     const { data: submissions, error: submissionsError } = await supabase
       .from('event_submissions')
       .select('user_id, calculated_points')
@@ -183,7 +203,6 @@ export async function calculateEventFinalRankings(eventId, supabase) {
       return [];
     }
 
-    // 4. Aggregiere nach user_id
     const userScores = {};
     submissions.forEach(sub => {
       if (!userScores[sub.user_id]) {
@@ -192,7 +211,6 @@ export async function calculateEventFinalRankings(eventId, supabase) {
       userScores[sub.user_id] += parseFloat(sub.calculated_points) || 0;
     });
 
-    // 5. Sortiere und addiere Platzierungs-Bonus
     const rankings = Object.entries(userScores)
       .sort((a, b) => b[1] - a[1])
       .map(([userId, totalPoints], index) => {
@@ -209,7 +227,6 @@ export async function calculateEventFinalRankings(eventId, supabase) {
         };
       });
 
-    // 6. Aktualisiere event_participants mit finalen Werten
     for (const ranking of rankings) {
       await supabase
         .from('event_participants')
@@ -228,14 +245,11 @@ export async function calculateEventFinalRankings(eventId, supabase) {
   }
 }
 
-// Aggregiere monatliche Punkte-Rankings
 export async function aggregateMonthlyLeaderboard(year, month, supabase) {
   try {
-    // Determine date range for the month
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 1);
 
-    // 1. Finde alle Events des Monats
     const { data: monthlyEvents, error: eventsError } = await supabase
       .from('events')
       .select('id')
@@ -254,7 +268,6 @@ export async function aggregateMonthlyLeaderboard(year, month, supabase) {
       return [];
     }
 
-    // 2. Aggregiere alle Teilnehmer-Punkte für diese Events
     const { data: participants, error: participantsError } = await supabase
       .from('event_participants')
       .select('user_id, total_points')
@@ -265,7 +278,6 @@ export async function aggregateMonthlyLeaderboard(year, month, supabase) {
       return [];
     }
 
-    // 3. Summiere Punkte pro Nutzer
     const userMonthlyPoints = {};
     const userEventCount = {};
 
@@ -278,7 +290,6 @@ export async function aggregateMonthlyLeaderboard(year, month, supabase) {
       userEventCount[p.user_id] += 1;
     });
 
-    // 4. Erstelle Ranking mit Rank-Nummern
     const leaderboard = Object.entries(userMonthlyPoints)
       .sort((a, b) => b[1] - a[1])
       .map(([userId, totalPoints], index) => ({
@@ -292,7 +303,6 @@ export async function aggregateMonthlyLeaderboard(year, month, supabase) {
         expires_at: new Date(year + 1, month - 1, 1).toISOString()
       }));
 
-    // 5. Speichere oder update monthly_leaderboards
     for (const entry of leaderboard) {
       if (entry.reward_status === 'not_eligible') {
         delete entry.reward_status;
@@ -317,10 +327,8 @@ export async function aggregateMonthlyLeaderboard(year, month, supabase) {
   }
 }
 
-// Aktiviere automatisch Rewards für Gewinner
 export async function autoActivateRewards(year, month, supabase) {
   try {
-    // 1. Finde alle Rank-1-Einträge des Monats ohne Reward
     const { data: winners, error: winnersError } = await supabase
       .from('monthly_leaderboards')
       .select('id, user_id')
@@ -341,7 +349,6 @@ export async function autoActivateRewards(year, month, supabase) {
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 30);
 
-        // 2. Erstelle reward_activation-Eintrag
         const { data: rewardActivation, error: rewardError } = await supabase
           .from('reward_activations')
           .upsert({
@@ -360,7 +367,6 @@ export async function autoActivateRewards(year, month, supabase) {
           continue;
         }
 
-        // 3. Aktualisiere monthly_leaderboards Status
         await supabase
           .from('monthly_leaderboards')
           .update({
