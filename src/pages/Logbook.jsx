@@ -85,6 +85,7 @@ export default function Logbook() {
       const stored = localStorage.getItem('catchgbt_pending_photos');
       if (stored) setPendingPhotos(JSON.parse(stored));
     } catch (error) {
+      setPendingPhotos([]);
     }
   };
 

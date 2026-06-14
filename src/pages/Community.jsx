@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import SwipeToRefresh from "@/components/utils/SwipeToRefresh";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -160,10 +160,22 @@ export default function Community() {
     }
   };
 
-  const votingCompetitions = competitions.filter(c => c.competition_type === 'photo_contest');
-  const teamCompetitions = competitions.filter(c => c.competition_type === 'most_catches');
-  const eventCompetitions = competitions.filter(c => c.competition_type === 'event');
-  const otherCompetitions = competitions.filter(c => c.competition_type !== 'photo_contest' && c.competition_type !== 'most_catches' && c.competition_type !== 'event');
+  const votingCompetitions = useMemo(
+    () => competitions.filter(c => c.competition_type === 'photo_contest'),
+    [competitions]
+  );
+  const teamCompetitions = useMemo(
+    () => competitions.filter(c => c.competition_type === 'most_catches'),
+    [competitions]
+  );
+  const eventCompetitions = useMemo(
+    () => competitions.filter(c => c.competition_type === 'event'),
+    [competitions]
+  );
+  const otherCompetitions = useMemo(
+    () => competitions.filter(c => c.competition_type !== 'photo_contest' && c.competition_type !== 'most_catches' && c.competition_type !== 'event'),
+    [competitions]
+  );
 
   const getUserDisplayName = (email) => {
     const user = userCache[email];
