@@ -505,40 +505,52 @@ export default function QuickCatchDialog() {
     triggerHaptic('light');
     playSound('click');
 
-    let exif = {};
-    try { 
-      exif = await parseEXIF(file); 
-    } catch (e) { 
-      console.warn("EXIF parsing failed:", e); 
-    }
-
-    if (exif?.dateTimeOriginal) {
-      const safeDateTime = String(exif.dateTimeOriginal).slice(0,16);
-      setForm(prev => ({ ...prev, catch_time: safeDateTime }));
-      toast.info("Fangzeit aus Bild-Metadaten übernommen.");
-      triggerHaptic('light');
-      playSound('notification');
-    }
-    if (exif?.gpsLat && exif?.gpsLon) {
-      assignNearestSpot(exif.gpsLat, exif.gpsLon);
-    }
-
-    let blob = file;
     try {
-      blob = await compressImage(file, 1600, 500);
-    } catch (e) {
-      console.warn("Image compression failed, uploading original file:", e);
-    }
+      let exif = {};
+      try {
+        exif = await parseEXIF(file);
+      } catch (e) {
+        console.warn("EXIF parsing failed:", e);
+      }
 
-    toast.info(`Lade Bild hoch: ${file.name}`);
-    playSound('loading');
-    const fileName = String(file.name || "fang") + ".jpg";
-    const f = new File([blob], fileName, { type: "image/jpeg" });
-    const { file_url } = await UploadFile({ file: f });
-    setForm(prev=>({ ...prev, photo_url: file_url }));
-    toast.success("Bild hochgeladen. Klicke auf KI-Analyse zum automatischen Ausfüllen.");
-    playSound('success');
-    triggerHaptic('light');
+      if (exif?.dateTimeOriginal) {
+        const safeDateTime = String(exif.dateTimeOriginal).slice(0,16);
+        setForm(prev => ({ ...prev, catch_time: safeDateTime }));
+        toast.info("Fangzeit aus Bild-Metadaten übernommen.");
+        triggerHaptic('light');
+        playSound('notification');
+      }
+      if (exif?.gpsLat && exif?.gpsLon) {
+        assignNearestSpot(exif.gpsLat, exif.gpsLon);
+      }
+
+      let blob = file;
+      try {
+        blob = await compressImage(file, 1600, 500);
+      } catch (e) {
+        console.warn("Image compression failed, uploading original file:", e);
+      }
+
+      toast.info(`Lade Bild hoch: ${file.name}`);
+      playSound('loading');
+      const fileName = String(file.name || "fang") + ".jpg";
+      const f = new File([blob], fileName, { type: "image/jpeg" });
+      const result = await UploadFile({ file: f });
+      const file_url = result?.file_url;
+      if (!file_url) {
+        throw new Error("Keine Datei-URL in der Antwort erhalten");
+      }
+      setForm(prev=>({ ...prev, photo_url: file_url }));
+      toast.success("Bild hochgeladen. Klicke auf KI-Analyse zum automatischen Ausfüllen.");
+      playSound('success');
+      triggerHaptic('light');
+    } catch (error) {
+      console.error("Upload-Fehler:", error);
+      playSound('error');
+      triggerHaptic('light');
+      const errorMsg = error?.message || "Fehler beim Hochladen des Bildes";
+      toast.error(errorMsg);
+    }
   };
 
   const handleAcceptAiAnalysis = () => {
@@ -589,7 +601,7 @@ export default function QuickCatchDialog() {
             <div className="sm:col-span-2 space-y-2">
               <label className="text-sm text-gray-400">Foto hochladen</label>
               <label className="flex items-center justify-center gap-2 w-full py-2 px-4 rounded-lg border border-gray-700 bg-gray-800/50 text-gray-300 cursor-pointer text-sm">
-                Bild auswaehlen
+                Bild auswählen
                 <input type="file" accept="image/*" onChange={(e)=>e.target.files[0] && upload(e.target.files[0])} className="hidden" />
               </label>
               {form.photo_url && (
