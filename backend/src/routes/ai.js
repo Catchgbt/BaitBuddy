@@ -38,7 +38,8 @@ router.get('/ai/test', async (req, res) => {
     const reply = await invokeLLM({ prompt: 'Sage nur: Hallo, ich funktioniere!' });
     return res.json({ ok: true, reply, provider: 'Groq (Llama)' });
   } catch (e) {
-    return res.json({ ok: false, error: e.message, stack: e.stack?.split('\n').slice(0, 3), step: 'llm_call' });
+    console.error('Error in /ai/test:', e);
+    return res.status(500).json({ ok: false, error: 'KI-Test fehlgeschlagen', step: 'llm_call' });
   }
 });
 

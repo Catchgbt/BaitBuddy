@@ -42,7 +42,10 @@ app.use('/api', mapsRoutes);
 app.use('/api', supportRoutes);
 
 app.use((req, res) => res.status(404).json({ error: `Not found: ${req.method} ${req.path}` }));
-app.use((err, req, res, next) => res.status(500).json({ error: err.message }));
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: 'Interner Fehler' });
+});
 
 if (!process.env.VERCEL) {
   app.listen(PORT, () => console.log(`BaitBuddy Backend läuft auf :${PORT}`));
