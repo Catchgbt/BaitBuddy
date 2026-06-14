@@ -4,6 +4,16 @@ import { supabase } from '../lib/supabase.js';
 
 const router = Router();
 
+const ALLOWED_CATCH_UPDATE_FIELDS = ['species', 'length_cm', 'weight_kg', 'bait_used', 'notes', 'photo_url', 'is_released', 'spot_id'];
+
+const filterCatchUpdate = (body) => {
+  const filtered = {};
+  for (const field of ALLOWED_CATCH_UPDATE_FIELDS) {
+    if (field in body) filtered[field] = body[field];
+  }
+  return filtered;
+};
+
 router.get('/catches', requireAuth, async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 50;
@@ -63,25 +73,19 @@ router.post('/catches', requireAuth, async (req, res) => {
   return res.json(data);
 });
 
-router.patch('/catches/:id', requireAuth, async (req, res) => {
+const updateCatch = async (req, res) => {
+  const filtered = filterCatchUpdate(req.body);
   const { data, error } = await supabase.from('catches')
-    .update(req.body)
+    .update(filtered)
     .eq('id', req.params.id)
     .eq('created_by', req.user.email)
     .select().single();
   if (error) return res.status(500).json({ error: error.message });
   return res.json(data);
-});
+};
 
-router.put('/catches/:id', requireAuth, async (req, res) => {
-  const { data, error } = await supabase.from('catches')
-    .update(req.body)
-    .eq('id', req.params.id)
-    .eq('created_by', req.user.email)
-    .select().single();
-  if (error) return res.status(500).json({ error: error.message });
-  return res.json(data);
-});
+router.patch('/catches/:id', requireAuth, updateCatch);
+router.put('/catches/:id', requireAuth, updateCatch);
 
 router.delete('/catches/:id', requireAuth, async (req, res) => {
   const { error } = await supabase.from('catches')

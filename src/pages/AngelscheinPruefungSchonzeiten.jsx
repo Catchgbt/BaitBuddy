@@ -45,7 +45,11 @@ export default function AngelscheinPruefungSchonzeiten() {
   ];
 
   useEffect(() => {
-    auth.me().then(setUser).catch(() => {});
+    auth.me()
+      .then(setUser)
+      .catch(err => {
+        console.warn('Fehler beim Laden des aktuellen Benutzers:', err);
+      });
   }, []);
 
   useEffect(() => {
