@@ -83,8 +83,18 @@ export default function Logbook() {
   const loadPendingPhotos = () => {
     try {
       const stored = localStorage.getItem('catchgbt_pending_photos');
-      if (stored) setPendingPhotos(JSON.parse(stored));
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          setPendingPhotos(parsed);
+        } else {
+          localStorage.removeItem('catchgbt_pending_photos');
+          setPendingPhotos([]);
+        }
+      }
     } catch (error) {
+      localStorage.removeItem('catchgbt_pending_photos');
+      setPendingPhotos([]);
     }
   };
 
