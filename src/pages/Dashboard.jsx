@@ -532,7 +532,7 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
               { name: "KI-Chat", path: "AIAssistant", Icon: MessageCircle, color: "text-purple-400", bg: "from-purple-500/10 to-purple-600/5" },
               { name: "KI-Cam", path: "AI", Icon: Camera, color: "text-pink-400", bg: "from-pink-500/10 to-pink-600/5" },
               { name: "Gewässer", path: "WaterAnalysis", offline: true, Icon: Waves, color: "text-teal-400", bg: "from-teal-500/10 to-teal-600/5" },
-              { name: "Ausrüstung", path: "Gear", offline: true, Icon: Wrench, color: "text-orange-400", bg: "from-orange-500/10 to-orange-600/5" },
+              { name: "Ausrüstung", path: "GearV1", offline: true, Icon: Wrench, color: "text-orange-400", bg: "from-orange-500/10 to-orange-600/5" },
               { name: "Trips", path: "TripPlanner", Icon: Calendar, color: "text-amber-400", bg: "from-amber-500/10 to-amber-600/5" },
               { name: "Community", path: "Community", Icon: Users, color: "text-cyan-400", bg: "from-cyan-500/10 to-cyan-600/5" },
               { name: "Ranking", path: "Ranking", Icon: Trophy, color: "text-yellow-400", bg: "from-yellow-500/10 to-yellow-600/5" },
