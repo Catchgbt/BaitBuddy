@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import VoiceControlWidget from "@/components/dashboard/VoiceControlWidget";
 import MiniKarte from "@/components/home/MiniKarte";
-import { Brain, Mic, BookOpen, ArrowRight } from "lucide-react";
+import { Brain, Mic, BookOpen, ArrowRight, MapPin, Cloud, BarChart2, MessageCircle, Camera, Waves, Wrench, Calendar, Users, Trophy, GraduationCap, Loader2 } from "lucide-react";
 import SchonzeitWarner from "@/components/dashboard/SchonzeitWarner";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -362,10 +362,13 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-cyan-400 text-sm">Laden...</div>
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
+          <div className="text-cyan-400/70 text-sm font-medium tracking-wide">Dashboard lädt...</div>
+        </div>
       </div>
     );
-    }
+  }
 
     return (
     <PageContainer maxWidth="max-w-7xl" enableSwipeRefresh={true} onRefresh={loadData}>
@@ -377,24 +380,27 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
         className="sr-only"
       />
       
-      <div className="space-y-12">
+      <div className="space-y-6">
 
-        <div className="flex items-center justify-between border-b border-gray-800/50 pb-6">
+        <div className="flex items-center justify-between border-b border-gray-800/50 pb-5">
           <Button
             onClick={handleAiAnalysis}
             disabled={isAnalyzing}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium shadow-lg hover:shadow-xl transition-all"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-medium shadow-lg shadow-purple-900/30 hover:shadow-purple-900/50 transition-all"
           >
             {isAnalyzing ? (
               <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
                 <span>Analysiere...</span>
               </>
             ) : (
-              <span>KI Standort-Analyse</span>
+              <>
+                <Brain className="w-4 h-4" />
+                <span>KI Standort-Analyse</span>
+              </>
             )}
           </Button>
-          
+
           <div className="flex flex-col items-end gap-2">
             <OfflineCacheIndicator />
             <VoiceControlWidget />
@@ -462,9 +468,9 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
               <h3 className="text-sm font-semibold text-cyan-400/70 uppercase tracking-wider mb-4 sm:mb-6">Aktuelles Wetter</h3>
               {weather ? (
                 <div className="space-y-3" role="region" aria-live="polite" aria-atomic="false" aria-label="Live Wetterdaten: Temperatur, Bedingung, Windgeschwindigkeit">
-                  <div className="flex items-baseline gap-2 sm:gap-3">
-                    <span className="text-4xl sm:text-6xl font-bold text-white tracking-tight" aria-label={`Temperatur: ${Math.round(weather.temperature_2m)} Grad Celsius`}>{Math.round(weather.temperature_2m)}</span>
-                    <span className="text-2xl sm:text-3xl text-gray-400">C</span>
+                  <div className="flex items-baseline gap-1 sm:gap-2">
+                    <span className="text-5xl sm:text-6xl font-bold text-white tracking-tight" aria-label={`Temperatur: ${Math.round(weather.temperature_2m)} Grad Celsius`}>{Math.round(weather.temperature_2m)}</span>
+                    <span className="text-2xl sm:text-3xl text-cyan-400/80 font-light">°C</span>
                   </div>
                   <div className="text-base sm:text-lg text-gray-300" aria-label={`Wetterbedingung: ${getWeatherDesc(weather.weather_code)}`}>{getWeatherDesc(weather.weather_code)}</div>
                   <div className="text-xs sm:text-sm text-gray-500 pt-2 border-t border-gray-800/50" aria-label={`Windgeschwindigkeit: ${Math.round(weather.wind_speed_10m)} Meter pro Sekunde`}>Wind: {Math.round(weather.wind_speed_10m)} m/s</div>
@@ -515,50 +521,54 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
 
         <FishingRecommendationCard />
 
-        <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Schnellzugriff</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
+        <div className="space-y-3">
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Schnellzugriff</h3>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
             {[
-              { name: "Karte", path: "Map", offline: true },
-              { name: "Wetter", path: "Weather", offline: true },
-              { name: "Fangbuch", path: "Logbook", offline: true },
-              { name: "Fang-Uebersicht", path: "CatchStats" },
-              { name: "KI-Chat", path: "AIAssistant" },
-              { name: "KI-Cam", path: "AI" },
-              { name: "Gewaesser (C)", path: "WaterAnalysis", offline: true },
-              { name: "Gear", path: "Gear", offline: true },
-              { name: "Trips", path: "TripPlanner" },
-              { name: "Community (C)", path: "Community" },
-              { name: "Ranking", path: "Ranking" },
-              { name: "Angelschein", path: "AngelscheinPruefungSchonzeiten", offline: true }
-            ].map((feature) => (
-              feature.path === "Community" ? (
+              { name: "Karte", path: "Map", offline: true, Icon: MapPin, color: "text-blue-400", bg: "from-blue-500/10 to-blue-600/5" },
+              { name: "Wetter", path: "Weather", offline: true, Icon: Cloud, color: "text-sky-400", bg: "from-sky-500/10 to-sky-600/5" },
+              { name: "Fangbuch", path: "Logbook", offline: true, Icon: BookOpen, color: "text-cyan-400", bg: "from-cyan-500/10 to-cyan-600/5" },
+              { name: "Statistik", path: "CatchStats", Icon: BarChart2, color: "text-emerald-400", bg: "from-emerald-500/10 to-emerald-600/5" },
+              { name: "KI-Chat", path: "AIAssistant", Icon: MessageCircle, color: "text-purple-400", bg: "from-purple-500/10 to-purple-600/5" },
+              { name: "KI-Cam", path: "AI", Icon: Camera, color: "text-pink-400", bg: "from-pink-500/10 to-pink-600/5" },
+              { name: "Gewässer", path: "WaterAnalysis", offline: true, Icon: Waves, color: "text-teal-400", bg: "from-teal-500/10 to-teal-600/5" },
+              { name: "Ausrüstung", path: "Gear", offline: true, Icon: Wrench, color: "text-orange-400", bg: "from-orange-500/10 to-orange-600/5" },
+              { name: "Trips", path: "TripPlanner", Icon: Calendar, color: "text-amber-400", bg: "from-amber-500/10 to-amber-600/5" },
+              { name: "Community", path: "Community", Icon: Users, color: "text-cyan-400", bg: "from-cyan-500/10 to-cyan-600/5" },
+              { name: "Ranking", path: "Ranking", Icon: Trophy, color: "text-yellow-400", bg: "from-yellow-500/10 to-yellow-600/5" },
+              { name: "Angelschein", path: "AngelscheinPruefungSchonzeiten", offline: true, Icon: GraduationCap, color: "text-indigo-400", bg: "from-indigo-500/10 to-indigo-600/5" }
+            ].map((feature) => {
+              const { Icon } = feature;
+              const inner = (
+                <>
+                  <div className={`absolute inset-0 bg-gradient-to-br ${feature.bg} opacity-0 group-hover:opacity-100 transition-opacity`} />
+                  <div className="relative flex flex-col items-center gap-2">
+                    <Icon className={`w-5 h-5 ${feature.color} group-hover:scale-110 transition-transform`} />
+                    <div className="text-xs font-medium text-gray-400 group-hover:text-white transition-colors leading-tight text-center">{feature.name}</div>
+                    {feature.offline && (
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400/60" title="Offline verfügbar" />
+                    )}
+                  </div>
+                </>
+              );
+              return feature.path === "Community" ? (
                 <button
                   key={feature.path}
                   onClick={() => setShowCommunityDialog(true)}
-                  className="group relative overflow-hidden rounded-xl bg-gray-900/50 hover:bg-gray-800/60 border border-gray-800/50 hover:border-gray-700/60 p-5 text-center transition-all"
+                  className="group relative overflow-hidden rounded-xl bg-gray-900/60 hover:bg-gray-800/70 border border-gray-800/50 hover:border-gray-700/70 p-4 text-center transition-all"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/0 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="relative">
-                    <div className="text-sm font-medium text-gray-300 group-hover:text-cyan-400 transition-colors">{feature.name}</div>
-                  </div>
+                  {inner}
                 </button>
               ) : (
                 <Link
                   key={feature.path}
                   to={createPageUrl(feature.path)}
-                  className="group relative overflow-hidden rounded-xl bg-gray-900/50 hover:bg-gray-800/60 border border-gray-800/50 hover:border-gray-700/60 p-5 text-center transition-all"
+                  className="group relative overflow-hidden rounded-xl bg-gray-900/60 hover:bg-gray-800/70 border border-gray-800/50 hover:border-gray-700/70 p-4 text-center transition-all"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/0 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="relative">
-                    <div className="text-sm font-medium text-gray-300 group-hover:text-cyan-400 transition-colors">{feature.name}</div>
-                    {feature.offline && (
-                      <div className="text-xs text-emerald-400 mt-1">Offline verfuegbar</div>
-                    )}
-                  </div>
+                  {inner}
                 </Link>
-              )
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

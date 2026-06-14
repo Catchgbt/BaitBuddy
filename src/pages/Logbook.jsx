@@ -310,6 +310,27 @@ export default function Logbook() {
   return (
     <SwipeToRefresh onRefresh={() => queryClient.invalidateQueries({ queryKey: ['catches'] })}>
       <div className="max-w-6xl mx-auto p-6 space-y-8 pb-safe-fixed">
+      {catches.length > 0 && !loading && (
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-xl bg-gradient-to-br from-cyan-900/30 to-cyan-900/10 border border-cyan-800/40 p-3 text-center">
+            <div className="text-2xl font-bold text-cyan-400">{catches.length}</div>
+            <div className="text-xs text-gray-400 mt-0.5">Einträge</div>
+          </div>
+          <div className="rounded-xl bg-gradient-to-br from-emerald-900/30 to-emerald-900/10 border border-emerald-800/40 p-3 text-center">
+            <div className="text-2xl font-bold text-emerald-400">
+              {[...new Set(catches.map(c => c.species).filter(Boolean))].length}
+            </div>
+            <div className="text-xs text-gray-400 mt-0.5">Arten</div>
+          </div>
+          <div className="rounded-xl bg-gradient-to-br from-amber-900/30 to-amber-900/10 border border-amber-800/40 p-3 text-center">
+            <div className="text-2xl font-bold text-amber-400">
+              {catches.filter(c => c.weight_kg).reduce((s, c) => s + c.weight_kg, 0).toFixed(1)}
+            </div>
+            <div className="text-xs text-gray-400 mt-0.5">kg gesamt</div>
+          </div>
+        </div>
+      )}
+
       <Card className="glass-morphism border-gray-800 rounded-2xl">
         <CardHeader>
           {!editingCatch && (
@@ -462,7 +483,7 @@ export default function Logbook() {
             </div>
 
             <div className="flex gap-3">
-              <Button type="submit" disabled={isSaving || uploading} className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white min-h-[44px]">
+              <Button type="submit" disabled={isSaving || uploading} className="flex-1 bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white font-semibold min-h-[44px] shadow-lg shadow-cyan-900/30 transition-all">
                 {isSaving ? (
                   <><Loader2 className="animate-spin h-5 w-5 mr-2" />Wird gespeichert...</>
                 ) : (editingCatch ? "Änderungen speichern" : "Fang speichern")}
