@@ -534,12 +534,19 @@ router.post('/rewards/claim', requireAuth, async (req, res) => {
 // ADMIN ENDPOINTS (Cron Jobs)
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.post('/admin/leaderboards/monthly/generate', async (req, res) => {
+router.get('/admin/leaderboards/monthly/generate', async (req, res) => {
   try {
-    // Hinweis: In Produktion sollte dies durch Vercel Cron oder Cloud Scheduler
-    // gesichert sein. Hier für Testing: einfaches Auth via Header
-    const apiKey = req.headers['x-api-key'] || process.env.ADMIN_API_KEY;
-    if (apiKey !== process.env.ADMIN_API_KEY) {
+    // Vercel Crons senden Authorization: Bearer <CRON_SECRET> Header
+    const secret = process.env.CRON_SECRET || process.env.ADMIN_API_KEY;
+    if (!secret) {
+      return res.status(500).json({ error: 'Cron-Secret nicht konfiguriert' });
+    }
+    const authHeader = req.headers.authorization || '';
+    const headerSecret = authHeader.replace(/^Bearer\s+/, '').trim();
+    const xApiKey = req.headers['x-api-key'] || '';
+
+    const isAuthorized = headerSecret === secret || xApiKey === secret;
+    if (!isAuthorized) {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
@@ -563,10 +570,18 @@ router.post('/admin/leaderboards/monthly/generate', async (req, res) => {
   }
 });
 
-router.post('/admin/rewards/auto-activate', async (req, res) => {
+router.get('/admin/rewards/auto-activate', async (req, res) => {
   try {
-    const apiKey = req.headers['x-api-key'] || process.env.ADMIN_API_KEY;
-    if (apiKey !== process.env.ADMIN_API_KEY) {
+    const secret = process.env.CRON_SECRET || process.env.ADMIN_API_KEY;
+    if (!secret) {
+      return res.status(500).json({ error: 'Cron-Secret nicht konfiguriert' });
+    }
+    const authHeader = req.headers.authorization || '';
+    const headerSecret = authHeader.replace(/^Bearer\s+/, '').trim();
+    const xApiKey = req.headers['x-api-key'] || '';
+
+    const isAuthorized = headerSecret === secret || xApiKey === secret;
+    if (!isAuthorized) {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
@@ -587,10 +602,18 @@ router.post('/admin/rewards/auto-activate', async (req, res) => {
   }
 });
 
-router.patch('/admin/events/auto-archive', async (req, res) => {
+router.get('/admin/events/auto-archive', async (req, res) => {
   try {
-    const apiKey = req.headers['x-api-key'] || process.env.ADMIN_API_KEY;
-    if (apiKey !== process.env.ADMIN_API_KEY) {
+    const secret = process.env.CRON_SECRET || process.env.ADMIN_API_KEY;
+    if (!secret) {
+      return res.status(500).json({ error: 'Cron-Secret nicht konfiguriert' });
+    }
+    const authHeader = req.headers.authorization || '';
+    const headerSecret = authHeader.replace(/^Bearer\s+/, '').trim();
+    const xApiKey = req.headers['x-api-key'] || '';
+
+    const isAuthorized = headerSecret === secret || xApiKey === secret;
+    if (!isAuthorized) {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
