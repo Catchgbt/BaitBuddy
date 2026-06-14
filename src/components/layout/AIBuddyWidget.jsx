@@ -57,8 +57,16 @@ export default function AIBuddyWidget() {
   const recognition = useRef(null);
   const widgetRef = useRef(null);
   const chatPanelRef = useRef(null);
+  const messagesEndRef = useRef(null);
   const currentPage = location.pathname.replace(/^\//, '').split('/')[0] || 'Dashboard';
   const tip = getTipForPage(currentPage);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
 
   // Initialize Speech Recognition
   useEffect(() => {
@@ -341,6 +349,8 @@ export default function AIBuddyWidget() {
                       {chatError}
                     </div>
                   )}
+
+                  <div ref={messagesEndRef} />
                 </div>
 
                 {/* Input Section */}
