@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronRight, Layers, MapPin, BarChart3, HelpCircle, Settings, Eye, EyeOff } from 'lucide-react';
+import { ChevronRight, Layers, Eye, EyeOff } from 'lucide-react';
 
 /**
  * MapNavigationHub - Zentrale Steuerstelle für alle Kartenfunktionen

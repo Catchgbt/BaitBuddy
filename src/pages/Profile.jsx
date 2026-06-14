@@ -9,7 +9,7 @@ import { functions } from "@/api/frontendClient";
 import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { UploadFile } from '@/integrations/Core';
-import { User as UserIcon, Camera, Copy, Check, Edit3, Calendar, Clock, MessageSquare, Crown, Link as LinkIcon, Mail, Volume2, AlertTriangle } from 'lucide-react';
+import { Camera, Copy, Check, Edit3, Calendar, Clock, MessageSquare, Crown, Link as LinkIcon, Mail, Volume2, AlertTriangle } from 'lucide-react';
 import { toast } from "sonner";
 import { MobileSelect } from "@/components/ui/mobile-select";
 import { Separator } from "@/components/ui/separator";

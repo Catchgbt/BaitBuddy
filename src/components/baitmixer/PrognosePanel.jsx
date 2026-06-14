@@ -17,7 +17,6 @@ import {
   Cell
 } from "recharts";
 import { TrendingUp, AlertCircle, CheckCircle2, Zap } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MobileSelect } from "@/components/ui/mobile-select";
 

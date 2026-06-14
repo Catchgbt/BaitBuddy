@@ -1,7 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
 import { Moon, Sun, Monitor } from 'lucide-react';
 import { useTheme } from '@/lib/ThemeContext';
 

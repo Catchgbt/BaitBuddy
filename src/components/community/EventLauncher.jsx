@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trophy, Loader2, Zap } from 'lucide-react';
+import { Loader2, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from "@/api/frontendClient";
 

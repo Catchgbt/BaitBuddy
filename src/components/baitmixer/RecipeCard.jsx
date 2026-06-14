@@ -1,7 +1,7 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Star, Zap } from "lucide-react";
+import { ChevronRight, Zap } from "lucide-react";
 import { DIFFICULTY_CONFIG, SEASON_CONFIG } from "@/data/baitRecipes.data";
 
 export default function RecipeCard({

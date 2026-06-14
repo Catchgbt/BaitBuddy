@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Cloud, Droplets, AlertCircle } from 'lucide-react';
+import { Droplets, AlertCircle } from 'lucide-react';
 import TideService from '../../services/TideService';
 
 function TideWidget({ latitude, longitude, isActive }) {

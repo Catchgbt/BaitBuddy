@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Bell, BellOff, Save, Zap, AlertCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Bell, Save, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import NotificationService from '../../services/NotificationService';
 

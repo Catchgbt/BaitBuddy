@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Layers, MapPin, Zap, Cloud, Eye, HelpCircle } from 'lucide-react';
+import { X, Layers, MapPin, Zap, Eye, HelpCircle } from 'lucide-react';
 
 /**
  * MapFeaturesInfo - Erklärt alle Kartenfunktionen und erweiterte Features

@@ -6,11 +6,7 @@ import { auth } from "@/api/auth";
 import { planMeetsRequirement } from "@/components/premium/planHierarchy";
 import {
   Radio, 
-  Camera, 
-  Scale, 
-  Waves, 
-  Gamepad2, 
-  Thermometer,
+  Camera,
   Battery,
   Wifi,
   WifiOff,
