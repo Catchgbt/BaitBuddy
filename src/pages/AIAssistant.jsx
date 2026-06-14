@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -42,12 +42,12 @@ function AIAssistantInner() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleSpeak = async (text) => {
+  const handleSpeak = useCallback(async (text) => {
     try {
       if (!text || typeof text !== 'string') return;
-      
+
       setIsSpeaking(true);
-      
+
       const cleanText = text
         .replace(/[\u{1F600}-\u{1F64F}]/gu, '')
         .replace(/[\u{1F300}-\u{1F5FF}]/gu, '')
@@ -55,7 +55,7 @@ function AIAssistantInner() {
         .replace(/[\*#_~`]/g, '')
         .replace(/\s+/g, ' ')
         .trim();
-      
+
       if (!cleanText) {
         setIsSpeaking(false);
         return;
@@ -63,7 +63,7 @@ function AIAssistantInner() {
 
       if (typeof window !== 'undefined' && window.speechSynthesis) {
         window.speechSynthesis.cancel();
-        
+
         const utterance = new SpeechSynthesisUtterance(cleanText);
         utterance.lang = 'de-DE';
         utterance.rate = 1.0;
@@ -85,11 +85,10 @@ function AIAssistantInner() {
         window.speechSynthesis.speak(utterance);
       }
     } catch (error) {
-      console.error('TTS Error:', error);
       setIsSpeaking(false);
       toast.error('Vorlesen fehlgeschlagen');
     }
-  };
+  }, []);
 
   const [isGuest, setIsGuest] = useState(false);
 
