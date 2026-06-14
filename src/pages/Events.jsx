@@ -61,7 +61,6 @@ export default function Events() {
         setLeaderboards(leaderboardsMap);
       }
     } catch (err) {
-      console.error("Error loading competitions:", err);
     } finally {
       setLoading(false);
     }
@@ -77,7 +76,6 @@ export default function Events() {
       await api.post(`/api/events/${compId}/join`, {});
       setJoined(prev => new Set([...prev, compId]));
     } catch (err) {
-      console.error("Error joining competition:", err);
     } finally {
       setJoining(prev => {
         const newSet = new Set(prev);

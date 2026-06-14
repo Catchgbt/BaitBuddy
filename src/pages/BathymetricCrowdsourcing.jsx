@@ -43,7 +43,6 @@ function BathymetricCrowdsourcingInner() {
       const data = await entities.BathymetricMap.list('-generated_at', 50);
       setMaps(data);
     } catch (err) {
-      console.error("Fehler:", err);
     }
     setLoadingMaps(false);
   };
