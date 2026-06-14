@@ -120,14 +120,14 @@ router.get('/community/clans/:id/leaderboard', optionalAuth, async (req, res) =>
   return res.json(data || []);
 });
 
-router.get('/events', optionalAuth, async (req, res) => {
+router.get('/competitions', optionalAuth, async (req, res) => {
   const { data, error } = await supabase.from('competitions')
     .select('*').eq('is_active', true).order('created_at', { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
   return res.json(data || []);
 });
 
-router.post('/events', requireAuth, async (req, res) => {
+router.post('/competitions', requireAuth, async (req, res) => {
   const { data, error } = await supabase.from('competitions').insert({
     ...req.body, created_by: req.user.email
   }).select().single();
@@ -135,7 +135,7 @@ router.post('/events', requireAuth, async (req, res) => {
   return res.json(data);
 });
 
-router.get('/events/:id/leaderboard', optionalAuth, async (req, res) => {
+router.get('/competitions/:id/leaderboard', optionalAuth, async (req, res) => {
   const { data, error } = await supabase.from('voting_submissions')
     .select('*').eq('competition_id', req.params.id)
     .order('total_score', { ascending: false }).limit(50);
@@ -143,7 +143,7 @@ router.get('/events/:id/leaderboard', optionalAuth, async (req, res) => {
   return res.json(data || []);
 });
 
-router.post('/events/:id/submit', requireAuth, async (req, res) => {
+router.post('/competitions/:id/submit', requireAuth, async (req, res) => {
   const { species, length_cm, photo_url } = req.body;
   const { data, error } = await supabase.from('voting_submissions').insert({
     competition_id: req.params.id,
@@ -157,7 +157,7 @@ router.post('/events/:id/submit', requireAuth, async (req, res) => {
   return res.json(data);
 });
 
-router.post('/events/:id/join', requireAuth, async (req, res) => {
+router.post('/competitions/:id/join', requireAuth, async (req, res) => {
   const { data, error } = await supabase.from('voting_submissions').insert({
     competition_id: req.params.id,
     user_id: req.user.email,

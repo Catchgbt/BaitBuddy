@@ -44,15 +44,17 @@ export async function addActivityPoints(userId, eventId, activityType, supabase)
       .single();
 
     if (participant) {
+      const { count: submissionCount } = await supabase
+        .from('event_submissions')
+        .select('*', { count: 'exact', head: true })
+        .eq('event_id', eventId)
+        .eq('user_id', userId);
+
       await supabase
         .from('event_participants')
         .update({
           total_points: (parseFloat(participant.total_points) || 0) + points,
-          submission_count: await supabase
-            .from('event_submissions')
-            .select('id', { count: 'exact', head: true })
-            .eq('event_id', eventId)
-            .eq('user_id', userId)
+          submission_count: submissionCount || 0
         })
         .eq('event_id', eventId)
         .eq('user_id', userId);

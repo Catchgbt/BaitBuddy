@@ -4,7 +4,6 @@ import { createPageUrl } from "@/utils";
 import { useHaptic } from "@/components/utils/HapticFeedback";
 import { useSound } from "@/components/utils/SoundManager";
 import { useLanguage } from "@/components/i18n/LanguageContext";
-import { User } from "@/entities/User";
 import { auth } from "@/api/auth";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -13,38 +12,10 @@ import {
   LogOut,
 } from "lucide-react";
 
-export default function Sidebar({ isOpen, setIsOpen, currentPageName }) {
+export default function Sidebar({ isOpen, setIsOpen, currentPageName, user, loading }) {
   const { triggerHaptic } = useHaptic();
   const { playSound } = useSound();
   const { t } = useLanguage();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const currentUser = await User.me();
-        setUser(currentUser);
-      } catch (error) {
-        console.error("Fehler beim Laden der Benutzerdaten in der Sidebar:", error);
-        setUser(null);
-      }
-      setLoading(false);
-    };
-
-    loadUser();
-
-    const handleUserUpdate = () => {
-      console.log('User refresh request received, reloading user data in sidebar.');
-      loadUser();
-    };
-
-    window.addEventListener('user-refresh-request', handleUserUpdate);
-
-    return () => {
-      window.removeEventListener('user-refresh-request', handleUserUpdate);
-    };
-  }, []);
 
   const mainItems = [
     { name: "Dashboard", path: "Dashboard", key: "nav.dashboard" },
