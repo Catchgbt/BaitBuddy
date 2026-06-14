@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect } from 'react'
+import React, { Suspense, lazy, useEffect } from 'react'
 import './App.css'
 import './globals.css'
 import { Toaster } from "@/components/ui/toaster"
@@ -20,13 +20,13 @@ import SplashIntro from '@/components/intro/SplashIntro';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { migrateOfflineStorage } from '@/lib/StorageMigration';
 import ErrorBoundary from '@/lib/ErrorBoundary';
-import CatchStats from '@/pages/CatchStats';
-import AdminTracking from '@/pages/AdminTracking';
-import Help from '@/pages/Help';
-import EventCatalog from '@/pages/EventCatalog';
-import EventDetails from '@/pages/EventDetails';
-import EventCreate from '@/pages/EventCreate';
-import MonthlyLeaderboard from '@/pages/MonthlyLeaderboard';
+const CatchStats = lazy(() => import('@/pages/CatchStats'));
+const AdminTracking = lazy(() => import('@/pages/AdminTracking'));
+const Help = lazy(() => import('@/pages/Help'));
+const EventCatalog = lazy(() => import('@/pages/EventCatalog'));
+const EventDetails = lazy(() => import('@/pages/EventDetails'));
+const EventCreate = lazy(() => import('@/pages/EventCreate'));
+const MonthlyLeaderboard = lazy(() => import('@/pages/MonthlyLeaderboard'));
 import PageViewTracker from '@/components/utils/PageViewTracker';
 
 const LazyPageFallback = () => (

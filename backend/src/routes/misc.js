@@ -55,6 +55,15 @@ router.post('/fishing/plans', requireAuth, async (req, res) => {
   return res.json(data);
 });
 
+router.patch('/fishing/plans/:id', requireAuth, async (req, res) => {
+  const { created_by, user_id, id, created_at, ...patch } = req.body || {};
+  const { data, error } = await supabase.from('fishing_plans')
+    .update(patch).eq('id', req.params.id).eq('created_by', req.user.email)
+    .select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data);
+});
+
 router.delete('/fishing/plans/:id', requireAuth, async (req, res) => {
   const { error } = await supabase.from('fishing_plans').delete()
     .eq('id', req.params.id).eq('created_by', req.user.email);

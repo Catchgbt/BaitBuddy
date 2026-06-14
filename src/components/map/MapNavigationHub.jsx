@@ -257,11 +257,12 @@ function MapNavigationHub({
 
   if (!isExpanded) {
     return (
-      <div className="fixed top-4 right-4 z-40">
+      <div className="fixed bottom-24 right-4 z-40">
         <button
           onClick={() => setIsExpanded(true)}
-          className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white p-4 rounded-full shadow-lg flex items-center justify-center w-16 h-16 transition-all hover:scale-110"
+          className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white p-4 rounded-full shadow-lg flex items-center justify-center w-14 h-14 transition-all hover:scale-110"
           title="Map Navigation Hub öffnen"
+          aria-label="Map Navigation Hub öffnen"
         >
           <Layers className="w-6 h-6" />
         </button>
@@ -273,7 +274,7 @@ function MapNavigationHub({
   const currentModeData = modes.find(m => m.id === currentMode);
 
   return (
-    <div className="fixed top-4 right-4 z-40 bg-gray-900/95 border border-cyan-700 rounded-2xl shadow-2xl max-w-2xl max-h-[80vh] overflow-y-auto">
+    <div className="fixed left-2 right-2 sm:left-auto sm:right-4 bottom-24 z-[60] bg-gray-900/95 border border-cyan-700 rounded-2xl shadow-2xl sm:max-w-md max-h-[70vh] overflow-y-auto">
       {/* Header */}
       <div className="sticky top-0 bg-gray-900/98 border-b border-cyan-700 p-4">
         <div className="flex items-center justify-between mb-3">
