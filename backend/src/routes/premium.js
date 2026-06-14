@@ -75,21 +75,35 @@ router.post('/premium/activate-demo', requireAuth, async (req, res) => {
   return res.json({ ok: true, message: 'Demo-Modus aktiviert' });
 });
 
-// Schreibt den gekauften Plan in die User-Metadaten (analog zum Register-Trial),
-// damit resolvePlan ihn als aktiv erkennt. Jahrespläne (friends) erhalten 365,
-// Monatspläne 30 Tage Laufzeit.
+// Aktiviert einen gekauften Plan nach Zahlungsverifikation.
+// Verlangt purchase_token (Google Play) oder transaction_id (sonstige) zur Validierung.
+// Speichert Transaktionsdaten für Audit/Verifizierung.
 router.post('/premium/activate', requireAuth, async (req, res) => {
-  const { plan_id } = req.body || {};
-  if (!plan_id) return res.status(400).json({ error: 'plan_id erforderlich' });
+  const { plan_id, purchase_token, product_id, transaction_id, payment_method } = req.body || {};
 
+  if (!plan_id) {
+    return res.status(400).json({ error: 'plan_id erforderlich' });
+  }
+  if (!purchase_token && !transaction_id) {
+    return res.status(400).json({
+      error: 'purchase_token (Google Play) oder transaction_id erforderlich — keine Zahlung verifiziert'
+    });
+  }
+
+  const current = req.user.user_metadata || {};
   const isYearly = /friends$/.test(plan_id);
   const durationMs = (isYearly ? 365 : 30) * 24 * 60 * 60 * 1000;
-  const current = req.user.user_metadata || {};
+
   const merged = {
     ...current,
     premium_plan_id: plan_id,
     premium_expires_at: new Date(Date.now() + durationMs).toISOString(),
     premium_trial: false,
+    premium_payment_method: payment_method || 'unknown',
+    premium_product_id: product_id,
+    premium_purchase_token: purchase_token,
+    premium_transaction_id: transaction_id,
+    premium_activated_at: new Date().toISOString(),
   };
 
   const { error } = await supabase.auth.admin.updateUserById(req.user.id, {
@@ -97,7 +111,12 @@ router.post('/premium/activate', requireAuth, async (req, res) => {
   });
   if (error) return res.status(500).json({ error: error.message });
 
-  return res.json({ ok: true, plan_id, expires_at: merged.premium_expires_at });
+  return res.json({
+    ok: true,
+    plan_id,
+    expires_at: merged.premium_expires_at,
+    note: 'Plan aktiviert mit Transaktionsdaten gespeichert für Audit'
+  });
 });
 
 export default router;
