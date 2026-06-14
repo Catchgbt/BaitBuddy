@@ -12,6 +12,7 @@ import { createPageUrl } from "@/utils";
 import WakeWordIndicator from "@/components/header/WakeWordIndicator";
 import EventTimer from "@/components/header/EventTimer";
 import LastBuddyMessage from "@/components/header/LastBuddyMessage";
+import EventPointsDisplay from "@/components/header/EventPointsDisplay";
 import MapFeaturesBadge from "@/components/layout/MapFeaturesBadge";
 import { functions } from "@/api/frontendClient";
 import { mobileStack } from "@/lib/MobileStackManager";
@@ -190,10 +191,11 @@ export default function Header({
           <EventTimer />
         </div>
 
-        {/* Center - Letzte Buddy-Nachricht (klickbar zum Voice Control) */}
+        {/* Center - Letzte Buddy-Nachricht + Event-Punkte */}
         <div className="flex items-center gap-2 relative z-20">
+          <EventPointsDisplay />
           <LastBuddyMessage />
-          
+
           {isDemo && (
             <Badge className="bg-amber-500 text-black text-xs font-bold">
               DEMO
