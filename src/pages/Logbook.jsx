@@ -296,7 +296,7 @@ export default function Logbook() {
       toast.success("Fang in der Community geteilt!");
       setShowShareDialog(false);
       setSavedCatchData(null);
-    } catch {
+    } catch (error) {
       toast.error("Fehler beim Teilen des Fangs");
     } finally {
       setIsSharing(false);
