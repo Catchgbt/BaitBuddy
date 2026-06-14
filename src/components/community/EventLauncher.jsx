@@ -36,15 +36,19 @@ export default function EventLauncher({ currentUser, onStarted }) {
       const endDate = new Date(now);
       endDate.setDate(endDate.getDate() + (template.duration_days || 14));
 
-      const response = await api.post('/api/community/competitions/start', {
-        template_id: template.template_id
+      const response = await api.post('/api/events', {
+        name: template.name,
+        description: template.description,
+        template_id: template.template_id,
+        start_date: now.toISOString(),
+        end_date: endDate.toISOString()
       });
 
-      if (response && (response.created || response.joined)) {
-        const msg = response.created
-          ? `"${template.name}" gestartet! Andere können jetzt mitmachen. 🎯`
-          : `Du bist "${template.name}" beigetreten! 🎣`;
-        toast.success(msg);
+      if (response && response.id) {
+        toast.success(`"${template.name}" gestartet! 🎯 Andere können jetzt mitmachen.`);
+        if (onStarted) await onStarted();
+      } else {
+        toast.success(`"${template.name}" aktiviert! 🎣`);
         if (onStarted) await onStarted();
       }
     } catch (error) {

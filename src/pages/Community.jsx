@@ -5,11 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { integrations, entities } from "@/api/frontendClient";
+import { integrations, entities, api } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { User } from "@/entities/User";
 import { toast } from "sonner";
-import { Heart, MessageCircle, Send, Camera, AlertTriangle, User as UserIcon, Loader2, X, Globe, Facebook, Trophy, Users, Activity, Fish, TrendingUp } from "lucide-react";
+import { Heart, MessageCircle, Send, Camera, AlertTriangle, User as UserIcon, Loader2, X, Globe, Facebook, Trophy, Users, Activity, Fish, TrendingUp, Zap } from "lucide-react";
 import CompetitionCard from "@/components/community/CompetitionCard";
 import CompetitionLauncher from "@/components/community/CompetitionLauncher";
 import EventLauncher from "@/components/community/EventLauncher";
@@ -107,8 +107,34 @@ export default function Community() {
 
   const loadCompetitions = async () => {
     try {
+      // Lade alte Community-Wettbewerbe
       const comps = await entities.Competition.list('-created_date', 20);
-      setCompetitions(comps.filter(c => c.is_active));
+      const oldComps = comps.filter(c => c.is_active);
+
+      // Lade neue Events
+      const events = await (async () => {
+        try {
+          const eventsData = await api.get('/api/events');
+          if (!Array.isArray(eventsData)) return [];
+          return eventsData.map(e => ({
+            id: e.id,
+            title: e.name,
+            description: e.description,
+            competition_type: 'event',
+            target_species: e.target_species,
+            start_date: e.start_date,
+            end_date: e.end_date,
+            created_by: e.created_by,
+            is_active: true
+          }));
+        } catch (err) {
+          console.error('Fehler beim Laden der Events:', err);
+          return [];
+        }
+      })();
+
+      // Kombiniere beide
+      setCompetitions([...events, ...oldComps]);
     } catch (error) {
       console.error("Fehler beim Laden der Wettbewerbe:", error);
     }
@@ -136,7 +162,8 @@ export default function Community() {
 
   const votingCompetitions = competitions.filter(c => c.competition_type === 'photo_contest');
   const teamCompetitions = competitions.filter(c => c.competition_type === 'most_catches');
-  const otherCompetitions = competitions.filter(c => c.competition_type !== 'photo_contest' && c.competition_type !== 'most_catches');
+  const eventCompetitions = competitions.filter(c => c.competition_type === 'event');
+  const otherCompetitions = competitions.filter(c => c.competition_type !== 'photo_contest' && c.competition_type !== 'most_catches' && c.competition_type !== 'event');
 
   const getUserDisplayName = (email) => {
     const user = userCache[email];
@@ -839,11 +866,53 @@ export default function Community() {
             </div>
             <div className="space-y-4">
               {teamCompetitions.map((comp) => (
-                <ClanLeaderboardCard 
-                  key={comp.id} 
-                  competition={comp} 
+                <ClanLeaderboardCard
+                  key={comp.id}
+                  competition={comp}
                   currentUser={currentUser}
                 />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Neue Events (von Event-Planung) */}
+        {eventCompetitions.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-cyan-400" />
+              <h2 className="text-xl font-bold text-cyan-400">🏆 Laufende Events</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {eventCompetitions.map((comp) => (
+                <Card key={comp.id} className="glass-morphism border-cyan-600/30 bg-gradient-to-br from-cyan-900/10 to-blue-900/10 rounded-xl overflow-hidden">
+                  <CardHeader>
+                    <CardTitle className="text-cyan-400">{comp.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {comp.description && (
+                      <p className="text-sm text-gray-300">{comp.description}</p>
+                    )}
+                    {comp.target_species && (
+                      <div className="text-xs text-cyan-400 bg-cyan-500/10 px-2 py-1 rounded inline-block">
+                        🐟 {comp.target_species}
+                      </div>
+                    )}
+                    <div className="text-xs text-gray-400">
+                      Endet am {new Date(comp.end_date).toLocaleDateString('de-DE')}
+                    </div>
+                    {currentUser && (
+                      <button
+                        onClick={() => {
+                          window.location.href = `/events/${comp.id}`;
+                        }}
+                        className="w-full py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-bold rounded-lg transition text-sm"
+                      >
+                        📊 Zum Event
+                      </button>
+                    )}
+                  </CardContent>
+                </Card>
               ))}
             </div>
           </div>
