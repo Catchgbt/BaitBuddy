@@ -56,11 +56,13 @@ export default function ProfilePage() {
       }
 
       // Lade Posts-Anzahl
-      try {
-        const posts = await entities.Post.filter({ created_by: currentUser.email });
-        setPostsCount(posts.length);
-      } catch (error) {
-        console.error('Fehler beim Laden der Posts:', error);
+      if (currentUser?.email) {
+        try {
+          const posts = await entities.Post.filter({ created_by: currentUser.email });
+          setPostsCount(posts.length);
+        } catch (error) {
+          setPostsCount(0);
+        }
       }
 
       // Lade Plan-Status
