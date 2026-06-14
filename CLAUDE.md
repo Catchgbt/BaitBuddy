@@ -4,9 +4,11 @@
 
 **Immer auf Deutsch antworten** — alle Antworten, Erklärungen und Zusammenfassungen in dieser Session und in zukünftigen Sessions auf Deutsch. (Code, Commit-Messages und PR-Titel dürfen technisch/englisch bleiben, wo üblich.)
 
-## Keine Platzhalter
+## Keine Platzhalter und keine Emojis im Code
 
 **Niemals Platzhalter setzen.** Keine Dummy-/Fake-/Mock-Werte, keine `TODO`-Stubs, keine „Lorem ipsum"-Texte, keine Beispiel-/Demo-Platzhalter und keine leeren „Coming soon"-Hülsen im produktiven Code. Immer echte, vollständig funktionsfähige Implementierungen mit echten Daten und echten Anbindungen liefern. Fehlt eine Information oder ist etwas unklar, nachfragen — statt einen Platzhalter einzusetzen.
+
+**Niemals Emojis im App-Code verwenden.** Weder in JSX/HTML-Text, noch in Labels, Buttons, Überschriften, Fehlermeldungen oder sonstigen UI-Elementen. Die App-Oberfläche bleibt emoji-frei — ausnahmslos.
 
 ## Infrastruktur: nur Vercel & Supabase
 
