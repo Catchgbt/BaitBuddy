@@ -99,6 +99,27 @@ router.get('/auth/me', requireAuth, (req, res) => {
     email: req.user.email,
     full_name: req.user.user_metadata?.full_name || '',
     created_at: req.user.created_at,
+    ...req.user.user_metadata,
+  });
+});
+
+// Aktualisiert die User-Metadaten (Credits, Profil, Profilbild, Theme, Referral …).
+// Wird vom Frontend über auth.updateMe / auth.updateMyUserData genutzt. Die neuen
+// Werte werden mit den bestehenden Metadaten gemerged, statt sie zu überschreiben.
+router.patch('/auth/me', requireAuth, async (req, res) => {
+  const current = req.user.user_metadata || {};
+  const merged = { ...current, ...(req.body || {}) };
+  const { data, error } = await supabase.auth.admin.updateUserById(req.user.id, {
+    user_metadata: merged,
+  });
+  if (error) return res.status(500).json({ error: error.message });
+  const u = data.user;
+  return res.json({
+    id: u.id,
+    email: u.email,
+    full_name: u.user_metadata?.full_name || '',
+    created_at: u.created_at,
+    ...u.user_metadata,
   });
 });
 

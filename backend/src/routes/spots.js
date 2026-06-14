@@ -17,9 +17,11 @@ router.get('/spots/public', async (req, res) => {
 });
 
 router.post('/spots', requireAuth, async (req, res) => {
-  const { name, latitude, longitude, water_type, notes, photo_url } = req.body;
+  const { name, latitude, longitude, water_type, notes, photo_url, is_favorite, depth_meters } = req.body;
   const { data, error } = await supabase.from('spots').insert({
-    created_by: req.user.email, name, latitude, longitude, water_type, notes, photo_url
+    created_by: req.user.email, name, latitude, longitude, water_type, notes, photo_url,
+    is_favorite: is_favorite ?? false,
+    depth_meters: depth_meters ?? null,
   }).select().single();
   if (error) return res.status(500).json({ error: error.message });
   return res.json(data);

@@ -310,6 +310,7 @@ const fileToBase64 = (file) => {
       resolve(base64);
     };
     reader.onerror = reject;
+    reader.readAsDataURL(file);
   });
 };
 

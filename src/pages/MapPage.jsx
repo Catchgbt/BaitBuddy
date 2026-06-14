@@ -305,17 +305,13 @@ export default function MapPage() {
     setShowAddModal(true);
   };
 
-  const handleAddSpot = async (spotData) => {
-    try {
-      await Spot.create(spotData);
-      toast.success("Spot hinzugefügt!");
-      await loadMapData();
-      setShowAddModal(false);
-      setClickedCoords(null);
-    } catch (error) {
-      console.error("Fehler beim Hinzufügen des Spots:", error);
-      toast.error("Fehler beim Speichern des Spots");
-    }
+  // AddSpotModal legt den Spot bereits selbst an (eigene Mutation) und ruft danach
+  // onSave auf. Hier nur die Kartendaten neu laden — kein zweites Spot.create,
+  // sonst würde der Spot doppelt gespeichert.
+  const handleAddSpot = async () => {
+    await loadMapData();
+    setShowAddModal(false);
+    setClickedCoords(null);
   };
 
   const handleCloseModal = () => {

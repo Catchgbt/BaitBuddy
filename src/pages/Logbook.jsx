@@ -3,10 +3,7 @@ import { analytics } from "@/api/frontendClient";
 import { entities } from "@/api/frontendClient";
 import { Catch } from "@/entities/Catch";
 import { Spot } from "@/entities/Spot";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useOptimisticMutation } from "@/lib/optimistic/useOptimisticMutation";
-import { useActionQueue } from "@/lib/optimistic/useActionQueue";
-import { createOptimisticCreate, createOptimisticDelete, createOptimisticUpdate } from "@/lib/optimistic/optimisticUtils";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -125,79 +122,88 @@ export default function Logbook() {
     setEditingCatch(null);
   }, []);
 
-  // ---- Action Queue ----
-  const actionQueue = useActionQueue();
+  // ---- Mutations with Optimistic UI (TanStack Query cache) ----
+  const createCatchMutation = useMutation({
+    mutationFn: (catchData) => Catch.create(catchData),
+    onMutate: async (catchData) => {
+      await queryClient.cancelQueries({ queryKey: ['catches'] });
+      const previous = queryClient.getQueryData(['catches']);
+      const optimistic = {
+        id: `tmp-${Date.now()}`,
+        ...catchData,
+        created_date: new Date().toISOString(),
+        created_by: 'temp',
+      };
+      queryClient.setQueryData(['catches'], (old = []) => [optimistic, ...old]);
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(['catches'], context.previous);
+      toast.error("Fehler beim Speichern des Fangs");
+    },
+    onSuccess: async (savedCatch, variables) => {
+      queryClient.setQueryData(['catches'], (old = []) =>
+        old.map(c => (c.id?.startsWith('tmp-') ? savedCatch : c))
+      );
+      toast.success("Fang gespeichert!");
+      resetForm();
+      setSavedCatchData(savedCatch);
 
-  // ---- Mutations with Optimistic UI ----
-  const createCatchMutation = useOptimisticMutation(
-    catches,
-    {
-      mutationFn: async (catchData) => {
-        const created = await Catch.create(catchData);
-        return [created, ...catches.filter(c => !c.id.startsWith('tmp-'))];
-      },
-      optimisticData: (variables) => 
-        createOptimisticCreate(catches, {
-          id: `tmp-${Date.now()}`,
-          ...variables,
-          created_date: new Date().toISOString(),
-          created_by: 'temp',
-        }),
-      onSuccess: async (newCatches, variables) => {
-        toast.success("Fang gespeichert!");
-        resetForm();
-        const savedCatch = newCatches[0];
-        setSavedCatchData(savedCatch);
+      analytics.track({
+        eventName: "fishing_catch_logged",
+        properties: {
+          species: variables.species,
+          has_photo: !!variables.photo_url,
+          has_spot: !!variables.spot_id,
+          length_cm: variables.length_cm ?? null,
+        },
+      });
 
-        analytics.track({
-          eventName: "fishing_catch_logged",
-          properties: {
-            species: variables.species,
-            has_photo: !!variables.photo_url,
-            has_spot: !!variables.spot_id,
-            length_cm: variables.length_cm ?? null,
-          },
-        });
+      if (shareRef.current) {
+        const catchText = `Mein Fang: ${savedCatch.species}${savedCatch.length_cm ? ` (${savedCatch.length_cm}cm)` : ''}${savedCatch.weight_kg ? `, ${savedCatch.weight_kg}kg` : ''}${savedCatch.bait_used ? `\nKöder: ${savedCatch.bait_used}` : ''}${savedCatch.notes ? `\n\n${savedCatch.notes}` : ''}`;
+        await entities.Post.create({ text: catchText, photo_url: savedCatch.photo_url || null, likes: 0, reported: false });
+        toast.success("Fang in Community geteilt!");
+        setShareInCommunity(false);
+      } else {
+        setShowShareDialog(true);
+      }
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['catches'] }),
+  });
 
-        if (shareRef.current) {
-          const catchText = `Mein Fang: ${savedCatch.species}${savedCatch.length_cm ? ` (${savedCatch.length_cm}cm)` : ''}${savedCatch.weight_kg ? `, ${savedCatch.weight_kg}kg` : ''}${savedCatch.bait_used ? `\nKöder: ${savedCatch.bait_used}` : ''}${savedCatch.notes ? `\n\n${savedCatch.notes}` : ''}`;
-          await entities.Post.create({ text: catchText, photo_url: savedCatch.photo_url || null, likes: 0, reported: false });
-          toast.success("Fang in Community geteilt!");
-          setShareInCommunity(false);
-        } else {
-          setShowShareDialog(true);
-        }
-      },
-      onError: () => toast.error("Fehler beim Speichern des Fangs"),
-    }
-  );
+  const updateCatchMutation = useMutation({
+    mutationFn: ({ id, data }) => Catch.update(id, data),
+    onMutate: async ({ id, data }) => {
+      await queryClient.cancelQueries({ queryKey: ['catches'] });
+      const previous = queryClient.getQueryData(['catches']);
+      queryClient.setQueryData(['catches'], (old = []) =>
+        old.map(c => (c.id === id ? { ...c, ...data } : c))
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(['catches'], context.previous);
+      toast.error("Fehler beim Aktualisieren");
+    },
+    onSuccess: () => { toast.success("Fang aktualisiert!"); resetForm(); },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['catches'] }),
+  });
 
-  const updateCatchMutation = useOptimisticMutation(
-    catches,
-    {
-      mutationFn: async ({ id, data }) => {
-        await Catch.update(id, data);
-        return catches.map(c => c.id === id ? { ...c, ...data } : c);
-      },
-      optimisticData: ({ id, data }) => 
-        createOptimisticUpdate(catches, { ...catches.find(c => c.id === id), ...data }),
-      onSuccess: () => { toast.success("Fang aktualisiert!"); resetForm(); },
-      onError: () => toast.error("Fehler beim Aktualisieren"),
-    }
-  );
-
-  const deleteCatchMutation = useOptimisticMutation(
-    catches,
-    {
-      mutationFn: async (id) => {
-        await Catch.delete(id);
-        return createOptimisticDelete(catches, id);
-      },
-      optimisticData: (id) => createOptimisticDelete(catches, id),
-      onSuccess: () => toast.success("Fang gelöscht"),
-      onError: () => toast.error("Fehler beim Löschen des Fangs"),
-    }
-  );
+  const deleteCatchMutation = useMutation({
+    mutationFn: (id) => Catch.delete(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['catches'] });
+      const previous = queryClient.getQueryData(['catches']);
+      queryClient.setQueryData(['catches'], (old = []) => old.filter(c => c.id !== id));
+      return { previous };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previous) queryClient.setQueryData(['catches'], context.previous);
+      toast.error("Fehler beim Löschen des Fangs");
+    },
+    onSuccess: () => toast.success("Fang gelöscht"),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['catches'] }),
+  });
 
   // ---- Handlers ----
   const handleFileUpload = async (e) => {
@@ -235,16 +241,10 @@ export default function Logbook() {
     };
 
     if (editingCatch) {
-      const actionId = actionQueue.enqueue(async () => {
-        await updateCatchMutation.mutate({ id: editingCatch.id, data: catchData });
-      }, 3);
+      updateCatchMutation.mutate({ id: editingCatch.id, data: catchData });
     } else {
-      const actionId = actionQueue.enqueue(async () => {
-        await createCatchMutation.mutate(catchData);
-      }, 3);
+      createCatchMutation.mutate(catchData);
     }
-    
-    actionQueue.scheduleProcessing();
   };
 
   const handleEdit = useCallback((catchItem) => {
@@ -421,12 +421,12 @@ export default function Logbook() {
                 <MobileSelect value={spotId} onValueChange={setSpotId} placeholder="Spot auswählen (optional)" label="Angelspot" options={[{ value: "", label: "Kein Spot" }, ...spots.map(s => ({ value: s.id, label: s.name }))]} className="bg-gray-800/50 border-gray-700 text-white" />
               </div>
               <div className="hidden md:block">
-                <Select value={spotId} onValueChange={setSpotId}>
+                <Select value={spotId || "none"} onValueChange={(v) => setSpotId(v === "none" ? "" : v)}>
                   <SelectTrigger id="spot-select" className="bg-gray-800/50 border-gray-700 text-white">
                     <SelectValue placeholder="Spot auswählen (optional)" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-gray-700 text-white">
-                    <SelectItem value={null}>Kein Spot</SelectItem>
+                    <SelectItem value="none">Kein Spot</SelectItem>
                     {spots.map((spot) => (
                       <SelectItem key={spot.id} value={spot.id}>{spot.name}</SelectItem>
                     ))}

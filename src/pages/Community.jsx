@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { integrations, entities, api } from "@/api/frontendClient";
+import { integrations, entities, api, community } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { User } from "@/entities/User";
 import { toast } from "sonner";
@@ -186,7 +186,7 @@ export default function Community() {
     setLoading(true);
     try {
       const [postsData, allComments] = await Promise.all([
-        entities.Post.list("-created_date", 50),
+        entities.Post.list("-created_at", 50),
         entities.Comment.list('', 1000)
       ]);
 
@@ -308,7 +308,7 @@ export default function Community() {
     ));
 
     try {
-      await entities.Post.update(postId, { likes: currentLikes + 1 });
+      await community.likePost(postId);
     } catch (error) {
       console.error("Fehler beim Liken:", error);
       // Revert on error
@@ -629,7 +629,7 @@ export default function Community() {
                         <div>
                           <p className="font-semibold text-white">{displayName}</p>
                           <p className="text-xs text-gray-400">
-                            {new Date(post.created_date).toLocaleDateString('de-DE', {
+                            {new Date(post.created_at).toLocaleDateString('de-DE', {
                               day: '2-digit',
                               month: 'short',
                               year: 'numeric',

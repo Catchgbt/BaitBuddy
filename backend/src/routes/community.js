@@ -31,9 +31,40 @@ router.post('/community/posts/:id/like', requireAuth, async (req, res) => {
   const { error } = await supabase.from('post_likes').insert({
     post_id: req.params.id, user_id: req.user.email
   });
+  // 23505 = bereits geliked (Unique-Constraint); nicht erneut hochzählen.
   if (error?.code === '23505') return res.json({ ok: true });
   if (error) return res.status(500).json({ error: error.message });
-  return res.json({ ok: true });
+
+  // Like-Anzahl aus post_likes aggregieren und auf dem Post persistieren,
+  // damit der Zähler nach einem Reload korrekt bleibt.
+  const { count } = await supabase.from('post_likes')
+    .select('*', { count: 'exact', head: true })
+    .eq('post_id', req.params.id);
+  if (typeof count === 'number') {
+    await supabase.from('community_posts').update({ likes: count }).eq('id', req.params.id);
+  }
+  return res.json({ ok: true, likes: count });
+});
+
+// Kommentare zu Community-Posts. community_posts nutzt created_by (E-Mail) als
+// Autor-Kennung; community_comments folgt demselben Schema.
+router.get('/community/comments', optionalAuth, async (req, res) => {
+  let query = supabase.from('community_comments')
+    .select('*').order('created_at', { ascending: true }).limit(1000);
+  if (req.query.post_id) query = query.eq('post_id', req.query.post_id);
+  const { data, error } = await query;
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data || []);
+});
+
+router.post('/community/comments', requireAuth, async (req, res) => {
+  const { post_id, text } = req.body || {};
+  if (!post_id || !text) return res.status(400).json({ error: 'post_id und text erforderlich' });
+  const { data, error } = await supabase.from('community_comments').insert({
+    post_id, text, created_by: req.user.email
+  }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data);
 });
 
 router.get('/community/voting/leaderboard', optionalAuth, async (req, res) => {

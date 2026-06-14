@@ -75,8 +75,29 @@ router.post('/premium/activate-demo', requireAuth, async (req, res) => {
   return res.json({ ok: true, message: 'Demo-Modus aktiviert' });
 });
 
+// Schreibt den gekauften Plan in die User-Metadaten (analog zum Register-Trial),
+// damit resolvePlan ihn als aktiv erkennt. Jahrespläne (friends) erhalten 365,
+// Monatspläne 30 Tage Laufzeit.
 router.post('/premium/activate', requireAuth, async (req, res) => {
-  return res.json({ ok: true });
+  const { plan_id } = req.body || {};
+  if (!plan_id) return res.status(400).json({ error: 'plan_id erforderlich' });
+
+  const isYearly = /friends$/.test(plan_id);
+  const durationMs = (isYearly ? 365 : 30) * 24 * 60 * 60 * 1000;
+  const current = req.user.user_metadata || {};
+  const merged = {
+    ...current,
+    premium_plan_id: plan_id,
+    premium_expires_at: new Date(Date.now() + durationMs).toISOString(),
+    premium_trial: false,
+  };
+
+  const { error } = await supabase.auth.admin.updateUserById(req.user.id, {
+    user_metadata: merged,
+  });
+  if (error) return res.status(500).json({ error: error.message });
+
+  return res.json({ ok: true, plan_id, expires_at: merged.premium_expires_at });
 });
 
 export default router;

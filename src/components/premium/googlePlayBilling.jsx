@@ -48,10 +48,12 @@ async function activatePlanOnServer({ planId, productId, purchaseToken, orderId 
     product_id: productId
   });
 
-  if (!response?.data?.ok) {
-    throw new Error(response?.data?.error || 'Plan-Aktivierung fehlgeschlagen');
+  // Der API-Client liefert die JSON-Antwort flach zurück (kein .data-Wrapper).
+  const data = response?.data ?? response;
+  if (!data?.ok) {
+    throw new Error(data?.error || 'Plan-Aktivierung fehlgeschlagen');
   }
-  return response.data;
+  return data;
 }
 
 // Startet den Kauf-Flow und wartet auf Native-Callbacks via window-Events.
