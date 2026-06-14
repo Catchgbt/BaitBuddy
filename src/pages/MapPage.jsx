@@ -195,15 +195,62 @@ export default function MapPage() {
       const safeUserSpots = Array.isArray(userSpots) ? userSpots : [];
       setSpots(safeUserSpots);
 
-      toast.success("Karte geladen", {
-        description: `${safeUserSpots.length} eigene Spots gefunden`,
-        duration: 2000
-      });
+      // Nur Toast zeigen wenn tatsächlich Spots geladen wurden
+      if (safeUserSpots.length > 0) {
+        toast.success("Deine Spots geladen", {
+          description: `${safeUserSpots.length} eigene Spots gefunden`,
+          duration: 2000
+        });
+      }
     } catch (error) {
       console.error("Fehler beim Laden der Karten-Daten:", error);
       toast.error("Fehler beim Laden der Spots");
       setSpots([]);
     }
+
+    // Versuche öffentliche Spots im Hintergrund zu laden (stillschweigend)
+    try {
+      const response = await functions.invoke('angelspotsGeojson');
+
+      let locations = [];
+      if (Array.isArray(response?.features)) {
+        locations = response.features
+          .filter(f => f?.geometry?.coordinates?.length >= 2)
+          .map(feature => ({
+            id: feature.properties?.id,
+            name: feature.properties?.name,
+            category: feature.properties?.category,
+            coordinates: {
+              lng: feature.geometry.coordinates[0],
+              lat: feature.geometry.coordinates[1]
+            },
+            address: feature.properties?.address,
+            website: feature.properties?.website,
+            source: feature.properties?.source
+          }));
+      } else if (Array.isArray(response?.hotspots)) {
+        locations = response.hotspots
+          .filter(h => h.latitude != null && h.longitude != null)
+          .map(h => ({
+            id: h.id,
+            name: h.name,
+            category: h.category || 'spot',
+            water_type: h.water_type,
+            coordinates: {
+              lat: Number(h.latitude),
+              lng: Number(h.longitude)
+            }
+          }));
+      }
+
+      if (locations.length > 0) {
+        setPublicLocations(locations);
+        setShowPublicSpots(true);
+      }
+    } catch (error) {
+      console.error("Fehler beim Laden öffentlicher Spots:", error);
+    }
+
     setLoading(false);
   };
 
