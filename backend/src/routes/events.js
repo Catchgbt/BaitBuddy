@@ -112,7 +112,7 @@ router.post('/events', requireAuth, async (req, res) => {
       .select()
       .single();
 
-    if (eventError) return res.status(500).json({ error: eventError.message });
+    if (eventError || !event) return res.status(500).json({ error: eventError?.message || 'Event creation failed' });
 
     // 2. Creator als Teilnehmer hinzufügen
     await supabase

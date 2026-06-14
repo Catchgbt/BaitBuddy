@@ -23,7 +23,11 @@ function parseActionFromReply(text) {
   const m = text.match(/<<ACTION>>([\s\S]*?)<<END>>/);
   if (!m) return { clean: text, action: null };
   let action = null;
-  try { action = JSON.parse(m[1].trim()); } catch {}
+  try {
+    action = JSON.parse(m[1].trim());
+  } catch (err) {
+    console.warn('Failed to parse voice action JSON:', err);
+  }
   const clean = text.replace(m[0], "").trim();
   return { clean, action };
 }
