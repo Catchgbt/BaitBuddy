@@ -16,6 +16,7 @@ import EventLauncher from "@/components/community/EventLauncher";
 import VotingEventCard from "@/components/community/VotingEventCard";
 import ClanLeaderboardCard from "@/components/community/ClanLeaderboardCard";
 import LeaderboardCard from "@/components/community/LeaderboardCard";
+import CompetitionsSection from "@/components/community/CompetitionsSection";
 import PlanGuard from "@/components/premium/PlanGuard";
 import ChatWidget from "@/components/community/ChatWidget";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
@@ -786,137 +787,17 @@ export default function Community() {
         </>)}
 
         {activeTab === "competitions" && (<PlanGuard requiredPlan="pro" featureName="Community-Wettbewerbe & Clans"><>
-        {/* Event Vorlagen */}
-        <EventLauncher
+        <CompetitionsSection
           currentUser={currentUser}
-          onStarted={async () => {
+          recentActivity={recentActivity}
+          votingCompetitions={votingCompetitions}
+          teamCompetitions={teamCompetitions}
+          eventCompetitions={eventCompetitions}
+          onCompetitionUpdated={async () => {
             await loadCompetitions();
             await loadRecentActivity();
           }}
         />
-
-        {/* Wettbewerbe starten */}
-        <CompetitionLauncher
-          currentUser={currentUser}
-          onStarted={async () => {
-            await loadCompetitions();
-            await loadRecentActivity();
-          }}
-        />
-
-        {/* Aktuelle Aktivitaten */}
-         {recentActivity.length > 0 && (
-          <Card className="glass-morphism border-gray-800 rounded-2xl">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Activity className="w-5 h-5 text-cyan-400" />
-                Aktuelle Aktivitaten
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {recentActivity.map((comp, idx) => (
-                <div key={idx} className="flex items-center gap-3 p-3 bg-gray-800/30 rounded-lg hover:bg-gray-800/50 transition-colors">
-                  <div className="w-10 h-10 rounded-full bg-amber-600/20 flex items-center justify-center">
-                    <Trophy className="w-5 h-5 text-amber-400" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-white text-sm font-semibold">
-                      {comp.title}
-                    </p>
-                    <p className="text-gray-400 text-xs">
-                      {comp.competition_type === 'photo_contest' && 'Community Voting'}
-                      {comp.competition_type === 'most_catches' && 'Team Wettbewerb'}
-                      {comp.competition_type === 'biggest_catch' && 'Groesster Fang'}
-                      {comp.competition_type === 'specific_species' && `Spezies: ${comp.target_species || 'Alle'}`}
-                      {' • '}
-                      bis {new Date(comp.end_date).toLocaleDateString('de-DE')}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Community-Voting Events */}
-        {votingCompetitions.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Heart className="w-5 h-5 text-purple-400" />
-              <h2 className="text-xl font-bold text-purple-400">Community-Voting Events</h2>
-            </div>
-            <div className="space-y-4">
-              {votingCompetitions.map((comp) => (
-                <VotingEventCard 
-                  key={comp.id} 
-                  competition={comp} 
-                  currentUser={currentUser}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Team-Wettbewerbe */}
-        {teamCompetitions.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-emerald-400" />
-              <h2 className="text-xl font-bold text-emerald-400">Team-Wettbewerbe</h2>
-            </div>
-            <div className="space-y-4">
-              {teamCompetitions.map((comp) => (
-                <ClanLeaderboardCard
-                  key={comp.id}
-                  competition={comp}
-                  currentUser={currentUser}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Neue Events (von Event-Planung) */}
-        {eventCompetitions.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Zap className="w-5 h-5 text-cyan-400" />
-              <h2 className="text-xl font-bold text-cyan-400">Laufende Veranstaltungen</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {eventCompetitions.map((comp) => (
-                <Card key={comp.id} className="glass-morphism border-cyan-600/30 bg-gradient-to-br from-cyan-900/10 to-blue-900/10 rounded-xl overflow-hidden">
-                  <CardHeader>
-                    <CardTitle className="text-cyan-400">{comp.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {comp.description && (
-                      <p className="text-sm text-gray-300">{comp.description}</p>
-                    )}
-                    {comp.target_species && (
-                      <div className="text-xs text-cyan-400 bg-cyan-500/10 px-2 py-1 rounded inline-block">
-                        {comp.target_species}
-                      </div>
-                    )}
-                    <div className="text-xs text-gray-400">
-                      Endet am {new Date(comp.end_date).toLocaleDateString('de-DE')}
-                    </div>
-                    {currentUser && (
-                      <button
-                        onClick={() => {
-                          window.location.href = `/events/${comp.id}`;
-                        }}
-                        className="w-full py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-bold rounded-lg transition text-sm"
-                      >
-                        Zur Veranstaltung
-                      </button>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Andere Wettbewerbe */}
         {otherCompetitions.length > 0 && (
