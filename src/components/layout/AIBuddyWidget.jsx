@@ -11,6 +11,7 @@ import { Mic, Send, X } from 'lucide-react';
 
 const STORAGE_KEY = 'buddy-widget-pos';
 const VISITED_PAGES_KEY = 'buddy-visited-pages';
+const HIDDEN_KEY = 'buddy-widget-hidden';
 
 /**
  * AI-Buddy Widget — animierter "HilfeBuddy" Text mit Chat und Voice-Unterstützung
@@ -38,6 +39,13 @@ export default function AIBuddyWidget() {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isOpen, setIsOpen] = useState(false);
+  const [isHidden, setIsHidden] = useState(() => {
+    try {
+      return localStorage.getItem(HIDDEN_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [isTalking, setIsTalking] = useState(false);
   const [isNodding, setIsNodding] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -83,9 +91,14 @@ export default function AIBuddyWidget() {
     }
   }, []);
 
-  // Auto-show bubble on first visit to page
+  // Auto-show bubble on first visit to page (unless user has hidden it)
   useEffect(() => {
     try {
+      const isHidden = localStorage.getItem(HIDDEN_KEY) === 'true';
+      if (isHidden) {
+        return;
+      }
+
       const visitedPages = JSON.parse(localStorage.getItem(VISITED_PAGES_KEY) || '[]');
       const hasVisited = visitedPages.includes(currentPage);
 
@@ -190,6 +203,23 @@ export default function AIBuddyWidget() {
   const handleCloseBubble = () => {
     setIsOpen(false);
     stop();
+    setIsHidden(true);
+    try {
+      localStorage.setItem(HIDDEN_KEY, 'true');
+    } catch {
+      // Ignore localStorage errors
+    }
+  };
+
+  // Handle show bubble again
+  const handleShowBubble = () => {
+    setIsHidden(false);
+    try {
+      localStorage.removeItem(HIDDEN_KEY);
+    } catch {
+      // Ignore localStorage errors
+    }
+    setIsOpen(true);
   };
 
   const bubbleVariants = {
@@ -363,7 +393,13 @@ export default function AIBuddyWidget() {
           {/* Avatar Button */}
           <motion.button
             key={currentPage}
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={() => {
+              if (isHidden) {
+                handleShowBubble();
+              } else {
+                setIsOpen(!isOpen);
+              }
+            }}
             className="relative group cursor-pointer"
             whileHover={{ scale: 1.12 }}
             whileTap={{ scale: 0.95 }}
