@@ -881,7 +881,7 @@ export default function Community() {
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <Zap className="w-5 h-5 text-cyan-400" />
-              <h2 className="text-xl font-bold text-cyan-400">🏆 Laufende Events</h2>
+              <h2 className="text-xl font-bold text-cyan-400">Laufende Veranstaltungen</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {eventCompetitions.map((comp) => (
@@ -895,7 +895,7 @@ export default function Community() {
                     )}
                     {comp.target_species && (
                       <div className="text-xs text-cyan-400 bg-cyan-500/10 px-2 py-1 rounded inline-block">
-                        🐟 {comp.target_species}
+                        {comp.target_species}
                       </div>
                     )}
                     <div className="text-xs text-gray-400">
@@ -908,7 +908,7 @@ export default function Community() {
                         }}
                         className="w-full py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-bold rounded-lg transition text-sm"
                       >
-                        📊 Zum Event
+                        Zur Veranstaltung
                       </button>
                     )}
                   </CardContent>

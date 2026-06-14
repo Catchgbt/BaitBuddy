@@ -45,10 +45,10 @@ export default function EventLauncher({ currentUser, onStarted }) {
       });
 
       if (response && response.id) {
-        toast.success(`"${template.name}" gestartet! 🎯 Andere können jetzt mitmachen.`);
+        toast.success(`"${template.name}" gestartet! Andere können jetzt mitmachen.`);
         if (onStarted) await onStarted();
       } else {
-        toast.success(`"${template.name}" aktiviert! 🎣`);
+        toast.success(`"${template.name}" aktiviert!`);
         if (onStarted) await onStarted();
       }
     } catch (error) {
@@ -74,7 +74,7 @@ export default function EventLauncher({ currentUser, onStarted }) {
       <CardHeader>
         <CardTitle className="text-cyan-400 flex items-center gap-2">
           <Zap className="w-5 h-5" />
-          🏆 Event Vorlagen
+          Event-Vorlagen
         </CardTitle>
         <p className="text-sm text-gray-400 mt-1">
           Starte ein vorgegebenes Event mit Freunden. Punkte sammeln und gewinnen!
@@ -90,7 +90,7 @@ export default function EventLauncher({ currentUser, onStarted }) {
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <h3 className="font-bold text-white text-sm">
-                    {template.icon} {template.name}
+                    {template.name}
                   </h3>
                   <p className="text-xs text-gray-400 mt-1">
                     {template.description}
@@ -113,9 +113,7 @@ export default function EventLauncher({ currentUser, onStarted }) {
                       Startet...
                     </>
                   ) : (
-                    <>
-                      ⚡ Starten
-                    </>
+                    "Starten"
                   )}
                 </button>
               </div>
