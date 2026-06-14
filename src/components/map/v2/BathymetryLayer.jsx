@@ -62,13 +62,24 @@ function BathymetryLayer({ selectedBundesland = null, opacity = 0.6, visible = t
 
     infoLayer.onAdd = function() {
       const div = L.DomUtil.create('div', 'bathymetry-info');
-      div.innerHTML = `
-        <div style="background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; font-size: 12px;">
-          <strong>🌊 Bathymetrie</strong><br>
-          ${selectedBundesland}<br>
-          <small>GeoTIFF laden...</small>
-        </div>
-      `;
+      const contentDiv = document.createElement('div');
+      contentDiv.style.cssText = 'background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; font-size: 12px;';
+
+      const title = document.createElement('strong');
+      title.textContent = '🌊 Bathymetrie';
+
+      const region = document.createElement('div');
+      region.textContent = selectedBundesland || 'Region';
+
+      const loading = document.createElement('small');
+      loading.textContent = 'GeoTIFF laden...';
+
+      contentDiv.appendChild(title);
+      contentDiv.appendChild(document.createElement('br'));
+      contentDiv.appendChild(region);
+      contentDiv.appendChild(document.createElement('br'));
+      contentDiv.appendChild(loading);
+      div.appendChild(contentDiv);
       return div;
     };
 
