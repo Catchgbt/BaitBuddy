@@ -21,8 +21,10 @@ const filterBody = (body, allowedFields) => {
 };
 
 router.get('/community/posts', optionalAuth, async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit) || 50, 500);
+  const offset = Math.max(parseInt(req.query.offset) || 0, 0);
   const { data, error } = await supabase.from('community_posts')
-    .select('*').order('created_at', { ascending: false }).limit(50);
+    .select('*').order('created_at', { ascending: false }).range(offset, offset + limit - 1);
   if (error) return res.status(500).json({ error: error.message });
   return res.json(data || []);
 });
@@ -66,8 +68,10 @@ router.post('/community/posts/:id/like', requireAuth, async (req, res) => {
 // Kommentare zu Community-Posts. community_posts nutzt created_by (E-Mail) als
 // Autor-Kennung; community_comments folgt demselben Schema.
 router.get('/community/comments', optionalAuth, async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit) || 100, 500);
+  const offset = Math.max(parseInt(req.query.offset) || 0, 0);
   let query = supabase.from('community_comments')
-    .select('*').order('created_at', { ascending: true }).limit(1000);
+    .select('*').order('created_at', { ascending: true }).range(offset, offset + limit - 1);
   if (req.query.post_id) query = query.eq('post_id', req.query.post_id);
   const { data, error } = await query;
   if (error) return res.status(500).json({ error: error.message });
@@ -85,8 +89,10 @@ router.post('/community/comments', requireAuth, async (req, res) => {
 });
 
 router.get('/community/voting/leaderboard', optionalAuth, async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit) || 50, 500);
+  const offset = Math.max(parseInt(req.query.offset) || 0, 0);
   const { data, error } = await supabase.from('voting_submissions')
-    .select('*').order('total_score', { ascending: false }).limit(50);
+    .select('*').order('total_score', { ascending: false }).range(offset, offset + limit - 1);
   if (error) return res.status(500).json({ error: error.message });
   return res.json(data || []);
 });
@@ -156,9 +162,11 @@ router.post('/competitions', requireAuth, async (req, res) => {
 });
 
 router.get('/competitions/:id/leaderboard', optionalAuth, async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit) || 50, 500);
+  const offset = Math.max(parseInt(req.query.offset) || 0, 0);
   const { data, error } = await supabase.from('voting_submissions')
     .select('*').eq('competition_id', req.params.id)
-    .order('total_score', { ascending: false }).limit(50);
+    .order('total_score', { ascending: false }).range(offset, offset + limit - 1);
   if (error) return res.status(500).json({ error: error.message });
   return res.json(data || []);
 });
