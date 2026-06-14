@@ -152,7 +152,16 @@ router.post('/ai/analyze-catch', requireAuth, async (req, res) => {
 
 router.post('/analyze-photo', requireAuth, async (req, res) => {
   try {
-    const imageBase64 = req.body.imageBase64 || req.body.image;
+    let imageBase64 = req.body.imageBase64 || req.body.image;
+
+    // Wenn image eine URL ist (Supabase), fetch die Daten
+    if (imageBase64?.startsWith('http')) {
+      const imgRes = await fetch(imageBase64);
+      if (!imgRes.ok) return res.status(400).json({ error: 'Bild konnte nicht heruntergeladen werden' });
+      const buffer = await imgRes.arrayBuffer();
+      imageBase64 = Buffer.from(buffer).toString('base64');
+    }
+
     if (!imageBase64) return res.status(400).json({ error: 'image required' });
     const raw = await invokeLLM({
       prompt: `Analysiere dieses Fisch-Foto. Antworte NUR mit einem JSON-Objekt in diesem Format, ohne Erklärungen:

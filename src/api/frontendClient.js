@@ -331,7 +331,17 @@ export const integrations = {
       });
     },
     GenerateImage: () => Promise.resolve({ url: '' }),
-    ExtractDataFromUploadedFile: () => Promise.resolve({}),
+    ExtractDataFromUploadedFile: async ({ file_url, json_schema }) => {
+      if (!file_url) throw new Error('file_url erforderlich');
+      const response = await api.post('/analyze-photo', { image: file_url });
+      return {
+        output: response.ok ? {
+          species: response.species,
+          length_cm: response.length_cm,
+          weight_kg: response.weight_kg,
+        } : null,
+      };
+    },
   },
 };
 
