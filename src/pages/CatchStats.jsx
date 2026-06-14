@@ -7,6 +7,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell
 } from "recharts";
+import { Fish, Weight, Trophy, Hash } from "lucide-react";
 
 const COLORS = [
   "#22d3ee", "#10b981", "#f59e0b", "#a78bfa", "#f87171",
@@ -113,32 +114,33 @@ function CatchStatsContent() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-6 pb-safe-fixed">
-      <h1 className="text-2xl font-bold text-cyan-400 drop-shadow-[0_0_12px_rgba(34,211,238,0.7)]">
+      <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">
         Fang-Statistiken
       </h1>
 
       {/* Kennzahlen */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Faenge gesamt", value: catches.length },
-          { label: "Arten", value: stats?.speciesCountData.length },
+          { label: "Fänge gesamt", value: catches.length, Icon: Hash, color: "text-cyan-400", bg: "from-cyan-900/30 to-cyan-900/10", border: "border-cyan-800/40" },
+          { label: "Arten", value: stats?.speciesCountData.length, Icon: Fish, color: "text-emerald-400", bg: "from-emerald-900/30 to-emerald-900/10", border: "border-emerald-800/40" },
           {
             label: "Gesamtgewicht",
             value: stats?.totalWeight ? `${stats.totalWeight.toFixed(1)} kg` : "—",
+            Icon: Weight, color: "text-blue-400", bg: "from-blue-900/30 to-blue-900/10", border: "border-blue-800/40"
           },
           {
-            label: "Groesster Fang",
+            label: "Größter Fang",
             value: stats?.maxCatch?.weight_kg
-              ? `${stats.maxCatch.weight_kg} kg (${stats.maxCatch.species})`
+              ? `${stats.maxCatch.weight_kg} kg`
               : stats?.maxCatch?.species || "—",
+            Icon: Trophy, color: "text-amber-400", bg: "from-amber-900/30 to-amber-900/10", border: "border-amber-800/40"
           },
-        ].map((item) => (
-          <Card key={item.label} className="glass-morphism border-gray-800 rounded-xl">
-            <CardContent className="p-4 text-center">
-              <p className="text-xs text-gray-400 mb-1">{item.label}</p>
-              <p className="text-lg font-bold text-white leading-tight">{item.value}</p>
-            </CardContent>
-          </Card>
+        ].map(({ label, value, Icon, color, bg, border }) => (
+          <div key={label} className={`rounded-xl bg-gradient-to-br ${bg} border ${border} p-4 text-center`}>
+            <Icon className={`w-5 h-5 ${color} mx-auto mb-2`} />
+            <p className="text-xs text-gray-400 mb-1">{label}</p>
+            <p className={`text-lg font-bold ${color} leading-tight`}>{value}</p>
+          </div>
         ))}
       </div>
 

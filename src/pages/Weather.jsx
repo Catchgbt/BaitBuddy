@@ -7,7 +7,7 @@ import { InvokeLLM } from "@/integrations/Core";
 import WeatherAlertsSettings from "@/components/settings/WeatherAlertsSettings";
 import { toast } from "sonner";
 import { backendTextToSpeech } from "@/functions/backendTextToSpeech";
-import { MapPin, AlertCircle } from "lucide-react";
+import { MapPin, AlertCircle, Thermometer, Wind, Droplets, Eye, Gauge, Cloud, Loader2 } from "lucide-react";
 
 import PremiumGuard from "@/components/premium/PremiumGuard";
 import WeatherRadarMap from "@/components/weather/WeatherRadarMap";
@@ -182,15 +182,15 @@ Sei konkret, praktisch und detailliert!`;
   };
 
   const getWeatherDescription = (code) => {
-    if ([0, 1].includes(code)) return "Sonnig & klar";
-    if ([2, 3].includes(code)) return "Teilweise bewölkt";
-    if ([45, 48].includes(code)) return "Nebelig";
-    if ([51, 53, 55].includes(code)) return "Leichter Nieselregen";
-    if ([61, 63, 65].includes(code)) return "Regen";
-    if ([71, 73, 75, 77].includes(code)) return "Schneefall";
-    if ([80, 81, 82].includes(code)) return "Schauer";
-    if ([95, 96, 99].includes(code)) return "Gewitter";
-    return "Wechselhaft";
+    if ([0, 1].includes(code)) return "☀️ Sonnig & klar";
+    if ([2, 3].includes(code)) return "⛅ Teilweise bewölkt";
+    if ([45, 48].includes(code)) return "🌫️ Nebelig";
+    if ([51, 53, 55].includes(code)) return "🌦️ Nieselregen";
+    if ([61, 63, 65].includes(code)) return "🌧️ Regen";
+    if ([71, 73, 75, 77].includes(code)) return "❄️ Schneefall";
+    if ([80, 81, 82].includes(code)) return "🌦️ Schauer";
+    if ([95, 96, 99].includes(code)) return "⛈️ Gewitter";
+    return "🌤️ Wechselhaft";
   };
 
   const getFishingCondition = () => {
@@ -269,13 +269,14 @@ Sei konkret, praktisch und detailliert!`;
 
   if (loading || !weatherData || locationLoading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-4">
-        <div className="text-cyan-400 animate-spin text-3xl mb-4">⟳</div>
-        <p className="text-gray-400">
+      <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-4 gap-4">
+        <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
+        <p className="text-gray-400 font-medium">
           {locationLoading ? "Ermittle Standort..." : "Lade Wetterdaten..."}
         </p>
         {currentLocation && (
-          <p className="text-gray-500 text-sm mt-2">
+          <p className="text-gray-500 text-sm flex items-center gap-1">
+            <MapPin className="w-3 h-3" />
             {currentLocation.name}
           </p>
         )}
@@ -292,14 +293,14 @@ Sei konkret, praktisch und detailliert!`;
     <div className="min-h-screen bg-gray-950 p-4 pb-32">
       <div className="max-w-6xl mx-auto space-y-6">
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]">
+            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-cyan-400 to-sky-400 bg-clip-text text-transparent">
               Wetter & Angelprognose
             </h1>
-            <div className="flex items-center gap-2 mt-1">
-              <MapPin className="w-4 h-4 text-gray-400" />
-              <p className="text-gray-400">
+            <div className="flex items-center gap-1.5 mt-1">
+              <MapPin className="w-3.5 h-3.5 text-cyan-500/60" />
+              <p className="text-gray-400 text-sm">
                 {currentLocation?.name || "Standort nicht verfügbar"}
               </p>
             </div>
@@ -308,10 +309,10 @@ Sei konkret, praktisch und detailliert!`;
             onClick={handleRequestLocation}
             variant="outline"
             size="sm"
-            className="border-gray-700 hover:bg-gray-800"
+            className="border-gray-700 hover:bg-gray-800 text-gray-300 flex-shrink-0"
           >
-            <MapPin className="w-4 h-4 mr-2" />
-            Standort aktualisieren
+            <MapPin className="w-4 h-4 mr-2 text-cyan-400" />
+            Aktualisieren
           </Button>
         </div>
 
@@ -352,40 +353,56 @@ Sei konkret, praktisch und detailliert!`;
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <WeatherStat
                     label="Luftdruck"
                     value={`${Math.round(current.pressure_msl)} hPa`}
                     trend={current.pressure_msl > 1013 ? "up" : "down"}
+                    icon={Gauge}
+                    color="text-blue-400"
                   />
                   <WeatherStat
                     label="Wind"
                     value={`${Math.round(current.wind_speed_10m * 3.6)} km/h`}
                     subtitle={`Böen: ${Math.round(current.wind_gusts_10m * 3.6)} km/h`}
+                    icon={Wind}
+                    color="text-sky-400"
                   />
                   <WeatherStat
                     label="Luftfeuchtigkeit"
                     value={`${current.relative_humidity_2m}%`}
+                    icon={Droplets}
+                    color="text-cyan-400"
                   />
                   <WeatherStat
                     label="Sichtweite"
                     value={`${(current.visibility/1000).toFixed(1)} km`}
+                    icon={Eye}
+                    color="text-emerald-400"
                   />
                   <WeatherStat
                     label="Bewölkung"
                     value={`${current.cloud_cover}%`}
+                    icon={Cloud}
+                    color="text-gray-400"
                   />
                   <WeatherStat
                     label="Taupunkt"
                     value={`${Math.round(current.dew_point_2m)}°C`}
+                    icon={Thermometer}
+                    color="text-orange-400"
                   />
                   <WeatherStat
                     label="UV-Index"
                     value={daily.uv_index_max[0]}
+                    icon={Eye}
+                    color="text-yellow-400"
                   />
                   <WeatherStat
                     label="Regen heute"
                     value={`${daily.precipitation_probability_max[0]}%`}
+                    icon={Droplets}
+                    color="text-blue-400"
                   />
                 </div>
 
@@ -555,16 +572,19 @@ Sei konkret, praktisch und detailliert!`;
   );
 }
 
-function WeatherStat({ label, value, subtitle, trend }) {
+function WeatherStat({ label, value, subtitle, trend, icon: Icon, color = "text-cyan-400" }) {
   return (
-    <div className="p-3 bg-gray-800/30 rounded-lg">
-      <div className="flex items-center gap-2 mb-1">
-        <div className="text-xs text-gray-400">{label}</div>
+    <div className="p-3 bg-gray-800/40 hover:bg-gray-800/60 rounded-xl border border-gray-700/40 hover:border-gray-700/60 transition-colors">
+      <div className="flex items-center gap-1.5 mb-2">
+        {Icon && <Icon className={`w-3.5 h-3.5 ${color}`} />}
+        <div className="text-xs text-gray-400 font-medium">{label}</div>
         {trend && (
-          <span className="text-xs">{trend === "up" ? "↑" : "↓"}</span>
+          <span className={`text-xs ml-auto font-bold ${trend === "up" ? "text-emerald-400" : "text-blue-400"}`}>
+            {trend === "up" ? "↑" : "↓"}
+          </span>
         )}
       </div>
-      <div className="text-lg font-semibold text-white">{value}</div>
+      <div className={`text-lg font-bold ${color}`}>{value}</div>
       {subtitle && <div className="text-xs text-gray-500 mt-0.5">{subtitle}</div>}
     </div>
   );

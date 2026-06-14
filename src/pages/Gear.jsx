@@ -462,8 +462,8 @@ Sei konkret und praxisorientiert!`;
       <div className="mx-auto max-w-6xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
         {/* --- Block 1: Ausrüstung --- */}
-        <div className="rounded-2xl border border-gray-700 p-4 space-y-4 glass-morphism">
-          <h2 className="text-xl font-bold flex items-center gap-2 text-cyan-400 drop-shadow-[0_0_12px_rgba(34,211,238,0.7)]"><Fish className="text-blue-400"/> Deine Ausrüstung</h2>
+        <div className="rounded-2xl border border-cyan-900/40 p-4 space-y-4 glass-morphism bg-gradient-to-br from-gray-900/80 to-gray-900/40">
+          <h2 className="text-xl font-bold flex items-center gap-2 text-cyan-400 drop-shadow-[0_0_12px_rgba(34,211,238,0.7)]"><Fish className="text-cyan-400"/> Deine Ausrüstung</h2>
           <div className="grid grid-cols-2 gap-4">
             <SelectGroup label="Rollen-Marke" value={reelBrand} onChange={v => {setReelBrand(v); setReelModel(REEL_DATA[v]?.[0] || "");}} options={Object.keys(REEL_DATA)} />
             <SelectGroup label="Rollen-Modell" value={reelModel} onChange={setReelModel} options={REEL_DATA[reelBrand] || []} />
@@ -475,7 +475,7 @@ Sei konkret und praxisorientiert!`;
         </div>
 
         {/* --- Block 2: Bedingungen --- */}
-        <div className="rounded-2xl border border-gray-700 p-4 space-y-4 glass-morphism">
+        <div className="rounded-2xl border border-emerald-900/40 p-4 space-y-4 glass-morphism bg-gradient-to-br from-gray-900/80 to-gray-900/40">
           <h2 className="text-xl font-bold flex items-center gap-2 text-cyan-400 drop-shadow-[0_0_12px_rgba(34,211,238,0.7)]">
             <Compass className="text-green-400"/> Bedingungen & Spot
             {weatherLoading && <Loader2 className="w-4 h-4 animate-spin text-blue-400" />}
@@ -565,53 +565,53 @@ Sei konkret und praxisorientiert!`;
         </div>
 
         {/* --- Block 3: KI-Analyse --- */}
-        <div className="rounded-2xl border border-blue-500/50 p-4 space-y-3 bg-blue-900/20 glass-morphism md:col-span-2 lg:col-span-1">
-          <h2 className="text-xl font-bold flex items-center gap-2 text-cyan-400 drop-shadow-[0_0_12px_rgba(34,211,238,0.7)]"><Wand2 className="text-purple-400"/> KI-Analyse & Empfehlung</h2>
-          <div className="bg-gray-800/50 rounded-lg p-3">
-            <h3 className="font-semibold text-blue-300">Empfohlene Rutenaktion</h3>
-            <p>{analysis.rodPower}</p>
-          </div>
-          <div className="bg-gray-800/50 rounded-lg p-3">
-            <h3 className="font-semibold text-blue-300">Primärer Ködertyp</h3>
-            <p>{analysis.primaryLure}</p>
-          </div>
-          <div className="bg-gray-800/50 rounded-lg p-3">
-            <h3 className="font-semibold text-blue-300">Köderfarben-Tipp</h3>
-            <p>{analysis.colorHint}</p>
-          </div>
-          <div className="bg-gray-800/50 rounded-lg p-3">
-            <h3 className="font-semibold text-blue-300">Schnur-Tipp</h3>
-            <p>{analysis.lineHint}</p>
-          </div>
-          <div className="bg-gray-800/50 rounded-lg p-3">
-            <h3 className="font-semibold text-blue-300">Haken-Tipp</h3>
-            <p>{analysis.hookHint}</p>
-          </div>
-          <div className="bg-gray-800/50 rounded-lg p-3 space-y-1">
-            <h3 className="font-semibold text-blue-300">Weitere Hinweise</h3>
-            {analysis.notes.map((n,i) => <p key={i} className="text-sm text-gray-300">- {n}</p>)}
-          </div>
+        <div className="rounded-2xl border border-purple-500/30 p-4 space-y-3 bg-gradient-to-br from-purple-900/20 to-blue-900/20 glass-morphism md:col-span-2 lg:col-span-1">
+          <h2 className="text-xl font-bold flex items-center gap-2 text-cyan-400 drop-shadow-[0_0_12px_rgba(34,211,238,0.7)]">
+            <Wand2 className="text-purple-400"/>
+            KI-Analyse & Empfehlung
+          </h2>
+          {[
+            { label: "Rutenaktion", value: analysis.rodPower, color: "text-cyan-300" },
+            { label: "Ködertyp", value: analysis.primaryLure, color: "text-emerald-300" },
+            { label: "Köderfarben", value: analysis.colorHint, color: "text-amber-300" },
+            { label: "Schnur-Tipp", value: analysis.lineHint, color: "text-sky-300" },
+            { label: "Haken-Tipp", value: analysis.hookHint, color: "text-purple-300" },
+          ].map(({ label, value, color }) => (
+            <div key={label} className="bg-gray-800/40 rounded-xl p-3 border border-gray-700/30 flex items-center justify-between gap-2">
+              <span className="text-xs text-gray-400 font-medium shrink-0">{label}</span>
+              <span className={`text-sm font-semibold ${color} text-right`}>{value}</span>
+            </div>
+          ))}
+          {analysis.notes.length > 0 && (
+            <div className="bg-gray-800/40 rounded-xl p-3 border border-gray-700/30 space-y-1.5">
+              <div className="text-xs text-gray-400 font-medium mb-2">Hinweise</div>
+              {analysis.notes.map((n,i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <div className="w-1 h-1 rounded-full bg-cyan-400 mt-1.5 shrink-0" />
+                  <p className="text-sm text-gray-300">{n}</p>
+                </div>
+              ))}
+            </div>
+          )}
 
-          {/* Neuer KI-Buddy Analyse Button */}
           <button
             onClick={analyzeGearWithAI}
-            className="w-full mt-4 p-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
+            className="w-full mt-2 p-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2 transition-all shadow-lg shadow-purple-900/30"
           >
             <Wand2 className="h-4 w-4" />
-            🤖 KI-Buddy Setup-Check
+            KI-Buddy Setup-Check
           </button>
 
-          {/* Neuer Button: In meinen Plan speichern */}
           <button
             onClick={saveToPlan}
-            className="w-full mt-2 p-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold flex items-center justify-center gap-2"
+            className="w-full p-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-900/30"
           >
             <Fish className="h-4 w-4" />
             In meinen Plan speichern
           </button>
 
-          <button onClick={resetAll} className="w-full mt-2 p-2 text-xs text-red-400 bg-red-900/30 rounded-lg hover:bg-red-900/50 flex items-center justify-center gap-2">
-            <RefreshCcw className="h-3 w-3"/> Alle Einstellungen zurücksetzen
+          <button onClick={resetAll} className="w-full p-2 text-xs text-red-400/70 bg-red-900/20 rounded-xl hover:bg-red-900/40 flex items-center justify-center gap-2 transition-colors border border-red-900/30">
+            <RefreshCcw className="h-3 w-3"/> Zurücksetzen
           </button>
         </div>
       </div>
