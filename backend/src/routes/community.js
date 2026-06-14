@@ -4,6 +4,22 @@ import { supabase } from '../lib/supabase.js';
 
 const router = Router();
 
+// Whitelist der erlaubten Felder pro Ressource
+const ALLOWED_POST_FIELDS = ['title', 'content', 'image_url'];
+const ALLOWED_VOTING_SUBMIT_FIELDS = ['category', 'title', 'description', 'image_url'];
+const ALLOWED_CLAN_FIELDS = ['name', 'description', 'icon_url'];
+const ALLOWED_COMPETITION_FIELDS = ['name', 'description', 'start_date', 'end_date', 'is_active'];
+
+const filterBody = (body, allowedFields) => {
+  const filtered = {};
+  for (const key of allowedFields) {
+    if (key in body) {
+      filtered[key] = body[key];
+    }
+  }
+  return filtered;
+};
+
 router.get('/community/posts', optionalAuth, async (req, res) => {
   const { data, error } = await supabase.from('community_posts')
     .select('*').order('created_at', { ascending: false }).limit(50);
@@ -12,8 +28,9 @@ router.get('/community/posts', optionalAuth, async (req, res) => {
 });
 
 router.post('/community/posts', requireAuth, async (req, res) => {
+  const filteredBody = filterBody(req.body, ALLOWED_POST_FIELDS);
   const { data, error } = await supabase.from('community_posts').insert({
-    ...req.body,
+    ...filteredBody,
     created_by: req.user.email
   }).select().single();
   if (error) return res.status(500).json({ error: error.message });
@@ -75,8 +92,9 @@ router.get('/community/voting/leaderboard', optionalAuth, async (req, res) => {
 });
 
 router.post('/community/voting/submit', requireAuth, async (req, res) => {
+  const filteredBody = filterBody(req.body, ALLOWED_VOTING_SUBMIT_FIELDS);
   const { data, error } = await supabase.from('voting_submissions').insert({
-    ...req.body, created_by: req.user.email
+    ...filteredBody, created_by: req.user.email
   }).select().single();
   if (error) return res.status(500).json({ error: error.message });
   return res.json(data);
@@ -92,8 +110,9 @@ router.post('/community/voting/:id/like', requireAuth, async (req, res) => {
 });
 
 router.post('/community/clans', requireAuth, async (req, res) => {
+  const filteredBody = filterBody(req.body, ALLOWED_CLAN_FIELDS);
   const { data, error } = await supabase.from('clans').insert({
-    ...req.body, created_by: req.user.email
+    ...filteredBody, created_by: req.user.email
   }).select().single();
   if (error) return res.status(500).json({ error: error.message });
   return res.json(data);
@@ -128,8 +147,9 @@ router.get('/competitions', optionalAuth, async (req, res) => {
 });
 
 router.post('/competitions', requireAuth, async (req, res) => {
+  const filteredBody = filterBody(req.body, ALLOWED_COMPETITION_FIELDS);
   const { data, error } = await supabase.from('competitions').insert({
-    ...req.body, created_by: req.user.email
+    ...filteredBody, created_by: req.user.email
   }).select().single();
   if (error) return res.status(500).json({ error: error.message });
   return res.json(data);
