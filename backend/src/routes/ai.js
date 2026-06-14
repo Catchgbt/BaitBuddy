@@ -122,7 +122,12 @@ Regeln: Aktions-Block nur wenn Nutzer wirklich eine Aktion will. Zuerst kurze Be
     let action = null;
     const actionMatch = reply.match(/<<ACTION>>(.*?)<<END>>/s);
     if (actionMatch) {
-      try { action = JSON.parse(actionMatch[1]); } catch {}
+      try {
+        action = JSON.parse(actionMatch[1]);
+      } catch (error) {
+        console.error('Fehler beim Parsen der KI-Action:', error);
+        action = null;
+      }
     }
     const cleanReply = reply.replace(/<<ACTION>>.*?<<END>>/s, '').trim();
 
@@ -171,8 +176,21 @@ Wenn du keinen Fisch erkennst, nutze null für alle Felder.`,
       imageBase64
     });
     let parsed = {};
-    try { parsed = JSON.parse(raw.match(/\{.*\}/s)?.[0] || '{}'); } catch {}
-    return res.json({ ok: true, species: parsed.species || null, length_cm: parsed.length_cm || null, weight_kg: parsed.weight_kg || null });
+    try {
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        parsed = JSON.parse(jsonMatch[0]);
+      }
+    } catch (error) {
+      console.error('Fehler beim Parsen der KI-Analyse:', error);
+      parsed = {};
+    }
+    return res.json({
+      ok: true,
+      species: typeof parsed.species === 'string' ? parsed.species : null,
+      length_cm: typeof parsed.length_cm === 'number' ? parsed.length_cm : null,
+      weight_kg: typeof parsed.weight_kg === 'number' ? parsed.weight_kg : null
+    });
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
@@ -274,12 +292,18 @@ Antworte AUSSCHLIESSLICH mit einem gültigen JSON-Objekt in exakt diesem Format,
 
     let recommendation;
     try {
-      recommendation = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] || '{}');
-    } catch {
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        recommendation = JSON.parse(jsonMatch[0]);
+      } else {
+        recommendation = null;
+      }
+    } catch (error) {
+      console.error('Fehler beim Parsen der KI-Empfehlung:', error);
       recommendation = null;
     }
 
-    if (!recommendation || !recommendation.summary) {
+    if (!recommendation || typeof recommendation.summary !== 'string' || !recommendation.summary.trim()) {
       return res.status(502).json({ error: 'KI lieferte keine gültige Empfehlung' });
     }
 

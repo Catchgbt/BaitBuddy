@@ -76,10 +76,21 @@ export default function LogSection() {
       queryClient.setQueryData(["catches"], context.previous);
       toast.error("Fehler beim Speichern.");
     },
-    onSuccess: (newCatch) => {
+    onSuccess: async (newCatch) => {
       queryClient.setQueryData(["catches"], (old = []) =>
         old.map((c) => (c.id?.startsWith("tmp-") ? newCatch : c))
       );
+      // Credits nach erfolgreichem Speichern aktualisieren
+      try {
+        const user = await auth.me();
+        const credits = calculateCatchCredits(form.species, parseFloat(form.length_cm));
+        await auth.updateMe({ credits: (user.credits || 0) + credits, total_earned: (user.total_earned || 0) + credits });
+        toast.success(`Fang gespeichert! +${credits} Credits.`);
+      } catch (error) {
+        console.error('Credits-Update fehlgeschlagen:', error);
+        toast.success("Fang gespeichert.");
+      }
+      setEditing(null);
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["catches"] }),
   });
@@ -97,6 +108,10 @@ export default function LogSection() {
     onError: (_err, _vars, context) => {
       queryClient.setQueryData(["catches"], context.previous);
       toast.error("Fehler beim Aktualisieren.");
+    },
+    onSuccess: () => {
+      toast.success("Fang aktualisiert.");
+      setEditing(null);
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["catches"] }),
   });
@@ -153,19 +168,8 @@ export default function LogSection() {
     try {
       if (editing === "new") {
         createMutation.mutate(payload);
-        setEditing(null);
-        try {
-          const user = await auth.me();
-          const credits = calculateCatchCredits(form.species, parseFloat(form.length_cm));
-          await auth.updateMe({ credits: (user.credits || 0) + credits, total_earned: (user.total_earned || 0) + credits });
-          toast.success(`Fang gespeichert! +${credits} Credits.`);
-        } catch {
-          toast.success("Fang gespeichert.");
-        }
       } else {
         updateMutation.mutate({ id: editing, payload });
-        setEditing(null);
-        toast.success("Fang aktualisiert.");
       }
     } catch {
       const q = JSON.parse(localStorage.getItem("fishmaster_catch_queue") || "[]");
@@ -183,9 +187,15 @@ export default function LogSection() {
 
   const uploadPhoto = async (file) => {
     setUploading(true);
-    const { file_url } = await UploadFile({ file });
-    setForm((prev) => ({ ...prev, photo_url: file_url }));
-    setUploading(false);
+    try {
+      const { file_url } = await UploadFile({ file });
+      setForm((prev) => ({ ...prev, photo_url: file_url }));
+    } catch (error) {
+      console.error('Foto-Upload fehlgeschlagen:', error);
+      toast.error('Foto konnte nicht hochgeladen werden.');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const importImageAndExtract = async (imageFile) => {
@@ -224,7 +234,8 @@ export default function LogSection() {
         openNew();
         setForm((prev) => ({ ...prev, photo_url: file_url }));
       }
-    } catch {
+    } catch (error) {
+      console.error('Datenextraktion fehlgeschlagen:', error);
       toast.error("Ein Fehler ist aufgetreten.");
     } finally {
       setIsExtracting(false);

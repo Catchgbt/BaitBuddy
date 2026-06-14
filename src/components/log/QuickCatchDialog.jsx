@@ -261,7 +261,20 @@ export default function QuickCatchDialog() {
 
   useEffect(() => {
     if (!open) return;
-    Spot.list().then(spotList => setSpots(spotList.filter(s => s && s.id))).catch(() => {});
+    let isMounted = true;
+    Spot.list()
+      .then(spotList => {
+        if (isMounted) {
+          setSpots(spotList.filter(s => s && s.id));
+        }
+      })
+      .catch((error) => {
+        if (isMounted) {
+          console.error('Spots laden fehlgeschlagen:', error);
+          toast.error('Spots konnten nicht geladen werden.');
+        }
+      });
+    return () => { isMounted = false; };
   }, [open]);
 
   useEffect(() => {

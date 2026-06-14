@@ -75,7 +75,9 @@ router.post('/auth/register', async (req, res) => {
         premium_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         premium_trial: true,
       },
-    }).catch(() => {});
+    }).catch((error) => {
+      console.error('Fehler beim Setzen der Premium-Trial nach Registration:', error);
+    });
   }
 
   // Frisch angelegten (bestätigten) Nutzer direkt einloggen, um ein Token zu liefern.
@@ -106,9 +108,19 @@ router.get('/auth/me', requireAuth, (req, res) => {
 // Aktualisiert die User-Metadaten (Credits, Profil, Profilbild, Theme, Referral …).
 // Wird vom Frontend über auth.updateMe / auth.updateMyUserData genutzt. Die neuen
 // Werte werden mit den bestehenden Metadaten gemerged, statt sie zu überschreiben.
+// Whitelist: nur diese Felder dürfen vom Frontend gesetzt werden. Premium-Felder sind geschützt!
+const METADATA_WHITELIST = ['full_name', 'profile_image_url', 'bio', 'theme', 'referral_code', 'avatar_url', 'profile_complete'];
 router.patch('/auth/me', requireAuth, async (req, res) => {
   const current = req.user.user_metadata || {};
-  const merged = { ...current, ...(req.body || {}) };
+  const sanitized = {};
+
+  for (const key of METADATA_WHITELIST) {
+    if (key in req.body) {
+      sanitized[key] = req.body[key];
+    }
+  }
+
+  const merged = { ...current, ...sanitized };
   const { data, error } = await supabase.auth.admin.updateUserById(req.user.id, {
     user_metadata: merged,
   });
