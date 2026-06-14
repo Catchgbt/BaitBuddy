@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useOptimisticMutation } from '@/lib/optimistic/useOptimisticMutation';
 import { useActionQueue } from '@/lib/optimistic/useActionQueue';
-import { base44 } from '@/api/base44Client';
+import { entities } from '@/api/frontendClient';
 import { toast } from 'sonner';
 
 export interface Catch {
@@ -27,7 +27,7 @@ export function useOptimisticCatch(initialCatches: Catch[] = []) {
     initialCatches,
     {
       mutationFn: async (catchData) => {
-        const created = await base44.entities.Catch.create(catchData);
+        const created = await entities.Catch.create(catchData);
         return [created, ...initialCatches];
       },
       optimisticData: (variables, current) => [

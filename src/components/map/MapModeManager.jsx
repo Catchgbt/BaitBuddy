@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronRight, X, CheckCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronRight, CheckCircle } from 'lucide-react';
 
 /**
  * MapModeManager - Verwaltet Map-Modi und initialisiert Guided Tours

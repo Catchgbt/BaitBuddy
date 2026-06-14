@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, AlertCircle, TrendingUp } from 'lucide-react';
+import { Sparkles, AlertCircle } from 'lucide-react';
 import FishPredictionService from '../../services/FishPredictionService';
 
 function PredictionWidget({ latitude, longitude, isActive }) {

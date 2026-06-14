@@ -1,18 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { functions } from "@/api/frontendClient";
-import { entities } from "@/api/frontendClient";
 import { Spot } from "@/entities/Spot";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import { Card, CardContent } from "@/components/ui/card";
-import { Clock, Ruler } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "@/components/location/LocationManager";
 import AddSpotModal from "@/components/map/v2/AddSpotModal";
 import SpotDetailPanel from "@/components/map/SpotDetailPanel";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
-import NewFeaturesNotification from "@/components/map/NewFeaturesNotification";
-import MapFeaturesInfo from "@/components/map/MapFeaturesInfo";
 import MapLayerControls from "@/components/map/v2/MapLayerControls";
 import HillshadeLayer from "@/components/map/v2/HillshadeLayer";
 import Terrain3DLayer from "@/components/map/v2/Terrain3DLayer";

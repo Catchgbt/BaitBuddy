@@ -215,10 +215,12 @@ const FUNCTION_MAP = {
   adminSetCredits:        (d) => api.post('/api/admin/credits/set', d).catch(() => ({ ok: true })),
   deleteAccount:          ()  => api.del('/api/user/account'),
   createClan:             (d) => api.post('/api/community/clans', d),
+  joinClan:               (d) => api.post(`/api/community/clans/${d?.clan_id}/join`),
   getClanLeaderboard:     (d) => api.get(`/api/community/clans/${d?.clan_id}/leaderboard`).catch(() => []),
   checkFeatureAccess:     (d) => api.post('/api/premium/check-feature', d).catch(() => ({ allowed: false })),
   geocodeFishingClubs:    (d) => api.post('/api/fishing/clubs/geocode', d).catch(() => []),
   addVotingLike:          (d) => api.post(`/api/community/voting/${d?.submission_id}/like`).catch(() => ({ ok: true })),
+  getVotingLeaderboard:   ()  => api.get('/api/community/voting/leaderboard').then(r => ({ leaderboard: Array.isArray(r) ? r : (r?.leaderboard || []) })).catch(() => ({ leaderboard: [] })),
   catchgbtVoices:         ()  => api.get('/api/ai/voices').catch(() => ({ voices: [] })),
   catchgbtPing:           ()  => api.get('/api/health').catch(() => ({ ok: false })),
   generateBathymetricMap: (d) => api.post('/api/water/bathymetric-map', d).catch(() => null),
@@ -333,7 +335,7 @@ export const integrations = {
     GenerateImage: () => Promise.resolve({ url: '' }),
     ExtractDataFromUploadedFile: async ({ file_url, json_schema }) => {
       if (!file_url) throw new Error('file_url erforderlich');
-      const response = await api.post('/analyze-photo', { image: file_url });
+      const response = await api.post('/api/analyze-photo', { image: file_url });
       return {
         output: response.ok ? {
           species: response.species,

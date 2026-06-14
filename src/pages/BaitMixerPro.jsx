@@ -15,15 +15,10 @@ import {
   Sparkles,
   Save,
   Trash2,
-  Plus,
-  Minus,
-  X,
   Heart,
   Zap,
-  BarChart3,
   BookOpen,
-  Download,
-  Share2
+  Download
 } from "lucide-react";
 import { toast } from "sonner";
 import { useHaptic } from "@/components/utils/HapticFeedback";

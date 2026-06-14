@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import BuddyTextAvatar, { BUDDY_TEXT_CSS } from '@/components/layout/BuddyTextAvatar';
+import { BUDDY_TEXT_CSS } from '@/components/layout/BuddyTextAvatar';
 import { getTipForPage } from '@/lib/buddyTips';
 import { useAuth } from '@/lib/AuthContext';
 import { ai } from '@/api/frontendClient';
 import { useElevenLabsVoice } from '@/hooks/useElevenLabsVoice';
 import { speakWithBrowserTTS } from '@/components/utils/browserTTS';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Mic, Send, X, ChevronUp } from 'lucide-react';
+import { Mic, Send, X } from 'lucide-react';
 
 const STORAGE_KEY = 'buddy-widget-pos';
 const VISITED_PAGES_KEY = 'buddy-visited-pages';

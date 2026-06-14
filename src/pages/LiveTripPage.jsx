@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { MapContainer, TileLayer, Polyline, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import { Play, Pause, X, Plus, Navigation, Zap, Droplets, Moon, Sparkles, Bell } from 'lucide-react';
+import { Play, Pause, X, Plus, Droplets, Moon, Sparkles, Bell } from 'lucide-react';
 import { toast } from 'sonner';
 import TideWidget from '../components/LiveTrip/TideWidget';
 import SolunarWidget from '../components/LiveTrip/SolunarWidget';

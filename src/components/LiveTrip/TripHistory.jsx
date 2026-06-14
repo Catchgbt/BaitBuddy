@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, Download, Cloud, AlertCircle, MapPin, Clock, Fish } from 'lucide-react';
+import { Trash2, Download, Cloud, AlertCircle, Clock, Fish } from 'lucide-react';
 import { toast } from 'sonner';
 import TripSyncService from '../../services/TripSyncService';
 

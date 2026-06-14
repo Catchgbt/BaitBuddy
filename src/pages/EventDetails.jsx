@@ -16,7 +16,6 @@ import {
   Loader2,
   ChevronLeft,
   Camera,
-  Trash2,
   Mail,
   CheckCircle2,
   AlertCircle
