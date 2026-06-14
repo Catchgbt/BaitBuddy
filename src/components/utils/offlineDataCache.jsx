@@ -19,7 +19,7 @@ export function cacheCatches(catches) {
     localStorage.setItem(KEYS.catches, JSON.stringify(catches));
     localStorage.setItem(KEYS.lastSync, new Date().toISOString());
   } catch (e) {
-    console.warn('[OfflineCache] Konnte Faenge nicht cachen:', e);
+    // Silently fail - cache is not critical
   }
 }
 
@@ -27,7 +27,7 @@ export function cacheSpots(spots) {
   try {
     localStorage.setItem(KEYS.spots, JSON.stringify(spots));
   } catch (e) {
-    console.warn('[OfflineCache] Konnte Spots nicht cachen:', e);
+    // Silently fail - cache is not critical
   }
 }
 
@@ -109,11 +109,16 @@ export function isOnline() {
 
 export function onOnlineStatusChange(callback) {
   if (typeof window === 'undefined') return () => {};
-  window.addEventListener('online', () => callback(true));
-  window.addEventListener('offline', () => callback(false));
+
+  const onlineHandler = () => callback(true);
+  const offlineHandler = () => callback(false);
+
+  window.addEventListener('online', onlineHandler);
+  window.addEventListener('offline', offlineHandler);
+
   return () => {
-    window.removeEventListener('online', () => callback(true));
-    window.removeEventListener('offline', () => callback(false));
+    window.removeEventListener('online', onlineHandler);
+    window.removeEventListener('offline', offlineHandler);
   };
 }
 
