@@ -305,8 +305,10 @@ export default function Dashboard() {
       const waterBodies = osmData?.elements
         ?.filter(el => el.tags?.name)
         ?.map(el => {
-          const dlat = (el.center?.lat || el.lat || location.lat) - location.lat;
-          const dlon = (el.center?.lon || el.lon || location.lon) - location.lon;
+          const refLat = location?.lat ?? 0;
+          const refLon = location?.lon ?? 0;
+          const dlat = (el.center?.lat ?? el.lat ?? refLat) - refLat;
+          const dlon = (el.center?.lon ?? el.lon ?? refLon) - refLon;
           const distM = Math.round(Math.sqrt(dlat * dlat + dlon * dlon) * 111320);
           const type = el.tags?.waterway ? `Fließgewässer (${el.tags.waterway})` : 'Stillgewässer';
           return `${el.tags.name} (${type}, ca. ${distM < 1000 ? distM + ' m' : (distM / 1000).toFixed(1) + ' km'})`;
