@@ -2,16 +2,19 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { BUDDY_TEXT_CSS } from '@/components/layout/BuddyTextAvatar';
 import { getTipForPage } from '@/lib/buddyTips';
+import { getRandomBuddyJoke, getRandomFarewellMessage } from '@/lib/buddyJokes';
 import { useAuth } from '@/lib/AuthContext';
 import { ai } from '@/api/frontendClient';
 import { useElevenLabsVoice } from '@/hooks/useElevenLabsVoice';
 import { speakWithBrowserTTS } from '@/components/utils/browserTTS';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Mic, Send, X } from 'lucide-react';
+import { Mic, Send, X, MessageCircle } from 'lucide-react';
 
 const STORAGE_KEY = 'buddy-widget-pos';
 const VISITED_PAGES_KEY = 'buddy-visited-pages';
 const HIDDEN_KEY = 'buddy-widget-hidden';
+const BUDDY_VOICE_ENABLED_KEY = 'buddy-voice-enabled';
+const SMALL_BUBBLE_TIMEOUT = 15000; // 15 Sekunden
 
 /**
  * AI-Buddy Widget — animierter "HilfeBuddy" Text mit Chat und Voice-Unterstützung
@@ -53,11 +56,22 @@ export default function AIBuddyWidget() {
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [chatError, setChatError] = useState(null);
+  const [buddyVoiceEnabled, setBuddyVoiceEnabled] = useState(() => {
+    try {
+      return localStorage.getItem(BUDDY_VOICE_ENABLED_KEY) !== 'false';
+    } catch {
+      return true;
+    }
+  });
+  const [smallBubbleText, setSmallBubbleText] = useState('');
+  const [showSmallBubble, setShowSmallBubble] = useState(false);
 
   const recognition = useRef(null);
   const widgetRef = useRef(null);
   const chatPanelRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const smallBubbleTimerRef = useRef(null);
+  const userActivityTimerRef = useRef(null);
   const currentPage = location.pathname.replace(/^\//, '').split('/')[0] || 'Dashboard';
   const tip = getTipForPage(currentPage);
 
@@ -121,12 +135,24 @@ export default function AIBuddyWidget() {
           setIsOpen(false);
         }, 5000);
 
+        // Show small buddy voice bubble if enabled
+        if (buddyVoiceEnabled) {
+          const jokeTimer = setTimeout(() => {
+            const joke = getRandomBuddyJoke();
+            showSmallBubbleWithText(joke);
+          }, 6000);
+          return () => {
+            clearTimeout(timer);
+            clearTimeout(jokeTimer);
+          };
+        }
+
         return () => clearTimeout(timer);
       }
     } catch {
       // Ignore localStorage errors
     }
-  }, [currentPage, isOpen]);
+  }, [currentPage, isOpen, buddyVoiceEnabled, showSmallBubbleWithText]);
 
   // Persist position to localStorage
   useEffect(() => {
@@ -230,6 +256,45 @@ export default function AIBuddyWidget() {
     setIsOpen(true);
   };
 
+  // Toggle KI Buddy voice (kleine Sprechblase)
+  const handleToggleBuddyVoice = () => {
+    const newState = !buddyVoiceEnabled;
+    setBuddyVoiceEnabled(newState);
+    try {
+      localStorage.setItem(BUDDY_VOICE_ENABLED_KEY, newState ? 'true' : 'false');
+    } catch {
+      // Ignore localStorage errors
+    }
+  };
+
+  // Zeige kleine Sprechblase mit Text und Auto-Close nach 15s Inaktivität
+  const showSmallBubbleWithText = useCallback((text) => {
+    setSmallBubbleText(text);
+    setShowSmallBubble(true);
+
+    // Clear existing timers
+    if (smallBubbleTimerRef.current) clearTimeout(smallBubbleTimerRef.current);
+    if (userActivityTimerRef.current) clearTimeout(userActivityTimerRef.current);
+
+    // Auto-hide after 15 seconds
+    userActivityTimerRef.current = setTimeout(() => {
+      const farewell = getRandomFarewellMessage();
+      setSmallBubbleText(farewell);
+
+      smallBubbleTimerRef.current = setTimeout(() => {
+        setShowSmallBubble(false);
+      }, 2000);
+    }, SMALL_BUBBLE_TIMEOUT);
+  }, []);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (smallBubbleTimerRef.current) clearTimeout(smallBubbleTimerRef.current);
+      if (userActivityTimerRef.current) clearTimeout(userActivityTimerRef.current);
+    };
+  }, []);
+
   const bubbleVariants = {
     hidden: { opacity: 0, scale: 0.85, x: 20 },
     visible: { opacity: 1, scale: 1, x: 0 },
@@ -247,7 +312,22 @@ export default function AIBuddyWidget() {
         className="fixed z-50 select-none bottom-6 right-6"
       >
         {/* Animated Bubble Container */}
-        <div className="flex flex-col items-end gap-3">
+        <div className="flex flex-col items-end gap-3 relative">
+          {/* Small Buddy Voice Bubble */}
+          <AnimatePresence>
+            {showSmallBubble && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.8, y: 10 }}
+                className="absolute -top-24 right-0 bg-white border-2 border-blue-300 rounded-2xl px-4 py-3 shadow-lg max-w-xs"
+              >
+                <p className="text-sm text-gray-800 leading-relaxed">{smallBubbleText}</p>
+                <div className="absolute -bottom-2 right-8 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-blue-300" />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Chat Bubble */}
           <AnimatePresence>
             {isOpen && (
@@ -400,39 +480,56 @@ export default function AIBuddyWidget() {
             )}
           </AnimatePresence>
 
-          {/* Avatar Button */}
-          <motion.button
-            key={currentPage}
-            onClick={() => {
-              if (isHidden) {
-                handleShowBubble();
-              } else {
-                setIsOpen(!isOpen);
-              }
-            }}
-            className="relative group cursor-pointer"
-            whileHover={{ scale: 1.12 }}
-            whileTap={{ scale: 0.95 }}
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{
-              scale: (isSpeaking || isTalking || isListening) ? [1, 1.06, 1, 1.04, 1] : 1,
-              opacity: 1,
-              y: (isSpeaking || isTalking || isListening)
-                ? [0, -8, 0, -4, 0]
-                : [0, -6, 0],
-            }}
-            transition={{
-              scale: (isSpeaking || isTalking || isListening)
-                ? { duration: 0.7, repeat: Infinity, ease: 'easeInOut' }
-                : { type: 'spring', stiffness: 300, damping: 12 },
-              opacity: { duration: 0.3 },
-              y: {
-                duration: (isSpeaking || isTalking || isListening) ? 0.7 : 3,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              },
-            }}
-          >
+          {/* Avatar with Voice Toggle */}
+          <div className="flex items-center gap-2">
+            {/* Voice Toggle Button */}
+            <motion.button
+              onClick={handleToggleBuddyVoice}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className={`p-2 rounded-full transition-colors ${
+                buddyVoiceEnabled
+                  ? 'bg-blue-500 text-white hover:bg-blue-600'
+                  : 'bg-gray-300 text-gray-600 hover:bg-gray-400'
+              }`}
+              title={buddyVoiceEnabled ? 'KI Buddy Voice aktiviert' : 'KI Buddy Voice deaktiviert'}
+            >
+              <MessageCircle size={18} />
+            </motion.button>
+
+            {/* Avatar Button */}
+            <motion.button
+              key={currentPage}
+              onClick={() => {
+                if (isHidden) {
+                  handleShowBubble();
+                } else {
+                  setIsOpen(!isOpen);
+                }
+              }}
+              className="relative group cursor-pointer"
+              whileHover={{ scale: 1.12 }}
+              whileTap={{ scale: 0.95 }}
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{
+                scale: (isSpeaking || isTalking || isListening) ? [1, 1.06, 1, 1.04, 1] : 1,
+                opacity: 1,
+                y: (isSpeaking || isTalking || isListening)
+                  ? [0, -8, 0, -4, 0]
+                  : [0, -6, 0],
+              }}
+              transition={{
+                scale: (isSpeaking || isTalking || isListening)
+                  ? { duration: 0.7, repeat: Infinity, ease: 'easeInOut' }
+                  : { type: 'spring', stiffness: 300, damping: 12 },
+                opacity: { duration: 0.3 },
+                y: {
+                  duration: (isSpeaking || isTalking || isListening) ? 0.7 : 3,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                },
+              }}
+            >
             {/* Runder Foto-Avatar Sabrina */}
             <div
               className={`relative w-24 h-24 rounded-full overflow-hidden bg-transparent transition-all ${
@@ -460,7 +557,8 @@ export default function AIBuddyWidget() {
             {isListening && (
               <div className="absolute bottom-0 left-0 w-4 h-4 bg-red-500 rounded-full ring-2 ring-white animate-pulse" />
             )}
-          </motion.button>
+            </motion.button>
+          </div>
         </div>
       </div>
     </>
