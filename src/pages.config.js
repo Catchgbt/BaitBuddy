@@ -56,7 +56,6 @@ const AGB = lazy(() => import('./pages/AGB'));
 const AuthCallback = lazy(() => import('./pages/AuthCallback'));
 const AI = lazy(() => import('./pages/AI'));
 const AIAssistant = lazy(() => import('./pages/AIAssistant'));
-const AIPage = lazy(() => import('./pages/AIPage'));
 const ARKnotenAssistent = lazy(() => import('./pages/ARKnotenAssistent'));
 const ARView = lazy(() => import('./pages/ARView'));
 const AdminUsers = lazy(() => import('./pages/AdminUsers'));
@@ -73,19 +72,16 @@ const Devices = lazy(() => import('./pages/Devices'));
 const Events = lazy(() => import('./pages/Events'));
 const FunctionRatings = lazy(() => import('./pages/FunctionRatings'));
 const Gear = lazy(() => import('./pages/Gear'));
-const GearV1 = lazy(() => import('./pages/GearV1'));
 const Home = lazy(() => import('./pages/Home'));
 const Impressum = lazy(() => import('./pages/Impressum'));
 const KiBuddyBeta = lazy(() => import('./pages/KiBuddyBeta'));
 const Licenses = lazy(() => import('./pages/Licenses'));
-const Log = lazy(() => import('./pages/Log'));
 const Logbook = lazy(() => import('./pages/Logbook'));
 const LiveTripPage = lazy(() => import('./pages/LiveTripPage'));
 const Map = lazy(() => import('./pages/Map'));
 const MapPage = lazy(() => import('./pages/MapPage'));
 const Match3Game = lazy(() => import('./pages/Match3Game'));
 const Premium = lazy(() => import('./pages/Premium'));
-const PremiumDebug = lazy(() => import('./pages/PremiumDebug'));
 const PremiumPlans = lazy(() => import('./pages/PremiumPlans'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Quiz = lazy(() => import('./pages/Quiz'));
@@ -93,7 +89,6 @@ const Rank = lazy(() => import('./pages/Rank'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Shop = lazy(() => import('./pages/Shop'));
-const Start = lazy(() => import('./pages/Start'));
 const StartFishing = lazy(() => import('./pages/StartFishing'));
 const TripPlanner = lazy(() => import('./pages/TripPlanner'));
 const Tutorials = lazy(() => import('./pages/Tutorials'));
@@ -111,7 +106,6 @@ export const PAGES = {
     "AuthCallback": AuthCallback,
     "AI": AI,
     "AIAssistant": AIAssistant,
-    "AIPage": AIPage,
     "ARKnotenAssistent": ARKnotenAssistent,
     "ARView": ARView,
     "AdminUsers": AdminUsers,
@@ -128,19 +122,16 @@ export const PAGES = {
     "Events": Events,
     "FunctionRatings": FunctionRatings,
     "Gear": Gear,
-    "GearV1": GearV1,
     "Home": Home,
     "Impressum": Impressum,
     "KiBuddyBeta": KiBuddyBeta,
     "Licenses": Licenses,
-    "Log": Log,
     "Logbook": Logbook,
     "LiveTrip": LiveTripPage,
     "Map": Map,
     "MapPage": MapPage,
     "Match3Game": Match3Game,
     "Premium": Premium,
-    "PremiumDebug": PremiumDebug,
     "PremiumPlans": PremiumPlans,
     "Profile": Profile,
     "Quiz": Quiz,
@@ -148,7 +139,6 @@ export const PAGES = {
     "ResetPassword": ResetPassword,
     "Settings": Settings,
     "Shop": Shop,
-    "Start": Start,
     "StartFishing": StartFishing,
     "TripPlanner": TripPlanner,
     "Tutorials": Tutorials,
