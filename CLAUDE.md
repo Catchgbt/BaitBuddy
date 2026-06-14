@@ -82,3 +82,7 @@ BaitBuddy/
 ## Live-URL
 
 **https://bait-buddy.vercel.app** — wird bei jedem Merge zu `main` aktualisiert
+
+## Merge-Reports
+
+Nach Fixes und Merges werden **keine Merge-Reports eingecheckt** — alles ist live nach dem Merge zu `main`.
