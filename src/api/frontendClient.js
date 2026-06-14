@@ -127,6 +127,11 @@ const ENTITY_MAP = {
   User:           '/api/admin/users',
   ChatMessage:    '/api/ai/messages',
   LiveTrip:       '/api/trips',
+  GearCategory:   '/api/gear/categories',
+  GearItem:       '/api/gear/items',
+  GearRule:       '/api/gear/rules',
+  Loadout:        '/api/gear/loadouts',
+  PackSession:    '/api/gear/sessions',
 };
 
 function makeEntity(entityName) {
@@ -161,9 +166,22 @@ function makeEntity(entityName) {
       return [];
     },
 
+    get: async (id) => {
+      if (!base) return null;
+      try { return await api.get(`${base}/${id}`); } catch { return null; }
+    },
+
     create: async (data) => {
       if (!base) return { id: `local_${Date.now()}`, ...data };
       return safePost(base, data);
+    },
+
+    bulkCreate: async (items = []) => {
+      if (!base) return items.map((d) => ({ id: `local_${Date.now()}_${Math.random().toString(36).slice(2)}`, ...d }));
+      try {
+        const result = await api.post(`${base}/bulk`, items);
+        return Array.isArray(result) ? result : [];
+      } catch { return []; }
     },
 
     update: async (id, data) => {
