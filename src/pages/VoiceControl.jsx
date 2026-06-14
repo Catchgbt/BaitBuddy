@@ -923,22 +923,20 @@ function VoiceBuddy() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 p-4 pb-32">
-      <div className="max-w-4xl mx-auto space-y-6">
-        
+    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-950 to-gray-900 p-4 pb-32">
+      <div className="max-w-5xl mx-auto space-y-8">
+
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center space-y-3 mb-10">
           <motion.h1
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-4xl font-bold text-cyan-400 drop-shadow-[0_0_20px_rgba(34,211,238,0.8)] mb-2"
+            className="text-5xl font-bold bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent"
           >
-            KI Voice Control
+            Hey Buddy
           </motion.h1>
-          <p className="text-gray-400">Sprachgesteuerte Angel-Tipps mit Echtzeit-Daten</p>
+          <p className="text-gray-400 text-lg">Sprachgesteuerte Angel-Tipps in Echtzeit mit KI-Unterstützung</p>
         </div>
-
-
 
         {/* Error Alert */}
         <AnimatePresence>
@@ -948,9 +946,9 @@ function VoiceBuddy() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
             >
-              <Card className="bg-red-900/20 border-red-500/50">
+              <Card className="bg-red-900/20 border-red-500/50 backdrop-blur-sm">
                 <CardContent className="flex items-center gap-3 p-4">
-                  <AlertCircle className="w-5 h-5 text-red-400" />
+                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
                   <p className="text-red-300 text-sm">{error}</p>
                 </CardContent>
               </Card>
@@ -959,293 +957,297 @@ function VoiceBuddy() {
         </AnimatePresence>
 
         {/* Context Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Weather Card */}
-          <Card className="glass-morphism border-gray-800">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <Cloud className="w-8 h-8 text-cyan-400" />
-                <div>
-                  <p className="text-xs text-gray-400">Wetter</p>
-                  {loadingInitialData ? (
-                    <p className="text-gray-500 text-sm flex items-center"><Loader2 className="w-4 h-4 mr-2 animate-spin" />Lade...</p>
-                  ) : weather ? (
-                    <>
-                      <p className="text-white font-semibold">{weather.temp}°C, {getWeatherDescription(weather.weatherCode)}</p>
-                      <p className="text-xs text-emerald-400">Bedingungen: {fishingConditions?.rating}</p>
-                    </>
-                  ) : (
-                    <p className="text-gray-500 text-sm">Nicht verfügbar</p>
-                  )}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <Card className="bg-gradient-to-br from-cyan-900/20 to-cyan-900/10 border border-cyan-500/20 hover:border-cyan-500/40 backdrop-blur-sm transition-all hover:shadow-lg hover:shadow-cyan-500/10">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-cyan-500/20 rounded-lg">
+                    <Cloud className="w-8 h-8 text-cyan-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-2">Wetter</p>
+                    {loadingInitialData ? (
+                      <p className="text-gray-500 text-sm flex items-center"><Loader2 className="w-4 h-4 mr-2 animate-spin" />Lade...</p>
+                    ) : weather ? (
+                      <>
+                        <p className="text-white font-bold text-lg">{weather.temp}°C</p>
+                        <p className="text-gray-300 text-sm mb-1">{getWeatherDescription(weather.weatherCode)}</p>
+                        <p className="text-xs text-cyan-400 font-semibold">Bedingungen: {fishingConditions?.rating}</p>
+                      </>
+                    ) : (
+                      <p className="text-gray-500 text-sm">Nicht verfügbar</p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
 
           {/* Location Card */}
-          <Card className="glass-morphism border-gray-800">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <MapPin className="w-8 h-8 text-emerald-400" />
-                <div>
-                  <p className="text-xs text-gray-400">Nächster Spot</p>
-                  {loadingInitialData ? (
-                     <p className="text-gray-500 text-sm flex items-center"><Loader2 className="w-4 h-4 mr-2 animate-spin" />Lade...</p>
-                  ) : nearestSpot ? (
-                    <>
-                      <p className="text-white font-semibold truncate">{nearestSpot.name}</p>
-                      <p className="text-xs text-cyan-400">{nearestSpot.water_type}</p>
-                    </>
-                  ) : (
-                    <p className="text-gray-500 text-sm">Kein Spot in Nähe</p>
-                  )}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+            <Card className="bg-gradient-to-br from-emerald-900/20 to-emerald-900/10 border border-emerald-500/20 hover:border-emerald-500/40 backdrop-blur-sm transition-all hover:shadow-lg hover:shadow-emerald-500/10">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-emerald-500/20 rounded-lg">
+                    <MapPin className="w-8 h-8 text-emerald-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-2">Nächster Spot</p>
+                    {loadingInitialData ? (
+                      <p className="text-gray-500 text-sm flex items-center"><Loader2 className="w-4 h-4 mr-2 animate-spin" />Lade...</p>
+                    ) : nearestSpot ? (
+                      <>
+                        <p className="text-white font-bold text-lg truncate">{nearestSpot.name}</p>
+                        <p className="text-xs text-emerald-400 font-semibold">{nearestSpot.water_type}</p>
+                      </>
+                    ) : (
+                      <p className="text-gray-500 text-sm">Kein Spot in Nähe</p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
 
         {/* Main Control Card */}
-        <Card className="glass-morphism border-gray-800">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span className="text-cyan-400">Sprachsteuerung</span>
-              <Badge className={getStatusColor()}>
-                {(processingAI || loadingInitialData) && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
-                {getStatusText()}
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            
-            {/* Voice Animation */}
-            <div className="flex justify-center">
-              <motion.div
-                animate={{
-                  scale: isListening ? [1, 1.1, 1] : 1,
-                  rotate: isListening ? [0, 360] : 0,
-                }}
-                transition={{
-                  scale: { duration: 2, repeat: Infinity, ease: "easeInOut" },
-                  rotate: { duration: 20, repeat: Infinity, ease: "linear" }
-                }}
-                className="relative"
-              >
-                <div className={`w-32 h-32 rounded-full flex items-center justify-center ${
-                  isListening 
-                    ? 'bg-gradient-to-br from-cyan-600 to-emerald-600 shadow-[0_0_40px_rgba(34,211,238,0.6)]' 
-                    : 'bg-gradient-to-br from-gray-700 to-gray-800'
-                }`}>
-                  {isListening ? (
-                    <Waves className="w-16 h-16 text-white" />
-                  ) : (
-                    <Mic className="w-16 h-16 text-gray-400" />
-                  )}
-                </div>
-                
-                {isListening && (
-                  <motion.div
-                    className="absolute inset-0 rounded-full border-4 border-cyan-400"
-                    animate={{ scale: [1, 1.5], opacity: [1, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  />
-                )}
-              </motion.div>
-            </div>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <Card className="bg-gradient-to-b from-gray-900/80 to-gray-950/80 border border-cyan-500/20 backdrop-blur-md">
+            <CardHeader className="pb-6 border-b border-cyan-500/10">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-2xl font-bold text-cyan-400">Sprachsteuerung</CardTitle>
+                <Badge className={`${getStatusColor()} bg-gray-800/50 border border-gray-700`}>
+                  {(processingAI || loadingInitialData) && <Loader2 className="w-3 h-3 mr-2 animate-spin" />}
+                  {getStatusText()}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-8 pt-8">
 
-            {/* Transcript */}
-            <AnimatePresence>
-              {transcript && (
+              {/* Voice Animation */}
+              <div className="flex justify-center">
                 <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="bg-gray-800/50 rounded-lg p-4 border border-gray-700"
+                  animate={{
+                    scale: isListening ? [1, 1.1, 1] : 1,
+                  }}
+                  transition={{
+                    scale: { duration: 2, repeat: Infinity, ease: "easeInOut" },
+                  }}
+                  className="relative"
                 >
-                  <p className="text-gray-300 text-sm">
-                    <span className="text-gray-500 mr-2">Du:</span>
-                    {transcript}
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Last Tip */}
-            <AnimatePresence>
-              {lastTip && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="bg-emerald-900/20 rounded-lg p-4 border border-emerald-500/30"
-                >
-                  <div className="flex items-start gap-3">
-                    <Zap className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-emerald-400 text-xs font-semibold mb-1">CATCH-TIPP</p>
-                      <p className="text-gray-200 text-sm leading-relaxed">{lastTip}</p>
-                    </div>
+                  <div className={`w-40 h-40 rounded-full flex items-center justify-center font-semibold transition-all duration-500 ${
+                    isListening
+                      ? 'bg-gradient-to-br from-cyan-600 via-emerald-600 to-cyan-600 shadow-[0_0_60px_rgba(34,211,238,0.7)]'
+                      : 'bg-gradient-to-br from-gray-700 to-gray-800 shadow-lg'
+                  }`}>
+                    {isListening ? (
+                      <Waves className="w-20 h-20 text-white animate-pulse" />
+                    ) : (
+                      <Mic className="w-20 h-20 text-gray-400" />
+                    )}
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
 
-            {/* Controls */}
-            <div className="flex gap-3 justify-center">
-              {!isListening ? (
-                <Button
-                  onClick={startListening}
-                  size="lg"
-                  className="bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 shadow-lg"
-                  disabled={!!error || loadingInitialData}
-                >
-                  <Mic className="w-5 h-5 mr-2" />
-                  Voice Control starten
-                </Button>
-              ) : (
-                <Button
-                  onClick={stopListening}
-                  size="lg"
-                  variant="destructive"
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  <Mic className="w-5 h-5 mr-2" />
-                  Beenden
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                  {isListening && (
+                    <>
+                      <motion.div
+                        className="absolute inset-0 rounded-full border-2 border-cyan-400"
+                        animate={{ scale: [1, 1.4], opacity: [0.5, 0] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      />
+                      <motion.div
+                        className="absolute inset-0 rounded-full border-2 border-emerald-400"
+                        animate={{ scale: [1, 1.4], opacity: [0.5, 0] }}
+                        transition={{ duration: 2, repeat: Infinity, delay: 0.3 }}
+                      />
+                    </>
+                  )}
+                </motion.div>
+              </div>
+
+              {/* Transcript */}
+              <AnimatePresence>
+                {transcript && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="bg-cyan-900/20 rounded-xl p-5 border border-cyan-500/30 backdrop-blur-sm"
+                  >
+                    <p className="text-gray-300 text-sm leading-relaxed">
+                      <span className="text-cyan-400 font-semibold mr-2">Du:</span>
+                      {transcript}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Last Tip */}
+              <AnimatePresence>
+                {lastTip && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="bg-emerald-900/20 rounded-xl p-5 border border-emerald-500/30 backdrop-blur-sm"
+                  >
+                    <div className="flex items-start gap-4">
+                      <Zap className="w-6 h-6 text-emerald-400 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-emerald-400 text-xs font-bold uppercase tracking-wide mb-2">Buddy-Tipp</p>
+                        <p className="text-gray-200 text-sm leading-relaxed">{lastTip}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Controls */}
+              <div className="flex gap-4 justify-center pt-4">
+                {!isListening ? (
+                  <Button
+                    onClick={startListening}
+                    size="lg"
+                    className="bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-cyan-500/30 transition-all transform hover:scale-105"
+                    disabled={!!error || loadingInitialData}
+                  >
+                    <Mic className="w-5 h-5 mr-2" />
+                    Starten
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={stopListening}
+                    size="lg"
+                    className="bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-red-500/30 transition-all transform hover:scale-105"
+                  >
+                    <Mic className="w-5 h-5 mr-2" />
+                    Beenden
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Konversationshistorie */}
-        <Card className="glass-morphism border-gray-800">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between text-cyan-400 text-lg">
-              <span>Konversationsprotokoll</span>
-              <span className="text-xs text-gray-500 font-normal">letzte 24 Stunden</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingHistory ? (
-              <div className="flex items-center gap-2 text-gray-500 text-sm">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Lade Verlauf...
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+          <Card className="bg-gradient-to-b from-gray-900/80 to-gray-950/80 border border-cyan-500/20 backdrop-blur-md">
+            <CardHeader className="pb-6 border-b border-cyan-500/10">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xl font-bold text-cyan-400">Konversationen</CardTitle>
+                <span className="text-xs text-gray-500 font-normal bg-gray-800/50 px-3 py-1 rounded-full">letzte 24h</span>
               </div>
-            ) : conversationHistory.length === 0 ? (
-              <p className="text-gray-500 text-sm text-center py-4">Noch keine Konversationen. Starte Voice Control und sage "Hey Buddy".</p>
-            ) : (
-              <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
-                {conversationHistory.map((msg) => (
-                  <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[80%] rounded-xl px-4 py-2 ${
-                      msg.role === 'user'
-                        ? 'bg-cyan-900/40 border border-cyan-500/30 text-cyan-100'
-                        : 'bg-gray-800/60 border border-gray-700 text-gray-200'
-                    }`}>
-                      <p className="text-xs text-gray-500 mb-1">
-                        {msg.role === 'user' ? 'Du' : 'CatchGBT'} - {msg.timestamp ? format(new Date(msg.timestamp), 'HH:mm') : ''}
-                      </p>
-                      <p className="text-sm leading-relaxed">{msg.content}</p>
+            </CardHeader>
+            <CardContent className="pt-6">
+              {loadingHistory ? (
+                <div className="flex items-center justify-center gap-2 text-gray-500 text-sm py-8">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Lade Verlauf...
+                </div>
+              ) : conversationHistory.length === 0 ? (
+                <div className="text-center py-12">
+                  <Mic className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                  <p className="text-gray-500 text-sm">Noch keine Konversationen.</p>
+                  <p className="text-gray-600 text-xs mt-1">Starte Voice Control und sage "Hey Buddy"</p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+                  {conversationHistory.map((msg) => (
+                    <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[85%] rounded-xl px-4 py-3 ${
+                        msg.role === 'user'
+                          ? 'bg-gradient-to-br from-cyan-600/30 to-cyan-600/10 border border-cyan-500/40 text-cyan-100'
+                          : 'bg-gradient-to-br from-gray-800/50 to-gray-700/30 border border-gray-600/40 text-gray-200'
+                      }`}>
+                        <p className="text-xs text-gray-400 font-semibold mb-1">
+                          {msg.role === 'user' ? 'Du' : 'Hey Buddy'} · {msg.timestamp ? format(new Date(msg.timestamp), 'HH:mm') : ''}
+                        </p>
+                        <p className="text-sm leading-relaxed">{msg.content}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-                <div ref={conversationEndRef} />
-              </div>
-            )}
-            {conversationHistory.length > 0 && (
-              <button
-                onClick={async () => {
-                  const all = await entities.ChatMessage.filter({ context: 'voice_control' });
-                  for (const m of all) await entities.ChatMessage.delete(m.id);
-                  setConversationHistory([]);
-                  toast.success('Verlauf gelöscht');
-                }}
-                className="mt-4 text-xs text-red-400 hover:text-red-300 transition-colors"
-              >
-                Verlauf löschen
-              </button>
-            )}
-          </CardContent>
-        </Card>
+                  ))}
+                  <div ref={conversationEndRef} />
+                </div>
+              )}
+              {conversationHistory.length > 0 && (
+                <button
+                  onClick={async () => {
+                    const all = await entities.ChatMessage.filter({ context: 'voice_control' });
+                    for (const m of all) await entities.ChatMessage.delete(m.id);
+                    setConversationHistory([]);
+                    toast.success('Verlauf gelöscht');
+                  }}
+                  className="mt-6 text-xs text-red-400 hover:text-red-300 font-semibold transition-colors"
+                >
+                  Verlauf löschen
+                </button>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Instructions */}
-        <Card className="glass-morphism border-gray-800">
-          <CardHeader>
-            <CardTitle className="text-cyan-400 text-lg">Anleitung</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <h4 className="text-white font-semibold">Wie funktioniert's?</h4>
-              <ol className="text-gray-300 text-sm space-y-2 list-decimal list-inside">
-                <li>Klicke auf "Voice Control starten"</li>
-                <li>Sage <span className="text-cyan-400 font-semibold">"Hey Buddy"</span> um die KI zu aktivieren</li>
-                <li>Stelle deine Frage</li>
-                <li>Die KI antwortet mit echten Wetter- und Spot-Daten</li>
-              </ol>
-            </div>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+          <Card className="bg-gradient-to-b from-gray-900/80 to-gray-950/80 border border-cyan-500/20 backdrop-blur-md">
+            <CardHeader className="pb-6 border-b border-cyan-500/10">
+              <CardTitle className="text-xl font-bold text-cyan-400">Wie es funktioniert</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-6">
+              <div className="space-y-3">
+                <h4 className="text-white font-semibold text-sm">Schritt für Schritt:</h4>
+                <ol className="text-gray-300 text-sm space-y-2">
+                  {[
+                    { num: '1', text: 'Klicke auf "Starten" um Voice Control zu aktivieren' },
+                    { num: '2', text: 'Sage "Hey Buddy" um die KI zu aktivieren' },
+                    { num: '3', text: 'Stelle deine Angel-Frage' },
+                    { num: '4', text: 'Erhalte sofort eine Antwort mit Echtzeit-Daten' },
+                  ].map((item) => (
+                    <li key={item.num} className="flex items-start gap-3">
+                      <span className="flex-shrink-0 w-6 h-6 bg-cyan-600/30 border border-cyan-500/50 rounded-full flex items-center justify-center text-xs font-bold text-cyan-400">
+                        {item.num}
+                      </span>
+                      <span>{item.text}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
 
-            <div className="space-y-2">
-              <h4 className="text-white font-semibold">Beispiel-Befehle:</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
-                  <p className="text-cyan-400 text-xs font-semibold mb-1">Wo werfen?</p>
-                  <p className="text-gray-300 text-sm">"Hey Buddy, wo soll ich werfen?"</p>
-                </div>
-                <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
-                  <p className="text-cyan-400 text-xs font-semibold mb-1">Köder?</p>
-                  <p className="text-gray-300 text-sm">"Hey Buddy, welchen Köder?"</p>
-                </div>
-                <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
-                  <p className="text-cyan-400 text-xs font-semibold mb-1">Strategie?</p>
-                  <p className="text-gray-300 text-sm">"Hey Buddy, welche Strategie?"</p>
-                </div>
-                <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
-                  <p className="text-cyan-400 text-xs font-semibold mb-1">Wetter?</p>
-                  <p className="text-gray-300 text-sm">"Hey Buddy, wie ist das Wetter?"</p>
-                </div>
-                <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
-                  <p className="text-cyan-400 text-xs font-semibold mb-1">Standort?</p>
-                  <p className="text-gray-300 text-sm">"Hey Buddy, wo bin ich?"</p>
-                </div>
-                <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
-                  <p className="text-cyan-400 text-xs font-semibold mb-1">Beste Zeit?</p>
-                  <p className="text-gray-300 text-sm">"Hey Buddy, wann soll ich angeln?"</p>
-                </div>
-                <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
-                  <p className="text-cyan-400 text-xs font-semibold mb-1">Fischarten?</p>
-                  <p className="text-gray-300 text-sm">"Hey Buddy, welche Fische kann ich fangen?"</p>
-                </div>
-                <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
-                  <p className="text-cyan-400 text-xs font-semibold mb-1">Anfänger?</p>
-                  <p className="text-gray-300 text-sm">"Hey Buddy, Tipps für Anfänger?"</p>
-                </div>
-                <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
-                  <p className="text-cyan-400 text-xs font-semibold mb-1">Regeln?</p>
-                  <p className="text-gray-300 text-sm">"Hey Buddy, Schonzeit für Hecht?"</p>
-                  <p className="text-gray-300 text-sm">"Hey Buddy, Mindestmaß Zander?"</p>
-                </div>
-                <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
-                  <p className="text-cyan-400 text-xs font-semibold mb-1">Freie Frage</p>
-                  <p className="text-gray-300 text-sm">"Hey Buddy, [beliebige Frage]"</p>
+              <div className="space-y-3">
+                <h4 className="text-white font-semibold text-sm">Beispiel-Befehle:</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {[
+                    { title: 'Casting', cmd: '"Hey Buddy, wo soll ich werfen?"' },
+                    { title: 'Köder', cmd: '"Hey Buddy, welchen Köder?"' },
+                    { title: 'Strategie', cmd: '"Hey Buddy, wie vorgehen?"' },
+                    { title: 'Wetter', cmd: '"Hey Buddy, wie ist das Wetter?"' },
+                    { title: 'Standort', cmd: '"Hey Buddy, wo bin ich?"' },
+                    { title: 'Beste Zeit', cmd: '"Hey Buddy, wann angeln?"' },
+                    { title: 'Fischarten', cmd: '"Hey Buddy, welche Fische?"' },
+                    { title: 'Anfänger', cmd: '"Hey Buddy, Anfänger-Tipps?"' },
+                    { title: 'Regeln', cmd: '"Hey Buddy, Schonzeit Hecht?"' },
+                  ].map((item) => (
+                    <div key={item.title} className="bg-gray-800/30 border border-cyan-500/20 rounded-lg p-3 hover:border-cyan-500/40 transition-colors">
+                      <p className="text-cyan-400 text-xs font-bold uppercase tracking-wider mb-2">{item.title}</p>
+                      <p className="text-gray-300 text-xs font-mono">{item.cmd}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
 
-            <div className="bg-emerald-900/20 rounded-lg p-3 border border-emerald-500/30">
-              <p className="text-emerald-400 text-xs font-semibold mb-1">✨ NEU: Erweiterte KI</p>
-              <p className="text-gray-300 text-xs">
-                Die Voice Control nutzt jetzt echte Wetterdaten, Spot-Informationen, Angelregeln und KI für präzise, kontextbezogene Antworten auf alle deine Angel-Fragen!
-              </p>
-            </div>
-
-            <div className="bg-amber-900/20 rounded-lg p-3 border border-amber-500/30">
-              <p className="text-amber-400 text-xs font-semibold mb-1">⚠️ Hinweis</p>
-              <p className="text-gray-300 text-xs">
-                Funktioniert am besten in ruhiger Umgebung mit aktiviertem Mikrofon und GPS.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <div className="bg-emerald-900/20 rounded-lg p-4 border border-emerald-500/30">
+                  <p className="text-emerald-400 text-xs font-bold uppercase tracking-wide mb-2">Echtzeit-Daten</p>
+                  <p className="text-gray-300 text-xs">Wetter, Spots, Angelregeln und KI-gestützte Antworten für präzise Tipps</p>
+                </div>
+                <div className="bg-amber-900/20 rounded-lg p-4 border border-amber-500/30">
+                  <p className="text-amber-400 text-xs font-bold uppercase tracking-wide mb-2">Wichtig</p>
+                  <p className="text-gray-300 text-xs">Funktioniert best mit: ruhiger Umgebung, Mikrofon und GPS aktiviert</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
     </div>
   );
