@@ -6,6 +6,20 @@ import path from 'path';
 
 const router = Router();
 
+const ALLOWED_LICENSE_FIELDS = ['license_type', 'issue_date', 'expiration_date', 'number'];
+const ALLOWED_PLAN_FIELDS = ['name', 'date', 'location', 'target_species', 'notes', 'forecast_data'];
+const ALLOWED_GEAR_FIELDS = ['gear_type', 'name', 'brand', 'model', 'notes', 'condition'];
+
+const filterBody = (body, allowedFields) => {
+  const filtered = {};
+  for (const key of allowedFields) {
+    if (key in body) {
+      filtered[key] = body[key];
+    }
+  }
+  return filtered;
+};
+
 router.get('/fishing/rules', optionalAuth, async (req, res) => {
   const { data, error } = await supabase.from('rule_entries').select('*').limit(200);
   if (error) return res.status(500).json({ error: error.message });
@@ -35,8 +49,9 @@ router.get('/fishing/licenses', requireAuth, async (req, res) => {
 });
 
 router.post('/fishing/licenses', requireAuth, async (req, res) => {
+  const filteredBody = filterBody(req.body, ALLOWED_LICENSE_FIELDS);
   const { data, error } = await supabase.from('licenses').insert({
-    ...req.body, created_by: req.user.email
+    ...filteredBody, created_by: req.user.email
   }).select().single();
   if (error) return res.status(500).json({ error: error.message });
   return res.json(data);
@@ -49,15 +64,16 @@ router.get('/fishing/plans', requireAuth, async (req, res) => {
 });
 
 router.post('/fishing/plans', requireAuth, async (req, res) => {
+  const filteredBody = filterBody(req.body, ALLOWED_PLAN_FIELDS);
   const { data, error } = await supabase.from('fishing_plans').insert({
-    ...req.body, created_by: req.user.email
+    ...filteredBody, created_by: req.user.email
   }).select().single();
   if (error) return res.status(500).json({ error: error.message });
   return res.json(data);
 });
 
 router.patch('/fishing/plans/:id', requireAuth, async (req, res) => {
-  const { created_by, user_id, id, created_at, ...patch } = req.body || {};
+  const patch = filterBody(req.body, ALLOWED_PLAN_FIELDS);
   const { data, error } = await supabase.from('fishing_plans')
     .update(patch).eq('id', req.params.id).eq('created_by', req.user.email)
     .select().single();
@@ -85,16 +101,18 @@ router.get('/gear', requireAuth, async (req, res) => {
 });
 
 router.post('/gear', requireAuth, async (req, res) => {
+  const filteredBody = filterBody(req.body, ALLOWED_GEAR_FIELDS);
   const { data, error } = await supabase.from('gear').insert({
-    ...req.body, created_by: req.user.email
+    ...filteredBody, created_by: req.user.email
   }).select().single();
   if (error) return res.status(500).json({ error: error.message });
   return res.json(data);
 });
 
 router.patch('/gear/:id', requireAuth, async (req, res) => {
+  const filteredBody = filterBody(req.body, ALLOWED_GEAR_FIELDS);
   const { data, error } = await supabase.from('gear')
-    .update(req.body).eq('id', req.params.id).eq('created_by', req.user.email)
+    .update(filteredBody).eq('id', req.params.id).eq('created_by', req.user.email)
     .select().single();
   if (error) return res.status(500).json({ error: error.message });
   return res.json(data);

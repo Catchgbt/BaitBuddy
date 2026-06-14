@@ -1,6 +1,7 @@
 import express from 'express';
 import nodemailer from 'nodemailer';
 import { supabase } from '../lib/supabase.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -23,9 +24,11 @@ try {
 }
 
 // POST /api/support/tickets - Neues Support-Ticket erstellen
-router.post('/support/tickets', async (req, res) => {
+router.post('/support/tickets', requireAuth, async (req, res) => {
   try {
-    const { subject, category, message, user_email, user_name } = req.body;
+    const { subject, category, message } = req.body;
+    const user_email = req.user.email;
+    const user_name = req.user.user_metadata?.name || 'Nutzer';
 
     if (!subject || !message) {
       return res.status(400).json({ error: 'Betreff und Nachricht erforderlich' });
@@ -39,8 +42,8 @@ router.post('/support/tickets', async (req, res) => {
           subject: subject.trim(),
           category: category || 'sonstiges',
           message: message.trim(),
-          user_email: user_email || 'unknown@example.com',
-          user_name: user_name || 'Anonymer Nutzer',
+          user_email,
+          user_name,
           status: 'offen',
           created_date: new Date().toISOString(),
         },
@@ -56,38 +59,42 @@ router.post('/support/tickets', async (req, res) => {
 
     // Email an Support versendet
     if (emailTransporter) {
-      const supportEmail = process.env.SUPPORT_EMAIL || 'kaisaschnitt99@gmail.com';
-      const escapeHtml = (str) => {
-        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-        return String(str).replace(/[&<>"']/g, (c) => map[c]);
-      };
+      const supportEmail = process.env.SUPPORT_EMAIL;
+      if (!supportEmail) {
+        console.warn('SUPPORT_EMAIL nicht konfiguriert — Ticket-Email wird nicht versendet');
+      } else {
+        const escapeHtml = (str) => {
+          const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+          return String(str).replace(/[&<>"']/g, (c) => map[c]);
+        };
 
-      const mailOptions = {
-        from: process.env.SMTP_USER || 'BaitBuddy <noreply@baitbuddy.local>',
-        to: supportEmail,
-        subject: `[${escapeHtml(category || 'TICKET')}] ${escapeHtml(subject)}`,
-        html: `
-          <h2>Neues Support-Ticket</h2>
-          <p><strong>ID:</strong> ${escapeHtml(ticket?.id || '')}</p>
-          <p><strong>Von:</strong> ${escapeHtml(user_name)} (${escapeHtml(user_email)})</p>
-          <p><strong>Kategorie:</strong> ${escapeHtml(category || '')}</p>
-          <p><strong>Betreff:</strong> ${escapeHtml(subject)}</p>
-          <hr />
-          <p><strong>Nachricht:</strong></p>
-          <pre>${escapeHtml(message)}</pre>
-          <hr />
-          <p><em>Dieses Ticket wurde am ${new Date().toLocaleString('de-DE')} erstellt.</em></p>
-        `,
-        replyTo: user_email,
-      };
+        const mailOptions = {
+          from: process.env.SMTP_USER || 'BaitBuddy <noreply@baitbuddy.local>',
+          to: supportEmail,
+          subject: `[${escapeHtml(category || 'TICKET')}] ${escapeHtml(subject)}`,
+          html: `
+            <h2>Neues Support-Ticket</h2>
+            <p><strong>ID:</strong> ${escapeHtml(ticket?.id || '')}</p>
+            <p><strong>Von:</strong> ${escapeHtml(user_name)} (${escapeHtml(user_email)})</p>
+            <p><strong>Kategorie:</strong> ${escapeHtml(category || '')}</p>
+            <p><strong>Betreff:</strong> ${escapeHtml(subject)}</p>
+            <hr />
+            <p><strong>Nachricht:</strong></p>
+            <pre>${escapeHtml(message)}</pre>
+            <hr />
+            <p><em>Dieses Ticket wurde am ${new Date().toLocaleString('de-DE')} erstellt.</em></p>
+          `,
+          replyTo: user_email,
+        };
 
-      emailTransporter.sendMail(mailOptions, (err, info) => {
-        if (err) {
-          console.error('Email-Versand fehlgeschlagen:', err);
-        } else {
-          console.log('Ticket-Email versendet:', info.response);
-        }
-      });
+        emailTransporter.sendMail(mailOptions, (err, info) => {
+          if (err) {
+            console.error('Email-Versand fehlgeschlagen:', err);
+          } else {
+            console.log('Ticket-Email versendet:', info.response);
+          }
+        });
+      }
     } else {
       console.log('⚠️ Email-Transporter nicht konfiguriert. Ticket-Benachrichtigung skippiert:', {
         ticket_id: ticket?.id,
@@ -111,13 +118,9 @@ router.post('/support/tickets', async (req, res) => {
 });
 
 // GET /api/support/tickets - Tickets des aktuellen Benutzers abrufen
-router.get('/support/tickets', async (req, res) => {
+router.get('/support/tickets', requireAuth, async (req, res) => {
   try {
-    const userEmail = req.query.user_email || req.query.email;
-
-    if (!userEmail) {
-      return res.status(400).json({ error: 'User-Email erforderlich' });
-    }
+    const userEmail = req.user.email;
 
     let query = supabase
       .from('support_tickets')

@@ -52,6 +52,7 @@ class ApiClient {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ refresh_token: this.getRefreshToken() }),
+            signal: AbortSignal.timeout(15000), // 15s timeout for token refresh
           });
           const data = await res.json().catch(() => ({}));
           if (!res.ok || !data.token) {
@@ -78,6 +79,7 @@ class ApiClient {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
+      signal: AbortSignal.timeout(30000), // 30s timeout
     };
     if (body !== undefined) opts.body = JSON.stringify(body);
     const res = await fetch(`${API_URL}${path}`, opts);

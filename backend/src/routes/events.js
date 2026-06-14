@@ -112,7 +112,7 @@ router.post('/events', requireAuth, async (req, res) => {
       .select()
       .single();
 
-    if (eventError) return res.status(500).json({ error: eventError.message });
+    if (eventError || !event) return res.status(500).json({ error: eventError?.message || 'Event creation failed' });
 
     // 2. Creator als Teilnehmer hinzufügen
     await supabase
@@ -455,8 +455,12 @@ router.post('/events/invitations/:id/decline', requireAuth, async (req, res) => 
 router.get('/leaderboards/monthly', optionalAuth, async (req, res) => {
   try {
     const now = new Date();
-    const year = parseInt(req.query.year) || now.getFullYear();
-    const month = parseInt(req.query.month) || now.getMonth() + 1;
+    let year = parseInt(req.query.year) || now.getFullYear();
+    let month = parseInt(req.query.month) || now.getMonth() + 1;
+
+    // Validate ranges to prevent invalid queries
+    if (year < 2000 || year > now.getFullYear() + 1) year = now.getFullYear();
+    if (month < 1 || month > 12) month = now.getMonth() + 1;
 
     const { data, error } = await supabase
       .from('monthly_leaderboards')

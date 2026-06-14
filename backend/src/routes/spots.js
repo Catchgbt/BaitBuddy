@@ -4,6 +4,18 @@ import { supabase } from '../lib/supabase.js';
 
 const router = Router();
 
+const ALLOWED_SPOT_FIELDS = ['name', 'latitude', 'longitude', 'water_type', 'notes', 'photo_url', 'is_favorite', 'depth_meters'];
+
+const filterSpotBody = (body) => {
+  const filtered = {};
+  for (const key of ALLOWED_SPOT_FIELDS) {
+    if (key in body) {
+      filtered[key] = body[key];
+    }
+  }
+  return filtered;
+};
+
 router.get('/spots', requireAuth, async (req, res) => {
   const { data, error } = await supabase.from('spots').select('*').eq('created_by', req.user.email);
   if (error) return res.status(500).json({ error: error.message });
@@ -28,8 +40,9 @@ router.post('/spots', requireAuth, async (req, res) => {
 });
 
 router.patch('/spots/:id', requireAuth, async (req, res) => {
+  const filteredBody = filterSpotBody(req.body);
   const { data, error } = await supabase.from('spots')
-    .update(req.body)
+    .update(filteredBody)
     .eq('id', req.params.id)
     .eq('created_by', req.user.email)
     .select().single();
