@@ -526,7 +526,7 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
               { name: "KI-Chat", path: "AIAssistant" },
               { name: "KI-Cam", path: "AI" },
               { name: "Gewaesser (C)", path: "WaterAnalysis", offline: true },
-              { name: "Gear", path: "Gear", offline: true },
+              { name: "Gear", path: "GearV1", offline: true },
               { name: "Trips", path: "TripPlanner" },
               { name: "Community (C)", path: "Community" },
               { name: "Ranking", path: "Ranking" },
