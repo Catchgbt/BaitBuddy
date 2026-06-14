@@ -113,6 +113,28 @@ export default function AIBuddyWidget() {
     }
   }, []);
 
+  // Zeige kleine Sprechblase mit Text und Auto-Close nach 15s Inaktivität.
+  // Muss vor dem Auto-Show-useEffect stehen, der es in seiner Dependency-Liste
+  // referenziert — sonst ReferenceError (Temporal Dead Zone) beim Render.
+  const showSmallBubbleWithText = useCallback((text) => {
+    setSmallBubbleText(text);
+    setShowSmallBubble(true);
+
+    // Clear existing timers
+    if (smallBubbleTimerRef.current) clearTimeout(smallBubbleTimerRef.current);
+    if (userActivityTimerRef.current) clearTimeout(userActivityTimerRef.current);
+
+    // Auto-hide after 15 seconds
+    userActivityTimerRef.current = setTimeout(() => {
+      const farewell = getRandomFarewellMessage();
+      setSmallBubbleText(farewell);
+
+      smallBubbleTimerRef.current = setTimeout(() => {
+        setShowSmallBubble(false);
+      }, 2000);
+    }, SMALL_BUBBLE_TIMEOUT);
+  }, []);
+
   // Auto-show bubble on first visit to page (unless user has hidden it)
   useEffect(() => {
     try {
@@ -266,26 +288,6 @@ export default function AIBuddyWidget() {
       // Ignore localStorage errors
     }
   };
-
-  // Zeige kleine Sprechblase mit Text und Auto-Close nach 15s Inaktivität
-  const showSmallBubbleWithText = useCallback((text) => {
-    setSmallBubbleText(text);
-    setShowSmallBubble(true);
-
-    // Clear existing timers
-    if (smallBubbleTimerRef.current) clearTimeout(smallBubbleTimerRef.current);
-    if (userActivityTimerRef.current) clearTimeout(userActivityTimerRef.current);
-
-    // Auto-hide after 15 seconds
-    userActivityTimerRef.current = setTimeout(() => {
-      const farewell = getRandomFarewellMessage();
-      setSmallBubbleText(farewell);
-
-      smallBubbleTimerRef.current = setTimeout(() => {
-        setShowSmallBubble(false);
-      }, 2000);
-    }, SMALL_BUBBLE_TIMEOUT);
-  }, []);
 
   // Cleanup timers on unmount
   useEffect(() => {
