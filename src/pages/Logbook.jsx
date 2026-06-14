@@ -376,14 +376,46 @@ export default function Logbook() {
                         required: ["species"]
                       };
                       const { output } = await ExtractDataFromUploadedFile({ file_url, json_schema: extractionSchema });
-                      if (output) {
-                        if (output.species) setSpecies(output.species);
-                        if (output.length_cm) setLengthCm(String(output.length_cm));
-                        if (output.weight_kg) setWeightKg(String(output.weight_kg));
-                        if (output.bait_used) setBaitUsed(output.bait_used);
-                        if (output.notes) setNotes(output.notes);
-                        if (output.catch_time) setCatchTime(new Date(output.catch_time).toISOString().slice(0, 16));
-                        toast.success("Felder automatisch ausgefüllt!");
+                      if (output && typeof output === 'object') {
+                        let hasData = false;
+
+                        if (typeof output.species === 'string' && output.species.trim()) {
+                          setSpecies(output.species.trim());
+                          hasData = true;
+                        }
+                        if (typeof output.length_cm === 'number' && output.length_cm > 0) {
+                          setLengthCm(String(output.length_cm));
+                          hasData = true;
+                        }
+                        if (typeof output.weight_kg === 'number' && output.weight_kg > 0) {
+                          setWeightKg(String(output.weight_kg));
+                          hasData = true;
+                        }
+                        if (typeof output.bait_used === 'string' && output.bait_used.trim()) {
+                          setBaitUsed(output.bait_used.trim());
+                          hasData = true;
+                        }
+                        if (typeof output.notes === 'string' && output.notes.trim()) {
+                          setNotes(output.notes.trim());
+                          hasData = true;
+                        }
+                        if (typeof output.catch_time === 'string' && output.catch_time) {
+                          try {
+                            const dt = new Date(output.catch_time);
+                            if (!isNaN(dt.getTime())) {
+                              setCatchTime(dt.toISOString().slice(0, 16));
+                              hasData = true;
+                            }
+                          } catch (e) {
+                            // Invalid date format - skip
+                          }
+                        }
+
+                        if (hasData) {
+                          toast.success("Felder automatisch ausgefüllt!");
+                        } else {
+                          toast.warning("KI konnte keine verwertbaren Daten erkennen");
+                        }
                       } else {
                         toast.warning("KI konnte keine Daten erkennen");
                       }
