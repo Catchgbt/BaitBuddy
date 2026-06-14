@@ -159,75 +159,80 @@ export default function TripFormDialog({ open, onClose, onSave, plan, currentLoc
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-gray-950 border-gray-800">
-        <DialogHeader>
-          <DialogTitle className="text-cyan-400">
-            {plan ? "Trip bearbeiten" : "Neuen Trip planen"}
+      <DialogContent className="max-w-3xl max-h-[95vh] overflow-y-auto bg-gradient-to-b from-gray-900 via-gray-950 to-gray-950 border border-cyan-500/20 rounded-2xl shadow-2xl">
+        <DialogHeader className="pb-4 border-b border-cyan-500/10">
+          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">
+            {plan ? "Trip aktualisieren" : "Neuen Trip erstellen"}
           </DialogTitle>
-          <DialogDescription className="text-gray-400">
-            Gib alle Details deiner Angeltour an — Ziel, Gewässer, Zeitpunkt, Methode und Ausrüstung.
+          <DialogDescription className="text-gray-400 mt-2">
+            {plan ? "Bearbeite alle Details dieser Angeltour" : "Plane deine Angeltour mit allen notwendigen Informationen"}
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Basis */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="sm:col-span-2">
-              <Label className="text-gray-300">Titel der Tour *</Label>
-              <Input
-                value={form.title}
-                onChange={(e) => set("title")(e.target.value)}
-                placeholder="z. B. Hechttour am Baldeneysee"
-                className="bg-gray-900 border-gray-700 text-white mt-1"
-                required
-              />
-            </div>
-            <div>
-              <Label className="text-gray-300">Zielfisch</Label>
-              <Input
-                value={form.target_fish}
-                onChange={(e) => set("target_fish")(e.target.value)}
-                placeholder="z. B. Hecht, Zander"
-                className="bg-gray-900 border-gray-700 text-white mt-1"
-              />
-            </div>
-            <div>
-              <Label className="text-gray-300">Angelmethode</Label>
-              <Select value={form.method} onValueChange={set("method")}>
-                <SelectTrigger className="bg-gray-900 border-gray-700 text-white mt-1">
-                  <SelectValue placeholder="Methode wählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {METHODS.map((m) => (
-                    <SelectItem key={m} value={m}>{m}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        <form onSubmit={handleSubmit} className="space-y-6 pr-2">
+          {/* Basis Info */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-cyan-400 uppercase tracking-wide">Grundinformationen</h3>
+            <div className="space-y-3">
+              <div>
+                <Label className="text-sm font-medium text-gray-300 block mb-2">Titel der Tour *</Label>
+                <Input
+                  value={form.title}
+                  onChange={(e) => set("title")(e.target.value)}
+                  placeholder="z. B. Hechttour am Baldeneysee"
+                  className="bg-gray-800/50 border border-cyan-500/20 hover:border-cyan-500/40 focus:border-cyan-400 text-white placeholder-gray-500 rounded-lg px-4 py-3 transition-colors"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-300 block mb-2">Zielfisch</Label>
+                  <Input
+                    value={form.target_fish}
+                    onChange={(e) => set("target_fish")(e.target.value)}
+                    placeholder="z. B. Hecht, Zander"
+                    className="bg-gray-800/50 border border-cyan-500/20 hover:border-cyan-500/40 focus:border-cyan-400 text-white placeholder-gray-500 rounded-lg px-4 py-3 transition-colors"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-300 block mb-2">Angelmethode</Label>
+                  <Select value={form.method} onValueChange={set("method")}>
+                    <SelectTrigger className="bg-gray-800/50 border border-cyan-500/20 hover:border-cyan-500/40 focus:border-cyan-400 text-white rounded-lg px-4 py-3 transition-colors">
+                      <SelectValue placeholder="Methode wählen" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-900 border-cyan-500/20">
+                      {METHODS.map((m) => (
+                        <SelectItem key={m} value={m}>{m}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Gewässer / Spot */}
-          <div className="rounded-xl border border-gray-800 p-4 space-y-4">
-            <div className="flex items-center gap-2 text-cyan-400 text-sm font-semibold">
+          <div className="space-y-4 bg-gradient-to-br from-cyan-500/5 to-emerald-500/5 border border-cyan-500/15 rounded-xl p-5">
+            <h3 className="text-sm font-semibold text-cyan-400 uppercase tracking-wide flex items-center gap-2">
               <MapPin className="w-4 h-4" /> Gewässer & Spot
-            </div>
+            </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <Label className="text-gray-300">Spot / Gewässername</Label>
+                <Label className="text-sm font-medium text-gray-300 block mb-2">Spot / Gewässername</Label>
                 <Input
                   value={form.spotName}
                   onChange={(e) => set("spotName")(e.target.value)}
                   placeholder="z. B. Baldeneysee Nordufer"
-                  className="bg-gray-900 border-gray-700 text-white mt-1"
+                  className="bg-gray-800/50 border border-cyan-500/20 hover:border-cyan-500/40 focus:border-cyan-400 text-white placeholder-gray-500 rounded-lg px-4 py-3 transition-colors"
                 />
               </div>
               <div>
-                <Label className="text-gray-300">Gewässertyp</Label>
+                <Label className="text-sm font-medium text-gray-300 block mb-2">Gewässertyp</Label>
                 <Select value={form.waterType} onValueChange={set("waterType")}>
-                  <SelectTrigger className="bg-gray-900 border-gray-700 text-white mt-1">
+                  <SelectTrigger className="bg-gray-800/50 border border-cyan-500/20 hover:border-cyan-500/40 focus:border-cyan-400 text-white rounded-lg px-4 py-3 transition-colors">
                     <SelectValue placeholder="Typ wählen" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-gray-900 border-cyan-500/20">
                     {WATER_TYPES.map((w) => (
                       <SelectItem key={w} value={w}>{w}</SelectItem>
                     ))}
@@ -237,23 +242,23 @@ export default function TripFormDialog({ open, onClose, onSave, plan, currentLoc
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-end">
               <div>
-                <Label className="text-gray-300">Breitengrad (lat)</Label>
+                <Label className="text-sm font-medium text-gray-300 block mb-2">Breitengrad (lat)</Label>
                 <Input
                   value={form.lat}
                   onChange={(e) => set("lat")(e.target.value)}
                   placeholder="51.40000"
                   inputMode="decimal"
-                  className="bg-gray-900 border-gray-700 text-white mt-1"
+                  className="bg-gray-800/50 border border-cyan-500/20 hover:border-cyan-500/40 focus:border-cyan-400 text-white placeholder-gray-500 rounded-lg px-4 py-3 transition-colors"
                 />
               </div>
               <div>
-                <Label className="text-gray-300">Längengrad (lon)</Label>
+                <Label className="text-sm font-medium text-gray-300 block mb-2">Längengrad (lon)</Label>
                 <Input
                   value={form.lon}
                   onChange={(e) => set("lon")(e.target.value)}
                   placeholder="7.00000"
                   inputMode="decimal"
-                  className="bg-gray-900 border-gray-700 text-white mt-1"
+                  className="bg-gray-800/50 border border-cyan-500/20 hover:border-cyan-500/40 focus:border-cyan-400 text-white placeholder-gray-500 rounded-lg px-4 py-3 transition-colors"
                 />
               </div>
               <Button
@@ -261,110 +266,117 @@ export default function TripFormDialog({ open, onClose, onSave, plan, currentLoc
                 variant="outline"
                 onClick={useCurrentLocation}
                 disabled={currentLocation?.lat == null}
-                className="border-gray-700"
+                className="border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-600/10 text-cyan-400 rounded-lg"
                 title="Aktuellen Standort übernehmen"
               >
                 <Crosshair className="w-4 h-4 mr-2" />
                 Standort
               </Button>
             </div>
-            <p className="text-xs text-gray-500">
-              Mit Koordinaten startest du später die Navigation direkt aus dem Trip.
-            </p>
+            <p className="text-xs text-gray-500">Mit Koordinaten startest du später die Navigation direkt aus dem Trip.</p>
           </div>
 
           {/* Zeit */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <Label className="text-gray-300">Datum</Label>
-              <Input
-                type="date"
-                value={form.date}
-                onChange={(e) => set("date")(e.target.value)}
-                className="bg-gray-900 border-gray-700 text-white mt-1"
-              />
-            </div>
-            <div>
-              <Label className="text-gray-300">Startzeit</Label>
-              <Input
-                type="time"
-                value={form.time}
-                onChange={(e) => set("time")(e.target.value)}
-                className="bg-gray-900 border-gray-700 text-white mt-1"
-              />
-            </div>
-            <div>
-              <Label className="text-gray-300">Dauer (Std.)</Label>
-              <Input
-                type="number"
-                min="0"
-                step="0.5"
-                value={form.durationHours}
-                onChange={(e) => set("durationHours")(e.target.value)}
-                placeholder="z. B. 4"
-                className="bg-gray-900 border-gray-700 text-white mt-1"
-              />
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-cyan-400 uppercase tracking-wide">Zeitplan</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <Label className="text-sm font-medium text-gray-300 block mb-2">Datum</Label>
+                <Input
+                  type="date"
+                  value={form.date}
+                  onChange={(e) => set("date")(e.target.value)}
+                  className="bg-gray-800/50 border border-cyan-500/20 hover:border-cyan-500/40 focus:border-cyan-400 text-white rounded-lg px-4 py-3 transition-colors"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-300 block mb-2">Startzeit</Label>
+                <Input
+                  type="time"
+                  value={form.time}
+                  onChange={(e) => set("time")(e.target.value)}
+                  className="bg-gray-800/50 border border-cyan-500/20 hover:border-cyan-500/40 focus:border-cyan-400 text-white rounded-lg px-4 py-3 transition-colors"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-300 block mb-2">Dauer (Std.)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={form.durationHours}
+                  onChange={(e) => set("durationHours")(e.target.value)}
+                  placeholder="z. B. 4"
+                  className="bg-gray-800/50 border border-cyan-500/20 hover:border-cyan-500/40 focus:border-cyan-400 text-white placeholder-gray-500 rounded-lg px-4 py-3 transition-colors"
+                />
+              </div>
             </div>
           </div>
 
-          {/* Ausrüstung */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Label className="text-gray-300">Köder</Label>
-              <Input
-                value={form.bait}
-                onChange={(e) => set("bait")(e.target.value)}
-                placeholder="z. B. Gummifisch 12cm, Wurm"
-                className="bg-gray-900 border-gray-700 text-white mt-1"
-              />
+          {/* Ausrüstung & Köder */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-cyan-400 uppercase tracking-wide">Ausrüstung</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm font-medium text-gray-300 block mb-2">Köder</Label>
+                <Input
+                  value={form.bait}
+                  onChange={(e) => set("bait")(e.target.value)}
+                  placeholder="z. B. Gummifisch 12cm, Wurm"
+                  className="bg-gray-800/50 border border-cyan-500/20 hover:border-cyan-500/40 focus:border-cyan-400 text-white placeholder-gray-500 rounded-lg px-4 py-3 transition-colors"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-300 block mb-2">Begleiter</Label>
+                <Input
+                  value={form.companions}
+                  onChange={(e) => set("companions")(e.target.value)}
+                  placeholder="z. B. Tom, Lisa"
+                  className="bg-gray-800/50 border border-cyan-500/20 hover:border-cyan-500/40 focus:border-cyan-400 text-white placeholder-gray-500 rounded-lg px-4 py-3 transition-colors"
+                />
+              </div>
             </div>
             <div>
-              <Label className="text-gray-300">Begleiter</Label>
-              <Input
-                value={form.companions}
-                onChange={(e) => set("companions")(e.target.value)}
-                placeholder="z. B. Tom, Lisa"
-                className="bg-gray-900 border-gray-700 text-white mt-1"
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <Label className="text-gray-300">Ausrüstung</Label>
+              <Label className="text-sm font-medium text-gray-300 block mb-2">Ausrüstung Details</Label>
               <Textarea
                 value={form.gear}
                 onChange={(e) => set("gear")(e.target.value)}
-                placeholder="Ruten, Rollen, Schnurstärke, Kescher ..."
-                className="bg-gray-900 border-gray-700 text-white mt-1 min-h-[70px]"
+                placeholder="Ruten, Rollen, Schnurstärke, Kescher..."
+                className="bg-gray-800/50 border border-cyan-500/20 hover:border-cyan-500/40 focus:border-cyan-400 text-white placeholder-gray-500 rounded-lg px-4 py-3 transition-colors min-h-[90px] resize-none"
               />
             </div>
           </div>
 
           {/* Checkliste & Notizen */}
-          <div>
-            <Label className="text-gray-300">Packliste / Checkliste (je Zeile ein Punkt)</Label>
-            <Textarea
-              value={form.checklist}
-              onChange={(e) => set("checklist")(e.target.value)}
-              placeholder={"Angelschein\nKescher\nLebendfutter\nThermoskanne"}
-              className="bg-gray-900 border-gray-700 text-white mt-1 min-h-[90px]"
-            />
-          </div>
-          <div>
-            <Label className="text-gray-300">Notizen</Label>
-            <Textarea
-              value={form.notes}
-              onChange={(e) => set("notes")(e.target.value)}
-              placeholder="Wetter, Pegelstand, Beobachtungen ..."
-              className="bg-gray-900 border-gray-700 text-white mt-1 min-h-[70px]"
-            />
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-cyan-400 uppercase tracking-wide">Vorbereitung</h3>
+            <div>
+              <Label className="text-sm font-medium text-gray-300 block mb-2">Packliste / Checkliste</Label>
+              <Textarea
+                value={form.checklist}
+                onChange={(e) => set("checklist")(e.target.value)}
+                placeholder="Ein Punkt pro Zeile:&#10;Angelschein&#10;Kescher&#10;Lebendfutter&#10;Thermoskanne"
+                className="bg-gray-800/50 border border-cyan-500/20 hover:border-cyan-500/40 focus:border-cyan-400 text-white placeholder-gray-500 rounded-lg px-4 py-3 transition-colors min-h-[100px] resize-none"
+              />
+            </div>
+            <div>
+              <Label className="text-sm font-medium text-gray-300 block mb-2">Notizen</Label>
+              <Textarea
+                value={form.notes}
+                onChange={(e) => set("notes")(e.target.value)}
+                placeholder="Wetter-Vorhersage, Pegelstand, wichtige Beobachtungen..."
+                className="bg-gray-800/50 border border-cyan-500/20 hover:border-cyan-500/40 focus:border-cyan-400 text-white placeholder-gray-500 rounded-lg px-4 py-3 transition-colors min-h-[90px] resize-none"
+              />
+            </div>
           </div>
 
-          <div className="flex gap-3 justify-end pt-2 sticky bottom-0 bg-gray-950 pb-1">
-            <Button type="button" variant="outline" onClick={onClose} className="border-gray-700">
+          <div className="flex gap-3 justify-end pt-4 border-t border-cyan-500/10">
+            <Button type="button" variant="outline" onClick={onClose} className="border-gray-700 hover:bg-gray-800/50">
               Abbrechen
             </Button>
-            <Button type="submit" disabled={saving || !form.title.trim()} className="bg-emerald-600 hover:bg-emerald-700">
+            <Button type="submit" disabled={saving || !form.title.trim()} className="bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white font-semibold rounded-lg">
               {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-              {plan ? "Änderungen speichern" : "Trip speichern"}
+              {plan ? "Speichern" : "Erstellen"}
             </Button>
           </div>
         </form>
