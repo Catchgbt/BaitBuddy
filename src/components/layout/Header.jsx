@@ -35,13 +35,15 @@ export default function Header({
     setPlanLoading(true);
     try {
       const [currentUser, planStatusResponse, plans] = await Promise.all([
-        User.me(),
+        User.me().catch(() => null),
         functions.invoke('getPlanStatus').catch(() => null),
         FishingPlan.filter({ is_active: true }).catch(() => [])
       ]);
 
-      setUser(currentUser);
-      setActiveTripsCount(plans.length);
+      if (currentUser) {
+        setUser(currentUser);
+      }
+      setActiveTripsCount(plans?.length || 0);
 
       const alerts = currentUser?.settings?.weather_alerts || {};
       let count = 0;
