@@ -65,7 +65,7 @@ export default function Dashboard() {
       try {
         await functions.invoke('cleanupOldSessions');
       } catch (error) {
-        console.log('Session cleanup (ignoriert):', error.message);
+        // Session cleanup errors are non-critical
       }
     };
     
@@ -155,7 +155,7 @@ export default function Dashboard() {
             );
           });
         } catch (error) {
-          console.warn('Geolocation error:', error);
+          // Geolocation fallback to cached location
         }
       }
 
@@ -182,7 +182,7 @@ export default function Dashboard() {
               await cacheWeatherData(userLocation.lat, userLocation.lon, weatherData.current);
             }
           } catch (error) {
-            console.warn('Fehler beim Laden von Wetterdaten:', error);
+            // Weather fetch error - will use cached data
           }
         }
 
