@@ -40,9 +40,9 @@ function MapController() {
     clubs: true,
     parks: true,
     waters: true,
-    angelshops: false,
-    angelparksEu: false,
-    tiefenkarten: false,
+    angelshops: true,
+    angelparksEu: true,
+    tiefenkarten: true,
     forellenseen: false,
     bathymetrie: false,
     fluesse: false
