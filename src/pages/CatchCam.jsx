@@ -491,7 +491,9 @@ function CatchCamInner() {
               <div className="absolute top-3 right-3 bg-black/60 text-white px-3 py-2 rounded-lg backdrop-blur-sm text-sm">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4" />
-                  {weather ? `${weather.weather[0].main}, ${weather.main.temp}°C` : "Wetter lädt..."}
+                  {weather && weather.weather?.[0]?.main && weather.main?.temp
+                    ? `${weather.weather[0].main}, ${weather.main.temp}°C`
+                    : "Wetter lädt..."}
                 </div>
                 {currentLocation && (
                   <div className="text-xs text-gray-300 mt-1">

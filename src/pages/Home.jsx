@@ -89,7 +89,10 @@ function RotatingGreeting({ userName }) {
   }, []);
 
   const pool = getGreetingPool();
-  const text = pool[greetingIndex % pool.length](userName);
+  if (!pool || pool.length === 0) return null;
+  const greeting = pool[greetingIndex % pool.length];
+  if (typeof greeting !== 'function') return null;
+  const text = greeting(userName);
 
   return (
     <AnimatePresence mode="wait">
