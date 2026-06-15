@@ -1,27 +1,27 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { Droplets, TrendingUp } from 'lucide-react';
 
-/**
- * HydrographicAnalysis - Hydrographische Datenanalyse & Visualisierung
- * - Wasserströmungen
- * - Tiefenprofile
- * - Temperaturgradienten
- * - Qualitätsmetriken
- */
 function HydrographicAnalysis({ visible = false, bounds = null }) {
   const map = useMap();
   const [analysis, setAnalysis] = useState(null);
   const [metrics, setMetrics] = useState(null);
-  const [layers, setLayers] = useState([]);
+  const layersRef = useRef([]);
 
-  // Analyze water conditions in bounding box
   const analyzeWaterData = useCallback(async (bounds) => {
-    if (!bounds) return;
+    if (!bounds || !map) return;
+
+    layersRef.current.forEach((layer) => {
+      try {
+        if (map.hasLayer(layer)) map.removeLayer(layer);
+      } catch (err) {
+        console.warn('Error removing layer:', err);
+      }
+    });
+    layersRef.current = [];
 
     try {
-      // Fetch hydrographic data from available sources
       const data = await Promise.all([
         fetchWaterQualityData(bounds),
         fetchWaterTemperatureData(bounds),
@@ -31,7 +31,6 @@ function HydrographicAnalysis({ visible = false, bounds = null }) {
 
       const [quality, temperature, flow, depth] = data;
 
-      // Calculate metrics
       const metrics = {
         avgTemperature: temperature?.avg || null,
         avgPH: quality?.avgPH || null,
@@ -96,7 +95,7 @@ function HydrographicAnalysis({ visible = false, bounds = null }) {
     );
 
     heatmapLayer.addTo(map);
-    setLayers((prev) => [...prev, heatmapLayer]);
+    layersRef.current.push(heatmapLayer);
   };
 
   const renderFlowVectors = (map, vectors) => {
@@ -121,7 +120,7 @@ function HydrographicAnalysis({ visible = false, bounds = null }) {
       });
 
       marker.addTo(map);
-      setLayers((prev) => [...prev, marker]);
+      layersRef.current.push(marker);
     });
   };
 
@@ -139,7 +138,7 @@ function HydrographicAnalysis({ visible = false, bounds = null }) {
       });
 
       line.addTo(map);
-      setLayers((prev) => [...prev, line]);
+      layersRef.current.push(line);
     });
   };
 
@@ -164,20 +163,24 @@ function HydrographicAnalysis({ visible = false, bounds = null }) {
 
       polygon.bindPopup(`Quality: ${zone.quality.toUpperCase()}`);
       polygon.addTo(map);
-      setLayers((prev) => [...prev, polygon]);
+      layersRef.current.push(polygon);
     });
   };
 
-  // Cleanup layers
   React.useEffect(() => {
     return () => {
-      layers.forEach((layer) => {
-        if (map.hasLayer(layer)) {
-          map.removeLayer(layer);
+      layersRef.current.forEach((layer) => {
+        try {
+          if (map?.hasLayer(layer)) {
+            map.removeLayer(layer);
+          }
+        } catch (err) {
+          console.warn('Error removing layer:', err);
         }
       });
+      layersRef.current = [];
     };
-  }, [layers, map]);
+  }, [map]);
 
   return (
     <div className="absolute top-4 right-4 z-30 bg-gray-900/80 backdrop-blur-sm rounded-lg border border-gray-700 p-3 text-xs max-w-xs">
