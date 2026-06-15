@@ -92,9 +92,10 @@ function LayoutContent({ children, currentPageName }) {
     };
 
     applyDarkMode(darkModeQuery.matches);
-    darkModeQuery.addEventListener('change', (e) => applyDarkMode(e.matches));
+    const handleDarkModeChange = (e) => applyDarkMode(e.matches);
+    darkModeQuery.addEventListener('change', handleDarkModeChange);
 
-    return () => darkModeQuery.removeEventListener('change', (e) => applyDarkMode(e.matches));
+    return () => darkModeQuery.removeEventListener('change', handleDarkModeChange);
   }, []);
 
   const refreshUser = async () => {
@@ -146,18 +147,23 @@ function LayoutContent({ children, currentPageName }) {
       });
     }, 30000);
 
-    const stopSession = () => {
+    const stopSession = async () => {
       if (!sessionDbId) return;
-      entities.UsageSession.update(sessionDbId, {
-        status: 'stopped',
-        stopped_at: new Date().toISOString()
-      });
+      try {
+        await entities.UsageSession.update(sessionDbId, {
+          status: 'stopped',
+          stopped_at: new Date().toISOString()
+        });
+      } catch (error) {
+        console.error('Error stopping session:', error);
+      }
     };
 
-    window.addEventListener('beforeunload', stopSession);
+    const handleBeforeUnload = () => { stopSession(); };
+    window.addEventListener('beforeunload', handleBeforeUnload);
     return () => {
       clearInterval(heartbeat);
-      window.removeEventListener('beforeunload', stopSession);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       stopSession();
     };
   }, [user?.email]);
