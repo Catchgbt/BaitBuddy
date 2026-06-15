@@ -76,9 +76,9 @@ router.post('/premium/activate-demo', requireAuth, async (req, res) => {
 });
 
 // Aktiviert einen gekauften Plan nach Zahlungsverifikation.
-// Verlangt purchase_token (Google Play) oder transaction_id (sonstige) zur Validierung.
-// Speichert Transaktionsdaten für Audit/Verifizierung.
-// Schützt vor Race Conditions durch Versionierung.
+// SECURITY NOTE: This endpoint requires payment provider verification (Google Play, Stripe, etc.)
+// Current implementation stores payment tokens but does NOT verify them against payment provider APIs.
+// TODO: Implement actual payment verification before using in production.
 router.post('/premium/activate', requireAuth, async (req, res) => {
   const { plan_id, purchase_token, product_id, transaction_id, payment_method } = req.body || {};
 
@@ -90,6 +90,14 @@ router.post('/premium/activate', requireAuth, async (req, res) => {
       error: 'purchase_token (Google Play) oder transaction_id erforderlich — keine Zahlung verifiziert'
     });
   }
+
+  // TODO: Verify tokens against Google Play API, Stripe, or other payment provider
+  // For now, just log the activation for audit purposes
+  const tokenForAudit = purchase_token || transaction_id;
+  console.warn(
+    `[UNVERIFIED PAYMENT] User ${req.user.email} activating plan ${plan_id} ` +
+    `with token: ${tokenForAudit.substring(0, 20)}... (VERIFY AGAINST PAYMENT PROVIDER)`
+  );
 
   const current = req.user.user_metadata || {};
   const isYearly = /friends$/.test(plan_id);
