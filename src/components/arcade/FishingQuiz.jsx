@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -151,21 +151,21 @@ export default function FishingQuiz() {
     }, 2000);
   };
 
-  const handleAnswer = (index) => {
+  const handleAnswer = useCallback((index) => {
     if (showResult) return;
-    
+
     setSelectedAnswer(index);
     setShowResult(true);
-    
+
     const isCorrect = index === questions[currentQuestion].correct;
     if (isCorrect) {
-      setScore(score + 1);
+      setScore(prev => prev + 1);  // Use functional update to avoid stale closure
     }
-    
+
     setTimeout(() => {
       nextQuestion();
     }, 2000);
-  };
+  }, [showResult, questions, currentQuestion]);
 
   const nextQuestion = () => {
     if (currentQuestion + 1 < questions.length) {

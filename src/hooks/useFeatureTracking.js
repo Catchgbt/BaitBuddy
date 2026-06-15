@@ -45,7 +45,9 @@ export function useFeatureTracking(featureId) {
           if (sessionDbIdRef.current) {
             entities.UsageSession.update(sessionDbIdRef.current, {
               last_heartbeat: new Date().toISOString(),
-            }).catch(() => {});
+            }).catch((error) => {
+              console.warn(`useFeatureTracking(${featureId}) heartbeat failed:`, error);
+            });
           }
         }, 30000);
       } catch (error) {
