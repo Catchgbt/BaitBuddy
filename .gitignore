@@ -43,5 +43,6 @@ android/keystore.properties
 android/app/*.keystore
 android/app/*.jks
 *.aab
-*.apkbathymetry_data/
+*.apk
+bathymetry_data/
 *.log

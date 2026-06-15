@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { auth } from "@/api/auth";
 import { api } from "@/api/frontendClient";
-import { ChevronRight, Zap, Users, Clock, Award } from "lucide-react";
+import { ChevronRight, Zap, Award } from "lucide-react";
 
 function getCountdown(endDate) {
   const now = new Date();

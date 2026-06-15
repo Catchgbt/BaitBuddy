@@ -172,7 +172,13 @@ export default function LogSection() {
         updateMutation.mutate({ id: editing, payload });
       }
     } catch {
-      const q = JSON.parse(localStorage.getItem("fishmaster_catch_queue") || "[]");
+      let q = [];
+      try {
+        const parsed = JSON.parse(localStorage.getItem("fishmaster_catch_queue") || "[]");
+        if (Array.isArray(parsed)) q = parsed;
+      } catch {
+        q = [];
+      }
       q.push(payload);
       localStorage.setItem("fishmaster_catch_queue", JSON.stringify(q));
       toast.info("Offline gespeichert - wird synchronisiert.");

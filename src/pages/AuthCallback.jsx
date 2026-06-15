@@ -22,12 +22,16 @@ export default function AuthCallback() {
     supabase.auth.getSession().then(({ data, error }) => {
       if (unsubscribed) return;
       if (error) { setStatus('Fehler: ' + error.message); return; }
-      if (data.session?.access_token) {
+      if (data?.session?.access_token) {
         api.setToken(data.session.access_token);
         if (data.session.refresh_token) api.setRefreshToken(data.session.refresh_token);
         subscription.unsubscribe();
         unsubscribed = true;
         window.location.replace('/Dashboard');
+      }
+    }).catch((err) => {
+      if (!unsubscribed) {
+        setStatus('Fehler: ' + (err?.message || 'Anmeldung konnte nicht verarbeitet werden.'));
       }
     });
 

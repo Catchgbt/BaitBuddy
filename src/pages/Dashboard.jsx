@@ -31,8 +31,8 @@ export default function Dashboard() {
   const [nearestSpots, setNearestSpots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [pullStart, setPullStart] = useState(0);
-  const [pullDistance, setPullDistance] = useState(0);
+  const pullStartRef = React.useRef(0);
+  const pullDistanceRef = React.useRef(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
@@ -54,9 +54,10 @@ export default function Dashboard() {
         `Willkommen, ${firstName}. Heute könnte dein bester Fangtag werden.`
       ];
       const greeting = greetings[Math.floor(Math.random() * greetings.length)];
-      setTimeout(() => {
+      const greetingTimeout = setTimeout(() => {
         speak(greeting, { rate: 0.9, pitch: 1 });
       }, 500);
+      return () => clearTimeout(greetingTimeout);
     }
   }, [user, greetingPlayed, speak]);
 
@@ -74,27 +75,27 @@ export default function Dashboard() {
 
     const handleTouchStart = (e) => {
       if (window.scrollY === 0) {
-        setPullStart(e.touches[0].clientY);
+        pullStartRef.current = e.touches[0].clientY;
       }
     };
 
     const handleTouchMove = (e) => {
-      if (pullStart > 0) {
-        const distance = e.touches[0].clientY - pullStart;
+      if (pullStartRef.current > 0) {
+        const distance = e.touches[0].clientY - pullStartRef.current;
         if (distance > 0 && distance < 150) {
-          setPullDistance(distance);
+          pullDistanceRef.current = distance;
         }
       }
     };
 
     const handleTouchEnd = async () => {
-      if (pullDistance > 80) {
+      if (pullDistanceRef.current > 80) {
         setIsRefreshing(true);
         await loadData();
         setIsRefreshing(false);
       }
-      setPullStart(0);
-      setPullDistance(0);
+      pullStartRef.current = 0;
+      pullDistanceRef.current = 0;
     };
 
     window.addEventListener('touchstart', handleTouchStart, { passive: true });

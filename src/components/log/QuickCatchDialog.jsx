@@ -355,7 +355,13 @@ export default function QuickCatchDialog() {
   const saveDraft = () => {
     triggerHaptic('light');
     playSound('click');
-    const drafts = JSON.parse(localStorage.getItem("fishmaster_drafts") || "[]");
+    let drafts = [];
+    try {
+      const parsed = JSON.parse(localStorage.getItem("fishmaster_drafts") || "[]");
+      if (Array.isArray(parsed)) drafts = parsed;
+    } catch {
+      drafts = [];
+    }
     drafts.push({ ...form, saved_at: new Date().toISOString() });
     localStorage.setItem("fishmaster_drafts", JSON.stringify(drafts));
     toast.success("Als Entwurf gespeichert (offline verfügbar)");
@@ -489,7 +495,13 @@ export default function QuickCatchDialog() {
         points_earned: form.length_cm ? (1 + Math.floor(parseFloat(form.length_cm)/10)) : 1
       };
       
-      const q = JSON.parse(localStorage.getItem("fishmaster_catch_queue") || "[]");
+      let q = [];
+      try {
+        const parsed = JSON.parse(localStorage.getItem("fishmaster_catch_queue") || "[]");
+        if (Array.isArray(parsed)) q = parsed;
+      } catch {
+        q = [];
+      }
       q.push(catchData);
       localStorage.setItem("fishmaster_catch_queue", JSON.stringify(q));
       
