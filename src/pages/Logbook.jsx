@@ -237,11 +237,31 @@ export default function Logbook() {
     e.preventDefault();
     if (!species?.trim()) { toast.error("Bitte Fischart angeben"); return; }
 
+    // P3.1, P3.2: Validate numeric inputs with bounds
+    let parsedLength = null;
+    let parsedWeight = null;
+
+    if (lengthCm?.trim()) {
+      parsedLength = parseFloat(lengthCm);
+      if (isNaN(parsedLength) || parsedLength < 0.1 || parsedLength > 500) {
+        toast.error("Länge muss zwischen 0,1 und 500 cm liegen");
+        return;
+      }
+    }
+
+    if (weightKg?.trim()) {
+      parsedWeight = parseFloat(weightKg);
+      if (isNaN(parsedWeight) || parsedWeight < 0.1 || parsedWeight > 1000) {
+        toast.error("Gewicht muss zwischen 0,1 und 1000 kg liegen");
+        return;
+      }
+    }
+
     const catchData = {
       species: species.trim(),
       spot_id: spotId || null,
-      length_cm: lengthCm ? parseFloat(lengthCm) : null,
-      weight_kg: weightKg ? parseFloat(weightKg) : null,
+      length_cm: parsedLength,
+      weight_kg: parsedWeight,
       bait_used: baitUsed.trim() || null,
       photo_url: photoUrl || null,
       notes: notes.trim() || null,
