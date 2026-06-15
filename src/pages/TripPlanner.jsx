@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { User } from "@/entities/User";
-import { analytics } from "@/api/frontendClient";
+import { analytics, events } from "@/api/frontendClient";
+import { useEventActivityTracking } from "@/hooks/useEventActivityTracking";
 import PremiumGuard from "@/components/premium/PremiumGuard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,6 +59,7 @@ function formatDateTime(iso) {
 
 function TripPlannerContent() {
   useFeatureTracking("fishing_plan");
+  const { trackTripFinish } = useEventActivityTracking();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -66,10 +68,23 @@ function TripPlannerContent() {
   const [editingNotes, setEditingNotes] = useState({});
   const [formOpen, setFormOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState(null);
+  const [activeEventId, setActiveEventId] = useState(null);
 
   useEffect(() => {
     loadPlans();
     loadOfflineNotes();
+
+    const loadActiveEvent = async () => {
+      try {
+        const event = await events.getActiveEvent();
+        if (event?.active_event?.id) {
+          setActiveEventId(event.active_event.id);
+        }
+      } catch {
+        // Event loading non-critical
+      }
+    };
+    loadActiveEvent();
   }, []);
 
   const loadOfflineNotes = () => {
@@ -148,6 +163,8 @@ function TripPlannerContent() {
       window.dispatchEvent(new Event("active-trips-updated"));
       if (newState) {
         analytics.track({ eventName: "fishing_trip_started", properties: { target_fish: plan.target_fish } });
+      } else if (activeEventId) {
+        trackTripFinish(activeEventId);
       }
       toast.success(newState ? "Trip aktiviert" : "Trip deaktiviert");
     } catch (error) {

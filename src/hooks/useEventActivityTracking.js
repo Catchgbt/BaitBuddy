@@ -97,6 +97,32 @@ export function useEventActivityTracking() {
     }
   };
 
+  // Track catch submission
+  const trackCatchSubmission = async (eventId) => {
+    if (!eventId) return;
+    try {
+      const result = await events.trackActivity(eventId, 'catch_logged');
+      if (result?.ok) {
+        console.log(`[Event] +30 Punkte für Fang-Einreichung`);
+      }
+    } catch (error) {
+      console.error('Fehler beim Tracken der Fang-Aktivität:', error);
+    }
+  };
+
+  // Track trip completion
+  const trackTripFinish = async (eventId) => {
+    if (!eventId) return;
+    try {
+      const result = await events.trackActivity(eventId, 'trip_completed');
+      if (result?.ok) {
+        console.log(`[Event] +50 Punkte für Trip-Abschluss`);
+      }
+    } catch (error) {
+      console.error('Fehler beim Tracken der Trip-Aktivität:', error);
+    }
+  };
+
   return {
     trackTripCompletion,
     trackAIChat,
@@ -104,6 +130,8 @@ export function useEventActivityTracking() {
     trackPhotoAnalysis,
     trackFishingRecommendation,
     trackSpotAnalysis,
-    trackWeatherCheck
+    trackWeatherCheck,
+    trackCatchSubmission,
+    trackTripFinish
   };
 }
