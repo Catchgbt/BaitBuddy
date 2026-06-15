@@ -131,9 +131,11 @@ export default function Dashboard() {
           const location = JSON.parse(savedLocation);
           if (location && location.lat != null && location.lon != null) {
             userLocation = { lat: location.lat, lon: location.lon };
+          } else {
+            console.warn('Invalid geolocation format in localStorage');
           }
         } catch (parseError) {
-          console.warn('Location parse error:', parseError);
+          console.error('Error parsing user location:', parseError);
         }
       }
 

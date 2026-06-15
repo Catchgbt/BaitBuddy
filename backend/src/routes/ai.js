@@ -304,13 +304,14 @@ Antworte AUSSCHLIESSLICH mit einem gültigen JSON-Objekt in exakt diesem Format,
     }
 
     if (!recommendation || typeof recommendation.summary !== 'string' || !recommendation.summary.trim()) {
-      return res.status(502).json({ error: 'KI lieferte keine gültige Empfehlung' });
+      console.error('Invalid recommendation format:', recommendation);
+      return res.status(400).json({ ok: false, error: 'KI lieferte keine gültige Empfehlung', data: null });
     }
 
     return res.json({ ok: true, data: { recommendation, catchCount, weather } });
   } catch (e) {
     console.error('[Fishing Recommendation Error]', e.message);
-    return res.status(500).json({ error: e.message });
+    return res.status(500).json({ ok: false, error: e.message, data: null });
   }
 });
 

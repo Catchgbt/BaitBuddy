@@ -57,6 +57,11 @@ router.post('/support/tickets', requireAuth, async (req, res) => {
 
     const ticket = data?.[0];
 
+    if (!ticket || !ticket.id) {
+      console.error('Ticket wurde erstellt, aber ID konnte nicht gelesen werden');
+      return res.status(500).json({ error: 'Ticket-ID konnte nicht abgerufen werden' });
+    }
+
     // Email an Support versendet
     if (emailTransporter) {
       const supportEmail = process.env.SUPPORT_EMAIL;

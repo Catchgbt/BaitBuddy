@@ -16,8 +16,8 @@ const filterCatchUpdate = (body) => {
 
 router.get('/catches', requireAuth, async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 50;
-    const offset = parseInt(req.query.offset) || 0;
+    const limit = Math.max(1, parseInt(req.query.limit) || 50);
+    const offset = Math.max(0, parseInt(req.query.offset) || 0);
 
     if (!req.user?.email) {
       return res.status(401).json({ error: 'Benutzer-E-Mail nicht verfügbar' });
