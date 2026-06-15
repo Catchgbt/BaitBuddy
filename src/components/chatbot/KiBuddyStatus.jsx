@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { User } from "@/entities/User";
 import { BrainCircuit } from "lucide-react";
 
 export default function KiBuddyStatus() {
   const [text, setText] = useState("");
   const [user, setUser] = useState(null);
+  const timeoutRef = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -34,7 +35,11 @@ export default function KiBuddyStatus() {
           }
         }
 
-        setTimeout(() => setText(""), 15000);
+        // Clear previous timeout if it exists
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+        timeoutRef.current = setTimeout(() => setText(""), 15000);
       }
     };
 
@@ -45,6 +50,9 @@ export default function KiBuddyStatus() {
     return () => {
       if (typeof window !== 'undefined') {
         window.removeEventListener('kiResponse', handleKiResponse);
+      }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
     };
   }, []);

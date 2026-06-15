@@ -120,21 +120,24 @@ function applySpecials(board, toClearSet) {
 }
 
 function dropAndRefill(board) {
+  // Create immutable copy to avoid direct mutation
+  const newBoard = board.map(row => [...row]);
   for (let c = 0; c < SIZE; c++) {
     let write = SIZE - 1;
     for (let r = SIZE - 1; r >= 0; r--) {
-      if (board[r][c]) {
+      if (newBoard[r][c]) {
         if (write !== r) {
-          board[write][c] = board[r][c];
-          board[r][c] = null;
+          newBoard[write][c] = newBoard[r][c];
+          newBoard[r][c] = null;
         }
         write--;
       }
     }
     for (let r = write; r >= 0; r--) {
-      board[r][c] = newCell();
+      newBoard[r][c] = newCell();
     }
   }
+  return newBoard;
 }
 
 function makeQuest() {
@@ -300,8 +303,9 @@ function Match3QuestGame() {
         const [r, c] = key.split(",").map(Number);
         newBoard[r][c] = null;
       }
-      
-      dropAndRefill(newBoard);
+
+      const refilledBoard = dropAndRefill(newBoard);
+      newBoard = refilledBoard;
       await new Promise(resolve => setTimeout(resolve, 400));
     }
     

@@ -153,11 +153,12 @@ export default function CommunitySection() {
   });
 
   const handleCreatePost = () => {
-    if (!newPost.text.trim()) {
+    const trimmedText = newPost.text.trim();
+    if (!trimmedText) {
       toast.warning('Bitte gib einen Text ein');
       return;
     }
-    createPostMutation.mutate({ text: newPost.text, photo_url: newPost.photo_url || null });
+    createPostMutation.mutate({ text: trimmedText, photo_url: newPost.photo_url || null });
   };
 
   const updateLikeMutation = useOptimisticMutation({
