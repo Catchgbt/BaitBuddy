@@ -8,7 +8,7 @@ import { ai } from '@/api/frontendClient';
 import { useElevenLabsVoice } from '@/hooks/useElevenLabsVoice';
 import { speakWithBrowserTTS } from '@/components/utils/browserTTS';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Mic, Send, X, MessageCircle } from 'lucide-react';
+import { Mic, Send, X } from 'lucide-react';
 
 const STORAGE_KEY = 'buddy-widget-pos';
 const VISITED_PAGES_KEY = 'buddy-visited-pages';
@@ -354,12 +354,26 @@ export default function AIBuddyWidget() {
                       <p className="text-xs text-gray-500">Dein Angel-Buddy</p>
                     </div>
                   </div>
-                  <button
-                    onClick={handleCloseBubble}
-                    className="p-1 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0"
-                  >
-                    <X size={18} className="text-gray-600" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleVoiceInput}
+                      disabled={isLoading}
+                      className={`p-2 rounded-lg transition-colors flex-shrink-0 ${
+                        isListening
+                          ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse'
+                          : 'bg-green-500 hover:bg-green-600 text-white disabled:bg-gray-400'
+                      }`}
+                      title={isListening ? 'Höre zu...' : 'Mit Stimme fragen'}
+                    >
+                      <Mic size={16} />
+                    </button>
+                    <button
+                      onClick={handleCloseBubble}
+                      className="p-1 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0"
+                    >
+                      <X size={18} className="text-gray-600" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Messages */}
@@ -433,7 +447,7 @@ export default function AIBuddyWidget() {
                 </div>
 
                 {/* Input Section */}
-                <div className="border-t border-gray-200 bg-white p-3 space-y-2">
+                <div className="border-t border-gray-200 bg-white p-3">
                   {/* Text Input */}
                   <div className="flex gap-2">
                     <input
@@ -457,20 +471,6 @@ export default function AIBuddyWidget() {
                       <Send size={16} />
                     </button>
                   </div>
-
-                  {/* Voice Button */}
-                  <button
-                    onClick={handleVoiceInput}
-                    disabled={isLoading}
-                    className={`w-full py-2 px-4 rounded-lg font-semibold text-xs flex items-center justify-center gap-2 transition-colors ${
-                      isListening
-                        ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse'
-                        : 'bg-green-500 hover:bg-green-600 text-white disabled:bg-gray-300'
-                    }`}
-                  >
-                    <Mic size={14} />
-                    {isListening ? 'Höre zu...' : 'Sprich'}
-                  </button>
                 </div>
 
                 {/* Bubble Tail */}
@@ -479,24 +479,8 @@ export default function AIBuddyWidget() {
             )}
           </AnimatePresence>
 
-          {/* Avatar with Voice Toggle */}
+          {/* Avatar Button */}
           <div className="flex items-center gap-2">
-            {/* Voice Toggle Button */}
-            <motion.button
-              onClick={handleToggleBuddyVoice}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className={`p-2 rounded-full transition-colors ${
-                buddyVoiceEnabled
-                  ? 'bg-blue-500 text-white hover:bg-blue-600'
-                  : 'bg-gray-300 text-gray-600 hover:bg-gray-400'
-              }`}
-              title={buddyVoiceEnabled ? 'KI Buddy Voice aktiviert' : 'KI Buddy Voice deaktiviert'}
-            >
-              <MessageCircle size={18} />
-            </motion.button>
-
-            {/* Avatar Button */}
             <motion.button
               key={currentPage}
               onClick={() => {
