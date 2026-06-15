@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { functions } from "@/api/frontendClient";
 import { Spot } from "@/entities/Spot";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
@@ -126,9 +126,9 @@ export default function MapPage() {
       setMapCenter([currentLocation.lat, currentLocation.lon]);
       setMapZoom(13);
     }
-  }, [gpsLocation, currentLocation, spots]);
+  }, [gpsLocation, currentLocation, findNearestSpot]);
 
-  const findNearestSpot = async () => {
+  const findNearestSpot = useCallback(async () => {
     if (!gpsLocation || spots.length === 0) return;
 
     let nearest = null;
@@ -151,13 +151,13 @@ export default function MapPage() {
       setNearestSpot(nearest);
       calculateTravelTime(nearest);
     }
-  };
+  }, [gpsLocation, spots]);
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
+    const a =
       Math.sin(dLat/2) * Math.sin(dLat/2) +
       Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
       Math.sin(dLon/2) * Math.sin(dLon/2);
@@ -165,7 +165,41 @@ export default function MapPage() {
     return R * c;
   };
 
-  const calculateTravelTime = async (spot) => {
+  const parsePublicSpots = (response) => {
+    let locations = [];
+    if (Array.isArray(response?.features)) {
+      locations = response.features
+        .filter(f => f?.geometry?.coordinates?.length >= 2)
+        .map(feature => ({
+          id: feature.properties?.id,
+          name: feature.properties?.name,
+          category: feature.properties?.category,
+          coordinates: {
+            lng: feature.geometry.coordinates[0],
+            lat: feature.geometry.coordinates[1]
+          },
+          address: feature.properties?.address,
+          website: feature.properties?.website,
+          source: feature.properties?.source
+        }));
+    } else if (Array.isArray(response?.hotspots)) {
+      locations = response.hotspots
+        .filter(h => h.latitude != null && h.longitude != null)
+        .map(h => ({
+          id: h.id,
+          name: h.name,
+          category: h.category || 'spot',
+          water_type: h.water_type,
+          coordinates: {
+            lat: Number(h.latitude),
+            lng: Number(h.longitude)
+          }
+        }));
+    }
+    return locations;
+  };
+
+  const calculateTravelTime = useCallback(async (spot) => {
     if (!gpsLocation) return;
 
     try {
@@ -182,16 +216,15 @@ export default function MapPage() {
     } catch (error) {
       console.error('Fehler bei Fahrzeitberechnung:', error);
     }
-  };
+  }, [gpsLocation]);
 
-  const loadMapData = async () => {
+  const loadMapData = useCallback(async () => {
     setLoading(true);
     try {
       const userSpots = await Spot.list();
       const safeUserSpots = Array.isArray(userSpots) ? userSpots : [];
       setSpots(safeUserSpots);
 
-      // Nur Toast zeigen wenn tatsächlich Spots geladen wurden
       if (safeUserSpots.length > 0) {
         toast.success("Deine Spots geladen", {
           description: `${safeUserSpots.length} eigene Spots gefunden`,
@@ -204,41 +237,9 @@ export default function MapPage() {
       setSpots([]);
     }
 
-    // Versuche öffentliche Spots im Hintergrund zu laden (stillschweigend)
     try {
       const response = await functions.invoke('angelspotsGeojson');
-
-      let locations = [];
-      if (Array.isArray(response?.features)) {
-        locations = response.features
-          .filter(f => f?.geometry?.coordinates?.length >= 2)
-          .map(feature => ({
-            id: feature.properties?.id,
-            name: feature.properties?.name,
-            category: feature.properties?.category,
-            coordinates: {
-              lng: feature.geometry.coordinates[0],
-              lat: feature.geometry.coordinates[1]
-            },
-            address: feature.properties?.address,
-            website: feature.properties?.website,
-            source: feature.properties?.source
-          }));
-      } else if (Array.isArray(response?.hotspots)) {
-        locations = response.hotspots
-          .filter(h => h.latitude != null && h.longitude != null)
-          .map(h => ({
-            id: h.id,
-            name: h.name,
-            category: h.category || 'spot',
-            water_type: h.water_type,
-            coordinates: {
-              lat: Number(h.latitude),
-              lng: Number(h.longitude)
-            }
-          }));
-      }
-
+      const locations = parsePublicSpots(response);
       if (locations.length > 0) {
         setPublicLocations(locations);
         setShowPublicSpots(true);
@@ -248,44 +249,12 @@ export default function MapPage() {
     }
 
     setLoading(false);
-  };
+  }, []);
 
-  const loadPublicSpots = async () => {
+  const loadPublicSpots = useCallback(async () => {
     try {
       const response = await functions.invoke('angelspotsGeojson');
-
-      let locations = [];
-
-      if (Array.isArray(response?.features)) {
-        locations = response.features
-          .filter(f => f?.geometry?.coordinates?.length >= 2)
-          .map(feature => ({
-            id: feature.properties?.id,
-            name: feature.properties?.name,
-            category: feature.properties?.category,
-            coordinates: {
-              lng: feature.geometry.coordinates[0],
-              lat: feature.geometry.coordinates[1]
-            },
-            address: feature.properties?.address,
-            website: feature.properties?.website,
-            source: feature.properties?.source
-          }));
-      } else if (Array.isArray(response?.hotspots)) {
-        locations = response.hotspots
-          .filter(h => h.latitude != null && h.longitude != null)
-          .map(h => ({
-            id: h.id,
-            name: h.name,
-            category: h.category || 'spot',
-            water_type: h.water_type,
-            coordinates: {
-              lat: Number(h.latitude),
-              lng: Number(h.longitude)
-            }
-          }));
-      }
-
+      const locations = parsePublicSpots(response);
       setPublicLocations(locations);
       setShowPublicSpots(true);
 
@@ -298,51 +267,53 @@ export default function MapPage() {
       toast.error("Fehler beim Laden der öffentlichen Spots");
       setPublicLocations([]);
     }
-  };
+  }, []);
 
-  const handleMapClick = (latlng) => {
+  const handleMapClick = useCallback((latlng) => {
     setClickedCoords({ lat: latlng.lat, lng: latlng.lng });
     setShowAddModal(true);
-  };
+  }, []);
 
-  // AddSpotModal legt den Spot bereits selbst an (eigene Mutation) und ruft danach
-  // onSave auf. Hier nur die Kartendaten neu laden — kein zweites Spot.create,
-  // sonst würde der Spot doppelt gespeichert.
-  const handleAddSpot = async () => {
+  const handleAddSpot = useCallback(async () => {
     await loadMapData();
     setShowAddModal(false);
     setClickedCoords(null);
-  };
+  }, [loadMapData]);
 
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     setShowAddModal(false);
     setClickedCoords(null);
-  };
+  }, []);
 
-  const handleModeChange = (newMode) => {
+  const handleModeChange = useCallback((newMode) => {
     setMapMode(newMode);
     localStorage.setItem('mapMode', newMode);
     toast.success(`Modus gewechselt zu ${newMode === 'guided' ? 'Geführt' : newMode === 'simple' ? 'Einfach' : 'Erweitert'}`);
-  };
+  }, []);
 
-  const handleFeatureSelect = (featureId) => {
-    // Feature-Aktivierung basierend auf auswahl
+  const validSpots = useMemo(() =>
+    spots.filter(s => s.latitude != null && s.longitude != null),
+    [spots]
+  );
+
+  const validPublicLocations = useMemo(() =>
+    publicLocations.filter(l => l.coordinates?.lat != null && l.coordinates?.lng != null),
+    [publicLocations]
+  );
+
+  const handleFeatureSelect = useCallback((featureId) => {
     switch(featureId) {
       case 'relief-shading':
-        setShowHillshade(!showHillshade);
-        toast.success(showHillshade ? 'Relief-Shading deaktiviert' : 'Relief-Shading aktiviert');
+        setShowHillshade(v => !v);
         break;
       case '3d-terrain':
-        setShow3DTerrain(!show3DTerrain);
-        toast.success(show3DTerrain ? '3D-Terrain deaktiviert' : '3D-Terrain aktiviert');
+        setShow3DTerrain(v => !v);
         break;
       case 'satellite':
-        setShowSatellite(!showSatellite);
-        toast.success(showSatellite ? 'Satelliten-Bilder deaktiviert' : 'Satelliten-Bilder aktiviert');
+        setShowSatellite(v => !v);
         break;
       case 'hydrographic':
-        setShowHydrographic(!showHydrographic);
-        toast.success(showHydrographic ? 'Hydrographische Daten deaktiviert' : 'Hydrographische Daten aktiviert');
+        setShowHydrographic(v => !v);
         break;
       default:
         toast.info(`Feature "${featureId}" wurde selektiert`);
@@ -506,7 +477,7 @@ export default function MapPage() {
               </Marker>
             )}
 
-            {spots.filter(spot => spot.latitude != null && spot.longitude != null).map((spot) => (
+            {validSpots.map((spot) => (
               <Marker
                 key={spot.id}
                 position={[Number(spot.latitude), Number(spot.longitude)]}
@@ -531,10 +502,8 @@ export default function MapPage() {
               </Marker>
             ))}
 
-            {showPublicSpots && publicLocations.map((location) => {
-              const coords = location.coordinates || {};
-              if (coords.lat == null || coords.lng == null) return null;
-
+            {showPublicSpots && validPublicLocations.map((location) => {
+              const coords = location.coordinates;
               const categoryLabel =
                 location.category === 'club' ? 'Angelverein'
                 : location.category === 'spot' ? (location.water_type ? location.water_type.charAt(0).toUpperCase() + location.water_type.slice(1) : 'Angelspot')
@@ -552,13 +521,9 @@ export default function MapPage() {
                   <Popup>
                     <div className="min-w-[200px]">
                       <div className="font-semibold text-base mb-1">{location.name}</div>
-                      <div className="text-sm text-gray-600">
-                        {categoryLabel}
-                      </div>
+                      <div className="text-sm text-gray-600">{categoryLabel}</div>
                       {location.address && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          {location.address.city}
-                        </div>
+                        <div className="text-xs text-gray-500 mt-1">{location.address.city}</div>
                       )}
                     </div>
                   </Popup>
