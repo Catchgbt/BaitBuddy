@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { useLocation } from "@/components/location/LocationManager";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
 import TripLiveTicker from "@/components/LiveTrip/TripLiveTicker";
-import TripFormDialog from "@/components/LiveTrip/TripFormDialog";
+import TripForm from "@/components/LiveTrip/TripForm";
 
 // spot_info normalisieren (Objekt = neu, String = alte Datensätze).
 function readSpot(spotInfo) {
@@ -302,7 +302,14 @@ function TripPlannerContent() {
 
             {/* Detail */}
             <div className="lg:sticky lg:top-6 self-start">
-              {selectedPlan ? (
+              {formOpen ? (
+                <TripForm
+                  onClose={() => setFormOpen(false)}
+                  onSave={handleSaveTrip}
+                  plan={editingPlan}
+                  currentLocation={currentLocation}
+                />
+              ) : selectedPlan ? (
                 <TripDetail
                   plan={selectedPlan}
                   spot={readSpot(selectedPlan.spot_info)}
@@ -328,14 +335,6 @@ function TripPlannerContent() {
           </div>
         )}
       </div>
-
-      <TripFormDialog
-        open={formOpen}
-        onClose={() => setFormOpen(false)}
-        onSave={handleSaveTrip}
-        plan={editingPlan}
-        currentLocation={currentLocation}
-      />
     </div>
   );
 }
