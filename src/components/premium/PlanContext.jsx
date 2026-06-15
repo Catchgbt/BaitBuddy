@@ -19,11 +19,18 @@ export function PlanProvider({ children }) {
   const loadPlan = async () => {
     setLoading(true);
     let retries = 0;
-    const maxRetries = 10; // ~10 seconds
+    const maxRetries = 3; // max 3 retries, ~3s instead of 10s
 
     const tryLoad = async () => {
       try {
-        const response = await functions.invoke('getPlanStatus');
+        // Use Promise.race to enforce max 3s timeout per attempt
+        const response = await Promise.race([
+          functions.invoke('getPlanStatus'),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('getPlanStatus timeout')), 3000)
+          ),
+        ]);
+
         const payload = response?.data ?? response;
         console.log('[PlanContext] loadPlan response:', { payload, ok: payload?.ok, plan: payload?.plan });
         if (payload && payload.plan) {
@@ -43,7 +50,8 @@ export function PlanProvider({ children }) {
         // Retry if it looks like a token issue and we haven't exceeded retries
         if (error.message?.includes('Kein Token') && retries < maxRetries) {
           retries++;
-          await new Promise(r => setTimeout(r, 1000)); // Wait 1 second before retry
+          // Non-blocking: don't await setTimeout directly; use Promise instead
+          await new Promise(r => setTimeout(r, 500)); // 500ms delay between retries
           return await tryLoad();
         } else {
           console.error('[PlanContext] Giving up, setting to free');

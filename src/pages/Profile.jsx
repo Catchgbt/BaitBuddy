@@ -58,9 +58,10 @@ export default function ProfilePage() {
       // Lade Posts-Anzahl
       try {
         const posts = await entities.Post.filter({ created_by: currentUser.email });
-        setPostsCount(posts.length);
+        setPostsCount((posts && Array.isArray(posts)) ? posts.length : 0);
       } catch (error) {
         console.error('Fehler beim Laden der Posts:', error);
+        setPostsCount(0);
       }
 
       // Lade Plan-Status
@@ -72,32 +73,39 @@ export default function ProfilePage() {
         }
       } catch (error) {
         console.error('Fehler beim Laden des Plans:', error);
+        setCurrentPlan(null);
       }
 
       // Lade Chat-Historie (letzte 5 Konversationen)
       try {
         const messages = await entities.ChatMessage.list('-created_date', 100);
-        
-        // Gruppiere nach conversation_id
-        const groupedConversations = {};
-        messages.forEach(msg => {
-          if (!groupedConversations[msg.conversation_id]) {
-            groupedConversations[msg.conversation_id] = [];
-          }
-          groupedConversations[msg.conversation_id].push(msg);
-        });
-        
-        // Konvertiere zu Array und sortiere
-        const conversations = Object.entries(groupedConversations).map(([id, msgs]) => ({
-          id,
-          messages: msgs.sort((a, b) => new Date(a.created_date).getTime() - new Date(b.created_date).getTime()),
-          lastMessage: msgs.sort((a, b) => new Date(a.created_date).getTime() - new Date(b.created_date).getTime())[msgs.length - 1],
-          messageCount: msgs.length
-        })).sort((a, b) => new Date(b.lastMessage.created_date).getTime() - new Date(a.lastMessage.created_date).getTime());
-        
-        setChatHistory(conversations.slice(0, 5));
+
+        // P2.4: Null-check für messages (könnte null sein)
+        if (!messages || !Array.isArray(messages)) {
+          setChatHistory([]);
+        } else {
+          // Gruppiere nach conversation_id
+          const groupedConversations = {};
+          messages.forEach(msg => {
+            if (!groupedConversations[msg.conversation_id]) {
+              groupedConversations[msg.conversation_id] = [];
+            }
+            groupedConversations[msg.conversation_id].push(msg);
+          });
+
+          // Konvertiere zu Array und sortiere
+          const conversations = Object.entries(groupedConversations).map(([id, msgs]) => ({
+            id,
+            messages: msgs.sort((a, b) => new Date(a.created_date).getTime() - new Date(b.created_date).getTime()),
+            lastMessage: msgs.sort((a, b) => new Date(a.created_date).getTime() - new Date(b.created_date).getTime())[msgs.length - 1],
+            messageCount: msgs.length
+          })).sort((a, b) => new Date(b.lastMessage.created_date).getTime() - new Date(a.lastMessage.created_date).getTime());
+
+          setChatHistory(conversations.slice(0, 5));
+        }
       } catch (error) {
         console.error('Fehler beim Laden der Chat-Historie:', error);
+        setChatHistory([]);
       }
 
     } catch (error) {

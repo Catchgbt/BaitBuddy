@@ -139,11 +139,25 @@ const ENTITY_MAP = {
 function makeEntity(entityName) {
   const base = ENTITY_MAP[entityName];
 
+  // Generate unique offline ID (for retry-ability and deduplication)
+  const generateOfflineId = () => {
+    const uid = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    return `offline_${uid}`;
+  };
+
   const safeGet = async (path) => {
-    try { return await api.get(path); } catch { return []; }
+    try { return await api.get(path); } catch (error) {
+      // Return error indicator instead of silent [] — caller can differentiate
+      return { __error: true, message: error.message || 'Fehler beim Laden' };
+    }
   };
   const safePost = async (path, body) => {
-    try { return await api.post(path, body); } catch { return { id: `local_${Date.now()}`, ...body }; }
+    try { return await api.post(path, body); } catch (error) {
+      // Return error indicator instead of fake offline object
+      return { __error: true, message: error.message || 'Fehler beim Speichern' };
+    }
   };
 
   return {
@@ -154,6 +168,7 @@ function makeEntity(entityName) {
       if (orderBy) p.set('order', orderBy);
       const qs = p.toString() ? `?${p.toString()}` : '';
       const result = await safeGet(`${base}${qs}`);
+      if (result?.__error) return [];
       return Array.isArray(result) ? result : [];
     },
 
@@ -163,6 +178,7 @@ function makeEntity(entityName) {
       Object.entries(filters).forEach(([k, v]) => { if (v != null) p.set(k, String(v)); });
       const qs = p.toString() ? `?${p.toString()}` : '';
       const result = await safeGet(`${base}${qs}`);
+      if (result?.__error) return [];
       if (Array.isArray(result)) return result;
       if (result && Array.isArray(result.data)) return result.data;
       return [];
@@ -174,12 +190,14 @@ function makeEntity(entityName) {
     },
 
     create: async (data) => {
-      if (!base) return { id: `local_${Date.now()}`, ...data };
-      return safePost(base, data);
+      if (!base) return { id: generateOfflineId(), ...data };
+      const result = await safePost(base, data);
+      if (result?.__error) throw new Error(result.message);
+      return result;
     },
 
     bulkCreate: async (items = []) => {
-      if (!base) return items.map((d) => ({ id: `local_${Date.now()}_${Math.random().toString(36).slice(2)}`, ...d }));
+      if (!base) return items.map((d) => ({ id: generateOfflineId(), ...d }));
       try {
         const result = await api.post(`${base}/bulk`, items);
         return Array.isArray(result) ? result : [];

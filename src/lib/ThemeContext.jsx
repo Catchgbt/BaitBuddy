@@ -67,6 +67,7 @@ export const ThemeProvider = ({ children }) => {
   };
 
   const toggleTheme = async (newTheme = null) => {
+    const previousTheme = theme;
     const selectedTheme = newTheme || (theme === 'dark' ? 'light' : 'dark');
     setTheme(selectedTheme);
     applyTheme(selectedTheme, batteryMode, animationsEnabled);
@@ -81,10 +82,13 @@ export const ThemeProvider = ({ children }) => {
       });
     } catch (error) {
       console.error('Fehler beim Speichern des Themes:', error);
+      setTheme(previousTheme);
+      applyTheme(previousTheme, batteryMode, animationsEnabled);
     }
   };
 
   const toggleBatteryMode = async (enabled = null) => {
+    const previousBatteryMode = batteryMode;
     const newBatteryMode = enabled !== null ? enabled : !batteryMode;
     setBatteryMode(newBatteryMode);
     applyTheme(theme, newBatteryMode, animationsEnabled);
@@ -99,10 +103,13 @@ export const ThemeProvider = ({ children }) => {
       });
     } catch (error) {
       console.error('Fehler beim Speichern des Akku-Spar-Modus:', error);
+      setBatteryMode(previousBatteryMode);
+      applyTheme(theme, previousBatteryMode, animationsEnabled);
     }
   };
 
   const toggleAnimations = async (enabled = null) => {
+    const previousAnimationsEnabled = animationsEnabled;
     const newAnimationsEnabled = enabled !== null ? enabled : !animationsEnabled;
     setAnimationsEnabled(newAnimationsEnabled);
     applyTheme(theme, batteryMode, newAnimationsEnabled);
@@ -117,6 +124,8 @@ export const ThemeProvider = ({ children }) => {
       });
     } catch (error) {
       console.error('Fehler beim Speichern der Animationseinstellungen:', error);
+      setAnimationsEnabled(previousAnimationsEnabled);
+      applyTheme(theme, batteryMode, previousAnimationsEnabled);
     }
   };
 

@@ -237,11 +237,31 @@ export default function Logbook() {
     e.preventDefault();
     if (!species?.trim()) { toast.error("Bitte Fischart angeben"); return; }
 
+    // P3.1, P3.2: Validate numeric inputs with bounds
+    let parsedLength = null;
+    let parsedWeight = null;
+
+    if (lengthCm?.trim()) {
+      parsedLength = parseFloat(lengthCm);
+      if (isNaN(parsedLength) || parsedLength < 0.1 || parsedLength > 500) {
+        toast.error("Länge muss zwischen 0,1 und 500 cm liegen");
+        return;
+      }
+    }
+
+    if (weightKg?.trim()) {
+      parsedWeight = parseFloat(weightKg);
+      if (isNaN(parsedWeight) || parsedWeight < 0.1 || parsedWeight > 1000) {
+        toast.error("Gewicht muss zwischen 0,1 und 1000 kg liegen");
+        return;
+      }
+    }
+
     const catchData = {
       species: species.trim(),
       spot_id: spotId || null,
-      length_cm: lengthCm ? parseFloat(lengthCm) : null,
-      weight_kg: weightKg ? parseFloat(weightKg) : null,
+      length_cm: parsedLength,
+      weight_kg: parsedWeight,
       bait_used: baitUsed.trim() || null,
       photo_url: photoUrl || null,
       notes: notes.trim() || null,
@@ -361,9 +381,21 @@ export default function Logbook() {
                   onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
+                    // P3.5: Pre-check file size (max 10MB)
+                    if (file.size > 10 * 1024 * 1024) {
+                      toast.error("Datei zu groß (max. 10 MB)");
+                      return;
+                    }
                     setIsAnalyzing(true);
                     try {
-                      const { file_url } = await UploadFile({ file });
+                      const result = await UploadFile({ file });
+                      // P1.4: Validate file_url exists before using it
+                      if (!result?.file_url) {
+                        toast.error("Datei-Upload fehlgeschlagen");
+                        setIsAnalyzing(false);
+                        return;
+                      }
+                      const { file_url } = result;
                       setPhotoUrl(file_url);
                       toast.info("KI analysiert das Bild...");
                       const extractionSchema = {
@@ -387,8 +419,9 @@ export default function Logbook() {
                       } else {
                         toast.warning("KI konnte keine Daten erkennen");
                       }
-                    } catch {
+                    } catch (error) {
                       toast.error("KI-Analyse fehlgeschlagen");
+                      console.error("AI analysis error:", error);
                     } finally {
                       setIsAnalyzing(false);
                     }
