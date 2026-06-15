@@ -178,7 +178,7 @@ export default function Community() {
 
   const filteredPosts = posts.filter(post => {
     const query = searchQuery.toLowerCase();
-    const matchesText = post.text.toLowerCase().includes(query);
+    const matchesText = (post.text || "").toLowerCase().includes(query);
     const matchesCreator = getUserDisplayName(post.created_by).toLowerCase().includes(query);
     return matchesText || matchesCreator;
   });
@@ -660,7 +660,7 @@ export default function Community() {
                   </CardHeader>
 
                   <CardContent className="space-y-4">
-                    <p className="text-gray-200 whitespace-pre-wrap">{post.text}</p>
+                    {post.text && <p className="text-gray-200 whitespace-pre-wrap">{post.text}</p>}
 
                     {post.photo_url && (
                       <img 
