@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { events } from '@/api/frontendClient';
 import { auth } from '@/api/auth';
+import { useEventActivityTracking } from '@/hooks/useEventActivityTracking';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +26,7 @@ import { useFeatureTracking } from '@/hooks/useFeatureTracking';
 
 export default function EventDetails() {
   useFeatureTracking('event_details');
+  const { trackCatchSubmission } = useEventActivityTracking();
   const { eventId } = useParams();
   const navigate = useNavigate();
   const [event, setEvent] = useState(null);
@@ -100,6 +102,7 @@ export default function EventDetails() {
         catch_time: new Date().toISOString()
       });
 
+      trackCatchSubmission(eventId);
       toast.success('Fang erfolgreich eingereicht!');
       setSubmissionData({ species: '', length_cm: '', weight_kg: '', photo_url: '' });
       await loadData();
