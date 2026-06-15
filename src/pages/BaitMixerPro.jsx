@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { integrations } from "@/api/frontendClient";
+import { integrations, events } from "@/api/frontendClient";
 import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
+import { useEventActivityTracking } from "@/hooks/useEventActivityTracking";
 import PremiumGuard from "@/components/premium/PremiumGuard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ const TABS = [
 
 export default function BaitMixerPro() {
   useFeatureTracking("bait_recipe");
+  const { trackBaitMixer } = useEventActivityTracking();
   const queryClient = useQueryClient();
   const { triggerHaptic } = useHaptic();
 
@@ -52,6 +54,7 @@ export default function BaitMixerPro() {
   const [recipeName, setRecipeName] = useState("");
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState("");
+  const [activeEventId, setActiveEventId] = useState(null);
 
   // Prognose-Parameter
   const [waterTemp, setWaterTemp] = useState(15);
@@ -70,6 +73,20 @@ export default function BaitMixerPro() {
   // ──────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     loadData();
+  }, []);
+
+  useEffect(() => {
+    const loadActiveEvent = async () => {
+      try {
+        const event = await events.getActiveEvent();
+        if (event?.active_event?.id) {
+          setActiveEventId(event.active_event.id);
+        }
+      } catch {
+        // Event loading non-critical
+      }
+    };
+    loadActiveEvent();
   }, []);
 
   useEffect(() => {
@@ -330,6 +347,9 @@ Exportiert: ${exportData.exportDate}
       const ingredient = ingredients.find(i => i.name === ingName);
       return sum + ((ingredient?.cost_per_kg || 0) * percentage / 100);
     }, 0);
+    if (activeEventId) {
+      trackBaitMixer(activeEventId);
+    }
     saveRecipeMutation.mutate({
       name: recipeName.trim(),
       category: mode,

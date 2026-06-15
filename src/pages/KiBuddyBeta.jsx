@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { catchgbtChat } from "@/functions/catchgbtChat";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
 import { useElevenLabsVoice } from "@/hooks/useElevenLabsVoice";
+import { useEventActivityTracking } from "@/hooks/useEventActivityTracking";
+import { events } from "@/api/frontendClient";
 
 import PremiumGuard from "@/components/premium/PremiumGuard";
 
@@ -15,6 +17,7 @@ export default function KiBuddyBeta() {
 
 function KiBuddyBetaInner() {
   useFeatureTracking("ai_buddy");
+  const { trackAIChat } = useEventActivityTracking();
   const [messages, setMessages] = useState([{ role: "system", text: "Hallo! Ich bin Sabrina, deine KI-Angelexpertin. Stelle mir eine Frage!" }]);
   const [input, setInput] = useState("");
   const [status, setStatus] = useState("");
@@ -23,12 +26,27 @@ function KiBuddyBetaInner() {
   const [waveBars, setWaveBars] = useState([4, 4, 4, 4, 4]);
   const [interimTranscript, setInterimTranscript] = useState("");
   const [confidence, setConfidence] = useState(null);
+  const [activeEventId, setActiveEventId] = useState(null);
   const chatRef = useRef();
   const recRef = useRef(null);
   const waveRef = useRef(null);
   const timeoutRef = useRef(null);
   const retryRef = useRef(0);
   const { speak, stop: stopVoice, isSpeaking } = useElevenLabsVoice();
+
+  useEffect(() => {
+    const loadActiveEvent = async () => {
+      try {
+        const event = await events.getActiveEvent();
+        if (event?.active_event?.id) {
+          setActiveEventId(event.active_event.id);
+        }
+      } catch {
+        // Event loading non-critical
+      }
+    };
+    loadActiveEvent();
+  }, []);
 
   useEffect(() => {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
@@ -86,6 +104,9 @@ function KiBuddyBetaInner() {
       const ans = res?.reply || res?.message || "Keine Antwort erhalten.";
       retryRef.current = 0;
       setMessages(m => [...m, { role: "assistant", text: ans }]);
+      if (activeEventId) {
+        trackAIChat(activeEventId);
+      }
       if (tonAn) speakWithElevenLabs(ans);
       else setStatus("");
     } catch {
