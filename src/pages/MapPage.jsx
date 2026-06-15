@@ -318,7 +318,7 @@ export default function MapPage() {
       default:
         toast.info(`Feature "${featureId}" wurde selektiert`);
     }
-  };
+  }, []);
 
   if (loading) {
     return (
