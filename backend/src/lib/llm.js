@@ -55,5 +55,11 @@ export async function invokeLLM({ prompt, imageBase64 = null }) {
   }
 
   const data = await res.json();
-  return data.choices[0].message.content;
+
+  const content = data?.choices?.[0]?.message?.content;
+  if (!content || typeof content !== 'string') {
+    throw new Error(`LLM returned invalid response: missing or invalid content. Response: ${JSON.stringify(data).slice(0, 200)}`);
+  }
+
+  return content;
 }

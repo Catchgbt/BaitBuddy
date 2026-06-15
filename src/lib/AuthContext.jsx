@@ -31,11 +31,16 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
     } catch (error) {
       console.error('Auth check failed:', error);
-      setIsAuthenticated(false);
-      setUser(null);
+      // Only logout on auth failures (401/403), not on transient network errors
       if (error.status === 401 || error.status === 403) {
+        console.warn('Auth token invalid, logging out');
+        setIsAuthenticated(false);
+        setUser(null);
         auth.setToken(null);
         auth.setRefreshToken?.(null);
+      } else {
+        // For network errors, 500, etc: keep current auth state and set error flag
+        setAuthError(error.message);
       }
     } finally {
       setIsLoadingAuth(false);

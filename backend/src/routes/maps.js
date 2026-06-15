@@ -3,8 +3,19 @@ import fs from 'fs/promises';
 import path from 'path';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
+
+// Whitelist of valid source IDs
+const VALID_SOURCES = new Set([
+  'gebco_europe_tile',
+  'eu_dem_25m',
+  'copernicus_dem_30',
+  'osm_germany_pbf',
+  'opentopomap',
+  'wms_nrw_dtk'
+]);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const DATA_DIR = path.join(__dirname, '..', '..', 'data', 'maps');
@@ -62,7 +73,7 @@ function runPythonScript(args) {
  * GET /api/maps/status
  * Returns status of all available map datasets
  */
-router.get('/maps/status', async (req, res) => {
+router.get('/maps/status', requireAuth, async (req, res) => {
   try {
     await ensureDataDir();
 
@@ -101,8 +112,7 @@ router.get('/maps/status', async (req, res) => {
     res.json({
       success: true,
       maps,
-      totalSizeMb: (totalSize / (1024 * 1024)).toFixed(2),
-      dataDir: DATA_DIR,
+      totalSizeMb: (totalSize / (1024 * 1024)).toFixed(2)
     });
   } catch (error) {
     console.error('Error getting map status:', error);
@@ -180,14 +190,14 @@ router.get('/maps/available', (req, res) => {
  * POST /api/maps/download
  * Trigger download of a specific map source
  */
-router.post('/maps/download', async (req, res) => {
+router.post('/maps/download', requireAuth, async (req, res) => {
   try {
     const { sourceId } = req.body;
 
-    if (!sourceId) {
+    if (!sourceId || !VALID_SOURCES.has(sourceId)) {
       return res
         .status(400)
-        .json({ success: false, error: 'sourceId required' });
+        .json({ success: false, error: 'Invalid or missing sourceId' });
     }
 
     // Run download in background (don't wait)
@@ -215,7 +225,7 @@ router.post('/maps/download', async (req, res) => {
  * POST /api/maps/download-auto
  * Trigger automatic downloads (priority 1 sources)
  */
-router.post('/maps/download-auto', async (req, res) => {
+router.post('/maps/download-auto', requireAuth, async (req, res) => {
   try {
     // Run auto-download in background
     runPythonScript(['auto'])
@@ -241,9 +251,14 @@ router.post('/maps/download-auto', async (req, res) => {
  * DELETE /api/maps/:sourceId
  * Delete a downloaded map dataset
  */
-router.delete('/maps/:sourceId', async (req, res) => {
+router.delete('/maps/:sourceId', requireAuth, async (req, res) => {
   try {
     const { sourceId } = req.params;
+
+    if (!VALID_SOURCES.has(sourceId)) {
+      return res.status(400).json({ success: false, error: 'Invalid sourceId' });
+    }
+
     await ensureDataDir();
 
     // Find and delete related files
@@ -251,7 +266,8 @@ router.delete('/maps/:sourceId', async (req, res) => {
     let deleted = 0;
 
     for (const file of files) {
-      if (file.startsWith(sourceId)) {
+      // Only match files that have sourceId as a distinct component (prevent partial matches)
+      if (file.startsWith(sourceId + '_') || file === sourceId) {
         const filePath = path.join(DATA_DIR, file);
         try {
           await fs.unlink(filePath);

@@ -28,7 +28,7 @@ router.get('/events/templates', optionalAuth, async (req, res) => {
     return res.json(data || []);
   } catch (error) {
     console.error('Error fetching templates:', error);
-    res.status(500).json({ error: 'Fehler beim Laden der Templates' });
+    return res.status(500).json({ error: 'Fehler beim Laden der Templates' });
   }
 });
 
@@ -44,7 +44,7 @@ router.get('/events/templates/:templateId', optionalAuth, async (req, res) => {
     return res.json(data);
   } catch (error) {
     console.error('Error fetching template:', error);
-    res.status(500).json({ error: 'Fehler beim Laden des Templates' });
+    return res.status(500).json({ error: 'Fehler beim Laden des Templates' });
   }
 });
 
@@ -64,7 +64,7 @@ router.get('/events', optionalAuth, async (req, res) => {
     return res.json(data || []);
   } catch (error) {
     console.error('Error fetching events:', error);
-    res.status(500).json({ error: 'Fehler beim Laden der Events' });
+    return res.status(500).json({ error: 'Fehler beim Laden der Events' });
   }
 });
 
@@ -80,7 +80,7 @@ router.get('/events/:id', optionalAuth, async (req, res) => {
     return res.json(data);
   } catch (error) {
     console.error('Error fetching event:', error);
-    res.status(500).json({ error: 'Fehler beim Laden des Events' });
+    return res.status(500).json({ error: 'Fehler beim Laden des Events' });
   }
 });
 
@@ -115,13 +115,18 @@ router.post('/events', requireAuth, async (req, res) => {
     if (eventError || !event) return res.status(500).json({ error: eventError?.message || 'Event creation failed' });
 
     // 2. Creator als Teilnehmer hinzufügen
-    await supabase
+    const { error: participantError } = await supabase
       .from('event_participants')
       .insert({
         event_id: event.id,
         user_id: req.user.email,
         joined_at: new Date().toISOString()
       });
+
+    if (participantError) {
+      console.error('Fehler beim Hinzufügen des Event-Teilnehmers:', participantError);
+      return res.status(500).json({ error: 'Konnte Creator nicht als Teilnehmer hinzufügen' });
+    }
 
     // 3. Standard-Punkte-Konfiguration erstellen
     const { data: template } = await supabase
@@ -148,7 +153,7 @@ router.post('/events', requireAuth, async (req, res) => {
     return res.status(201).json(event);
   } catch (error) {
     console.error('Error creating event:', error);
-    res.status(500).json({ error: 'Fehler beim Erstellen des Events' });
+    return res.status(500).json({ error: 'Fehler beim Erstellen des Events' });
   }
 });
 
@@ -179,7 +184,7 @@ router.patch('/events/:id', requireAuth, async (req, res) => {
     return res.json(data);
   } catch (error) {
     console.error('Error updating event:', error);
-    res.status(500).json({ error: 'Fehler beim Aktualisieren des Events' });
+    return res.status(500).json({ error: 'Fehler beim Aktualisieren des Events' });
   }
 });
 
@@ -203,7 +208,7 @@ router.delete('/events/:id', requireAuth, async (req, res) => {
     return res.json({ ok: true });
   } catch (error) {
     console.error('Error deleting event:', error);
-    res.status(500).json({ error: 'Fehler beim Löschen des Events' });
+    return res.status(500).json({ error: 'Fehler beim Löschen des Events' });
   }
 });
 
@@ -229,7 +234,7 @@ router.post('/events/:id/join', requireAuth, async (req, res) => {
     return res.json({ ok: true });
   } catch (error) {
     console.error('Error joining event:', error);
-    res.status(500).json({ error: 'Fehler beim Beitreten des Events' });
+    return res.status(500).json({ error: 'Fehler beim Beitreten des Events' });
   }
 });
 
@@ -244,7 +249,7 @@ router.post('/events/:id/leave', requireAuth, async (req, res) => {
     return res.json({ ok: true });
   } catch (error) {
     console.error('Error leaving event:', error);
-    res.status(500).json({ error: 'Fehler beim Verlassen des Events' });
+    return res.status(500).json({ error: 'Fehler beim Verlassen des Events' });
   }
 });
 
@@ -305,7 +310,7 @@ router.post('/events/:id/submit', requireAuth, async (req, res) => {
     return res.status(201).json(submission);
   } catch (error) {
     console.error('Error submitting event entry:', error);
-    res.status(500).json({ error: 'Fehler beim Einreichen der Einreichung' });
+    return res.status(500).json({ error: 'Fehler beim Einreichen der Einreichung' });
   }
 });
 
@@ -321,7 +326,7 @@ router.get('/events/:id/participants', optionalAuth, async (req, res) => {
     return res.json(data || []);
   } catch (error) {
     console.error('Error fetching participants:', error);
-    res.status(500).json({ error: 'Fehler beim Laden der Teilnehmer' });
+    return res.status(500).json({ error: 'Fehler beim Laden der Teilnehmer' });
   }
 });
 
@@ -338,7 +343,7 @@ router.get('/events/:id/leaderboard', optionalAuth, async (req, res) => {
     return res.json(data || []);
   } catch (error) {
     console.error('Error fetching leaderboard:', error);
-    res.status(500).json({ error: 'Fehler beim Laden des Leaderboards' });
+    return res.status(500).json({ error: 'Fehler beim Laden des Leaderboards' });
   }
 });
 
@@ -373,7 +378,7 @@ router.post('/events/:id/invite', requireAuth, async (req, res) => {
     return res.status(201).json({ invitations: invitations.filter(i => !i.error) });
   } catch (error) {
     console.error('Error sending invitations:', error);
-    res.status(500).json({ error: 'Fehler beim Senden von Einladungen' });
+    return res.status(500).json({ error: 'Fehler beim Senden von Einladungen' });
   }
 });
 
@@ -390,7 +395,7 @@ router.get('/events/invitations/me', requireAuth, async (req, res) => {
     return res.json(data || []);
   } catch (error) {
     console.error('Error fetching invitations:', error);
-    res.status(500).json({ error: 'Fehler beim Laden von Einladungen' });
+    return res.status(500).json({ error: 'Fehler beim Laden von Einladungen' });
   }
 });
 
@@ -428,7 +433,7 @@ router.post('/events/invitations/:id/accept', requireAuth, async (req, res) => {
     return res.json({ ok: true });
   } catch (error) {
     console.error('Error accepting invitation:', error);
-    res.status(500).json({ error: 'Fehler beim Akzeptieren der Einladung' });
+    return res.status(500).json({ error: 'Fehler beim Akzeptieren der Einladung' });
   }
 });
 
@@ -444,7 +449,7 @@ router.post('/events/invitations/:id/decline', requireAuth, async (req, res) => 
     return res.json({ ok: true });
   } catch (error) {
     console.error('Error declining invitation:', error);
-    res.status(500).json({ error: 'Fehler beim Ablehnen der Einladung' });
+    return res.status(500).json({ error: 'Fehler beim Ablehnen der Einladung' });
   }
 });
 
@@ -474,7 +479,7 @@ router.get('/leaderboards/monthly', optionalAuth, async (req, res) => {
     return res.json(data || []);
   } catch (error) {
     console.error('Error fetching monthly leaderboard:', error);
-    res.status(500).json({ error: 'Fehler beim Laden des monatlichen Leaderboards' });
+    return res.status(500).json({ error: 'Fehler beim Laden des monatlichen Leaderboards' });
   }
 });
 
@@ -490,7 +495,7 @@ router.get('/rewards/my-activations', requireAuth, async (req, res) => {
     return res.json(data || []);
   } catch (error) {
     console.error('Error fetching reward activations:', error);
-    res.status(500).json({ error: 'Fehler beim Laden der aktivierten Rewards' });
+    return res.status(500).json({ error: 'Fehler beim Laden der aktivierten Rewards' });
   }
 });
 
@@ -515,22 +520,23 @@ router.post('/rewards/claim', requireAuth, async (req, res) => {
       return res.status(403).json({ error: 'Keine Berechtigung für diesen Reward' });
     }
 
-    // Reward wurde bereits automatisch aktiviert
-    const { data: activation, error } = await supabase
+    // Reward wird atomare beansprucht (nur wenn noch 'active')
+    const { data: claimed, error: claimError } = await supabase
       .from('reward_activations')
-      .select('*')
+      .update({ status: 'claimed', claimed_at: new Date().toISOString() })
       .eq('user_id', req.user.email)
       .eq('leaderboard_id', leaderboard_id)
-      .single();
+      .eq('status', 'active')
+      .select();
 
-    if (error || !activation) {
-      return res.status(400).json({ error: 'Reward nicht verfügbar' });
+    if (claimError || !claimed || claimed.length === 0) {
+      return res.status(400).json({ error: 'Reward bereits beansprucht oder nicht verfügbar' });
     }
 
-    return res.json(activation);
+    return res.json(claimed[0]);
   } catch (error) {
     console.error('Error claiming reward:', error);
-    res.status(500).json({ error: 'Fehler beim Beanspruchen des Rewards' });
+    return res.status(500).json({ error: 'Fehler beim Beanspruchen des Rewards' });
   }
 });
 
@@ -555,7 +561,8 @@ router.get('/admin/leaderboards/monthly/generate', async (req, res) => {
     }
 
     const now = new Date();
-    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1);
+    const lastMonth = new Date(now);
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
     const year = lastMonth.getFullYear();
     const month = lastMonth.getMonth() + 1;
 
@@ -570,7 +577,7 @@ router.get('/admin/leaderboards/monthly/generate', async (req, res) => {
     });
   } catch (error) {
     console.error('Error generating monthly leaderboard:', error);
-    res.status(500).json({ error: 'Fehler beim Generieren des monatlichen Leaderboards' });
+    return res.status(500).json({ error: 'Fehler beim Generieren des monatlichen Leaderboards' });
   }
 });
 
@@ -602,7 +609,7 @@ router.get('/admin/rewards/auto-activate', async (req, res) => {
     });
   } catch (error) {
     console.error('Error auto-activating rewards:', error);
-    res.status(500).json({ error: 'Fehler beim automatischen Aktivieren von Rewards' });
+    return res.status(500).json({ error: 'Fehler beim automatischen Aktivieren von Rewards' });
   }
 });
 
@@ -655,7 +662,7 @@ router.get('/admin/events/auto-archive', async (req, res) => {
     });
   } catch (error) {
     console.error('Error archiving events:', error);
-    res.status(500).json({ error: 'Fehler beim Archivieren von Events' });
+    return res.status(500).json({ error: 'Fehler beim Archivieren von Events' });
   }
 });
 

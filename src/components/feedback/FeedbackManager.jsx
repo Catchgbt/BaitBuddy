@@ -10,18 +10,21 @@ export default function FeedbackManager() {
     // Event-Listener für Feature-Nutzung
     const handleFeatureUsed = async (event) => {
       const { feature } = event.detail;
-      
+
       try {
         const user = await User.me();
-        
+
         // Prüfe ob dieses Feature bereits bewertet wurde
         const hasRated = user.feature_ratings?.[feature]?.rating;
-        
+
         if (!hasRated) {
           // Zeige Feedback-Dialog nach kurzer Verzögerung
-          setTimeout(() => {
+          const timerId = setTimeout(() => {
             setCurrentFeedback(feature);
           }, 2000); // 2 Sekunden Verzögerung für bessere UX
+
+          // Store timer ID for cleanup (through closure)
+          handleFeatureUsed._timerId = timerId;
         }
       } catch (error) {
         console.error("Fehler beim Prüfen des Feedback-Status:", error);
@@ -29,9 +32,13 @@ export default function FeedbackManager() {
     };
 
     window.addEventListener("feature-used", handleFeatureUsed);
-    
+
     return () => {
       window.removeEventListener("feature-used", handleFeatureUsed);
+      // Cleanup any pending timeouts
+      if (handleFeatureUsed._timerId) {
+        clearTimeout(handleFeatureUsed._timerId);
+      }
     };
   }, []);
 
