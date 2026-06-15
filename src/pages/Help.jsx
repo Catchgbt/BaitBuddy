@@ -28,8 +28,13 @@ export default function Help() {
 
   useEffect(() => {
     loadUser();
-    loadTickets();
   }, []);
+
+  useEffect(() => {
+    if (user?.email) {
+      loadTickets();
+    }
+  }, [user]);
 
   const loadUser = async () => {
     try {
