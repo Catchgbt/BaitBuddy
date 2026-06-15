@@ -410,35 +410,46 @@ function CatchCamInner() {
       toast.warning("Kein bestes Foto ausgewählt. Mache erst einen Burst!");
       return;
     }
-    
+
     setIsSaving(true);
     triggerHaptic('heavy');
-    
+
     try {
       toast.info("Lade Foto hoch...");
       const file = new File([bestPhoto.blob], "catch.jpg", { type: "image/jpeg" });
-      const { file_url } = await UploadFile({ file });
-      
+      const uploadResult = await UploadFile({ file });
+
+      if (!uploadResult || !uploadResult.file_url) {
+        throw new Error("Foto-Upload fehlgeschlagen: Ungültige Antwort vom Server");
+      }
+
       const catchData = {
-        photo_url: file_url,
+        photo_url: uploadResult.file_url,
         catch_time: new Date(bestPhoto.timestamp).toISOString(),
         length_cm: estimatedCm || null,
         notes: markers.length > 0 ? `Marker: ${markers.map(m => m.label).join(", ")}` : "",
         species: "Unbekannt",
       };
-      
+
       if (audioBlob) {
         toast.info("Lade Sprachmemo hoch...");
         const audioFile = new File([audioBlob], "voice.webm", { type: "audio/webm" });
-        const { file_url: audio_url } = await UploadFile({ file: audioFile });
-        catchData.notes += ` | Audio: ${audio_url}`;
+        try {
+          const audioResult = await UploadFile({ file: audioFile });
+          if (audioResult && audioResult.file_url) {
+            catchData.notes += ` | Audio: ${audioResult.file_url}`;
+          }
+        } catch (audioErr) {
+          console.warn("Audio-Upload fehlgeschlagen:", audioErr);
+          toast.warning("Sprachmemo konnte nicht hochgeladen werden");
+        }
       }
-      
+
       await Catch.create(catchData);
-      
+
       playSound('success');
       toast.success("Fang erfolgreich gespeichert!");
-      
+
       // Reset
       setBestPhoto(null);
       setSnapshots([]);
