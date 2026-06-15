@@ -361,9 +361,21 @@ export default function Logbook() {
                   onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
+                    // P3.5: Pre-check file size (max 10MB)
+                    if (file.size > 10 * 1024 * 1024) {
+                      toast.error("Datei zu groß (max. 10 MB)");
+                      return;
+                    }
                     setIsAnalyzing(true);
                     try {
-                      const { file_url } = await UploadFile({ file });
+                      const result = await UploadFile({ file });
+                      // P1.4: Validate file_url exists before using it
+                      if (!result?.file_url) {
+                        toast.error("Datei-Upload fehlgeschlagen");
+                        setIsAnalyzing(false);
+                        return;
+                      }
+                      const { file_url } = result;
                       setPhotoUrl(file_url);
                       toast.info("KI analysiert das Bild...");
                       const extractionSchema = {
@@ -387,8 +399,9 @@ export default function Logbook() {
                       } else {
                         toast.warning("KI konnte keine Daten erkennen");
                       }
-                    } catch {
+                    } catch (error) {
                       toast.error("KI-Analyse fehlgeschlagen");
+                      console.error("AI analysis error:", error);
                     } finally {
                       setIsAnalyzing(false);
                     }
