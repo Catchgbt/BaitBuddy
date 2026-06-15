@@ -152,7 +152,7 @@ export default function AIBuddyWidget() {
     } catch {
       // Ignore localStorage errors
     }
-  }, [currentPage, isOpen, buddyVoiceEnabled, showSmallBubbleWithText]);
+  }, [currentPage, isOpen, buddyVoiceEnabled]);
 
   // Persist position to localStorage
   useEffect(() => {
@@ -367,14 +367,13 @@ export default function AIBuddyWidget() {
                   {messages.length === 0 ? (
                     <div className="flex flex-col items-start justify-start h-full gap-3">
                       <div className="text-sm">
-                        <p className="text-lg mb-2">👋</p>
                         <p className="font-semibold text-gray-800 mb-1">{tip?.title || 'Hallo!'}</p>
                         <p className="text-xs text-gray-600 leading-relaxed">{tip?.message || 'Wie kann ich dir helfen?'}</p>
                       </div>
 
                       {tip?.suggestions && tip.suggestions.length > 0 && (
                         <div className="w-full space-y-2">
-                          <p className="text-xs font-semibold text-gray-500 px-2">Schnelle Fragen:</p>
+                          <p className="text-xs font-semibold text-gray-500 px-2">Fragen:</p>
                           {tip.suggestions.map((suggestion, idx) => (
                             <button
                               key={idx}
@@ -385,7 +384,7 @@ export default function AIBuddyWidget() {
                               disabled={isLoading}
                               className="w-full text-left px-3 py-2 bg-blue-100 hover:bg-blue-200 disabled:bg-gray-200 text-blue-900 text-xs rounded-lg transition-colors truncate"
                             >
-                              💡 {suggestion}
+                              {suggestion}
                             </button>
                           ))}
                         </div>
