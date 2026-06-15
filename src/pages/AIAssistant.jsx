@@ -411,7 +411,7 @@ Verwende Emojis sparsam aber gezielt für bessere Lesbarkeit.`,
                     }
                   }}
                   placeholder="Deine Frage an den KI-Buddy..."
-                  className="min-h-[60px] max-h-[120px] bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 rounded-2xl resize-none pr-12 focus:border-cyan-500/50 focus:ring-cyan-500/20"
+                  className="min-h-[60px] max-h-[120px] bg-gray-800 border border-gray-700 text-white placeholder:text-gray-400 rounded-2xl resize-none pr-12 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50"
                   disabled={isLoading}
                 />
                 <div className="absolute bottom-3 right-3 text-xs text-gray-500">
