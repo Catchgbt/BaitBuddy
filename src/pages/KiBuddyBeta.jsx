@@ -326,7 +326,17 @@ function KiBuddyBetaInner() {
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === "Enter" && sendText()}
               placeholder="Frage stellen..."
-              style={{ flex: 1, background: "#0d1a2a", border: "1px solid #1e2f44", borderRadius: 10, padding: "10px 14px", color: "#ccdde8", fontSize: 13, fontFamily: "inherit", outline: "none" }}
+              style={{ flex: 1, background: "#1a2a3a", border: "1px solid #2a4a6a", borderRadius: 10, padding: "10px 14px", color: "#ffffff", fontSize: 13, fontFamily: "inherit", outline: "none", transition: "all 0.2s ease", boxShadow: "0 0 0 0 rgba(124, 58, 237, 0)" }}
+              onFocus={(e) => {
+                e.target.style.background = "#1f3a4f";
+                e.target.style.borderColor = "#7c3aed";
+                e.target.style.boxShadow = "0 0 0 2px rgba(124, 58, 237, 0.2)";
+              }}
+              onBlur={(e) => {
+                e.target.style.background = "#1a2a3a";
+                e.target.style.borderColor = "#2a4a6a";
+                e.target.style.boxShadow = "0 0 0 0 rgba(124, 58, 237, 0)";
+              }}
             />
             <button
               onClick={sendText}
