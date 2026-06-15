@@ -88,3 +88,15 @@ BaitBuddy/
 ## Merge-Reports
 
 Nach Fixes und Merges werden **keine Merge-Reports eingecheckt** — alles ist live nach dem Merge zu `main`.
+
+## Bug-Scan-Befehle
+
+**Check1** — Umfassender App-Scan
+- Scannt die GESAMTE App auf Bugs
+- Listet alle gefundenen Bugs auf
+- Fixt sie automatisch
+
+**Check2** — Gezielter Umgebungs-Scan
+- Scannt nur die angegebene Umgebung/Komponente auf Bugs
+- Listet Bugs auf
+- Fixt sie automatisch
