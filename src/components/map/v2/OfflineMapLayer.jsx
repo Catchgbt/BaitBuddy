@@ -10,12 +10,16 @@ export default function OfflineMapLayer({ isOnline }) {
     if (!map || !L) return;
 
     const tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-    
-    // Entferne alte Layer
+
+    // Entferne alte Layer - sammeln erste, dann entfernen
+    const layersToRemove = [];
     map.eachLayer(layer => {
       if (layer instanceof L.TileLayer) {
-        map.removeLayer(layer);
+        layersToRemove.push(layer);
       }
+    });
+    layersToRemove.forEach(layer => {
+      map.removeLayer(layer);
     });
 
     // Erstelle neue Layer

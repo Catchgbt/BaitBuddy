@@ -42,7 +42,9 @@ function HydrographicAnalysis({ visible = false, bounds = null }) {
       };
 
       setMetrics(metrics);
-      renderHydrographicVisualization(map, { quality, temperature, flow, depth });
+      if (map) {
+        renderHydrographicVisualization(map, { quality, temperature, flow, depth });
+      }
     } catch (error) {
       console.warn('Hydrographic analysis failed:', error);
     }
@@ -169,9 +171,10 @@ function HydrographicAnalysis({ visible = false, bounds = null }) {
 
   React.useEffect(() => {
     return () => {
+      if (!map) return;
       layersRef.current.forEach((layer) => {
         try {
-          if (map?.hasLayer(layer)) {
+          if (map.hasLayer(layer)) {
             map.removeLayer(layer);
           }
         } catch (err) {

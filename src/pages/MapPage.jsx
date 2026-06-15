@@ -126,7 +126,7 @@ export default function MapPage() {
       setMapCenter([currentLocation.lat, currentLocation.lon]);
       setMapZoom(13);
     }
-  }, [gpsLocation, currentLocation, findNearestSpot]);
+  }, [gpsLocation, currentLocation]);
 
   const findNearestSpot = useCallback(async () => {
     if (!gpsLocation || spots.length === 0) return;

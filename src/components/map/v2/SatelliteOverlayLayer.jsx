@@ -14,10 +14,14 @@ function SatelliteOverlayLayer({ visible = false, opacity = 0.6, source = 'usgs'
   const [isLoading, setIsLoading] = useState(false);
 
   React.useEffect(() => {
-    if (!map || !visible) {
-      if (layer && map.hasLayer(layer)) {
+    if (!visible) {
+      if (layer && map && map.hasLayer(layer)) {
         map.removeLayer(layer);
       }
+      return;
+    }
+
+    if (!map) {
       return;
     }
 

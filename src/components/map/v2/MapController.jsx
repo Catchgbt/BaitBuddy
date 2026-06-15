@@ -170,7 +170,6 @@ function MapController() {
       }
     };
 
-    loadTiefenkarten();
     loadForellenseen();
     loadBathymetry();
     loadDeutscheFluesse();

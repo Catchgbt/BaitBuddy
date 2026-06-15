@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useMap } from 'react-leaflet';
 import L from 'leaflet';
 
@@ -10,6 +10,7 @@ function Terrain3DLayer({ visible = false, mode = 'canvas' }) {
   const map = useMap();
   const [terrain, setTerrain] = useState(null);
   const [stats, setStats] = useState(null);
+  const moveendHandlerRef = useRef(null);
 
   React.useEffect(() => {
     if (!map || !visible) return;
@@ -60,10 +61,12 @@ function Terrain3DLayer({ visible = false, mode = 'canvas' }) {
     overlay.addTo(map);
     setTerrain(overlay);
 
-    // Update on map move
-    map.on('moveend', () => {
+    // Update on map move - store handler for cleanup
+    const moveendHandler = () => {
       overlay.setBounds(map.getBounds());
-    });
+    };
+    moveendHandlerRef.current = moveendHandler;
+    map.on('moveend', moveendHandler);
 
     setStats({
       mode: 'canvas',
@@ -75,8 +78,11 @@ function Terrain3DLayer({ visible = false, mode = 'canvas' }) {
     return () => {
       if (terrain && map) {
         if (terrain.addTo) {
-          // Leaflet layer
           map.removeLayer(terrain);
+        }
+        if (moveendHandlerRef.current) {
+          map.off('moveend', moveendHandlerRef.current);
+          moveendHandlerRef.current = null;
         }
       }
     };
