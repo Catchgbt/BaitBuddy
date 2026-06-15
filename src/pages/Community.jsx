@@ -9,12 +9,8 @@ import { integrations, entities, api, community } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { User } from "@/entities/User";
 import { toast } from "sonner";
-import { Heart, MessageCircle, Send, Camera, AlertTriangle, User as UserIcon, Loader2, X, Globe, Facebook, Trophy, Users, Activity, Fish, TrendingUp, Zap } from "lucide-react";
+import { Heart, MessageCircle, Send, Camera, AlertTriangle, User as UserIcon, Loader2, X, Globe, Facebook, Trophy, Fish, TrendingUp } from "lucide-react";
 import CompetitionCard from "@/components/community/CompetitionCard";
-import CompetitionLauncher from "@/components/community/CompetitionLauncher";
-import EventLauncher from "@/components/community/EventLauncher";
-import VotingEventCard from "@/components/community/VotingEventCard";
-import ClanLeaderboardCard from "@/components/community/ClanLeaderboardCard";
 import LeaderboardCard from "@/components/community/LeaderboardCard";
 import CompetitionsSection from "@/components/community/CompetitionsSection";
 import PlanGuard from "@/components/premium/PlanGuard";
@@ -40,7 +36,8 @@ export default function Community() {
   const [competitions, setCompetitions] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [pullStart, setPullStart] = useState(0);
+  const pullStartRef = useRef(0);
+  const pullDistanceRef = useRef(0);
   const [pullDistance, setPullDistance] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [showChat, setShowChat] = useState(false);
@@ -61,28 +58,30 @@ export default function Community() {
   useEffect(() => {
     const handleTouchStart = (e) => {
       if (window.scrollY === 0) {
-        setPullStart(e.touches[0].clientY);
+        pullStartRef.current = e.touches[0].clientY;
       }
     };
 
     const handleTouchMove = (e) => {
-      if (pullStart > 0) {
-        const distance = e.touches[0].clientY - pullStart;
+      if (pullStartRef.current > 0) {
+        const distance = e.touches[0].clientY - pullStartRef.current;
         if (distance > 0 && distance < 150) {
+          pullDistanceRef.current = distance;
           setPullDistance(distance);
         }
       }
     };
 
     const handleTouchEnd = async () => {
-      if (pullDistance > 80) {
+      if (pullDistanceRef.current > 80) {
         setIsRefreshing(true);
         await loadPosts();
         await loadCompetitions();
         await loadRecentActivity();
         setIsRefreshing(false);
       }
-      setPullStart(0);
+      pullStartRef.current = 0;
+      pullDistanceRef.current = 0;
       setPullDistance(0);
     };
 
@@ -95,7 +94,7 @@ export default function Community() {
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [pullStart, pullDistance]);
+  }, []);
 
   const loadCurrentUser = async () => {
     try {

@@ -228,7 +228,7 @@ export async function calculateEventFinalRankings(eventId, supabase) {
       });
 
     for (const ranking of rankings) {
-      await supabase
+      const { error: updateError } = await supabase
         .from('event_participants')
         .update({
           total_points: ranking.final_points,
@@ -236,6 +236,9 @@ export async function calculateEventFinalRankings(eventId, supabase) {
         })
         .eq('event_id', eventId)
         .eq('user_id', ranking.user_id);
+      if (updateError) {
+        console.error(`Fehler beim Aktualisieren von Teilnehmer ${ranking.user_id} (Event ${eventId}):`, updateError);
+      }
     }
 
     return rankings;
