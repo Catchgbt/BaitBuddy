@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocation } from "@/components/location/LocationManager";
 import { InvokeLLM } from "@/integrations/Core";
+import { events } from "@/api/frontendClient";
+import { useEventActivityTracking } from "@/hooks/useEventActivityTracking";
 import WeatherAlertsSettings from "@/components/settings/WeatherAlertsSettings";
 import { toast } from "sonner";
 import { backendTextToSpeech } from "@/functions/backendTextToSpeech";
@@ -22,18 +24,34 @@ export default function Weather() {
 
 function WeatherInner() {
   const { currentLocation, requestGpsLocation, loading: locationLoading } = useLocation();
+  const { trackWeatherCheck } = useEventActivityTracking();
   const [weatherData, setWeatherData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [aiTips, setAiTips] = useState(null);
   const [loadingTips, setLoadingTips] = useState(false);
   const [activeTab, setActiveTab] = useState("current");
   const [isReadingAloud, setIsReadingAloud] = useState(false);
+  const [activeEventId, setActiveEventId] = useState(null);
 
   useEffect(() => {
     if (currentLocation?.lat && currentLocation?.lon) {
       loadWeatherData(currentLocation.lat, currentLocation.lon);
     }
   }, [currentLocation]);
+
+  useEffect(() => {
+    const loadActiveEvent = async () => {
+      try {
+        const event = await events.getActiveEvent();
+        if (event?.active_event?.id) {
+          setActiveEventId(event.active_event.id);
+        }
+      } catch {
+        // Event loading non-critical
+      }
+    };
+    loadActiveEvent();
+  }, []);
 
   const loadWeatherData = async (lat, lon) => {
     setLoading(true);
@@ -101,6 +119,9 @@ Sei konkret, praktisch und detailliert!`;
 
       const result = await InvokeLLM({ prompt });
       setAiTips(result);
+      if (activeEventId) {
+        trackWeatherCheck(activeEventId);
+      }
     } catch (error) {
       console.error("KI-Tipps Fehler:", error);
       toast.error("KI-Analyse fehlgeschlagen");
