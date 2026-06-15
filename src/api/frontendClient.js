@@ -10,6 +10,7 @@ class ApiClient {
   constructor() {
     // Token wird bei jeder Request aus localStorage gelesen, nicht gecacht
     this._refreshPromise = null;
+    this._refreshFailTime = null; // Cooldown nach fehlgeschlagenem Refresh
   }
 
   setToken(token) {
@@ -45,6 +46,11 @@ class ApiClient {
   // "Verbindungsfehler" sitzen zu lassen. Parallele 401s teilen sich denselben
   // Refresh-Call (Supabase rotiert Refresh-Tokens bei jeder Nutzung).
   _refreshSession() {
+    // If refresh failed recently, don't retry immediately (avoid refresh loop)
+    if (this._refreshFailTime && Date.now() - this._refreshFailTime < 10000) {
+      return Promise.resolve(false);
+    }
+
     if (!this._refreshPromise) {
       this._refreshPromise = (async () => {
         try {
@@ -58,12 +64,15 @@ class ApiClient {
           if (!res.ok || !data.token) {
             this.setToken(null);
             this.setRefreshToken(null);
+            this._refreshFailTime = Date.now(); // Mark failure time
             return false;
           }
           this.setToken(data.token);
           if (data.refresh_token) this.setRefreshToken(data.refresh_token);
+          this._refreshFailTime = null; // Clear failure flag on success
           return true;
         } catch {
+          this._refreshFailTime = Date.now(); // Mark failure time
           return false;
         }
       })().finally(() => { this._refreshPromise = null; });
