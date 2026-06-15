@@ -35,7 +35,7 @@ export function useFeatureTracking(featureId) {
           entities.UsageSession.update(session.id, {
             status: "stopped",
             stopped_at: new Date().toISOString(),
-          });
+          }).catch(() => {});
           return;
         }
 

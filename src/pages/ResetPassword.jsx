@@ -13,6 +13,7 @@ export default function ResetPassword() {
 
   useEffect(() => {
     let active = true;
+    let invalidTimeout = null;
 
     // Supabase setzt aus dem Link-Hash eine Recovery-Session und feuert
     // PASSWORD_RECOVERY. Wir akzeptieren auch eine bereits bestehende Session.
@@ -26,10 +27,16 @@ export default function ResetPassword() {
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return;
       if (data.session) setPhase('ready');
-      else setTimeout(() => active && setPhase(p => (p === 'checking' ? 'invalid' : p)), 2500);
+      else invalidTimeout = setTimeout(() => {
+        if (active) setPhase(p => (p === 'checking' ? 'invalid' : p));
+      }, 2500);
     });
 
-    return () => { active = false; subscription.unsubscribe(); };
+    return () => {
+      active = false;
+      if (invalidTimeout) clearTimeout(invalidTimeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleSubmit = async (e) => {
