@@ -1,0 +1,89 @@
+// src/components/utils/elevenLabsTTS.js
+// Zentrale ElevenLabs Text-to-Speech Utility.
+// Das Backend (/api/ai/tts) liefert JSON { audioBase64, contentType }.
+// Diese Helfer dekodieren das Base64-Audio und spielen es ab.
+
+import { functions } from "@/api/frontendClient";
+
+let currentAudio = null;
+let currentUrl = null;
+
+/**
+ * Bricht eine laufende ElevenLabs-Wiedergabe ab.
+ */
+export function cancelElevenLabs() {
+  if (currentAudio) {
+    try {
+      currentAudio.pause();
+      currentAudio.src = "";
+    } catch { /* ignore */ }
+    currentAudio = null;
+  }
+  if (currentUrl) {
+    URL.revokeObjectURL(currentUrl);
+    currentUrl = null;
+  }
+}
+
+/**
+ * Holt ElevenLabs-Audio fürs übergebene Text und spielt es ab.
+ * Wirft einen Fehler, wenn kein Audio geliefert wird (z. B. API-Key fehlt → 501),
+ * damit der Aufrufer auf Browser-TTS zurückfallen kann.
+ *
+ * @param {string} text
+ * @param {{ onEnd?: () => void, onError?: (e:any) => void }} [callbacks]
+ * @returns {Promise<HTMLAudioElement>}
+ */
+export async function speakWithElevenLabs(text, callbacks = {}) {
+  if (!text || typeof text !== "string" || text.trim().length === 0) {
+    throw new Error("Kein Text für TTS");
+  }
+
+  cancelElevenLabs();
+
+  const response = await functions.invoke("textToSpeech", { text });
+
+  // frontendClient liefert das geparste JSON direkt (kein axios-Wrapper).
+  // Unterstütze zur Sicherheit auch ein response.data-Nesting.
+  const payload = response?.audioBase64 ? response : response?.data;
+  const audioBase64 = payload?.audioBase64;
+
+  if (!audioBase64) {
+    throw new Error("ElevenLabs lieferte kein Audio");
+  }
+
+  // Base64 → Blob
+  const binary = atob(audioBase64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  const blob = new Blob([bytes], { type: payload.contentType || "audio/mpeg" });
+
+  const url = URL.createObjectURL(blob);
+  currentUrl = url;
+
+  const audio = new Audio(url);
+  currentAudio = audio;
+
+  audio.onended = () => {
+    if (currentUrl === url) {
+      URL.revokeObjectURL(url);
+      currentUrl = null;
+    }
+    if (currentAudio === audio) currentAudio = null;
+    callbacks.onEnd?.();
+  };
+
+  audio.onerror = (e) => {
+    if (currentUrl === url) {
+      URL.revokeObjectURL(url);
+      currentUrl = null;
+    }
+    if (currentAudio === audio) currentAudio = null;
+    callbacks.onError?.(e);
+  };
+
+  await audio.play();
+  return audio;
+}

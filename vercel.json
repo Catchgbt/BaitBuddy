@@ -1,17 +1,23 @@
 {
-  "buildCommand": "cd frontend && npm install && npm run build",
-  "outputDirectory": "frontend/dist",
-  "installCommand": "cd frontend && npm install",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install --legacy-peer-deps && cd backend && npm install",
   "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/[...path]" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ],
+  "crons": [
     {
-      "source": "/api/:path*",
-      "destination": "https://yejiqenqdzupauddjcyi.supabase.co/functions/v1/api/:path*"
+      "path": "/api/admin/events/auto-archive",
+      "schedule": "0 2 * * *"
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "path": "/api/admin/rewards/auto-activate",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/admin/leaderboards/monthly/generate",
+      "schedule": "0 0 1 * *"
     }
-  ],
-  "cleanUrls": true,
-  "trailingSlash": false
+  ]
 }

@@ -1,0 +1,195 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10.45, 50.98]
+      },
+      "properties": {
+        "id": "forellensee_fulda",
+        "name": "Fulda Forellensee",
+        "bundesland": "Hessen",
+        "region": "Osthessen",
+        "fischarten": ["Forelle", "Äsche"],
+        "größe_hektar": 12,
+        "tiefe_m": 8,
+        "beschreibung": "Beliebter Forellensee in der Fulda-Region",
+        "angelerlaubnis": true,
+        "angelschein_erforderlich": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8.95, 50.22]
+      },
+      "properties": {
+        "id": "forellensee_rhein_hessen",
+        "name": "Rheinhessen Forellensee",
+        "bundesland": "Hessen",
+        "region": "Rheingau",
+        "fischarten": ["Forelle", "Bachsaibling"],
+        "größe_hektar": 8,
+        "tiefe_m": 6,
+        "beschreibung": "Hochwertiger Forellensee am Rhein",
+        "angelerlaubnis": true,
+        "angelschein_erforderlich": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [11.55, 47.25]
+      },
+      "properties": {
+        "id": "forellensee_bayern_chiemgau",
+        "name": "Chiemgau Forellensee",
+        "bundesland": "Bayern",
+        "region": "Chiemgau",
+        "fischarten": ["Forelle", "Seeforelle"],
+        "größe_hektar": 15,
+        "tiefe_m": 12,
+        "beschreibung": "Großer Forellensee in den Alpenvorland",
+        "angelerlaubnis": true,
+        "angelschein_erforderlich": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10.12, 48.95]
+      },
+      "properties": {
+        "id": "forellensee_donau",
+        "name": "Donau Forellensee",
+        "bundesland": "Bayern",
+        "region": "Niederbayern",
+        "fischarten": ["Forelle", "Äsche", "Hecht"],
+        "größe_hektar": 10,
+        "tiefe_m": 7,
+        "beschreibung": "Forellensee mit natürlichen Zu- und Abflüssen",
+        "angelerlaubnis": true,
+        "angelschein_erforderlich": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9.35, 47.67]
+      },
+      "properties": {
+        "id": "forellensee_see_vorarlberg",
+        "name": "Vorarlberg Forellensee",
+        "bundesland": "Bayern",
+        "region": "Oberschwaben",
+        "fischarten": ["Forelle", "Bachsaibling", "Seesaibling"],
+        "größe_hektar": 18,
+        "tiefe_m": 10,
+        "beschreibung": "Großer Forellensee mit kristallklarem Wasser",
+        "angelerlaubnis": true,
+        "angelschein_erforderlich": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8.67, 47.55]
+      },
+      "properties": {
+        "id": "forellensee_schwarzwald",
+        "name": "Schwarzwald Forellensee",
+        "bundesland": "Baden-Württemberg",
+        "region": "Schwarzwald",
+        "fischarten": ["Forelle", "Bachsaibling"],
+        "größe_hektar": 9,
+        "tiefe_m": 5,
+        "beschreibung": "Idyllischer Gebirgssee im Schwarzwald",
+        "angelerlaubnis": true,
+        "angelschein_erforderlich": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [13.35, 52.52]
+      },
+      "properties": {
+        "id": "forellensee_berlin_brandenburg",
+        "name": "Brandenburg Forellensee",
+        "bundesland": "Brandenburg",
+        "region": "Ostbrandenburg",
+        "fischarten": ["Forelle", "Hecht", "Barsch"],
+        "größe_hektar": 20,
+        "tiefe_m": 8,
+        "beschreibung": "Großer Seen-Komplex für Forellenfischen",
+        "angelerlaubnis": true,
+        "angelschein_erforderlich": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6.18, 50.95]
+      },
+      "properties": {
+        "id": "forellensee_nordrhein_westfalen",
+        "name": "Nordrhein-Westfalen Forellensee",
+        "bundesland": "Nordrhein-Westfalen",
+        "region": "Bergisches Land",
+        "fischarten": ["Forelle", "Barsch"],
+        "größe_hektar": 11,
+        "tiefe_m": 6,
+        "beschreibung": "Beliebtes Anglerziel im Bergischen Land",
+        "angelerlaubnis": true,
+        "angelschein_erforderlich": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10.55, 51.20]
+      },
+      "properties": {
+        "id": "forellensee_thueringen",
+        "name": "Thüringen Forellensee",
+        "bundesland": "Thüringen",
+        "region": "Mittelthüringen",
+        "fischarten": ["Forelle", "Äsche"],
+        "größe_hektar": 14,
+        "tiefe_m": 7,
+        "beschreibung": "Forellengewässer in der Mitte Deutschlands",
+        "angelerlaubnis": true,
+        "angelschein_erforderlich": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [13.40, 54.05]
+      },
+      "properties": {
+        "id": "forellensee_mecklenburg_vorpommern",
+        "name": "Mecklenburg Forellensee",
+        "bundesland": "Mecklenburg-Vorpommern",
+        "region": "Mecklenburgische Seenplatte",
+        "fischarten": ["Forelle", "Seeforelle", "Barsch"],
+        "größe_hektar": 25,
+        "tiefe_m": 15,
+        "beschreibung": "Großer Seen-Komplex mit Seefischen",
+        "angelerlaubnis": true,
+        "angelschein_erforderlich": true
+      }
+    }
+  ]
+}

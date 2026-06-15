@@ -4,17 +4,62 @@ import { supabase } from '../lib/supabase.js';
 
 const router = Router();
 
-// GET /api/catches
+const ALLOWED_CATCH_UPDATE_FIELDS = ['species', 'length_cm', 'weight_kg', 'bait_used', 'notes', 'photo_url', 'is_released', 'spot_id'];
+
+const filterCatchUpdate = (body) => {
+  const filtered = {};
+  for (const field of ALLOWED_CATCH_UPDATE_FIELDS) {
+    if (field in body) filtered[field] = body[field];
+  }
+  return filtered;
+};
+
 router.get('/catches', requireAuth, async (req, res) => {
-  const { data, error } = await supabase
-    .from('catches').select('*')
-    .eq('created_by', req.user.email)
-    .order('catch_time', { ascending: false });
-  if (error) return res.status(500).json({ error: error.message });
-  return res.json({ ok: true, catches: data });
+  try {
+    const limit = parseInt(req.query.limit) || 50;
+    const offset = parseInt(req.query.offset) || 0;
+
+    if (!req.user?.email) {
+      return res.status(401).json({ error: 'Benutzer-E-Mail nicht verfügbar' });
+    }
+
+    const { data, error } = await supabase
+      .from('catches').select('*')
+      .eq('created_by', req.user.email)
+      .order('catch_time', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (error) {
+      console.error('[Catches Error]', error);
+      return res.status(500).json({ error: error.message, details: 'Datenbankfehler beim Laden der Fänge' });
+    }
+
+    return res.json(data || []);
+  } catch (e) {
+    console.error('[Catches Exception]', e);
+    return res.status(500).json({ error: e.message });
+  }
 });
 
-// POST /api/catches
+router.get('/catches/stats/summary', requireAuth, async (req, res) => {
+  const { data, error } = await supabase
+    .from('catches').select('species, length_cm, weight_kg, catch_time')
+    .eq('created_by', req.user.email);
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json({
+    total: data.length,
+    species: [...new Set(data.map(c => c.species).filter(Boolean))],
+    biggest: data.reduce((max, c) => c.length_cm > (max?.length_cm || 0) ? c : max, null),
+  });
+});
+
+router.get('/catches/:id', requireAuth, async (req, res) => {
+  const { data, error } = await supabase.from('catches').select('*')
+    .eq('id', req.params.id).eq('created_by', req.user.email).single();
+  if (error) return res.status(404).json({ error: 'Nicht gefunden' });
+  return res.json(data);
+});
+
 router.post('/catches', requireAuth, async (req, res) => {
   const { species, length_cm, weight_kg, bait_used, notes, catch_time, spot_id, photo_url, is_released } = req.body;
   const { data, error } = await supabase.from('catches').insert({
@@ -23,23 +68,25 @@ router.post('/catches', requireAuth, async (req, res) => {
     catch_time: catch_time || new Date().toISOString(),
     spot_id, photo_url,
     is_released: is_released || false
-  }).select();
+  }).select().single();
   if (error) return res.status(500).json({ error: error.message });
-  return res.json({ ok: true, catch: data[0] });
+  return res.json(data);
 });
 
-// PUT /api/catches/:id
-router.put('/catches/:id', requireAuth, async (req, res) => {
+const updateCatch = async (req, res) => {
+  const filtered = filterCatchUpdate(req.body);
   const { data, error } = await supabase.from('catches')
-    .update(req.body)
+    .update(filtered)
     .eq('id', req.params.id)
     .eq('created_by', req.user.email)
-    .select();
+    .select().single();
   if (error) return res.status(500).json({ error: error.message });
-  return res.json({ ok: true, catch: data[0] });
-});
+  return res.json(data);
+};
 
-// DELETE /api/catches/:id
+router.patch('/catches/:id', requireAuth, updateCatch);
+router.put('/catches/:id', requireAuth, updateCatch);
+
 router.delete('/catches/:id', requireAuth, async (req, res) => {
   const { error } = await supabase.from('catches')
     .delete()

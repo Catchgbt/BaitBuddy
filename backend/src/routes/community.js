@@ -4,24 +4,173 @@ import { supabase } from '../lib/supabase.js';
 
 const router = Router();
 
-// Wettbewerbe
+// Whitelist der erlaubten Felder pro Ressource
+const ALLOWED_POST_FIELDS = ['title', 'content', 'image_url'];
+const ALLOWED_VOTING_SUBMIT_FIELDS = ['category', 'title', 'description', 'image_url'];
+const ALLOWED_CLAN_FIELDS = ['name', 'description', 'icon_url'];
+const ALLOWED_COMPETITION_FIELDS = ['name', 'description', 'start_date', 'end_date', 'is_active'];
+
+const filterBody = (body, allowedFields) => {
+  const filtered = {};
+  for (const key of allowedFields) {
+    if (key in body) {
+      filtered[key] = body[key];
+    }
+  }
+  return filtered;
+};
+
+router.get('/community/posts', optionalAuth, async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit) || 50, 500);
+  const offset = Math.max(parseInt(req.query.offset) || 0, 0);
+  const { data, error } = await supabase.from('community_posts')
+    .select('*').order('created_at', { ascending: false }).range(offset, offset + limit - 1);
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data || []);
+});
+
+router.post('/community/posts', requireAuth, async (req, res) => {
+  const filteredBody = filterBody(req.body, ALLOWED_POST_FIELDS);
+  const { data, error } = await supabase.from('community_posts').insert({
+    ...filteredBody,
+    created_by: req.user.email
+  }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data);
+});
+
+router.delete('/community/posts/:id', requireAuth, async (req, res) => {
+  const { error } = await supabase.from('community_posts').delete()
+    .eq('id', req.params.id).eq('created_by', req.user.email);
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json({ ok: true });
+});
+
+router.post('/community/posts/:id/like', requireAuth, async (req, res) => {
+  const { error } = await supabase.from('post_likes').insert({
+    post_id: req.params.id, user_id: req.user.email
+  });
+  // 23505 = bereits geliked (Unique-Constraint); nicht erneut hochzählen.
+  if (error?.code === '23505') return res.json({ ok: true });
+  if (error) return res.status(500).json({ error: error.message });
+
+  // Like-Anzahl aus post_likes aggregieren und auf dem Post persistieren,
+  // damit der Zähler nach einem Reload korrekt bleibt.
+  const { count } = await supabase.from('post_likes')
+    .select('*', { count: 'exact', head: true })
+    .eq('post_id', req.params.id);
+  if (typeof count === 'number') {
+    await supabase.from('community_posts').update({ likes: count }).eq('id', req.params.id);
+  }
+  return res.json({ ok: true, likes: count });
+});
+
+// Kommentare zu Community-Posts. community_posts nutzt created_by (E-Mail) als
+// Autor-Kennung; community_comments folgt demselben Schema.
+router.get('/community/comments', optionalAuth, async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit) || 100, 500);
+  const offset = Math.max(parseInt(req.query.offset) || 0, 0);
+  let query = supabase.from('community_comments')
+    .select('*').order('created_at', { ascending: true }).range(offset, offset + limit - 1);
+  if (req.query.post_id) query = query.eq('post_id', req.query.post_id);
+  const { data, error } = await query;
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data || []);
+});
+
+router.post('/community/comments', requireAuth, async (req, res) => {
+  const { post_id, text } = req.body || {};
+  if (!post_id || !text) return res.status(400).json({ error: 'post_id und text erforderlich' });
+  const { data, error } = await supabase.from('community_comments').insert({
+    post_id, text, created_by: req.user.email
+  }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data);
+});
+
+router.get('/community/voting/leaderboard', optionalAuth, async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit) || 50, 500);
+  const offset = Math.max(parseInt(req.query.offset) || 0, 0);
+  const { data, error } = await supabase.from('voting_submissions')
+    .select('*').order('total_score', { ascending: false }).range(offset, offset + limit - 1);
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data || []);
+});
+
+router.post('/community/voting/submit', requireAuth, async (req, res) => {
+  const filteredBody = filterBody(req.body, ALLOWED_VOTING_SUBMIT_FIELDS);
+  const { data, error } = await supabase.from('voting_submissions').insert({
+    ...filteredBody, created_by: req.user.email
+  }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data);
+});
+
+router.post('/community/voting/:id/like', requireAuth, async (req, res) => {
+  const { error } = await supabase.from('voting_likes').insert({
+    submission_id: req.params.id, user_id: req.user.email
+  });
+  if (error?.code === '23505') return res.json({ ok: true });
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json({ ok: true });
+});
+
+router.post('/community/clans', requireAuth, async (req, res) => {
+  const filteredBody = filterBody(req.body, ALLOWED_CLAN_FIELDS);
+  const { data, error } = await supabase.from('clans').insert({
+    ...filteredBody, created_by: req.user.email
+  }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data);
+});
+
+router.post('/community/clans/:id/join', requireAuth, async (req, res) => {
+  const { error } = await supabase.from('clan_members').insert({
+    clan_id: req.params.id, user_id: req.user.email
+  });
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json({ ok: true });
+});
+
+router.get('/community/clans/:id/leaderboard', optionalAuth, async (req, res) => {
+  const { data: members } = await supabase.from('clan_members')
+    .select('user_id').eq('clan_id', req.params.id);
+  if (!members?.length) return res.json([]);
+  const memberIds = members.map(m => m.user_id);
+  const { data, error } = await supabase.from('catches')
+    .select('created_by, species, length_cm')
+    .in('created_by', memberIds)
+    .order('length_cm', { ascending: false }).limit(20);
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data || []);
+});
+
 router.get('/competitions', optionalAuth, async (req, res) => {
   const { data, error } = await supabase.from('competitions')
     .select('*').eq('is_active', true).order('created_at', { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
-  return res.json({ ok: true, competitions: data });
+  return res.json(data || []);
 });
 
-// Leaderboard für Wettbewerb
+router.post('/competitions', requireAuth, async (req, res) => {
+  const filteredBody = filterBody(req.body, ALLOWED_COMPETITION_FIELDS);
+  const { data, error } = await supabase.from('competitions').insert({
+    ...filteredBody, created_by: req.user.email
+  }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data);
+});
+
 router.get('/competitions/:id/leaderboard', optionalAuth, async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit) || 50, 500);
+  const offset = Math.max(parseInt(req.query.offset) || 0, 0);
   const { data, error } = await supabase.from('voting_submissions')
     .select('*').eq('competition_id', req.params.id)
-    .order('total_score', { ascending: false }).limit(50);
+    .order('total_score', { ascending: false }).range(offset, offset + limit - 1);
   if (error) return res.status(500).json({ error: error.message });
-  return res.json({ ok: true, leaderboard: data });
+  return res.json(data || []);
 });
 
-// Fang einreichen
 router.post('/competitions/:id/submit', requireAuth, async (req, res) => {
   const { species, length_cm, photo_url } = req.body;
   const { data, error } = await supabase.from('voting_submissions').insert({
@@ -31,19 +180,20 @@ router.post('/competitions/:id/submit', requireAuth, async (req, res) => {
     species, length_cm, photo_url,
     catch_time: new Date().toISOString(),
     total_score: length_cm || 0
-  }).select();
+  }).select().single();
   if (error) return res.status(500).json({ error: error.message });
-  return res.json({ ok: true, submission: data[0] });
+  return res.json(data);
 });
 
-// Liken
-router.post('/submissions/:id/like', requireAuth, async (req, res) => {
-  const { error } = await supabase.from('voting_likes').insert({
-    submission_id: req.params.id, user_id: req.user.email
-  });
-  if (error?.code === '23505') return res.json({ ok: true, message: 'Bereits geliked' });
+router.post('/competitions/:id/join', requireAuth, async (req, res) => {
+  const { data, error } = await supabase.from('voting_submissions').insert({
+    competition_id: req.params.id,
+    user_id: req.user.email,
+    created_by: req.user.email,
+    total_score: 0
+  }).select().single();
+  if (error?.code === '23505') return res.json({ ok: true });
   if (error) return res.status(500).json({ error: error.message });
-  await supabase.rpc('increment_likes', { sub_id: req.params.id }).catch(() => {});
   return res.json({ ok: true });
 });
 
