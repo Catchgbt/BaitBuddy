@@ -117,19 +117,19 @@ class AdvancedCacheOptimizer {
 
   async _cacheTile(key, blob, url) {
     const size = blob.size;
-    const compressed = size > CACHE_LIMITS.COMPRESSION_THRESHOLD;
+    const shouldCompress = size > CACHE_LIMITS.COMPRESSION_THRESHOLD;
 
     let dataToStore = blob;
     let compressedSize = size;
 
     // Attempt compression for large tiles
-    if (compressed) {
+    if (shouldCompress) {
       try {
-        const compressed = await this._compress(blob);
-        if (compressed.size < size * 0.9) {
+        const compressedBlob = await this._compress(blob);
+        if (compressedBlob.size < size * 0.9) {
           // Only use if compression saves >10%
-          dataToStore = compressed;
-          compressedSize = compressed.size;
+          dataToStore = compressedBlob;
+          compressedSize = compressedBlob.size;
         }
       } catch (error) {
         console.warn('Compression failed, storing uncompressed:', error);
@@ -147,7 +147,7 @@ class AdvancedCacheOptimizer {
       url,
       data: dataToStore,
       size: compressedSize,
-      compressed,
+      compressed: shouldCompress,
       originalSize: size,
       lastAccess: Date.now(),
       created: Date.now(),
