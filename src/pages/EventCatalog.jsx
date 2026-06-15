@@ -16,9 +16,9 @@ import {
   Target,
   AlertCircle,
   CheckCircle2,
-  Loader2
+  Loader2,
+  X
 } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useFeatureTracking } from '@/hooks/useFeatureTracking';
 
 export default function EventCatalog() {
@@ -29,13 +29,13 @@ export default function EventCatalog() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [creatingEvent, setCreatingEvent] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [customEventData, setCustomEventData] = useState({
     name: '',
     description: '',
     target_species: '',
     duration_days: 14
   });
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -96,7 +96,7 @@ export default function EventCatalog() {
       });
 
       toast.success('Event erfolgreich erstellt! Du kannst jetzt User einladen.');
-      setShowCreateDialog(false);
+      setShowCreateForm(false);
       setCustomEventData({ name: '', description: '', target_species: '', duration_days: 14 });
       await loadData();
       queryClient.invalidateQueries({ queryKey: ['events'] });
@@ -132,6 +132,104 @@ export default function EventCatalog() {
     );
   }
 
+  if (showCreateForm) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-4 md:p-6">
+        <div className="max-w-2xl mx-auto">
+          <div className="mb-8 flex items-center justify-between">
+            <h1 className="text-4xl font-bold text-white flex items-center gap-3">
+              <Trophy className="w-10 h-10 text-amber-400" />
+              Neues Event erstellen
+            </h1>
+            <button
+              onClick={() => setShowCreateForm(false)}
+              className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <X className="w-6 h-6 text-gray-300" />
+            </button>
+          </div>
+
+          <Card className="bg-gray-800 border-gray-700">
+            <CardContent className="pt-6">
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Event-Name
+                  </label>
+                  <Input
+                    placeholder="z.B. Mein Sommer-Hecht-Turnier"
+                    value={customEventData.name}
+                    onChange={(e) => setCustomEventData({ ...customEventData, name: e.target.value })}
+                    className="bg-gray-900 border-gray-600 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Beschreibung
+                  </label>
+                  <Textarea
+                    placeholder="Beschreibe dein Event..."
+                    value={customEventData.description}
+                    onChange={(e) => setCustomEventData({ ...customEventData, description: e.target.value })}
+                    className="bg-gray-900 border-gray-600 text-white"
+                    rows="4"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Zielfisch (optional)
+                  </label>
+                  <Input
+                    placeholder="z.B. Hecht"
+                    value={customEventData.target_species}
+                    onChange={(e) => setCustomEventData({ ...customEventData, target_species: e.target.value })}
+                    className="bg-gray-900 border-gray-600 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Dauer (Tage)
+                  </label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="30"
+                    value={customEventData.duration_days}
+                    onChange={(e) => setCustomEventData({ ...customEventData, duration_days: e.target.value })}
+                    className="bg-gray-900 border-gray-600 text-white"
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleCreateCustomEvent}
+                    disabled={creatingEvent}
+                    className="flex-1 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700"
+                  >
+                    {creatingEvent ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Wird erstellt...
+                      </>
+                    ) : (
+                      'Event erstellen'
+                    )}
+                  </Button>
+                  <Button
+                    onClick={() => setShowCreateForm(false)}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    Abbrechen
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
@@ -147,81 +245,13 @@ export default function EventCatalog() {
                 Tritt bestehenden Events bei oder starte deinen eigenen Wettbewerb mit deinen Freunden
               </p>
             </div>
-            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-              <DialogTrigger asChild>
-                <Button className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Neues Event
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-gray-900 border-gray-700">
-                <DialogHeader>
-                  <DialogTitle className="text-white">Eigenes Event erstellen</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Event-Name
-                    </label>
-                    <Input
-                      placeholder="z.B. Mein Sommer-Hecht-Turnier"
-                      value={customEventData.name}
-                      onChange={(e) => setCustomEventData({ ...customEventData, name: e.target.value })}
-                      className="bg-gray-800 border-gray-700 text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Beschreibung
-                    </label>
-                    <Textarea
-                      placeholder="Beschreibe dein Event..."
-                      value={customEventData.description}
-                      onChange={(e) => setCustomEventData({ ...customEventData, description: e.target.value })}
-                      className="bg-gray-800 border-gray-700 text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Zielfisch (optional)
-                    </label>
-                    <Input
-                      placeholder="z.B. Hecht"
-                      value={customEventData.target_species}
-                      onChange={(e) => setCustomEventData({ ...customEventData, target_species: e.target.value })}
-                      className="bg-gray-800 border-gray-700 text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Dauer (Tage)
-                    </label>
-                    <Input
-                      type="number"
-                      min="1"
-                      max="30"
-                      value={customEventData.duration_days}
-                      onChange={(e) => setCustomEventData({ ...customEventData, duration_days: e.target.value })}
-                      className="bg-gray-800 border-gray-700 text-white"
-                    />
-                  </div>
-                  <Button
-                    onClick={handleCreateCustomEvent}
-                    disabled={creatingEvent}
-                    className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700"
-                  >
-                    {creatingEvent ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Wird erstellt...
-                      </>
-                    ) : (
-                      'Event erstellen'
-                    )}
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <Button
+              onClick={() => setShowCreateForm(true)}
+              className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Neues Event
+            </Button>
           </div>
         </div>
 
