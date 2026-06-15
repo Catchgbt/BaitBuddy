@@ -12,7 +12,7 @@ import { createPageUrl } from "@/utils";
 import WakeWordIndicator from "@/components/header/WakeWordIndicator";
 import EventTimer from "@/components/header/EventTimer";
 import LastBuddyMessage from "@/components/header/LastBuddyMessage";
-import MapFeaturesBadge from "@/components/layout/MapFeaturesBadge";
+import EventHeaderWidget from "@/components/header/EventHeaderWidget";
 import { functions } from "@/api/frontendClient";
 import { mobileStack } from "@/lib/MobileStackManager";
 
@@ -267,7 +267,7 @@ export default function Header({
             </Link>
           )}
 
-          <MapFeaturesBadge />
+          <EventHeaderWidget />
           <WakeWordIndicator />
         </div>
       </div>

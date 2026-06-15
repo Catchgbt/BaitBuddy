@@ -1,74 +1,52 @@
 import React, { useState, useEffect } from 'react';
 import { events } from '@/api/frontendClient';
-import { Trophy, Clock, Zap, Loader2 } from 'lucide-react';
+import { Trophy, Zap } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 
 export default function EventHeaderWidget() {
   const [points, setPoints] = useState(0);
   const [activeEvent, setActiveEvent] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(loadData, 60000); // Aktualisiere jede Minute
+    const interval = setInterval(loadData, 60000);
     return () => clearInterval(interval);
   }, []);
 
   const loadData = async () => {
     try {
-      setLoading(true);
       const [pointsData, eventData] = await Promise.all([
         events.getCurrentPoints(),
         events.getActiveEvent()
       ]);
-
       setPoints(pointsData?.total_points || 0);
       setActiveEvent(eventData?.active_event || null);
-    } catch (error) {
-      console.error('Fehler beim Laden der Event-Daten:', error);
-    } finally {
-      setLoading(false);
+      setLoaded(true);
+    } catch {
+      setLoaded(true);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center gap-3 px-4 py-2 rounded-lg bg-gray-800/40 border border-gray-700/50">
-        <Loader2 className="w-4 h-4 text-amber-400 animate-spin" />
-      </div>
-    );
-  }
+  if (!loaded) return null;
 
   return (
-    <div className="flex items-center gap-4 px-4 py-2 rounded-lg bg-gradient-to-r from-amber-900/20 to-orange-900/20 border border-amber-600/30 hover:border-amber-500/50 transition-all">
-      {/* Punkte Anzeige */}
-      <div className="flex items-center gap-1.5">
-        <Zap className="w-4 h-4 text-amber-400" />
-        <span className="text-sm font-semibold text-amber-300">
-          {Math.round(points * 100) / 100}
-        </span>
-        <span className="text-xs text-gray-400">Pkt.</span>
-      </div>
-
-      {/* Separator */}
-      <div className="w-px h-4 bg-gray-700/50"></div>
-
-      {/* Event Laufzeit */}
-      {activeEvent ? (
-        <div className="flex items-center gap-1.5">
-          <Trophy className="w-4 h-4 text-blue-400" />
-          <span className="text-xs font-medium text-blue-300">
-            {activeEvent.name}
+    <Link to={createPageUrl('Events')}>
+      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-900/30 to-orange-900/30 border border-amber-600/40 hover:border-amber-500/60 transition-all">
+        <Trophy className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+        <div className="flex items-center gap-1">
+          <Zap className="w-3 h-3 text-amber-400 flex-shrink-0" />
+          <span className="text-xs font-semibold text-amber-300 tabular-nums">
+            {Math.round(points)}
           </span>
-          <span className="text-xs text-blue-400/70 font-semibold">
+        </div>
+        {activeEvent && (
+          <span className="text-[10px] text-amber-400/70 font-medium hidden sm:inline">
             {activeEvent.days_left}d
           </span>
-        </div>
-      ) : (
-        <div className="flex items-center gap-1.5">
-          <Clock className="w-4 h-4 text-gray-500" />
-          <span className="text-xs text-gray-400">Kein aktives Event</span>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </Link>
   );
 }
