@@ -54,9 +54,11 @@ export default function Dashboard() {
         `Willkommen, ${firstName}. Heute könnte dein bester Fangtag werden.`
       ];
       const greeting = greetings[Math.floor(Math.random() * greetings.length)];
-      setTimeout(() => {
+      const speakTimer = setTimeout(() => {
         speak(greeting, { rate: 0.9, pitch: 1 });
       }, 500);
+
+      return () => clearTimeout(speakTimer);
     }
   }, [user, greetingPlayed, speak]);
 
