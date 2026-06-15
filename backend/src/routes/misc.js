@@ -180,13 +180,26 @@ router.post('/files/upload', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'file_base64 und file_name erforderlich' });
     }
 
+    if (!file_base64.match(/^[A-Za-z0-9+/=]+$/)) {
+      return res.status(400).json({ error: 'Ungültiges Base64-Format' });
+    }
+
     // Sicherheit: file_name validieren, um Path Traversal zu verhindern
     const sanitized = path.basename(file_name);
     if (!sanitized || sanitized !== file_name) {
       return res.status(400).json({ error: 'Ungültiger Dateiname' });
     }
 
-    const buffer = Buffer.from(file_base64, 'base64');
+    let buffer;
+    try {
+      buffer = Buffer.from(file_base64, 'base64');
+      if (buffer.length === 0) {
+        return res.status(400).json({ error: 'Datei ist leer' });
+      }
+    } catch (bufErr) {
+      return res.status(400).json({ error: 'Fehler beim Dekodieren der Datei' });
+    }
+
     const bucket = 'catches';
     const filePath = `${req.user.email}/${Date.now()}-${sanitized}`;
 
@@ -198,16 +211,25 @@ router.post('/files/upload', requireAuth, async (req, res) => {
       });
 
     if (error) {
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: `Upload fehlgeschlagen: ${error.message}` });
     }
 
-    const { data: { publicUrl } } = supabase.storage
+    if (!data || !data.path) {
+      return res.status(500).json({ error: 'Upload erfolgreich, aber kein Pfad zurückgegeben' });
+    }
+
+    const { data: urlData } = supabase.storage
       .from(bucket)
       .getPublicUrl(data.path);
 
-    return res.json({ file_url: publicUrl });
+    if (!urlData || !urlData.publicUrl) {
+      return res.status(500).json({ error: 'Konnte öffentliche URL nicht generieren' });
+    }
+
+    return res.json({ file_url: urlData.publicUrl });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.error('Upload error:', err);
+    return res.status(500).json({ error: `Unerwarteter Fehler: ${err.message}` });
   }
 });
 

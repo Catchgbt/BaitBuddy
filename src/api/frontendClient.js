@@ -343,12 +343,31 @@ export const User = Object.assign(makeEntity('User'), auth);
 // ── Integrations ──────────────────────────────────────────────────────────────
 const fileToBase64 = (file) => {
   return new Promise((resolve, reject) => {
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB limit
+
+    if (file.size > MAX_FILE_SIZE) {
+      reject(new Error(`Datei zu groß (max ${MAX_FILE_SIZE / 1024 / 1024}MB)`));
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = () => {
-      const base64 = reader.result.split(',')[1];
-      resolve(base64);
+      try {
+        const base64 = reader.result.split(',')[1];
+        if (!base64) {
+          throw new Error('Fehler beim Konvertieren zu Base64');
+        }
+        resolve(base64);
+      } catch (e) {
+        reject(e);
+      }
     };
-    reader.onerror = reject;
+    reader.onerror = () => {
+      reject(new Error('Fehler beim Lesen der Datei'));
+    };
+    reader.onabort = () => {
+      reject(new Error('Datei-Lesevorgang abgebrochen'));
+    };
     reader.readAsDataURL(file);
   });
 };
@@ -364,13 +383,26 @@ export const integrations = {
     SendEmail:  () => Promise.resolve({ ok: true }),
     SendSMS:    () => Promise.resolve({ ok: true }),
     UploadFile: async ({ file }) => {
-      if (!file) throw new Error('file erforderlich');
-      const file_base64 = await fileToBase64(file);
-      return api.post('/api/files/upload', {
-        file_base64,
-        file_name: file.name,
-        file_type: file.type,
-      });
+      if (!file) throw new Error('Datei erforderlich');
+      if (!file.name) throw new Error('Datei hat keinen Namen');
+      if (!file.type) throw new Error('Datei-Typ konnte nicht ermittelt werden');
+
+      try {
+        const file_base64 = await fileToBase64(file);
+        const response = await api.post('/api/files/upload', {
+          file_base64,
+          file_name: file.name,
+          file_type: file.type,
+        });
+
+        if (!response || !response.file_url) {
+          throw new Error('Server hat keine Datei-URL zurückgegeben');
+        }
+
+        return response;
+      } catch (error) {
+        throw new Error(`Upload fehlgeschlagen: ${error.message}`);
+      }
     },
     GenerateImage: () => Promise.resolve({ url: '' }),
     ExtractDataFromUploadedFile: async ({ file_url, json_schema }) => {
