@@ -69,7 +69,6 @@ function WeatherInner() {
         duration: 2000
       });
     } catch (error) {
-      console.error("Wetter-API Fehler:", error);
       toast.error("Wetterdaten konnten nicht geladen werden", {
         description: error.message,
         duration: 4000
@@ -123,7 +122,6 @@ Sei konkret, praktisch und detailliert!`;
         trackWeatherCheck(activeEventId);
       }
     } catch (error) {
-      console.error("KI-Tipps Fehler:", error);
       toast.error("KI-Analyse fehlgeschlagen");
     }
     setLoadingTips(false);
@@ -161,7 +159,6 @@ Sei konkret, praktisch und detailliert!`;
 
           utterance.onend = () => setIsReadingAloud(false);
           utterance.onerror = (e) => {
-            console.error("Browser TTS error:", e);
             setIsReadingAloud(false);
             toast.error("Vorlesen fehlgeschlagen");
           };
@@ -182,7 +179,6 @@ Sei konkret, praktisch und detailliert!`;
         };
 
         audio.onerror = (e) => {
-          console.error("Audio playback error:", e);
           URL.revokeObjectURL(url);
           setIsReadingAloud(false);
           toast.error("Abspielen fehlgeschlagen");
@@ -190,13 +186,11 @@ Sei konkret, praktisch und detailliert!`;
 
         await audio.play();
       } else {
-        console.warn("Unexpected content type:", contentType);
         setIsReadingAloud(false);
         toast.error("Unerwartetes Datenformat");
       }
 
     } catch (error) {
-      console.error("Fehler beim Vorlesen:", error);
       toast.error("Vorlesen fehlgeschlagen");
       setIsReadingAloud(false);
     }

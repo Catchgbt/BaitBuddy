@@ -122,7 +122,6 @@ function MapController() {
         const data = await response.json();
         setForellenseen(data);
       } catch (error) {
-        console.warn('Forellenseen konnten nicht geladen werden:', error);
       }
     };
 
@@ -133,7 +132,6 @@ function MapController() {
         const data = await response.json();
         setBathymetryData(data.bundeslaender_list || []);
       } catch (error) {
-        console.warn('Bathymetrie-Daten konnten nicht geladen werden:', error);
       }
     };
 
@@ -144,7 +142,6 @@ function MapController() {
         const data = await response.json();
         setDeutscheFluesse(data);
       } catch (error) {
-        console.warn('Deutsche Flüsse konnten nicht geladen werden:', error);
       }
     };
 
@@ -155,7 +152,6 @@ function MapController() {
         const data = await response.json();
         setEuropeanRivers(data);
       } catch (error) {
-        console.warn('Europäische Flüsse konnten nicht geladen werden:', error);
       }
     };
 
@@ -166,7 +162,6 @@ function MapController() {
         const data = await response.json();
         setEuropeanBathymetry(data);
       } catch (error) {
-        console.warn('Europäische Bathymetrie konnten nicht geladen werden:', error);
       }
     };
 
@@ -185,7 +180,6 @@ function MapController() {
 
   useEffect(() => {
     if (currentLocation && currentLocation.lat != null && currentLocation.lon != null && !isInitialized) {
-      console.log("Setting map center from currentLocation:", currentLocation);
       setMapCenter({ lat: currentLocation.lat, lng: currentLocation.lon });
       setIsInitialized(true);
     }
@@ -197,16 +191,13 @@ function MapController() {
     const lon = urlParams.get('lon');
     
     if (lat && lon) {
-      console.log("Setting map center from URL params:", { lat, lon });
       setMapCenter({ lat: parseFloat(lat), lng: parseFloat(lon) });
       setMapZoom(15);
       setIsInitialized(true);
     } else if (currentLocation && currentLocation.lat != null && currentLocation.lon != null) {
-      console.log("Setting map center from currentLocation:", currentLocation);
       setMapCenter({ lat: currentLocation.lat, lng: currentLocation.lon });
       setIsInitialized(true);
     } else {
-      console.log("Setting default map center (Germany)");
       setMapCenter({ lat: 51.1657, lng: 10.4515 });
       setMapZoom(6);
       setIsInitialized(true);

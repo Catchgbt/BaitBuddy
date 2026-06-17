@@ -91,7 +91,6 @@ function TripPlannerContent() {
     try {
       setOfflineNotes(JSON.parse(localStorage.getItem("trip_offline_notes") || "{}"));
     } catch (error) {
-      console.error("Fehler beim Laden der Notizen:", error);
     }
   };
 
@@ -117,7 +116,6 @@ function TripPlannerContent() {
       setPlans(list);
       setSelectedPlan((prev) => (prev ? list.find((p) => p.id === prev.id) || null : prev));
     } catch (error) {
-      console.error("Fehler beim Laden der Pläne:", error);
     }
     setLoading(false);
   };
@@ -138,7 +136,6 @@ function TripPlannerContent() {
       await loadPlans();
       window.dispatchEvent(new Event("active-trips-updated"));
     } catch (error) {
-      console.error("Fehler beim Speichern des Trips:", error);
       toast.error("Trip konnte nicht gespeichert werden");
       throw error;
     }
@@ -168,7 +165,6 @@ function TripPlannerContent() {
       }
       toast.success(newState ? "Trip aktiviert" : "Trip deaktiviert");
     } catch (error) {
-      console.error("Fehler beim Aktualisieren des Trip-Status:", error);
       toast.error("Status konnte nicht gespeichert werden");
       await loadPlans();
     }
@@ -183,7 +179,6 @@ function TripPlannerContent() {
       window.dispatchEvent(new Event("active-trips-updated"));
       toast.success("Trip gelöscht");
     } catch (error) {
-      console.error("Fehler beim Löschen des Trips:", error);
       toast.error("Trip konnte nicht gelöscht werden");
     }
   };
@@ -478,7 +473,6 @@ export default function TripPlanner() {
       try {
         setUser(await User.me());
       } catch (e) {
-        console.log("User not logged in:", e);
       }
       setLoading(false);
     })();

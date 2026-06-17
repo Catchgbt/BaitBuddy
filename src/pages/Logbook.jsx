@@ -421,7 +421,6 @@ export default function Logbook() {
                       }
                     } catch (error) {
                       toast.error("KI-Analyse fehlgeschlagen");
-                      console.error("AI analysis error:", error);
                     } finally {
                       setIsAnalyzing(false);
                     }

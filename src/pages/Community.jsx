@@ -95,7 +95,7 @@ export default function Community() {
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [pullStart, pullDistance]);
+  }, []);
 
   const loadCurrentUser = async () => {
     try {

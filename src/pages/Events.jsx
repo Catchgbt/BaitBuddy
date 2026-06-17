@@ -235,16 +235,18 @@ export default function Events() {
 
       if (Array.isArray(comps) && comps.length > 0 && user) {
         const leaderboardsMap = {};
+        const joinedSet = new Set();
         await Promise.all(comps.map(async (comp) => {
           const lb = await api.get(`/api/events/${comp.id}/leaderboard`).catch(() => []);
-          leaderboardsMap[comp.id] = Array.isArray(lb) ? lb.map((e, idx) => ({
+          leaderboardsMap[comp.id] = Array.isArray(lb) ? lb.map((e) => ({
             ...e,
             is_user: e.user_id === user.email
           })) : [];
           const userJoined = (leaderboardsMap[comp.id] || []).some(entry => entry.user_id === user.email);
-          if (userJoined) setJoined(prev => new Set([...prev, comp.id]));
+          if (userJoined) joinedSet.add(comp.id);
         }));
         setLeaderboards(leaderboardsMap);
+        setJoined(joinedSet);
       }
     } catch (err) {
       console.error(err);
