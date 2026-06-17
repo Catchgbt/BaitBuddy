@@ -126,7 +126,7 @@ export default function MapPage() {
       setMapCenter([currentLocation.lat, currentLocation.lon]);
       setMapZoom(13);
     }
-  }, [gpsLocation, currentLocation, findNearestSpot]);
+  }, [gpsLocation, currentLocation]);
 
   const findNearestSpot = useCallback(async () => {
     if (!gpsLocation || spots.length === 0) return;
@@ -347,10 +347,10 @@ export default function MapPage() {
 
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]">
-            🗺️ Karte & Spots — Komplett mit 6 Advanced Features
+            Karte & Spots — Komplett mit 6 Advanced Features
           </h1>
           <p className="text-sm text-gray-400 mt-1">
-            🎣 Klicke unten rechts auf den 🟦 Hub um alle neuen Features zu entdecken
+            Klicke unten rechts auf den Hub um alle neuen Features zu entdecken
           </p>
         </div>
 
@@ -358,17 +358,17 @@ export default function MapPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <Card className="glass-morphism border-cyan-700 bg-cyan-900/20">
             <CardContent className="p-4">
-              <div className="text-xs text-cyan-400 mb-2 font-semibold">✨ NEU: 6 ADVANCED FEATURES</div>
+              <div className="text-xs text-cyan-400 mb-2 font-semibold">NEU: 6 ADVANCED FEATURES</div>
               <div className="space-y-1 text-xs text-cyan-200">
-                <div>✅ Offline Tile-Caching (Phase 1)</div>
-                <div>✅ Relief-Shading (Phase 2)</div>
-                <div>✅ 3D-Terrain (Phase 3)</div>
-                <div>✅ Hydrographische Daten (Phase 4)</div>
-                <div>✅ Satelliten-Bilder (Phase 5)</div>
-                <div>✅ Cache-Optimierung (Phase 6)</div>
+                <div>Offline Tile-Caching (Phase 1)</div>
+                <div>Relief-Shading (Phase 2)</div>
+                <div>3D-Terrain (Phase 3)</div>
+                <div>Hydrographische Daten (Phase 4)</div>
+                <div>Satelliten-Bilder (Phase 5)</div>
+                <div>Cache-Optimierung (Phase 6)</div>
               </div>
               <div className="text-xs text-cyan-600 mt-2 italic">
-                → Klick den Hub rechts unten um Features zu aktivieren
+                Klick den Hub rechts unten um Features zu aktivieren
               </div>
             </CardContent>
           </Card>
@@ -378,11 +378,11 @@ export default function MapPage() {
               <div className="text-xs text-gray-400 mb-2">DEINE SPOTS & ORTE</div>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-300">📍 Deine Spots:</span>
+                  <span className="text-gray-300">Deine Spots:</span>
                   <span className="text-cyan-400 font-semibold">{spots.length}</span>
                 </div>
                 <div className="flex justify-between text-sm items-center">
-                  <span className="text-gray-300">🏛️ Angelvereine & Parks:</span>
+                  <span className="text-gray-300">Angelvereine & Parks:</span>
                   <span className="text-green-400 font-semibold">{showPublicSpots ? publicLocations.length : '0'}</span>
                 </div>
                 {!showPublicSpots && (
@@ -390,7 +390,7 @@ export default function MapPage() {
                     onClick={loadPublicSpots}
                     className="w-full mt-2 px-3 py-1 text-xs bg-green-900/50 hover:bg-green-800 text-green-300 rounded border border-green-700 transition-colors"
                   >
-                    → Öffentliche Spots laden (~700)
+                    Öffentliche Spots laden (~700)
                   </button>
                 )}
                 {showPublicSpots && (
@@ -398,17 +398,17 @@ export default function MapPage() {
                     onClick={() => setShowPublicSpots(false)}
                     className="w-full mt-2 px-3 py-1 text-xs bg-red-900/50 hover:bg-red-800 text-red-300 rounded border border-red-700 transition-colors"
                   >
-                    ← Öffentliche Spots verbergen
+                    Öffentliche Spots verbergen
                   </button>
                 )}
                 {nearestSpot && travelInfo && (
                   <>
                     <div className="border-t border-gray-700 pt-2 mt-2">
-                      <div className="text-xs text-gray-500 mb-1">🎯 Nächster Spot:</div>
+                      <div className="text-xs text-gray-500 mb-1">Nächster Spot:</div>
                       <div className="font-semibold text-white text-sm">{nearestSpot.name}</div>
                       <div className="flex gap-2 text-xs text-gray-400 mt-1">
-                        <span>📏 {travelInfo.distance_km?.toFixed(1)} km</span>
-                        <span>⏱️ {travelInfo.duration_min} min</span>
+                        <span>{travelInfo.distance_km?.toFixed(1)} km</span>
+                        <span>{travelInfo.duration_min} min</span>
                       </div>
                     </div>
                   </>
