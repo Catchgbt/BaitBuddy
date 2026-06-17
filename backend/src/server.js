@@ -50,7 +50,7 @@ app.use((err, req, res, next) => {
 });
 
 if (!process.env.VERCEL) {
-  app.listen(PORT, () => console.log(`BaitBuddy Backend läuft auf :${PORT}`));
+  app.listen(PORT, () => {});
 }
 
 export default app;

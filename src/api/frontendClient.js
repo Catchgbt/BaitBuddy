@@ -425,7 +425,6 @@ export const functions = {
   invoke: (name, data) => {
     const fn = FUNCTION_MAP[name];
     if (fn) return fn(data);
-    console.warn(`[BaitBuddy] Unbekannte Funktion: ${name}`);
     return Promise.resolve({});
   },
 };

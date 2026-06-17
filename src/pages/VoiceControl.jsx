@@ -88,7 +88,6 @@ async function speakWithBrowserFirst(text, { rate = 1, pitch = 1 } = {}) {
   if (!text || text.trim().length === 0) return Promise.resolve();
   
   try {
-    console.log('[TTS] Browser Speech Synthesis: Starting...');
     return await speakBrowser(text, rate, pitch);
   } catch (error) {
     console.error('[TTS] Browser TTS failed:', error);
@@ -99,7 +98,6 @@ async function speakWithBrowserFirst(text, { rate = 1, pitch = 1 } = {}) {
 
 function speakBrowser(text, rate = 1, pitch = 1) {
   if (!('speechSynthesis' in window)) {
-    console.warn('[TTS] Browser Speech Synthesis not available');
     return Promise.resolve();
   }
   if (!text || text.trim().length === 0) return Promise.resolve();
@@ -123,7 +121,6 @@ function speakBrowser(text, rate = 1, pitch = 1) {
       let hasEnded = false;
       const timeout = setTimeout(() => {
         if (!hasEnded) {
-          console.warn('[TTS] Speech did not end after 30s, forcing resolve');
           hasEnded = true;
           resolve();
         }
@@ -133,7 +130,6 @@ function speakBrowser(text, rate = 1, pitch = 1) {
         if (!hasEnded) {
           hasEnded = true;
           clearTimeout(timeout);
-          console.log('[TTS] Speech ended normally');
           resolve();
         }
       };
@@ -146,8 +142,7 @@ function speakBrowser(text, rate = 1, pitch = 1) {
           resolve();
         }
       };
-      
-      console.log('[TTS] Speaking:', text.substring(0, 60) + '...');
+
       window.speechSynthesis.speak(utter);
     } catch (error) {
       console.error('[TTS] Exception:', error);
@@ -381,7 +376,6 @@ function VoiceBuddy() {
         .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
       setConversationHistory(recent);
     } catch (e) {
-      console.warn('Could not load history:', e);
     } finally {
       setLoadingHistory(false);
     }
@@ -415,7 +409,7 @@ function VoiceBuddy() {
             setFishingConditions(evaluateFishingConditions(weatherData));
           }
         })
-        .catch(err => console.warn('Wetter laden fehlgeschlagen:', err));
+        .catch(err => {});
 
       Spot.list()
         .then(spots => {
@@ -434,13 +428,13 @@ function VoiceBuddy() {
           });
           setNearestSpot(nearest);
         })
-        .catch(err => console.warn('Spots laden fehlgeschlagen:', err));
+        .catch(err => {});
     }
 
     // Regeln immer laden (unabhängig von Location)
     entities.RuleEntry.list()
       .then(rulesData => setRules(rulesData || []))
-      .catch(err => console.warn('Regeln laden fehlgeschlagen:', err));
+      .catch(err => {});
   }, [currentLocation]);
 
   // Ist gerade Schonzeit?
@@ -795,7 +789,6 @@ function VoiceBuddy() {
         // Header über neue Buddy-Nachricht informieren
         window.dispatchEvent(new CustomEvent('buddy-message-added'));
 
-        console.log('[VoiceControl] About to speak:', tip.substring(0, 60) + '...');
         // Pausiere Recognition damit TTS nicht abgeschnitten wird
         try { recognitionRef.current?.stop(); } catch {}
         try {
@@ -804,7 +797,6 @@ function VoiceBuddy() {
           console.error('[VoiceControl] Speech playback error:', speechError);
           toast.warning('Audio konnte nicht abgespielt werden. Antwort ist sichtbar.');
         }
-        console.log('[VoiceControl] Speech finished');
         // Recognition wieder starten
         if (isListeningRef.current) {
           try { recognitionRef.current?.start(); } catch {}
@@ -828,10 +820,6 @@ function VoiceBuddy() {
         setError('Kein Mikrofon gefunden. Bitte verbinde ein Mikrofon.');
         setIsListening(false);
         isListeningRef.current = false;
-      } else if (event.error === 'network') {
-        console.warn('Network error in speech recognition');
-      } else {
-        console.warn(`Speech recognition error: ${event.error}`);
       }
     };
 
@@ -840,7 +828,6 @@ function VoiceBuddy() {
         try {
           recognition.start();
         } catch (e) {
-          console.warn('Could not restart recognition:', e.message);
         }
       }
     };

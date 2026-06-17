@@ -276,7 +276,6 @@ function LandingPageContent() {
                 }
             }
         } catch (error) {
-            console.warn('Could not load user name:', error);
         }
     };
 
@@ -634,7 +633,6 @@ function LandingPageContent() {
                 try {
                     auth.redirectToLogin(createPageUrl('Logbook'));
                 } catch (error) {
-                    console.error('Redirect error:', error);
                     window.location.href = createPageUrl('Dashboard');
                 }
                 return;
@@ -643,7 +641,6 @@ function LandingPageContent() {
             let exifData = { gpsLat: null, gpsLon: null, dateTimeOriginal: null };
             try {
                 exifData = await parseEXIF(file);
-                console.log('EXIF-Daten extrahiert:', exifData);
 
                 if (exifData && exifData.gpsLat != null && exifData.gpsLon != null) {
                     toast.info('GPS-Position gefunden', {
@@ -652,16 +649,13 @@ function LandingPageContent() {
                     });
                 }
             } catch (e) {
-                console.warn('Konnte EXIF-Daten nicht lesen:', e);
                 exifData = { gpsLat: null, gpsLon: null, dateTimeOriginal: null };
             }
 
             let blob = file;
             try {
                 blob = await compressImage(file, 1600, 500);
-                console.log(`Bild komprimiert: ${(blob.size / 1024).toFixed(2)} KB`);
             } catch (e) {
-                console.warn("Image compression failed, using original:", e);
             }
 
             toast.info("Lade Foto hoch...");
@@ -728,7 +722,6 @@ function LandingPageContent() {
 
             
         } catch (error) {
-            console.error("Fehler beim Upload:", error);
             toast.error("Fehler beim Speichern des Fotos", {
                 duration: 3000
             });

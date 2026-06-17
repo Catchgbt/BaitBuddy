@@ -157,7 +157,6 @@ export default function QuizPage() {
         const userData = await User.me();
         setUser(userData);
       } catch (error) {
-        console.error("Fehler beim Laden der Benutzerdaten:", error);
       } finally {
         setIsLoading(false);
       }
@@ -189,7 +188,6 @@ export default function QuizPage() {
             console.warn("User data not available, cannot save quiz progress.");
         }
     } catch (error) {
-        console.error("Fehler beim Speichern des Quiz-Fortschritts:", error);
     }
     setGameState('results');
   }, [correctCount, wrongCount, currentLevelData, runStartTime, score, user]);
@@ -293,7 +291,7 @@ export default function QuizPage() {
         timerRef.current = null;
       }
     };
-  }, [timeLeft, gameState, answered, currentQuestions.length, questionIndex, handleQuizEnd]);
+  }, [gameState, answered, currentQuestions.length, questionIndex, handleQuizEnd]);
 
   // Memoize current question for efficient rendering
   const currentQuestion = useMemo(() => {

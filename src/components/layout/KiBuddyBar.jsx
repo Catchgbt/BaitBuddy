@@ -34,7 +34,6 @@ export default function KiBuddyBar({ onToggleChatbot, chatbotOpen, onOpenVoice }
         const currentUser = await User.me();
         setUser(currentUser);
       } catch (userError) {
-        console.warn("Could not load user data:", userError.message);
       }
     };
     

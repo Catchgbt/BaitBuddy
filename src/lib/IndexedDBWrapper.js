@@ -25,13 +25,11 @@ export class IndexedDBManager {
       const req = indexedDB.open(DB_NAME, DB_VERSION);
 
       req.onerror = () => {
-        console.error('[IndexedDB] Failed to open database');
         reject(req.error);
       };
 
       req.onupgradeneeded = (event) => {
         const db = event.target.result;
-        console.log(`[IndexedDB] Upgrading to version ${DB_VERSION}`);
 
         for (const [storeName, config] of Object.entries(STORES)) {
           if (!db.objectStoreNames.contains(storeName)) {
@@ -45,7 +43,6 @@ export class IndexedDBManager {
 
       req.onsuccess = () => {
         this.db = req.result;
-        console.log('[IndexedDB] Database initialized');
         resolve(true);
       };
     });
@@ -155,7 +152,6 @@ export const OfflineDataStore = {
       await idb.put('catches', data);
       await idb.setMetadata('lastSync_catches', new Date().toISOString());
     } catch (e) {
-      console.warn('[OfflineStore] Failed to cache catches:', e);
     }
   },
 
@@ -164,7 +160,6 @@ export const OfflineDataStore = {
       const data = await idb.get('catches', 'catches_main');
       return data?.records || [];
     } catch (e) {
-      console.warn('[OfflineStore] Failed to get cached catches:', e);
       return [];
     }
   },
@@ -178,7 +173,6 @@ export const OfflineDataStore = {
       };
       await idb.put('spots', data);
     } catch (e) {
-      console.warn('[OfflineStore] Failed to cache spots:', e);
     }
   },
 
@@ -187,7 +181,6 @@ export const OfflineDataStore = {
       const data = await idb.get('spots', 'spots_main');
       return data?.records || [];
     } catch (e) {
-      console.warn('[OfflineStore] Failed to get cached spots:', e);
       return [];
     }
   },
@@ -218,7 +211,6 @@ export const OfflineDataStore = {
       await idb.put('pending_syncs', record);
       return record.id;
     } catch (e) {
-      console.warn('[OfflineStore] Failed to add pending sync:', e);
       return null;
     }
   },
@@ -227,7 +219,6 @@ export const OfflineDataStore = {
     try {
       return await idb.query('pending_syncs', 'entity_type', entityType);
     } catch (e) {
-      console.warn('[OfflineStore] Failed to get pending syncs:', e);
       return [];
     }
   },
@@ -236,7 +227,6 @@ export const OfflineDataStore = {
     try {
       await idb.delete('pending_syncs', id);
     } catch (e) {
-      console.warn('[OfflineStore] Failed to remove pending sync:', e);
     }
   },
 
@@ -247,7 +237,6 @@ export const OfflineDataStore = {
       await idb.clear('pending_syncs');
       await idb.clear('metadata');
     } catch (e) {
-      console.warn('[OfflineStore] Failed to clear all data:', e);
     }
   },
 

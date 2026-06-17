@@ -5,7 +5,6 @@ export function safeParse(key, defaultValue = null) {
     if (!raw) return defaultValue;
     return JSON.parse(raw);
   } catch (err) {
-    console.warn(`[StorageUtils] Parse error for key "${key}":`, err);
     try {
       localStorage.removeItem(key);
     } catch {}
@@ -18,7 +17,6 @@ export function safeStringify(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
     return true;
   } catch (err) {
-    console.warn(`[StorageUtils] Stringify error for key "${key}":`, err);
     return false;
   }
 }
@@ -28,7 +26,6 @@ export function safeRemove(key) {
     localStorage.removeItem(key);
     return true;
   } catch (err) {
-    console.warn(`[StorageUtils] Remove error for key "${key}":`, err);
     return false;
   }
 }

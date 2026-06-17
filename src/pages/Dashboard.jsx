@@ -133,7 +133,6 @@ export default function Dashboard() {
             userLocation = { lat: location.lat, lon: location.lon };
           }
         } catch (parseError) {
-          console.warn('Location parse error:', parseError);
         }
       }
 
@@ -220,7 +219,6 @@ export default function Dashboard() {
         setNearestSpots(spots.slice(0, 2));
       }
     } catch (error) {
-      console.error("Fehler beim Laden:", error);
     } finally {
       setLoading(false);
     }
@@ -282,7 +280,6 @@ export default function Dashboard() {
         try {
           location = JSON.parse(savedLocation);
         } catch (e) {
-          console.error('Location parse error:', e);
         }
       }
 
