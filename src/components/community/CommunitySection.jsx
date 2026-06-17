@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useHaptic } from "@/components/utils/HapticFeedback";
 import { useSound } from "@/components/utils/SoundManager";
-import { ThumbsUp, MessageCircle, AlertTriangle, Send, Users, ExternalLink, Video, BookOpen } from "lucide-react";
+import { ThumbsUp, MessageCircle, AlertTriangle, Send, Users, ExternalLink, Video, BookOpen, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function CommunitySection() {
@@ -59,15 +59,16 @@ export default function CommunitySection() {
       setUserCache(cache);
 
       // Kommentare laden
-      const commentPromises = allPosts.map(post => 
+      const commentPromises = allPosts.map(post =>
         entities.Comment.filter({ post_id: post.id })
       );
-      const allComments = await Promise.all(commentPromises);
-      
+      const commentsByPost = await Promise.all(commentPromises);
+
       // User-Daten für Kommentar-Ersteller laden
-      const commentEmails = allComments.flat().map(c => c.created_by);
+      const allComments = commentsByPost.flat();
+      const commentEmails = allComments.map(c => c.created_by);
       const uniqueCommentEmails = [...new Set(commentEmails)].filter(e => !cache[e]);
-      
+
       if (uniqueCommentEmails.length > 0) {
         const commentUserPromises = uniqueCommentEmails.map(async (email) => {
           try {
@@ -77,17 +78,17 @@ export default function CommunitySection() {
             return { email, user: null };
           }
         });
-        
+
         const commentUserResults = await Promise.all(commentUserPromises);
         commentUserResults.forEach(({ email, user }) => {
           cache[email] = user;
         });
         setUserCache(cache);
       }
-      
+
       const commentMap = {};
       allPosts.forEach((post, idx) => {
-        commentMap[post.id] = allComments[idx] || [];
+        commentMap[post.id] = commentsByPost[idx] || [];
       });
       setComments(commentMap);
     } catch (error) {
@@ -236,7 +237,10 @@ export default function CommunitySection() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center p-6">
-        <div className="text-cyan-400 animate-spin text-2xl">⟳</div>
+        <div className="flex items-center gap-3 text-cyan-400">
+          <Loader2 className="w-6 h-6 animate-spin" />
+          <span>Lade Community...</span>
+        </div>
       </div>
     );
   }

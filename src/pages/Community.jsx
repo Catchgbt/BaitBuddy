@@ -291,7 +291,7 @@ export default function Community() {
       setNewPostText("");
       setNewPostImage(null);
       setImagePreview(null);
-      toast.success("Post erstellt! 🎣");
+      toast.success("Post erstellt");
       await loadPosts();
       window.scrollTo(0, 0);
     } catch (error) {
