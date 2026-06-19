@@ -24,7 +24,7 @@ export default function DepthUploadPanel({ onUploadSuccess }) {
     try {
       const { file_url } = await integrations.Core.UploadFile({ file });
       const res = await processDepthData({ file_url, water_body_name: waterBodyName, device_type: deviceType, is_public: isPublic });
-      toast.success(res.data?.message || "Daten importiert");
+      toast.success(res?.message || "Daten importiert");
       setFile(null);
       setWaterBodyName("");
       if (onUploadSuccess) onUploadSuccess();
