@@ -55,7 +55,7 @@ export default function Dashboard() {
       ];
       const greeting = greetings[Math.floor(Math.random() * greetings.length)];
       setTimeout(() => {
-        speak(greeting, { rate: 0.9, pitch: 1 });
+        speak(greeting);
       }, 500);
     }
   }, [user, greetingPlayed, speak]);
