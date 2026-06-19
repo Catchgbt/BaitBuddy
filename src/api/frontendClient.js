@@ -135,6 +135,7 @@ const ENTITY_MAP = {
   Loadout:        '/api/gear/loadouts',
   PackSession:    '/api/gear/sessions',
   BaitRecipe:     '/api/bait-recipes',
+  Clan:           '/api/community/clans',
   WaterReview:    '/api/water-reviews',
   WaterAnalysisHistory: '/api/water-analysis-history',
   VotingLike:     '/api/voting-likes',

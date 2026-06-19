@@ -32,14 +32,12 @@ export default function ChatWidget({ topic = "Allgemein" }) {
     if (isOpen) {
       loadMessages();
       loadActiveUsers();
-      const unsubscribe = entities.ChatMessage.subscribe((event) => {
-        if (event.type === 'create' && event.data?.context === topic) {
-          setMessages(prev => [...prev, event.data]);
-        }
-      });
+      // Backend-seitige Realtime-Subscriptions gibt es nicht — neue Nachrichten
+      // werden per Polling nachgeladen, solange der Chat geöffnet ist.
+      const messageInterval = setInterval(loadMessages, 5000);
       const sessionInterval = setInterval(updateUserSession, 30000);
       return () => {
-        unsubscribe();
+        clearInterval(messageInterval);
         clearInterval(sessionInterval);
       };
     }

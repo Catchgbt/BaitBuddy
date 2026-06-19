@@ -23,7 +23,7 @@ const coerce = (v) => {
   return v;
 };
 
-function registerEntity(path, table, allowedFields, { publicRead = false } = {}) {
+function registerEntity(path, table, allowedFields, { publicRead = false, readOnly = false, ownerEmailCols = ['user_email'] } = {}) {
   const allow = new Set(allowedFields);
 
   const pack = (body = {}) => {
@@ -71,9 +71,12 @@ function registerEntity(path, table, allowedFields, { publicRead = false } = {})
     return res.json(data);
   });
 
+  if (readOnly) return;
+
   // CREATE
   router.post(path, requireAuth, async (req, res) => {
-    const row = { ...pack(req.body), user_id: req.user.id, user_email: req.user.email };
+    const row = { ...pack(req.body), user_id: req.user.id };
+    for (const c of ownerEmailCols) row[c] = req.user.email;
     const { data, error } = await supabase.from(table).insert(row).select().single();
     if (error) return res.status(500).json({ error: error.message });
     return res.json(data);
@@ -144,5 +147,22 @@ registerEntity('/depth-data-points', 'depth_data_points', [
 registerEntity('/licenses', 'licenses', [
   'type', 'number', 'valid_from', 'valid_until', 'issuer', 'notes', 'photo_url',
 ], { publicRead: false });
+
+// Community-Chat-Nachrichten (ChatWidget) — öffentlich im jeweiligen Topic.
+// created_by trägt die E-Mail (vom UI als Absender gerendert).
+registerEntity('/ai/messages', 'chat_messages', [
+  'role', 'content', 'context',
+], { publicRead: true, ownerEmailCols: ['created_by', 'user_email'] });
+
+// Chat-Sessions / Online-Status (ChatWidget) — öffentlich lesbar (wer ist online).
+registerEntity('/community/sessions', 'chat_sessions', [
+  'user_email', 'user_name', 'last_activity', 'is_active',
+], { publicRead: true, ownerEmailCols: ['user_email', 'created_by'] });
+
+// Clans (ClanLeaderboardCard) — nur lesen; Erstellung/Beitritt laufen über
+// community.js. members ist ein jsonb-Array (verhindert .includes-Crash im UI).
+registerEntity('/community/clans', 'clans', [
+  'name', 'description', 'competition_id',
+], { publicRead: true, readOnly: true });
 
 export default router;
