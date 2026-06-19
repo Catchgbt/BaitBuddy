@@ -139,15 +139,27 @@ function TextAIMode() {
         userName: user?.full_name || 'User'
       });
       
-      const aiReply = res.data?.reply || "Entschuldigung, es gab ein Problem.";
+      // catchgbtChat liefert das geparste /ai/chat-JSON direkt ({ reply, message }),
+      // nicht das base44-{ data }-Nesting — daher reply/message statt data.reply.
+      const aiReply = res?.reply || res?.message || "Entschuldigung, es gab ein Problem.";
       setHistory(prev => [...prev, { role: 'assistant', content: aiReply }]);
 
       if (useSpeech) {
         setIsSpeaking(true);
-        const ttsResponse = await backendTextToSpeech({ text: aiReply });
-        if (ttsResponse.data instanceof ArrayBuffer && ttsResponse.data.byteLength > 0) {
-          await playAudio(ttsResponse.data, () => setIsSpeaking(false));
-        } else {
+        // TTS ist optional: ein Fehler hier (z. B. fehlender ElevenLabs-Key)
+        // darf die bereits angezeigte KI-Antwort nicht überschreiben.
+        try {
+          const ttsResponse = await backendTextToSpeech({ text: aiReply });
+          if (ttsResponse?.audioBase64) {
+            // backendTextToSpeech liefert base64-Audio; playAudio erwartet
+            // Binärdaten für den Blob.
+            const bytes = Uint8Array.from(atob(ttsResponse.audioBase64), c => c.charCodeAt(0));
+            await playAudio(bytes, () => setIsSpeaking(false));
+          } else {
+            await playTextWithBrowserTTS(aiReply);
+            setIsSpeaking(false);
+          }
+        } catch {
           await playTextWithBrowserTTS(aiReply);
           setIsSpeaking(false);
         }

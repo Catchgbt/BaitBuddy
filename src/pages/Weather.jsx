@@ -138,38 +138,21 @@ Sei konkret, praktisch und detailliert!`;
         .replace(/\s+/g, ' ')
         .trim();
 
-      const response = await backendTextToSpeech({
-        text: cleanText,
-        speechRate: 1.0,
-        voiceId: "alloy",
-        quality: "standard"
-      });
-
-      const contentType = response.headers?.get?.('content-type') || response.headers?.['content-type'] || '';
-
-      if (contentType.includes('application/json')) {
-        const jsonData = response.data;
-        
-        if (jsonData.fallback_to_browser) {
-          const utterance = new SpeechSynthesisUtterance(cleanText);
-          utterance.lang = 'de-DE';
-          utterance.rate = 1.0;
-          utterance.pitch = 1;
-          utterance.volume = 0.8;
-
-          utterance.onend = () => setIsReadingAloud(false);
-          utterance.onerror = (e) => {
-            setIsReadingAloud(false);
-            toast.error("Vorlesen fehlgeschlagen");
-          };
-
-          window.speechSynthesis.speak(utterance);
-          return;
-        }
+      // backendTextToSpeech liefert das geparste /ai/tts-JSON
+      // { audioBase64, contentType } — kein axios-Response mit .headers/.data.
+      // Liegt ElevenLabs-Audio vor, wird es abgespielt; sonst (oder bei Fehler,
+      // z. B. fehlender ELEVENLABS_API_KEY) Fallback auf die Browser-Sprachausgabe.
+      let audioBase64 = null;
+      try {
+        const response = await backendTextToSpeech({ text: cleanText });
+        audioBase64 = response?.audioBase64 || null;
+      } catch {
+        audioBase64 = null;
       }
 
-      if (contentType.includes('audio/mpeg')) {
-        const blob = new Blob([response.data], { type: 'audio/mpeg' });
+      if (audioBase64) {
+        const bytes = Uint8Array.from(atob(audioBase64), c => c.charCodeAt(0));
+        const blob = new Blob([bytes], { type: 'audio/mpeg' });
         const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
 
@@ -177,8 +160,7 @@ Sei konkret, praktisch und detailliert!`;
           URL.revokeObjectURL(url);
           setIsReadingAloud(false);
         };
-
-        audio.onerror = (e) => {
+        audio.onerror = () => {
           URL.revokeObjectURL(url);
           setIsReadingAloud(false);
           toast.error("Abspielen fehlgeschlagen");
@@ -186,8 +168,17 @@ Sei konkret, praktisch und detailliert!`;
 
         await audio.play();
       } else {
-        setIsReadingAloud(false);
-        toast.error("Unerwartetes Datenformat");
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.lang = 'de-DE';
+        utterance.rate = 1.0;
+        utterance.pitch = 1;
+        utterance.volume = 0.8;
+        utterance.onend = () => setIsReadingAloud(false);
+        utterance.onerror = () => {
+          setIsReadingAloud(false);
+          toast.error("Vorlesen fehlgeschlagen");
+        };
+        window.speechSynthesis.speak(utterance);
       }
 
     } catch (error) {
