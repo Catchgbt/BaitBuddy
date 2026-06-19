@@ -239,7 +239,32 @@ const FUNCTION_MAP = {
   backendTextToSpeech:    (d) => api.post('/api/ai/tts', d),
   geminiTextToSpeech:     (d) => api.post('/api/ai/tts', d),
   freeNeuralTTS:          (d) => api.post('/api/ai/tts', d),
-  analyzeCatchPhoto:      (d) => api.post('/api/ai/analyze-catch', d),
+  // Foto-Analyse für strukturierte Fang-Daten. Nutzt /analyze-photo (liefert
+  // species/length_cm/weight_kg), NICHT /ai/analyze-catch (liefert nur Freitext).
+  // Die Antwort wird ins von den Aufrufern (CatchDetailModal, PendingPhotoCard,
+  // QuickCatchDialog) erwartete Format { data: { result_data, summary } } gemappt —
+  // ohne dieses Mapping waren deren `result_data`-Prüfungen immer falsch und die
+  // KI-Foto-Analyse zeigte nie ein Ergebnis.
+  analyzeCatchPhoto: async (d) => {
+    const r = await api
+      .post('/api/analyze-photo', { image: d?.file_url || d?.image_base64 || d?.image })
+      .catch(() => null);
+    if (!r?.ok || (!r.species && r.length_cm == null && r.weight_kg == null)) {
+      return { data: null };
+    }
+    return {
+      data: {
+        result_data: {
+          species_name: r.species || '',
+          length_cm: r.length_cm ?? null,
+          weight_kg: r.weight_kg ?? null,
+        },
+        summary: r.species
+          ? `Erkannt: ${r.species}${r.length_cm ? `, ca. ${Math.round(r.length_cm)} cm` : ''}`
+          : 'Keine Fischart erkannt',
+      },
+    };
+  },
   aiEvaluateCatch:        (d) => api.post('/api/ai/evaluate-catch', d),
   generateCatchReport:    (d) => api.post('/api/ai/generate-catch-report', d),
   calculateTravelTime:    (d) => api.post('/api/fishing/clubs/nearby', d).catch(() => ({})),
