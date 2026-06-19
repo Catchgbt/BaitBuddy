@@ -134,6 +134,7 @@ const ENTITY_MAP = {
   GearRule:       '/api/gear/rules',
   Loadout:        '/api/gear/loadouts',
   PackSession:    '/api/gear/sessions',
+  BaitRecipe:     '/api/bait-recipes',
 };
 
 function makeEntity(entityName) {
