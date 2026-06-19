@@ -206,6 +206,30 @@ router.post('/weather', optionalAuth, async (req, res) => {
   }
 });
 
+// LiveTrip Cloud-Backup (TripSyncService). Der komplette Trip wird als jsonb
+// gespeichert; die id stammt aus dem lokalen IndexedDB-Trip, daher Upsert
+// (Idempotenz beim erneuten Synchronisieren). list liefert die Trips 1:1 zurück.
+router.post('/trips', requireAuth, async (req, res) => {
+  try {
+    const trip = req.body || {};
+    const id = String(trip.id || Date.now());
+    const { data, error } = await supabase.from('live_trips').upsert({
+      id, user_id: req.user.id, user_email: req.user.email, trip,
+    }, { onConflict: 'id' }).select().single();
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ ok: true, id: data.id, ...trip });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+router.get('/trips', requireAuth, async (req, res) => {
+  const { data, error } = await supabase.from('live_trips')
+    .select('trip').eq('user_id', req.user.id).order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json((data || []).map((r) => r.trip));
+});
+
 router.del = router.delete;
 router.delete('/user/account', requireAuth, async (req, res) => {
   return res.json({ ok: true, message: 'Account-Löschung eingeleitet' });

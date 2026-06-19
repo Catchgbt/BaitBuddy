@@ -12,10 +12,10 @@ const router = Router();
 
 const RESERVED = new Set(['order', 'limit', 'offset']);
 // Sortier-Whitelist: das Frontend sendet teils base44-Legacy-Order-Felder
-// (z. B. -analyzed_at, -reviewed_at, -generated_at), die es als Spalte nicht
-// gibt. Unbekannte Order-Spalten fallen auf created_at zurück, statt einen
-// 500er auszulösen.
-const SAFE_SORT = new Set(['created_at', 'created_date', 'valid_until']);
+// (z. B. -analyzed_at, -reviewed_at, -created_date), die es als Spalte nicht in
+// jeder Tabelle gibt. created_at existiert überall und ist die zuverlässige
+// Erstellungszeit; unbekannte Order-Spalten fallen darauf zurück (statt 500er).
+const SAFE_SORT = new Set(['created_at', 'valid_until']);
 
 const coerce = (v) => {
   if (v === 'true') return true;
@@ -158,5 +158,17 @@ registerEntity('/ai/messages', 'chat_messages', [
 registerEntity('/community/sessions', 'chat_sessions', [
   'user_email', 'user_name', 'last_activity', 'is_active',
 ], { publicRead: true, ownerEmailCols: ['user_email', 'created_by'] });
+
+// Nutzungs-Sessions (Layout-Tracking) — privat pro Nutzer. user_id wird aus der
+// Auth gesetzt; ein vom Frontend als user_id übergebener E-Mail-Wert wird
+// ignoriert (nicht in der Whitelist) und die Ownership greift über die Auth-UUID.
+registerEntity('/user/sessions', 'usage_sessions', [
+  'session_id', 'feature_id', 'started_at', 'status', 'last_heartbeat', 'stopped_at',
+], { publicRead: false });
+
+// Premium-Wallet (Credits-Anzeige) — privat, nur lesen.
+registerEntity('/premium/wallet', 'premium_wallets', [
+  'credits',
+], { publicRead: false, readOnly: true });
 
 export default router;
