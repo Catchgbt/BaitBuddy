@@ -159,10 +159,4 @@ registerEntity('/community/sessions', 'chat_sessions', [
   'user_email', 'user_name', 'last_activity', 'is_active',
 ], { publicRead: true, ownerEmailCols: ['user_email', 'created_by'] });
 
-// Clans (ClanLeaderboardCard) — nur lesen; Erstellung/Beitritt laufen über
-// community.js. members ist ein jsonb-Array (verhindert .includes-Crash im UI).
-registerEntity('/community/clans', 'clans', [
-  'name', 'description', 'competition_id',
-], { publicRead: true, readOnly: true });
-
 export default router;

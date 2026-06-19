@@ -288,7 +288,7 @@ const FUNCTION_MAP = {
   deleteAccount:          ()  => api.del('/api/user/account'),
   createClan:             (d) => api.post('/api/community/clans', d),
   joinClan:               (d) => api.post(`/api/community/clans/${d?.clan_id}/join`),
-  getClanLeaderboard:     (d) => api.get(`/api/community/clans/${d?.clan_id}/leaderboard`).catch(() => []),
+  getClanLeaderboard:     (d) => api.get(`/api/community/clans/leaderboard?competition_id=${d?.competition_id || ''}`).catch(() => ({ leaderboard: [] })),
   checkFeatureAccess:     (d) => api.post('/api/premium/check-feature', d).catch(() => ({ allowed: false })),
   geocodeFishingClubs:    (d) => api.post('/api/fishing/clubs/geocode', d).catch(() => []),
   addVotingLike:          (d) => api.post(`/api/community/voting/${d?.submission_id}/like`).catch(() => ({ ok: true })),
