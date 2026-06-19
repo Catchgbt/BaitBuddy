@@ -135,6 +135,12 @@ const ENTITY_MAP = {
   Loadout:        '/api/gear/loadouts',
   PackSession:    '/api/gear/sessions',
   BaitRecipe:     '/api/bait-recipes',
+  WaterReview:    '/api/water-reviews',
+  WaterAnalysisHistory: '/api/water-analysis-history',
+  VotingLike:     '/api/voting-likes',
+  BathymetricMap: '/api/bathymetric-maps',
+  DepthDataPoint: '/api/depth-data-points',
+  License:        '/api/licenses',
 };
 
 function makeEntity(entityName) {

@@ -11,6 +11,11 @@ const router = Router();
 // Eigentümer beschränkt; `publicRead` öffnet nur das Lesen (z. B. Marktplatz).
 
 const RESERVED = new Set(['order', 'limit', 'offset']);
+// Sortier-Whitelist: das Frontend sendet teils base44-Legacy-Order-Felder
+// (z. B. -analyzed_at, -reviewed_at, -generated_at), die es als Spalte nicht
+// gibt. Unbekannte Order-Spalten fallen auf created_at zurück, statt einen
+// 500er auszulösen.
+const SAFE_SORT = new Set(['created_at', 'created_date', 'valid_until']);
 
 const coerce = (v) => {
   if (v === 'true') return true;
@@ -41,10 +46,11 @@ function registerEntity(path, table, allowedFields, { publicRead = false } = {})
       }
 
       const order = req.query.order ? String(req.query.order) : null;
-      if (order) {
-        q = q.order(order.replace(/^-/, ''), { ascending: !order.startsWith('-') });
+      const col = order ? order.replace(/^-/, '') : null;
+      if (col && (allow.has(col) || SAFE_SORT.has(col))) {
+        q = q.order(col, { ascending: !order.startsWith('-') });
       } else {
-        q = q.order('created_date', { ascending: false });
+        q = q.order('created_at', { ascending: false });
       }
       if (req.query.limit) q = q.limit(Number(req.query.limit));
 
@@ -107,6 +113,36 @@ registerEntity('/ratings', 'function_ratings', [
 registerEntity('/bait-recipes', 'bait_recipes', [
   'name', 'category', 'target_fish', 'ingredients', 'instructions',
   'total_percentage', 'attractiveness_score', 'estimated_cost', 'ai_generated', 'ai_analysis', 'is_public',
+], { publicRead: false });
+
+// Gewässer-Bewertungen (ReviewsList, MapView) — öffentlich lesbar.
+registerEntity('/water-reviews', 'water_reviews', [
+  'spot_id', 'rating', 'review',
+], { publicRead: true });
+
+// Wasseranalyse-Verlauf (MiniWaterAnalysis, WaterAnalysisMapLayer) — privat.
+registerEntity('/water-analysis-history', 'water_analysis_history', [
+  'spot_id', 'latitude', 'longitude', 'spot_name', 'analysis_data',
+], { publicRead: false });
+
+// Voting-Likes (VotingEventCard) — öffentlich lesbar (Anzahl/Status).
+registerEntity('/voting-likes', 'voting_likes', [
+  'submission_id',
+], { publicRead: true });
+
+// Bathymetrie-Karten (BathymetricCrowdsourcing) — öffentlich lesbar (Crowdsourcing).
+registerEntity('/bathymetric-maps', 'bathymetric_maps', [
+  'spot_id', 'name', 'map_data',
+], { publicRead: true });
+
+// Tiefendaten-Punkte (MyDepthDataList) — privat pro Nutzer.
+registerEntity('/depth-data-points', 'depth_data_points', [
+  'map_id', 'latitude', 'longitude', 'depth_m',
+], { publicRead: false });
+
+// Angelschein-Verwaltung (LicensesSection) — privat pro Nutzer.
+registerEntity('/licenses', 'licenses', [
+  'type', 'number', 'valid_from', 'valid_until', 'issuer', 'notes', 'photo_url',
 ], { publicRead: false });
 
 export default router;
