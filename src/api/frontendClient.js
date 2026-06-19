@@ -399,12 +399,30 @@ const fileToBase64 = (file) => {
 
 export const integrations = {
   Core: {
-    InvokeLLM: ({ prompt, response_json_schema, ...rest }) =>
-      api.post('/api/ai/chat', {
-        messages: [{ role: 'user', content: prompt }],
-        response_json_schema,
+    // base44-Kompatibilität: InvokeLLM liefert den Antwort-TEXT zurück — bzw. bei
+    // response_json_schema das geparste JSON-Objekt — nicht das rohe
+    // { ok, reply, message }-Transportobjekt. Mehrere Seiten (Weather,
+    // BaitMixerPro, Help, StartFishing) setzen/rendern das Ergebnis direkt; ohne
+    // diese Entpackung landete "[object Object]" im UI bzw. React warf beim
+    // Rendern eines Objekts als React-Child.
+    InvokeLLM: async ({ prompt, response_json_schema, ...rest }) => {
+      const jsonHint = response_json_schema
+        ? `\n\nAntworte AUSSCHLIESSLICH mit einem gültigen JSON-Objekt gemäß diesem Schema, ohne Markdown und ohne weitere Erklärungen:\n${JSON.stringify(response_json_schema)}`
+        : '';
+      const res = await api.post('/api/ai/chat', {
+        messages: [{ role: 'user', content: `${prompt}${jsonHint}` }],
         ...rest,
-      }),
+      });
+      const text = res?.reply ?? res?.message ?? '';
+      if (!response_json_schema) return text;
+      // Strukturierte Antwort erwartet: JSON aus dem Text extrahieren. Bei
+      // Fehlschlag ein leeres Objekt liefern — Aufrufer greifen mit ?./&& zu.
+      try {
+        const match = typeof text === 'string' ? text.match(/\{[\s\S]*\}/) : null;
+        if (match) return JSON.parse(match[0]);
+      } catch { /* Fallthrough zu {} */ }
+      return {};
+    },
     SendEmail:  () => Promise.resolve({ ok: true }),
     SendSMS:    () => Promise.resolve({ ok: true }),
     UploadFile: async ({ file }) => {
