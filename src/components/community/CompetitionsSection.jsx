@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, Trophy, Users, Heart, TrendingUp, Info } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import EventLauncher from './EventLauncher';
 import CompetitionLauncher from './CompetitionLauncher';
 import VotingEventCard from './VotingEventCard';

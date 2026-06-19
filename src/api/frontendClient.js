@@ -134,6 +134,14 @@ const ENTITY_MAP = {
   GearRule:       '/api/gear/rules',
   Loadout:        '/api/gear/loadouts',
   PackSession:    '/api/gear/sessions',
+  BaitRecipe:     '/api/bait-recipes',
+  Clan:           '/api/community/clans',
+  WaterReview:    '/api/water-reviews',
+  WaterAnalysisHistory: '/api/water-analysis-history',
+  VotingLike:     '/api/voting-likes',
+  BathymetricMap: '/api/bathymetric-maps',
+  DepthDataPoint: '/api/depth-data-points',
+  License:        '/api/licenses',
 };
 
 function makeEntity(entityName) {
@@ -239,7 +247,32 @@ const FUNCTION_MAP = {
   backendTextToSpeech:    (d) => api.post('/api/ai/tts', d),
   geminiTextToSpeech:     (d) => api.post('/api/ai/tts', d),
   freeNeuralTTS:          (d) => api.post('/api/ai/tts', d),
-  analyzeCatchPhoto:      (d) => api.post('/api/ai/analyze-catch', d),
+  // Foto-Analyse für strukturierte Fang-Daten. Nutzt /analyze-photo (liefert
+  // species/length_cm/weight_kg), NICHT /ai/analyze-catch (liefert nur Freitext).
+  // Die Antwort wird ins von den Aufrufern (CatchDetailModal, PendingPhotoCard,
+  // QuickCatchDialog) erwartete Format { data: { result_data, summary } } gemappt —
+  // ohne dieses Mapping waren deren `result_data`-Prüfungen immer falsch und die
+  // KI-Foto-Analyse zeigte nie ein Ergebnis.
+  analyzeCatchPhoto: async (d) => {
+    const r = await api
+      .post('/api/analyze-photo', { image: d?.file_url || d?.image_base64 || d?.image })
+      .catch(() => null);
+    if (!r?.ok || (!r.species && r.length_cm == null && r.weight_kg == null)) {
+      return { data: null };
+    }
+    return {
+      data: {
+        result_data: {
+          species_name: r.species || '',
+          length_cm: r.length_cm ?? null,
+          weight_kg: r.weight_kg ?? null,
+        },
+        summary: r.species
+          ? `Erkannt: ${r.species}${r.length_cm ? `, ca. ${Math.round(r.length_cm)} cm` : ''}`
+          : 'Keine Fischart erkannt',
+      },
+    };
+  },
   aiEvaluateCatch:        (d) => api.post('/api/ai/evaluate-catch', d),
   generateCatchReport:    (d) => api.post('/api/ai/generate-catch-report', d),
   calculateTravelTime:    (d) => api.post('/api/fishing/clubs/nearby', d).catch(() => ({})),
@@ -255,7 +288,7 @@ const FUNCTION_MAP = {
   deleteAccount:          ()  => api.del('/api/user/account'),
   createClan:             (d) => api.post('/api/community/clans', d),
   joinClan:               (d) => api.post(`/api/community/clans/${d?.clan_id}/join`),
-  getClanLeaderboard:     (d) => api.get(`/api/community/clans/${d?.clan_id}/leaderboard`).catch(() => []),
+  getClanLeaderboard:     (d) => api.get(`/api/community/clans/leaderboard?competition_id=${d?.competition_id || ''}`).catch(() => ({ leaderboard: [] })),
   checkFeatureAccess:     (d) => api.post('/api/premium/check-feature', d).catch(() => ({ allowed: false })),
   geocodeFishingClubs:    (d) => api.post('/api/fishing/clubs/geocode', d).catch(() => []),
   addVotingLike:          (d) => api.post(`/api/community/voting/${d?.submission_id}/like`).catch(() => ({ ok: true })),
@@ -374,12 +407,30 @@ const fileToBase64 = (file) => {
 
 export const integrations = {
   Core: {
-    InvokeLLM: ({ prompt, response_json_schema, ...rest }) =>
-      api.post('/api/ai/chat', {
-        messages: [{ role: 'user', content: prompt }],
-        response_json_schema,
+    // base44-Kompatibilität: InvokeLLM liefert den Antwort-TEXT zurück — bzw. bei
+    // response_json_schema das geparste JSON-Objekt — nicht das rohe
+    // { ok, reply, message }-Transportobjekt. Mehrere Seiten (Weather,
+    // BaitMixerPro, Help, StartFishing) setzen/rendern das Ergebnis direkt; ohne
+    // diese Entpackung landete "[object Object]" im UI bzw. React warf beim
+    // Rendern eines Objekts als React-Child.
+    InvokeLLM: async ({ prompt, response_json_schema, ...rest }) => {
+      const jsonHint = response_json_schema
+        ? `\n\nAntworte AUSSCHLIESSLICH mit einem gültigen JSON-Objekt gemäß diesem Schema, ohne Markdown und ohne weitere Erklärungen:\n${JSON.stringify(response_json_schema)}`
+        : '';
+      const res = await api.post('/api/ai/chat', {
+        messages: [{ role: 'user', content: `${prompt}${jsonHint}` }],
         ...rest,
-      }),
+      });
+      const text = res?.reply ?? res?.message ?? '';
+      if (!response_json_schema) return text;
+      // Strukturierte Antwort erwartet: JSON aus dem Text extrahieren. Bei
+      // Fehlschlag ein leeres Objekt liefern — Aufrufer greifen mit ?./&& zu.
+      try {
+        const match = typeof text === 'string' ? text.match(/\{[\s\S]*\}/) : null;
+        if (match) return JSON.parse(match[0]);
+      } catch { /* Fallthrough zu {} */ }
+      return {};
+    },
     SendEmail:  () => Promise.resolve({ ok: true }),
     SendSMS:    () => Promise.resolve({ ok: true }),
     UploadFile: async ({ file }) => {

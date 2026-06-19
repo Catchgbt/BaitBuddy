@@ -3,6 +3,7 @@ import { requireAuth, optionalAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
 import { Buffer } from 'buffer';
 import path from 'path';
+import { parseDepthFile } from '../lib/depthParser.js';
 
 const router = Router();
 
@@ -137,6 +138,62 @@ router.get('/water/history', requireAuth, async (req, res) => {
   return res.json([]);
 });
 
+// Tiefendaten-Upload (Bathymetrie-Crowdsourcing): lädt die zuvor hochgeladene
+// CSV/GPX-Datei, parst lat/lon/Tiefe und legt eine Bathymetrie-Karte samt
+// Tiefenpunkten an. Wird vom Frontend über processDepthData aufgerufen.
+const DEPTH_MAX_POINTS = 5000;
+router.post('/water/bathymetry', requireAuth, async (req, res) => {
+  try {
+    const { file_url, water_body_name, device_type, is_public } = req.body || {};
+    if (!file_url) return res.status(400).json({ error: 'file_url erforderlich' });
+    if (!water_body_name?.trim()) return res.status(400).json({ error: 'water_body_name erforderlich' });
+
+    const fileRes = await fetch(file_url).catch(() => null);
+    if (!fileRes || !fileRes.ok) {
+      return res.status(400).json({ error: 'Datei konnte nicht geladen werden' });
+    }
+    const text = await fileRes.text();
+
+    const points = parseDepthFile(text, file_url);
+    if (!points.length) {
+      return res.status(422).json({
+        error: 'Keine gültigen Tiefenpunkte gefunden (erwartet: CSV mit lat,lng,tiefe oder GPX mit <depth>)',
+      });
+    }
+    const limited = points.slice(0, DEPTH_MAX_POINTS);
+
+    const { data: map, error: mapErr } = await supabase.from('bathymetric_maps').insert({
+      user_id: req.user.id,
+      name: water_body_name.trim(),
+      map_data: {
+        device_type: device_type || 'unknown',
+        is_public: is_public !== false,
+        point_count: limited.length,
+        source_points: points.length,
+      },
+    }).select().single();
+    if (mapErr) return res.status(500).json({ error: mapErr.message });
+
+    const rows = limited.map((p) => ({
+      map_id: map.id, user_id: req.user.id,
+      latitude: p.lat, longitude: p.lon, depth_m: p.depth,
+    }));
+    const { error: ptErr } = await supabase.from('depth_data_points').insert(rows);
+    if (ptErr) return res.status(500).json({ error: ptErr.message });
+
+    const note = points.length > limited.length ? ` (von ${points.length}, auf ${DEPTH_MAX_POINTS} begrenzt)` : '';
+    return res.json({
+      ok: true,
+      message: `${limited.length} Tiefenpunkte importiert${note}`,
+      map_id: map.id,
+      point_count: limited.length,
+    });
+  } catch (e) {
+    console.error('[Bathymetry Upload Error]', e);
+    return res.status(500).json({ error: e.message });
+  }
+});
+
 router.post('/weather', optionalAuth, async (req, res) => {
   const { latitude, longitude } = req.body;
   try {
@@ -147,6 +204,30 @@ router.post('/weather', optionalAuth, async (req, res) => {
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
+});
+
+// LiveTrip Cloud-Backup (TripSyncService). Der komplette Trip wird als jsonb
+// gespeichert; die id stammt aus dem lokalen IndexedDB-Trip, daher Upsert
+// (Idempotenz beim erneuten Synchronisieren). list liefert die Trips 1:1 zurück.
+router.post('/trips', requireAuth, async (req, res) => {
+  try {
+    const trip = req.body || {};
+    const id = String(trip.id || Date.now());
+    const { data, error } = await supabase.from('live_trips').upsert({
+      id, user_id: req.user.id, user_email: req.user.email, trip,
+    }, { onConflict: 'id' }).select().single();
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ ok: true, id: data.id, ...trip });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+router.get('/trips', requireAuth, async (req, res) => {
+  const { data, error } = await supabase.from('live_trips')
+    .select('trip').eq('user_id', req.user.id).order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json((data || []).map((r) => r.trip));
 });
 
 router.del = router.delete;

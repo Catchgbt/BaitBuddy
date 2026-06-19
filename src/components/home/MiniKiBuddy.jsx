@@ -24,16 +24,13 @@ async function speakText(text) {
   stopCurrentAudio();
 
   try {
-    // Aufruf ueber Base44 SDK (axios), liefert response mit data als ArrayBuffer/Blob
-    const res = await textToSpeech({ text: text.slice(0, 1000) }, { responseType: 'blob' });
+    // textToSpeech liefert das geparste /ai/tts-JSON ({ audioBase64, contentType }),
+    // kein axios-Response mit .data. base64 wird hier in einen Audio-Blob dekodiert.
+    const res = await textToSpeech({ text: text.slice(0, 1000) });
 
-    let blob = res?.data;
-    if (!blob) throw new Error('Leere Audio-Antwort');
-
-    // Falls SDK ArrayBuffer liefert, in Blob konvertieren
-    if (!(blob instanceof Blob)) {
-      blob = new Blob([blob], { type: 'audio/mpeg' });
-    }
+    if (!res?.audioBase64) throw new Error('Leere Audio-Antwort');
+    const bytes = Uint8Array.from(atob(res.audioBase64), c => c.charCodeAt(0));
+    const blob = new Blob([bytes], { type: res.contentType || 'audio/mpeg' });
     if (blob.size === 0) throw new Error('Leere Audio-Antwort');
 
     const audioUrl = URL.createObjectURL(blob);

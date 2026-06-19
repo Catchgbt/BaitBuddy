@@ -7,7 +7,7 @@ const router = Router();
 // Whitelist der erlaubten Felder pro Ressource
 const ALLOWED_POST_FIELDS = ['title', 'content', 'image_url'];
 const ALLOWED_VOTING_SUBMIT_FIELDS = ['category', 'title', 'description', 'image_url'];
-const ALLOWED_CLAN_FIELDS = ['name', 'description', 'icon_url'];
+const ALLOWED_CLAN_FIELDS = ['name', 'description', 'logo_url', 'competition_id'];
 const ALLOWED_COMPETITION_FIELDS = ['name', 'description', 'start_date', 'end_date', 'is_active'];
 
 const filterBody = (body, allowedFields) => {
@@ -115,28 +115,115 @@ router.post('/community/voting/:id/like', requireAuth, async (req, res) => {
   return res.json({ ok: true });
 });
 
+const CLAN_MAX_MEMBERS = 10;
+
+// Aggregiert Clans (optional einer Competition) mit Mitgliedern und Fang-Statistik.
+// Mitgliedschaft ist die Wahrheit aus clan_members (user_id = E-Mail); die Fänge
+// kommen aus catches der Mitglieder. Drei Sammel-Queries statt N+1 pro Clan.
+async function buildClanStats(competitionId) {
+  let clanQuery = supabase.from('clans').select('*');
+  if (competitionId) clanQuery = clanQuery.eq('competition_id', competitionId);
+  const { data: clans } = await clanQuery;
+  if (!clans?.length) return [];
+
+  const clanIds = clans.map((c) => c.id);
+  const { data: memberRows } = await supabase
+    .from('clan_members').select('clan_id, user_id').in('clan_id', clanIds);
+
+  const membersByClan = {};
+  const allEmails = new Set();
+  for (const m of memberRows || []) {
+    (membersByClan[m.clan_id] ||= []).push(m.user_id);
+    if (m.user_id) allEmails.add(m.user_id);
+  }
+
+  const catchesByEmail = {};
+  if (allEmails.size) {
+    const { data: catchRows } = await supabase
+      .from('catches').select('created_by, length_cm').in('created_by', [...allEmails]);
+    for (const c of catchRows || []) {
+      (catchesByEmail[c.created_by] ||= []).push(Number(c.length_cm) || 0);
+    }
+  }
+
+  return clans.map((clan) => {
+    const members = membersByClan[clan.id] || [];
+    const lengths = members.flatMap((e) => catchesByEmail[e] || []);
+    const totalScore = Math.round(lengths.reduce((s, l) => s + l, 0));
+    const averageSize = lengths.length ? Math.round(totalScore / lengths.length) : 0;
+    return {
+      ...clan,
+      members,
+      member_count: members.length,
+      total_catches: lengths.length,
+      total_score: totalScore,
+      total_event_score: totalScore,
+      average_size: averageSize,
+    };
+  });
+}
+
+// Clan-Liste (optional je Competition) inkl. Mitglieder + Statistik.
+router.get('/community/clans', optionalAuth, async (req, res) => {
+  try {
+    return res.json(await buildClanStats(req.query.competition_id || null));
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+// Clan-Rangliste einer Competition (nach Gesamt-Score, mit Rang).
+router.get('/community/clans/leaderboard', optionalAuth, async (req, res) => {
+  try {
+    const leaderboard = (await buildClanStats(req.query.competition_id || null))
+      .sort((a, b) => b.total_score - a.total_score)
+      .map((c, i) => ({
+        clan_id: c.id,
+        clan_name: c.name,
+        member_count: c.member_count,
+        total_catches: c.total_catches,
+        average_size: c.average_size,
+        total_score: c.total_score,
+        rank: i + 1,
+      }));
+    return res.json({ leaderboard });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
 router.post('/community/clans', requireAuth, async (req, res) => {
   const filteredBody = filterBody(req.body, ALLOWED_CLAN_FIELDS);
-  const { data, error } = await supabase.from('clans').insert({
+  const { data: clan, error } = await supabase.from('clans').insert({
     ...filteredBody, created_by: req.user.email
   }).select().single();
   if (error) return res.status(500).json({ error: error.message });
-  return res.json(data);
+  // Ersteller wird automatisch erstes Mitglied (Modell A: clan_members).
+  await supabase.from('clan_members')
+    .insert({ clan_id: clan.id, user_id: req.user.email, role: 'owner' });
+  return res.json(clan);
 });
 
 router.post('/community/clans/:id/join', requireAuth, async (req, res) => {
+  const { count } = await supabase.from('clan_members')
+    .select('*', { count: 'exact', head: true }).eq('clan_id', req.params.id);
+  if ((count || 0) >= CLAN_MAX_MEMBERS) {
+    return res.status(400).json({ error: `Clan ist voll (max. ${CLAN_MAX_MEMBERS} Mitglieder)` });
+  }
   const { error } = await supabase.from('clan_members').insert({
     clan_id: req.params.id, user_id: req.user.email
   });
+  if (error?.code === '23505') return res.json({ ok: true, already_member: true });
   if (error) return res.status(500).json({ error: error.message });
   return res.json({ ok: true });
 });
 
+// Mitglieder + grösster Fang je Mitglied eines einzelnen Clans.
 router.get('/community/clans/:id/leaderboard', optionalAuth, async (req, res) => {
   const { data: members } = await supabase.from('clan_members')
     .select('user_id').eq('clan_id', req.params.id);
   if (!members?.length) return res.json([]);
-  const memberIds = members.map(m => m.user_id);
+  const memberIds = members.map((m) => m.user_id);
   const { data, error } = await supabase.from('catches')
     .select('created_by, species, length_cm')
     .in('created_by', memberIds)

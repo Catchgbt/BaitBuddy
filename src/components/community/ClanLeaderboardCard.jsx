@@ -27,7 +27,7 @@ export default function ClanLeaderboardCard({ competition, currentUser }) {
       
       setClans(allClans);
       
-      const myClan = allClans.find(c => c.members.includes(currentUser?.email));
+      const myClan = allClans.find(c => (c.members || []).includes(currentUser?.email));
       setUserClan(myClan);
 
       const response = await functions.invoke('getClanLeaderboard', {
@@ -90,7 +90,7 @@ export default function ClanLeaderboardCard({ competition, currentUser }) {
         {userClan ? (
           <div className="p-3 bg-emerald-900/20 border border-emerald-600/30 rounded-lg">
             <p className="text-emerald-400 font-semibold">Dein Clan: {userClan.name}</p>
-            <p className="text-gray-300 text-sm">Mitglieder: {userClan.members.length}/10</p>
+            <p className="text-gray-300 text-sm">Mitglieder: {userClan.members?.length || 0}/10</p>
             <p className="text-gray-300 text-sm">Punkte: {userClan.total_event_score}</p>
           </div>
         ) : (

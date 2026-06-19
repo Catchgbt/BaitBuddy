@@ -15,7 +15,6 @@ function TideWidget({ latitude, longitude, isActive }) {
         setLoading(true);
         const data = await TideService.getCurrentAndForecastTides(latitude, longitude);
         setTideData(data);
-        setStation(data.station);
         setError(null);
       } catch (err) {
         console.error('Fehler beim Laden der Gezeitendaten:', err);
