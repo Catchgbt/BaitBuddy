@@ -186,7 +186,11 @@ class TideService {
     const diff = eventTime.getTime() - now.getTime();
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    return { hours, minutes, diff };
+    // totalMinutes wird von FishPredictionService (Tide-Boost) und
+    // NotificationService (Gezeiten-Alarm) erwartet — ohne dieses Feld
+    // griffen deren Schwellenwert-Vergleiche (undefined < 60) nie.
+    const totalMinutes = Math.floor(diff / (1000 * 60));
+    return { hours, minutes, totalMinutes, diff };
   }
 
   // Formatiere Datum für NOAA API (YYYYMMDD)
@@ -211,7 +215,7 @@ class TideService {
         height: parseFloat(tideHeight.toFixed(2)),
         type: tideHeight > 1.5 ? 'Steigend' : 'Fallend',
         typeEmoji: tideHeight > 1.5 ? '🌊' : '⬇️',
-        timeToNext: { hours: 6, minutes: 12, diff: 6 * 60 * 60 * 1000 },
+        timeToNext: { hours: 6, minutes: 12, totalMinutes: 372, diff: 6 * 60 * 60 * 1000 },
         nextEvent: tideHeight > 1.5 ? 'Hochwasser' : 'Niedrigwasser',
         nextTime: new Date(now.getTime() + 6 * 60 * 60 * 1000).toISOString(),
       },
