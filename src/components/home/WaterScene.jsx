@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 
 // Unterwasser-Szene (app-weiter Hintergrund): Tiefenverlauf wie in einem See,
 // Lichtstrahlen von der Oberfläche mit gelegentlichen hellen Einstrahlungen,
@@ -147,9 +147,20 @@ function RoamingFish({ layer, startIndex = 0, startDir = 1 }) {
   );
 }
 
-export default function WaterScene() {
+function WaterScene() {
+  // Animationen anhalten, wenn der Tab nicht sichtbar ist. Der dekorative
+  // Hintergrund (Caustics, Blasen, Fische) braucht im Hintergrund keine
+  // GPU/CPU-Zeit – das spart Akku und verhindert unnötige Compositing-Last.
+  const [paused, setPaused] = useState(() => typeof document !== 'undefined' && document.hidden);
+
+  useEffect(() => {
+    const onVisibility = () => setPaused(document.hidden);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
+
   return (
-    <div className="bb-water-scene" aria-hidden="true">
+    <div className={`bb-water-scene${paused ? ' bb-paused' : ''}`} aria-hidden="true">
       <style>{`
         .bb-water-scene {
           position: fixed; inset: 0; z-index: 0;
@@ -321,6 +332,9 @@ export default function WaterScene() {
           background: radial-gradient(ellipse at 50% 35%, transparent 55%, rgba(1, 10, 18, .55) 100%);
         }
 
+        /* Tab im Hintergrund: alle Animationen anhalten (Akku/Compositing sparen) */
+        .bb-water-scene.bb-paused * { animation-play-state: paused !important; }
+
         @media (prefers-reduced-motion: reduce) {
           .bb-water-scene * { animation: none !important; }
           .bb-fish-far { display: none; }
@@ -385,3 +399,7 @@ export default function WaterScene() {
     </div>
   );
 }
+
+// WaterScene ist statisch (keine Props) und wird in einem häufig re-rendernden
+// Layout eingebettet. memo verhindert unnötige Re-Renders des Hintergrunds.
+export default memo(WaterScene);

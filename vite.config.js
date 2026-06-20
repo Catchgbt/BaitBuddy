@@ -20,16 +20,22 @@ export default defineConfig({
     },
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: [
-            '@radix-ui/react-accordion',
-            '@radix-ui/react-alert-dialog',
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-tooltip',
-          ],
+        // Schwere, selten geänderte Bibliotheken in eigene Chunks auslagern.
+        // Libs, die nur in lazy-geladenen Seiten verwendet werden (three, leaflet,
+        // recharts, jspdf, html2canvas), bleiben dadurch eigene Lazy-Chunks und
+        // landen nicht im initialen Bundle – das beschleunigt den ersten Start
+        // und verbessert das Langzeit-Caching (stabile Hashes pro Lib-Gruppe).
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+          if (id.includes('/react-dom/') || id.includes('/react-router') || /\/react\//.test(id)) {
+            return 'react-vendor';
+          }
+          if (id.includes('/three/')) return 'three';
+          if (id.includes('leaflet')) return 'leaflet';
+          if (id.includes('recharts') || id.includes('/d3-') || id.includes('/victory-')) return 'charts';
+          if (id.includes('jspdf') || id.includes('html2canvas')) return 'pdf';
+          if (id.includes('framer-motion')) return 'framer';
+          if (id.includes('@radix-ui')) return 'radix';
         },
       },
     },

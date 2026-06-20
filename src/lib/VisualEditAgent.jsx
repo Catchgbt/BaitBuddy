@@ -565,8 +565,14 @@ export default function VisualEditAgent() {
 		isDropdownOpenRef.current = isDropdownOpen;
 	}, [isDropdownOpen]);
 
-	// Handle window resize and scroll to reposition overlays
+	// Handle window resize and scroll to reposition overlays.
+	// Diese Beobachtung (MutationObserver über den gesamten DOM-Baum + globale
+	// scroll/resize-Listener) ist teuer und nur im aktiven Visual-Edit-Modus nötig.
+	// Für reguläre Nutzer (kein Editor-Iframe) wird sie gar nicht erst angehängt,
+	// was App-weite DOM-Beobachtung bei jedem Render/Scroll vermeidet.
 	useEffect(() => {
+		if (!isVisualEditMode) return;
+
 		const handleResize = () => {
 			// Reposition selected overlays
 			if (selectedElementIdRef.current) {
@@ -641,7 +647,7 @@ export default function VisualEditAgent() {
 			window.removeEventListener('scroll', handleResize);
 			mutationObserver.disconnect();
 		};
-	}, []);
+	}, [isVisualEditMode]);
 
 	// No visible UI - all functionality is handled through event listeners and message passing
 	return null;
