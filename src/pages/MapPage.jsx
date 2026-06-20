@@ -17,6 +17,8 @@ import SatelliteOverlayLayer from "@/components/map/v2/SatelliteOverlayLayer";
 import AdvancedCacheManager from "@/components/map/v2/AdvancedCacheManager";
 import MapNavigationHub from "@/components/map/MapNavigationHub";
 import MapModeManager from "@/components/map/MapModeManager";
+import { RadarLayer, useRainviewerRadar, RADAR_MODES } from "@/components/map/RadarOverlay";
+import { MapPin, CloudRain, Crosshair, Play, Pause, ChevronDown } from "lucide-react";
 
 // Leaflet CSS laden
 if (typeof document !== "undefined") {
@@ -112,10 +114,18 @@ export default function MapPage() {
     return !localStorage.getItem('mapTourCompleted');
   });
   const [showPublicSpots, setShowPublicSpots] = useState(false);
+  // Ansicht: Spots-Karte oder Wetter-Radar-Overlay (direkt umschaltbar)
+  const [mapView, setMapView] = useState("spots");
+  const [showDetails, setShowDetails] = useState(false);
+  const radar = useRainviewerRadar(mapView === "radar");
 
   useEffect(() => {
     loadMapData();
   }, []);
+
+  const handleLocateMe = useCallback(() => {
+    requestGpsLocation?.();
+  }, [requestGpsLocation]);
 
   useEffect(() => {
     if (gpsLocation) {
@@ -345,27 +355,79 @@ export default function MapPage() {
         {/* Removed: NewFeaturesNotification - Alle Infos sind jetzt im MapNavigationHub */}
         {/* Removed: MapFeaturesInfo - Integriert in MapNavigationHub */}
 
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]">
-            Karte & Spots — Komplett mit 6 Advanced Features
+        <div className="flex items-center justify-between gap-2">
+          <h1 className="text-lg sm:text-2xl font-bold text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]">
+            Karte & Spots
           </h1>
-          <p className="text-sm text-gray-400 mt-1">
-            Klicke unten rechts auf den Hub um alle neuen Features zu entdecken
-          </p>
+          <button
+            onClick={() => setShowDetails(v => !v)}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs bg-gray-800/70 border border-gray-700 text-gray-300 hover:bg-gray-700/70 transition-colors"
+          >
+            Details
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showDetails ? 'rotate-180' : ''}`} />
+          </button>
         </div>
 
-        {/* Simplified Info Cards - nur essenzielle Infos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {/* Direkter Umschalter: Spots-Karte ⇄ Wetter-Radar */}
+        <div className="flex p-1 rounded-xl bg-gray-900/70 border border-gray-800 gap-1">
+          <button
+            onClick={() => setMapView("spots")}
+            aria-pressed={mapView === "spots"}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+              mapView === "spots"
+                ? "bg-cyan-600 text-white shadow-lg shadow-cyan-900/40"
+                : "text-gray-400 hover:text-gray-200"
+            }`}
+          >
+            <MapPin className="w-4 h-4" />
+            Spots
+          </button>
+          <button
+            onClick={() => setMapView("radar")}
+            aria-pressed={mapView === "radar"}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+              mapView === "radar"
+                ? "bg-emerald-600 text-white shadow-lg shadow-emerald-900/40"
+                : "text-gray-400 hover:text-gray-200"
+            }`}
+          >
+            <CloudRain className="w-4 h-4" />
+            Wetter-Radar
+          </button>
+        </div>
+
+        {/* Radar-Modus-Auswahl (nur im Radar-Modus) */}
+        {mapView === "radar" && (
+          <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+            {Object.entries(RADAR_MODES).map(([key, val]) => (
+              <button
+                key={key}
+                onClick={() => radar.setMode(key)}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-xs border transition-colors ${
+                  radar.mode === key
+                    ? "bg-emerald-600/30 border-emerald-400 text-emerald-200"
+                    : "bg-gray-800/50 border-gray-700 text-gray-400 hover:bg-gray-700/50"
+                }`}
+              >
+                {val.name}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Einklappbare Detail-Karten */}
+        {showDetails && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card className="glass-morphism border-cyan-700 bg-cyan-900/20">
             <CardContent className="p-4">
-              <div className="text-xs text-cyan-400 mb-2 font-semibold">NEU: 6 ADVANCED FEATURES</div>
+              <div className="text-xs text-cyan-400 mb-2 font-semibold">6 ADVANCED FEATURES</div>
               <div className="space-y-1 text-xs text-cyan-200">
-                <div>Offline Tile-Caching (Phase 1)</div>
-                <div>Relief-Shading (Phase 2)</div>
-                <div>3D-Terrain (Phase 3)</div>
-                <div>Hydrographische Daten (Phase 4)</div>
-                <div>Satelliten-Bilder (Phase 5)</div>
-                <div>Cache-Optimierung (Phase 6)</div>
+                <div>Offline Tile-Caching</div>
+                <div>Relief-Shading</div>
+                <div>3D-Terrain</div>
+                <div>Hydrographische Daten</div>
+                <div>Satelliten-Bilder</div>
+                <div>Cache-Optimierung</div>
               </div>
               <div className="text-xs text-cyan-600 mt-2 italic">
                 Klick den Hub rechts unten um Features zu aktivieren
@@ -417,8 +479,9 @@ export default function MapPage() {
             </CardContent>
           </Card>
         </div>
+        )}
 
-        <div className="h-[400px] rounded-2xl overflow-hidden border-2 border-gray-800 shadow-2xl relative z-10">
+        <div className="h-[calc(100dvh-15rem)] min-h-[360px] md:h-[560px] rounded-2xl overflow-hidden border-2 border-gray-800 shadow-2xl relative z-10">
           <MapContainer
             center={mapCenter}
             zoom={mapZoom}
@@ -429,6 +492,11 @@ export default function MapPage() {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
+
+            {/* Wetter-Radar-Overlay (RainViewer) – nur im Radar-Modus */}
+            {mapView === 'radar' && radar.currentFrame && (
+              <RadarLayer frame={radar.currentFrame} opacity={radar.opacity} mode={radar.mode} />
+            )}
 
             {/* Advanced Map Layers */}
             <HillshadeLayer visible={showHillshade} opacity={0.4} blendMode="multiply" />
@@ -531,6 +599,74 @@ export default function MapPage() {
               );
             })}
           </MapContainer>
+
+          {/* Schwebender Standort-Button (mobilfreundlich, oben rechts) */}
+          <button
+            onClick={handleLocateMe}
+            aria-label="Zu meinem Standort"
+            className="absolute top-3 right-3 z-[1000] w-11 h-11 flex items-center justify-center rounded-full bg-gray-900/85 border border-gray-700 text-cyan-300 shadow-lg backdrop-blur-sm active:scale-95 transition-transform"
+          >
+            <Crosshair className="w-5 h-5" />
+          </button>
+
+          {/* Radar-Steuerung (Zeitleiste, Play/Pause, Transparenz) */}
+          {mapView === 'radar' && (
+            <div className="absolute bottom-3 left-3 right-3 z-[1000] rounded-xl bg-gray-900/90 border border-gray-700 backdrop-blur-md p-3 shadow-xl">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => radar.setIsPlaying(!radar.isPlaying)}
+                  aria-label={radar.isPlaying ? 'Pause' : 'Abspielen'}
+                  className="shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-emerald-600 text-white active:scale-95 transition-transform"
+                >
+                  {radar.isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                </button>
+                <input
+                  type="range"
+                  min="0"
+                  max={Math.max(radar.frames.length - 1, 0)}
+                  value={radar.currentIndex}
+                  onChange={(e) => {
+                    radar.setIsPlaying(false);
+                    radar.setCurrentIndex(parseInt(e.target.value, 10));
+                  }}
+                  disabled={radar.frames.length === 0}
+                  className="flex-1 accent-emerald-500"
+                />
+                <span className="shrink-0 text-xs tabular-nums w-20 text-right">
+                  {radar.loading ? (
+                    <span className="text-gray-400">Lade…</span>
+                  ) : radar.error ? (
+                    <span className="text-red-400">Fehler</span>
+                  ) : radar.currentFrame ? (
+                    (() => {
+                      const isForecast = radar.currentFrame.time > Date.now() / 1000;
+                      const t = new Date(radar.currentFrame.time * 1000).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                      return (
+                        <span className={isForecast ? 'text-amber-400' : 'text-cyan-300'}>
+                          {isForecast ? 'Prognose ' : ''}{t}
+                        </span>
+                      );
+                    })()
+                  ) : (
+                    <span className="text-gray-500">—</span>
+                  )}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-[10px] text-gray-500 uppercase tracking-wider shrink-0">Transparenz</span>
+                <input
+                  type="range"
+                  min="0.1"
+                  max="1"
+                  step="0.1"
+                  value={radar.opacity}
+                  onChange={(e) => radar.setOpacity(parseFloat(e.target.value))}
+                  className="flex-1 accent-cyan-500"
+                />
+                <span className="text-[10px] text-gray-500 shrink-0">RainViewer</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
