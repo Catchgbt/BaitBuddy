@@ -53,6 +53,20 @@ async function executeVoiceAction(action, navigate) {
   return null;
 }
 
+// Browser-Stimmen vorab cachen (getVoices() ist beim ersten Aufruf häufig leer)
+let cachedVoices = [];
+function loadVoices() {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return;
+  const v = window.speechSynthesis.getVoices();
+  if (v && v.length) cachedVoices = v;
+}
+if (typeof window !== 'undefined' && window.speechSynthesis) {
+  loadVoices();
+  if (window.speechSynthesis.onvoiceschanged !== undefined) {
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+  }
+}
+
 function speakBrowser(text) {
   if (!('speechSynthesis' in window) || !text) return Promise.resolve();
   return new Promise((resolve) => {
@@ -60,7 +74,8 @@ function speakBrowser(text) {
       window.speechSynthesis.cancel();
       const utter = new SpeechSynthesisUtterance(text);
       utter.lang = LANGUAGE;
-      const germanVoice = window.speechSynthesis.getVoices().find(v => v.lang.startsWith('de'));
+      const voices = cachedVoices.length ? cachedVoices : window.speechSynthesis.getVoices();
+      const germanVoice = voices.find(v => v.lang && v.lang.startsWith('de'));
       if (germanVoice) utter.voice = germanVoice;
       utter.rate = 0.95;
       let done = false;
@@ -154,6 +169,8 @@ export default function VoiceControlWidget() {
   const recognitionRef = useRef(null);
   const isRunningRef = useRef(false);
   const awaitingCommandRef = useRef(false);
+  // True während TTS spricht: blockt Echo-Erkennung und Auto-Restart
+  const isSpeakingRef = useRef(false);
   const currentLocationRef = useRef(currentLocation);
   currentLocationRef.current = currentLocation;
 
@@ -175,22 +192,30 @@ export default function VoiceControlWidget() {
       }
       setLastAnswer(finalText);
       setVoiceState('speaking');
+      // Echo-Schutz aktiv: onend startet die Erkennung jetzt NICHT automatisch neu
+      isSpeakingRef.current = true;
       try { recognitionRef.current?.stop(); } catch {}
       await speak(finalText);
+      isSpeakingRef.current = false;
       if (isRunningRef.current) {
         try { recognitionRef.current?.start(); } catch {}
         setVoiceState('waiting');
       }
     } catch (e) {
       console.error('Voice AI error:', e);
+      isSpeakingRef.current = false;
       setLastAnswer('Entschuldigung, das hat nicht geklappt.');
-      if (isRunningRef.current) setVoiceState('waiting');
+      if (isRunningRef.current) {
+        try { recognitionRef.current?.start(); } catch {}
+        setVoiceState('waiting');
+      }
     }
   }, [navigate]);
 
   const stopVoice = useCallback(() => {
     isRunningRef.current = false;
     awaitingCommandRef.current = false;
+    isSpeakingRef.current = false;
     try { recognitionRef.current?.stop(); } catch {}
     if (window.speechSynthesis) window.speechSynthesis.cancel();
     setVoiceState('off');
@@ -211,6 +236,9 @@ export default function VoiceControlWidget() {
     recognition.interimResults = true;
 
     recognition.onresult = async (event) => {
+      // Während TTS läuft, Erkennung ignorieren (Echo-Schutz)
+      if (isSpeakingRef.current) return;
+
       let finalText = '';
       let interimText = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -224,7 +252,9 @@ export default function VoiceControlWidget() {
       if (!awaitingCommandRef.current && WAKE_WORD_VARIANTS.some(v => fullText.includes(v))) {
         awaitingCommandRef.current = true;
         setVoiceState('listening');
+        isSpeakingRef.current = true;
         await speak('Ja, bitte?');
+        isSpeakingRef.current = false;
         setTranscript('');
         return;
       }
@@ -255,7 +285,8 @@ export default function VoiceControlWidget() {
     };
 
     recognition.onend = () => {
-      if (isRunningRef.current) {
+      // Kein Auto-Restart während der Assistent spricht (sonst Feedback-Schleife)
+      if (isRunningRef.current && !isSpeakingRef.current) {
         try { recognition.start(); } catch {}
       }
     };

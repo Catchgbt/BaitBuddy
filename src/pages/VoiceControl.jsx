@@ -80,6 +80,20 @@ const WAKE_WORD = 'hey buddy';
 const WAKE_WORD_VARIANTS = ['hey buddy', 'hei buddy', 'hey budy', 'hey baddy', 'heybuddy', 'hey body', 'hallo buddy'];
 const LANGUAGE = 'de-DE';
 
+// Browser-Stimmen vorab cachen (getVoices() ist beim ersten Aufruf häufig leer)
+let cachedVoices = [];
+function loadVoices() {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return;
+  const v = window.speechSynthesis.getVoices();
+  if (v && v.length) cachedVoices = v;
+}
+if (typeof window !== 'undefined' && window.speechSynthesis) {
+  loadVoices();
+  if (window.speechSynthesis.onvoiceschanged !== undefined) {
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+  }
+}
+
 // Konversations-Session ID (pro App-Sitzung)
 const SESSION_ID = `voice_${Date.now()}`;
 
@@ -104,9 +118,9 @@ function speakBrowser(text, rate = 1, pitch = 1) {
   
   return new Promise((resolve) => {
     try {
-      // Nutze deutsche Stimme wenn verfügbar
-      const voices = window.speechSynthesis.getVoices();
-      const germanVoice = voices.find(v => v.lang.startsWith('de'));
+      // Nutze deutsche Stimme wenn verfügbar (gecachte Liste, sonst frisch laden)
+      const voices = cachedVoices.length ? cachedVoices : window.speechSynthesis.getVoices();
+      const germanVoice = voices.find(v => v.lang && v.lang.startsWith('de'));
       
       // Cancel pending speech
       window.speechSynthesis.cancel();
@@ -363,6 +377,8 @@ function VoiceBuddy() {
   const recognitionRef = useRef(null);
   const isWaitingForCommandRef = useRef(false);
   const isListeningRef = useRef(false);
+  // True während TTS spricht: blockt Echo-Erkennung und Auto-Restart der Erkennung
+  const isSpeakingRef = useRef(false);
   const conversationEndRef = useRef(null);
 
   // Lade gespeicherte Konversationshistorie (letzte 24h)
@@ -719,6 +735,9 @@ function VoiceBuddy() {
     recognition.maxAlternatives = 1;
 
     recognition.onresult = async (event) => {
+      // Während der Assistent spricht, eingehende Erkennung ignorieren (Echo-Schutz)
+      if (isSpeakingRef.current) return;
+
       let interimTranscript = '';
       let finalTranscript = '';
 
@@ -740,7 +759,10 @@ function VoiceBuddy() {
       if (!isWaitingForCommandRef.current && wakeWordDetected) {
         isWaitingForCommandRef.current = true;
         setStatus('listening');
+        // Echo-Schutz auch für die kurze Bestätigung
+        isSpeakingRef.current = true;
         await speak('Ja, bitte?', { rate: 1.1 });
+        isSpeakingRef.current = false;
         setTranscript('');
         return;
       }
@@ -757,7 +779,9 @@ function VoiceBuddy() {
         setStatus('responding');
         setIsSpeaking(true);
         isWaitingForCommandRef.current = false;
-        
+        // Echo-Schutz aktivieren, bevor wir antworten/sprechen
+        isSpeakingRef.current = true;
+
         if (userQuestion) {
           await saveConversationMessage('user', userQuestion);
           setConversationHistory(prev => [...prev, {
@@ -771,6 +795,7 @@ function VoiceBuddy() {
 
         const tip = await generateTip(parsed);
         if (!tip) {
+          isSpeakingRef.current = false;
           setIsSpeaking(false);
           setStatus('waiting');
           return;
@@ -789,7 +814,8 @@ function VoiceBuddy() {
         // Header über neue Buddy-Nachricht informieren
         window.dispatchEvent(new CustomEvent('buddy-message-added'));
 
-        // Pausiere Recognition damit TTS nicht abgeschnitten wird
+        // Pausiere Recognition damit TTS nicht abgeschnitten und nicht als Echo erkannt wird.
+        // isSpeakingRef ist gesetzt, daher startet onend die Erkennung NICHT automatisch neu.
         try { recognitionRef.current?.stop(); } catch {}
         try {
           await speak(tip, { rate: 0.95 });
@@ -797,11 +823,12 @@ function VoiceBuddy() {
           console.error('[VoiceControl] Speech playback error:', speechError);
           toast.warning('Audio konnte nicht abgespielt werden. Antwort ist sichtbar.');
         }
-        // Recognition wieder starten
+        // Echo-Schutz aufheben und Erkennung kontrolliert wieder starten
+        isSpeakingRef.current = false;
         if (isListeningRef.current) {
           try { recognitionRef.current?.start(); } catch {}
         }
-        
+
         setIsSpeaking(false);
         setStatus('waiting');
         setTranscript('');
@@ -824,7 +851,9 @@ function VoiceBuddy() {
     };
 
     recognition.onend = () => {
-      if (isListeningRef.current) {
+      // Nicht automatisch neu starten, während der Assistent spricht — sonst
+      // nimmt das Mikrofon die eigene TTS-Ausgabe auf (Feedback-Schleife).
+      if (isListeningRef.current && !isSpeakingRef.current) {
         try {
           recognition.start();
         } catch (e) {
@@ -879,6 +908,7 @@ function VoiceBuddy() {
 
   const stopListening = () => {
     isListeningRef.current = false;
+    isSpeakingRef.current = false;
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
