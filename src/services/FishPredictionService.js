@@ -69,7 +69,7 @@ class FishPredictionService {
 
       const hour = date.getHours();
       const month = date.getMonth() + 1;
-      const dayOfYear = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 86400000);
+      const dayOfYear = Math.floor((date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / 86400000);
 
       // Berechne Score für jede Art
       const predictions = {};

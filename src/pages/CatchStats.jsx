@@ -27,9 +27,12 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 function CatchStatsContent() {
+  // Gleicher Query-Key wie das Fangbuch (geteilter Cache) — daher identisches
+  // Limit, damit die Statistik unabhängig von der Mount-Reihenfolge alle Fänge
+  // auswertet und nicht beim Backend-Default von 50 gedeckelt wird.
   const { data: catches = [], isLoading } = useQuery({
     queryKey: ["catches"],
-    queryFn: () => Catch.list("-catch_time"),
+    queryFn: () => Catch.list("-catch_time", 1000),
   });
 
   const stats = useMemo(() => {

@@ -245,8 +245,8 @@ class TripSyncService {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open('BaitBuddy_LiveTrips', 1);
 
-      request.onupgradeneeded = (e) => {
-        const db = e.target.result;
+      request.onupgradeneeded = () => {
+        const db = request.result;
         if (!db.objectStoreNames.contains('trips')) {
           db.createObjectStore('trips', { keyPath: 'id' });
         }

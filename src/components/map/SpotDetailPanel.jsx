@@ -12,7 +12,10 @@ import {
   Droplets,
   Heart,
   Trash2,
-  ExternalLink
+  ExternalLink,
+  Waves,
+  Fish,
+  Building2
 } from 'lucide-react';
 import { functions } from "@/api/frontendClient";
 import { Spot } from "@/entities/Spot";
@@ -106,21 +109,26 @@ export default function SpotDetailPanel({ spot, onClose, onUpdate }) {
   };
 
   const getWaterTypeIcon = (waterType) => {
-    const types = {
-      fluss: '🏞️',
-      see: '🏔️',
-      teich: '🐸',
-      kanal: '🚢',
-      meer: '🌊',
-      bach: '🏞️'
-    };
-    return types[waterType] || '🎣';
+    const cls = 'w-5 h-5 text-cyan-400 shrink-0';
+    switch (waterType) {
+      case 'see':
+      case 'teich':
+        return <Droplets className={cls} />;
+      case 'fluss':
+      case 'bach':
+      case 'kanal':
+      case 'meer':
+        return <Waves className={cls} />;
+      default:
+        return <Fish className={cls} />;
+    }
   };
 
   const getCategoryIcon = (category) => {
-    if (category === 'club') return '🏛️';
-    if (category === 'spot') return '🎣';
-    return '📍';
+    const cls = 'w-5 h-5 text-cyan-400 shrink-0';
+    if (category === 'club') return <Building2 className={cls} />;
+    if (category === 'spot') return <Fish className={cls} />;
+    return <MapPin className={cls} />;
   };
 
   if (!spot || !coords) {

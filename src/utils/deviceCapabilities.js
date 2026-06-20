@@ -52,16 +52,18 @@ export const DeviceCapabilities = {
 
   // Connection detection
   getConnectionType: () => {
-    if (!navigator.connection) return 'unknown';
-    return navigator.connection.effectiveType; // 4g, 3g, 2g, slow-2g
+    const nav = /** @type {any} */ (navigator);
+    if (!nav.connection) return 'unknown';
+    return nav.connection.effectiveType; // 4g, 3g, 2g, slow-2g
   },
 
   isOnline: () => navigator.onLine,
 
   // Memory detection
   getMemoryStatus: () => {
-    if (!navigator.deviceMemory) return 'unknown';
-    return `${navigator.deviceMemory}GB`;
+    const nav = /** @type {any} */ (navigator);
+    if (!nav.deviceMemory) return 'unknown';
+    return `${nav.deviceMemory}GB`;
   },
 
   // CPU cores detection
@@ -79,9 +81,10 @@ export const DeviceCapabilities = {
 
   // Battery status
   async getBatteryStatus() {
-    if (!navigator.getBattery) return null;
+    const nav = /** @type {any} */ (navigator);
+    if (!nav.getBattery) return null;
     try {
-      return await navigator.getBattery();
+      return await nav.getBattery();
     } catch (e) {
       return null;
     }
@@ -152,7 +155,7 @@ if (import.meta.env.DEV) {
   if (typeof window !== 'undefined') {
     window.addEventListener('load', () => {
       // Available in console
-      window.deviceCapabilities = DeviceCapabilities;
+      /** @type {any} */ (window).deviceCapabilities = DeviceCapabilities;
     });
   }
 }
