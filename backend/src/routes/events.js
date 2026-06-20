@@ -300,6 +300,18 @@ router.post('/events/:id/submit', requireAuth, async (req, res) => {
         })
         .eq('event_id', req.params.id)
         .eq('user_id', req.user.email);
+    } else {
+      // User ist noch kein Teilnehmer: automatisch beitreten, damit die
+      // Punkte der Einreichung nicht verloren gehen.
+      await supabase
+        .from('event_participants')
+        .insert({
+          event_id: req.params.id,
+          user_id: req.user.email,
+          joined_at: new Date().toISOString(),
+          total_points: pointsResult.total,
+          submission_count: 1
+        });
     }
 
     return res.status(201).json(submission);
@@ -415,14 +427,20 @@ router.post('/events/invitations/:id/accept', requireAuth, async (req, res) => {
       .eq('id', req.params.id)
       .single();
 
-    // 3. Füge User als Teilnehmer hinzu
+    // 3. Füge User als Teilnehmer hinzu (Duplikate ignorieren)
     if (invitation) {
-      await supabase
+      const { error: participantError } = await supabase
         .from('event_participants')
         .insert({
           event_id: invitation.event_id,
-          user_id: req.user.email
+          user_id: req.user.email,
+          joined_at: new Date().toISOString()
         });
+
+      // 23505 = bereits Teilnehmer, das ist kein Fehler
+      if (participantError && participantError.code !== '23505') {
+        return res.status(500).json({ error: participantError.message });
+      }
     }
 
     return res.json({ ok: true });
