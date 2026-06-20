@@ -122,6 +122,7 @@ function MapController() {
         const data = await response.json();
         setForellenseen(data);
       } catch (error) {
+        console.error('Forellenseen konnten nicht geladen werden:', error);
       }
     };
 
@@ -132,6 +133,7 @@ function MapController() {
         const data = await response.json();
         setBathymetryData(data.bundeslaender_list || []);
       } catch (error) {
+        console.error('Bathymetrie-Metadaten konnten nicht geladen werden:', error);
       }
     };
 
@@ -142,6 +144,7 @@ function MapController() {
         const data = await response.json();
         setDeutscheFluesse(data);
       } catch (error) {
+        console.error('Deutsche Flüsse konnten nicht geladen werden:', error);
       }
     };
 
@@ -152,6 +155,7 @@ function MapController() {
         const data = await response.json();
         setEuropeanRivers(data);
       } catch (error) {
+        console.error('Europäische Flüsse konnten nicht geladen werden:', error);
       }
     };
 
@@ -162,6 +166,7 @@ function MapController() {
         const data = await response.json();
         setEuropeanBathymetry(data);
       } catch (error) {
+        console.error('Europäische Bathymetrie konnte nicht geladen werden:', error);
       }
     };
 

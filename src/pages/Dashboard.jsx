@@ -133,6 +133,7 @@ export default function Dashboard() {
             userLocation = { lat: location.lat, lon: location.lon };
           }
         } catch (parseError) {
+          console.warn('Dashboard: gespeicherter Standort ist ungültig:', parseError);
         }
       }
 
@@ -219,6 +220,7 @@ export default function Dashboard() {
         setNearestSpots(spots.slice(0, 2));
       }
     } catch (error) {
+      console.error('Dashboard: Daten konnten nicht geladen werden:', error);
     } finally {
       setLoading(false);
     }
@@ -280,6 +282,7 @@ export default function Dashboard() {
         try {
           location = JSON.parse(savedLocation);
         } catch (e) {
+          console.warn('Dashboard: gespeicherter Standort ist ungültig:', e);
         }
       }
 

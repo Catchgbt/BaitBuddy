@@ -34,6 +34,7 @@ export default function KiBuddyBar({ onToggleChatbot, chatbotOpen, onOpenVoice }
         const currentUser = await User.me();
         setUser(currentUser);
       } catch (userError) {
+        console.debug('KiBuddyBar: Benutzer nicht verfügbar (nicht eingeloggt):', userError);
       }
     };
     

@@ -91,6 +91,7 @@ function TripPlannerContent() {
     try {
       setOfflineNotes(JSON.parse(localStorage.getItem("trip_offline_notes") || "{}"));
     } catch (error) {
+      console.warn('TripPlanner: Offline-Notizen konnten nicht gelesen werden:', error);
     }
   };
 
@@ -116,6 +117,7 @@ function TripPlannerContent() {
       setPlans(list);
       setSelectedPlan((prev) => (prev ? list.find((p) => p.id === prev.id) || null : prev));
     } catch (error) {
+      console.error('TripPlanner: Tourenpläne konnten nicht geladen werden:', error);
     }
     setLoading(false);
   };
