@@ -19,6 +19,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { usePredictivePrefetch } from "@/hooks/usePredictivePrefetch";
 import PageContainer from "@/components/layout/PageContainer";
 import CommunityPostDialog from "@/components/community/CommunityPostDialog";
+import WeatherWarningBanner from "@/components/weather/WeatherWarningBanner";
 
 export default function Dashboard() {
   const queryClient = useQueryClient();
@@ -378,6 +379,8 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
       />
       
       <div className="space-y-6">
+
+        <WeatherWarningBanner />
 
         <div className="flex items-center justify-between border-b border-gray-800/50 pb-5">
           <Button
