@@ -382,8 +382,8 @@ function LandingPageContent() {
                         if (now >= new Date(ev.start_date) && now <= new Date(ev.end_date)) {
                             localStorage.setItem('catchgbt_event_popup_seen', '1');
                             const endStr = new Date(ev.end_date).toLocaleDateString('de-DE');
-                            const msg = `${ev.name}\n\n${ev.description || ''}\n\nPreis: ${ev.prize || ''}\n\nEvent endet am: ${endStr}`;
-                            alert(msg);
+                            const description = [ev.description, ev.prize ? `Preis: ${ev.prize}` : null, `Event endet am: ${endStr}`].filter(Boolean).join('\n');
+                            toast(ev.name, { description, duration: 8000 });
                         }
                     }
                 }
@@ -418,7 +418,8 @@ function LandingPageContent() {
                         if (now >= new Date(ev.start_date) && now <= new Date(ev.end_date)) {
                             localStorage.setItem('catchgbt_event_popup_seen', '1');
                             const endStr = new Date(ev.end_date).toLocaleDateString('de-DE');
-                            alert(`${ev.name}\n\n${ev.description || ''}\n\nPreis: ${ev.prize || ''}\n\nEvent endet am: ${endStr}`);
+                            const description = [ev.description, ev.prize ? `Preis: ${ev.prize}` : null, `Event endet am: ${endStr}`].filter(Boolean).join('\n');
+                            toast(ev.name, { description, duration: 8000 });
                         }
                     }
                 }

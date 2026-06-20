@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { toast } from 'sonner';
 import { User } from '@/entities/User';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -200,7 +201,7 @@ export default function QuizPage() {
     const shuffledLevelQuestions = shuffleArray([...levelConfig.questions]); 
     
     if (shuffledLevelQuestions.length === 0) {
-      alert("Für dieses Level sind keine Fragen verfügbar. Bitte wähle ein anderes Level.");
+      toast.error("Für dieses Level sind keine Fragen verfügbar. Bitte wähle ein anderes Level.");
       return;
     }
 

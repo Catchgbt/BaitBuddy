@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { toast } from 'sonner';
 import { useLocation } from 'react-router-dom';
 import { BUDDY_TEXT_CSS } from '@/components/layout/BuddyTextAvatar';
 import { getTipForPage } from '@/lib/buddyTips';
@@ -218,7 +219,7 @@ export default function AIBuddyWidget() {
   // Handle voice input
   const handleVoiceInput = () => {
     if (!recognition.current) {
-      alert('Spracherkennung wird nicht unterstützt');
+      toast.error('Spracherkennung wird nicht unterstützt');
       return;
     }
 

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
+import { toast } from "sonner";
 
 export default function KIFangberatungCatchGBT({ onStart, onStop, isActive }) {
   const videoRef = useRef(null);
@@ -45,9 +46,7 @@ export default function KIFangberatungCatchGBT({ onStart, onStop, isActive }) {
       setIsCameraOn(true);
     } catch (e) {
       console.error(e);
-      alert(
-        "Kamera konnte nicht aktiviert werden. Bitte Berechtigungen prüfen."
-      );
+      toast.error("Kamera konnte nicht aktiviert werden. Bitte Berechtigungen prüfen.");
       if (onStop) {
         onStop();
       }

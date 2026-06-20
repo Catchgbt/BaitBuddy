@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import { Gear, Spot } from "@/entities/all";
 import { InvokeLLM } from "@/integrations/Core";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -181,7 +182,7 @@ Antwort im JSON-Format:
     setSessionStarted(true);
     // Here you could create a fishing session record
     setTimeout(() => {
-      alert("Angel-Session gestartet! Viel Erfolg am Wasser! 🎣");
+      toast.success("Angel-Session gestartet! Viel Erfolg am Wasser!");
     }, 1000);
   };
 

@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { User } from "@/entities/User";
 import PremiumGuard from "@/components/premium/PremiumGuard";
 import { Crown } from "lucide-react";
@@ -200,16 +201,18 @@ function Match3QuestGame() {
         console.warn("Could not play success sound:", soundError);
       }
       
-      let alertMessage = `Spiel beendet! ${finalScoreValue} Punkte erreicht!\n+${baseCredits} Credits für Punkte`;
+      let creditsMessage = `+${baseCredits} Credits für Punkte`;
       if (gameWon) {
-        alertMessage += `\n+${bonusCredits} Bonus-Credits für gewonnenes Spiel`;
+        creditsMessage += `\n+${bonusCredits} Bonus-Credits für gewonnenes Spiel`;
       }
-      alertMessage += `\nGesamt: +${totalCredits} Credits! 🎉`;
-      alert(alertMessage);
-      
+      creditsMessage += `\nGesamt: +${totalCredits} Credits!`;
+      toast.success(`Spiel beendet! ${finalScoreValue} Punkte erreicht!`, {
+        description: creditsMessage,
+      });
+
     } catch (error) {
       console.error("Fehler beim Speichern der Credits:", error);
-      alert(`Spiel beendet mit ${finalScoreValue} Punkten! Fehler beim Speichern der Credits.`);
+      toast.error(`Spiel beendet mit ${finalScoreValue} Punkten! Fehler beim Speichern der Credits.`);
     }
   };
 
