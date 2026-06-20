@@ -92,7 +92,9 @@ class ApiClient {
         const refreshed = await this._refreshSession();
         if (refreshed) return this.request(method, path, body, true);
       }
-      const err = new Error(data.error || `HTTP ${res.status}`);
+      const err = /** @type {Error & { status?: number, data?: any }} */ (
+        new Error(data.error || `HTTP ${res.status}`)
+      );
       err.status = res.status;
       err.data = data;
       throw err;
@@ -237,6 +239,8 @@ const entitiesProxy = new Proxy({}, {
 
 // Nativer Entity-Zugriff (Teil der base44-Ablösung): erlaubt
 // `import { entities } from '@/api/frontendClient'` ohne base44-Wrapper.
+// Der Proxy erzeugt Entities dynamisch nach Namen — daher Record-Typisierung.
+/** @type {Record<string, ReturnType<typeof makeEntity>>} */
 export const entities = entitiesProxy;
 
 // ── Function → Endpoint Mapping ───────────────────────────────────────────────
@@ -386,7 +390,7 @@ const fileToBase64 = (file) => {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const base64 = reader.result.split(',')[1];
+        const base64 = /** @type {string} */ (reader.result).split(',')[1];
         if (!base64) {
           throw new Error('Fehler beim Konvertieren zu Base64');
         }

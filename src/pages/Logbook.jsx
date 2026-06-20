@@ -28,9 +28,12 @@ export default function Logbook() {
   const queryClient = useQueryClient();
 
   // ---- Data fetching via TanStack Query ----
+  // Ohne explizites Limit liefert das Backend nur die letzten 50 Fänge — das
+  // würde sowohl die Liste als auch die Kopf-Statistik (Einträge/Arten/kg)
+  // deckeln. Großzügiges Limit, damit das komplette Fangbuch sichtbar ist.
   const { data: catches = [], isLoading: catchesLoading } = useQuery({
     queryKey: ['catches'],
-    queryFn: () => Catch.list('-catch_time'),
+    queryFn: () => Catch.list('-catch_time', 1000),
   });
 
   const { data: spots = [], isLoading: spotsLoading } = useQuery({
