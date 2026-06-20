@@ -15,8 +15,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-
-const ALLOWED_PAGES = ["Dashboard","Logbook","Map","Weather","Community","Gear","AIAssistant","TripPlanner","Profile","Settings","Ranking","WaterAnalysis","AngelscheinPruefungSchonzeiten","Quiz","Licenses","Events","BaitMixer","CatchStats","ARKnotenAssistent","Shop","Premium","PremiumPlans","Help","Tutorials","Devices","DeviceIntegration","StartFishing","Start"];
+import { resolvePage } from "@/lib/voicePages";
 
 function parseActionFromReply(text) {
   if (!text) return { clean: text, action: null };
@@ -32,7 +31,7 @@ function parseActionFromReply(text) {
   return { clean, action };
 }
 
-async function executeVoiceAction(action, navigate) {
+async function executeVoiceAction(action, navigate, location = null) {
   if (!action || !action.type) return null;
   try {
     if (action.type === "log_catch") {
@@ -63,9 +62,30 @@ async function executeVoiceAction(action, navigate) {
     }
     if (action.type === "navigate") {
       const p = action.params || {};
-      if (!p.page || !ALLOWED_PAGES.includes(p.page)) return "Diese Seite kenne ich nicht.";
-      navigate(createPageUrl(p.page));
-      return `Oeffne ${p.page}.`;
+      const target = resolvePage(p.page);
+      if (!target) return "Diese Seite kenne ich nicht.";
+      navigate(createPageUrl(target));
+      return `Oeffne ${target}.`;
+    }
+    if (action.type === "add_spot" || action.type === "save_spot") {
+      const p = action.params || {};
+      if (!p.name) return "Wie soll der Spot heissen?";
+      // Koordinaten aus der Aktion oder als Fallback die aktuelle GPS-Position
+      const lat = p.latitude != null ? Number(p.latitude) : location?.lat;
+      const lon = p.longitude != null ? Number(p.longitude) : location?.lon;
+      if (lat == null || lon == null) {
+        return "Ich kenne deine Position nicht. Aktiviere GPS, dann speichere ich den Spot.";
+      }
+      await Spot.create({
+        name: p.name,
+        latitude: lat,
+        longitude: lon,
+        water_type: p.water_type || "see",
+        notes: p.notes || "",
+        ...(p.is_favorite != null && { is_favorite: !!p.is_favorite })
+      });
+      toast.success(`Spot gespeichert: ${p.name}`);
+      return `Spot ${p.name} wurde gespeichert.`;
     }
   } catch (e) {
     console.error("Voice action error:", e);
@@ -133,12 +153,15 @@ function speakBrowser(text, rate = 1, pitch = 1) {
       utter.volume = 1;
       
       let hasEnded = false;
+      // Sicherheits-Timeout proportional zur Textlänge (Sprechrate ~12 Zeichen/s),
+      // damit lange Antworten nicht vorzeitig als beendet gelten.
+      const safetyMs = Math.min(180000, Math.max(15000, text.length * 120));
       const timeout = setTimeout(() => {
         if (!hasEnded) {
           hasEnded = true;
           resolve();
         }
-      }, 30000);
+      }, safetyMs);
       
       utter.onend = () => {
         if (!hasEnded) {
@@ -158,6 +181,20 @@ function speakBrowser(text, rate = 1, pitch = 1) {
       };
 
       window.speechSynthesis.speak(utter);
+
+      // Chrome-Workaround: speechSynthesis stoppt nach ~15 Sekunden. Alle 8s
+      // pause()/resume() hält lange Antworten am Laufen.
+      const keepAlive = setInterval(() => {
+        if (!window.speechSynthesis.speaking) {
+          clearInterval(keepAlive);
+          return;
+        }
+        window.speechSynthesis.pause();
+        window.speechSynthesis.resume();
+      }, 8000);
+      const clearKeepAlive = () => clearInterval(keepAlive);
+      utter.addEventListener('end', clearKeepAlive);
+      utter.addEventListener('error', clearKeepAlive);
     } catch (error) {
       console.error('[TTS] Exception:', error);
       resolve();
@@ -505,7 +542,7 @@ function VoiceBuddy() {
         const { clean, action } = parseActionFromReply(raw);
         let finalText = clean || "Erledigt.";
         if (action) {
-          const actionMsg = await executeVoiceAction(action, navigate);
+          const actionMsg = await executeVoiceAction(action, navigate, currentLocation);
           if (actionMsg) finalText = (finalText ? finalText + " " : "") + actionMsg;
         }
         return finalText;

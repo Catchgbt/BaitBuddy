@@ -8,74 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
 import { speakWithElevenLabs, cancelElevenLabs } from "@/components/utils/elevenLabsTTS";
-
-const ALLOWED_PAGES = ["Dashboard","Logbook","Map","Weather","Community","Gear","AIAssistant","TripPlanner","Profile","Settings","Rank","WaterAnalysis","AngelscheinPruefungSchonzeiten","Quiz","Licenses","Events","BaitMixer","CatchStats","ARKnotenAssistent","Shop","Premium","PremiumPlans","VoiceControl","Help","Tutorials","Devices","DeviceIntegration","StartFishing","Start","WeatherAlerts","UsedGear","BathymetricCrowdsourcing"];
-
-const PAGE_ALIASES = {
-  "fangbuch": "Logbook",
-  "logbuch": "Logbook",
-  "logbook": "Logbook",
-  "karte": "Map",
-  "map": "Map",
-  "wetter": "Weather",
-  "weather": "Weather",
-  "community": "Community",
-  "ki": "KiBuddyBeta",
-  "kibuddy": "KiBuddyBeta",
-  "buddy": "KiBuddyBeta",
-  "wasser": "WaterAnalysis",
-  "wasseranalyse": "WaterAnalysis",
-  "trip": "TripPlanner",
-  "tripplaner": "TripPlanner",
-  "tripplanner": "TripPlanner",
-  "profil": "Profile",
-  "profile": "Profile",
-  "einstellungen": "Settings",
-  "settings": "Settings",
-  "rang": "Rank",
-  "ranking": "Rank",
-  "rank": "Rank",
-  "pruefung": "AngelscheinPruefungSchonzeiten",
-  "prüfung": "AngelscheinPruefungSchonzeiten",
-  "angelschein": "AngelscheinPruefungSchonzeiten",
-  "schonzeiten": "AngelscheinPruefungSchonzeiten",
-  "quiz": "Quiz",
-  "lizenzen": "Licenses",
-  "licenses": "Licenses",
-  "events": "Events",
-  "event": "Events",
-  "köder": "BaitMixer",
-  "koeder": "BaitMixer",
-  "bait": "BaitMixer",
-  "baitmixer": "BaitMixer",
-  "statistik": "CatchStats",
-  "stats": "CatchStats",
-  "knoten": "ARKnotenAssistent",
-  "ar": "ARKnotenAssistent",
-  "shop": "Shop",
-  "premium": "PremiumPlans",
-  "voice": "VoiceControl",
-  "hilfe": "Help",
-  "help": "Help",
-  "tutorial": "Tutorials",
-  "tutorials": "Tutorials",
-  "geräte": "Devices",
-  "geraete": "Devices",
-  "devices": "Devices",
-  "sos": "WeatherAlerts",
-  "warnung": "WeatherAlerts",
-  "dashboard": "Dashboard",
-  "home": "Dashboard"
-};
-
-function resolvePage(name) {
-  if (!name) return null;
-  const direct = ALLOWED_PAGES.find(p => p.toLowerCase() === String(name).toLowerCase());
-  if (direct) return direct;
-  const alias = PAGE_ALIASES[String(name).toLowerCase().trim()];
-  if (alias) return alias;
-  return null;
-}
+import { resolvePage } from "@/lib/voicePages";
 
 function parseAction(text) {
   if (!text) return { clean: text, action: null };
@@ -124,7 +57,7 @@ async function executeAction(action, navigate) {
       navigate(createPageUrl(target));
       return `Oeffne ${target}.`;
     }
-    if (action.type === "save_spot") {
+    if (action.type === "save_spot" || action.type === "add_spot") {
       const p = action.params || {};
       if (!p.name || p.latitude == null || p.longitude == null) {
         return "Ich brauche Name und Koordinaten fuer den Spot.";
