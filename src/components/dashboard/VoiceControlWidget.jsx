@@ -7,11 +7,10 @@ import { Catch } from '@/entities/Catch';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { useLocation } from '@/components/location/LocationManager';
+import { resolvePage } from '@/lib/voicePages';
 
 const WAKE_WORD_VARIANTS = ['hey buddy', 'hei buddy', 'hey budy', 'hey baddy', 'heybuddy', 'hey body', 'hallo buddy'];
 const LANGUAGE = 'de-DE';
-
-const ALLOWED_PAGES = ["Dashboard","Logbook","Map","Weather","Community","Gear","AIAssistant","TripPlanner","Profile","Settings","Ranking","WaterAnalysis","AngelscheinPruefungSchonzeiten","Quiz","Licenses","Events","BaitMixer","CatchStats","ARKnotenAssistent","Shop","Premium","PremiumPlans","Help","Tutorials","Devices","DeviceIntegration","StartFishing","Start"];
 
 function parseActionFromReply(text) {
   if (!text) return { clean: text, action: null };
@@ -42,9 +41,10 @@ async function executeVoiceAction(action, navigate) {
     }
     if (action.type === 'navigate') {
       const p = action.params || {};
-      if (!p.page || !ALLOWED_PAGES.includes(p.page)) return 'Diese Seite kenne ich nicht.';
-      navigate(createPageUrl(p.page));
-      return `Oeffne ${p.page}.`;
+      const target = resolvePage(p.page);
+      if (!target) return 'Diese Seite kenne ich nicht.';
+      navigate(createPageUrl(target));
+      return `Oeffne ${target}.`;
     }
   } catch (e) {
     console.error('Voice action error:', e);
@@ -79,8 +79,18 @@ function speakBrowser(text) {
       if (germanVoice) utter.voice = germanVoice;
       utter.rate = 0.95;
       let done = false;
-      const finish = () => { if (!done) { done = true; resolve(); } };
-      const timeout = setTimeout(finish, 30000);
+      // Chrome-Workaround: Sprachausgabe stoppt nach ~15s; pause/resume hält sie am Laufen.
+      const keepAlive = setInterval(() => {
+        if (!window.speechSynthesis.speaking) { clearInterval(keepAlive); return; }
+        window.speechSynthesis.pause();
+        window.speechSynthesis.resume();
+      }, 8000);
+      const finish = () => {
+        if (!done) { done = true; clearInterval(keepAlive); resolve(); }
+      };
+      // Sicherheits-Timeout proportional zur Textlänge (~12 Zeichen/s).
+      const safetyMs = Math.min(180000, Math.max(15000, text.length * 120));
+      const timeout = setTimeout(finish, safetyMs);
       utter.onend = () => { clearTimeout(timeout); finish(); };
       utter.onerror = () => { clearTimeout(timeout); finish(); };
       window.speechSynthesis.speak(utter);

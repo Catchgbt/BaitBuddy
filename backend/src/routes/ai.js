@@ -107,11 +107,12 @@ DU KANNST DIE APP STEUERN. Wenn der Nutzer dich darum bittet, etwas in der App z
 <<ACTION>>{"type":"...","params":{...}}<<END>>
 
 Verfügbare Aktionen:
-1. Navigieren / Seite öffnen: {"type":"navigate","params":{"page":"home|log|map|community|premium|chat"}}
+1. Navigieren / Seite öffnen: {"type":"navigate","params":{"page":"<seite>"}}
+   Erlaubte Seiten-Werte: dashboard, logbuch, karte, wetter, warnung, community, ausruestung, chat, ki, trip, profil, einstellungen, rang, wasser, angelschein, quiz, lizenzen, events, koeder, statistik, knoten, shop, premium, hilfe, tutorial, geraete, voice
 2. Fang eintragen: {"type":"log_catch","params":{"species":"Hecht","length_cm":75,"weight_kg":4.2,"bait_used":"Gummifisch","notes":"..."}}
 3. Spot speichern: {"type":"add_spot","params":{"name":"Mein Spot","water_type":"see|fluss|teich|kanal|bach","notes":"..."}}
 
-Regeln: Aktions-Block nur wenn Nutzer wirklich eine Aktion will. Zuerst kurze Bestätigung, dann Block. Block wird dem Nutzer nicht angezeigt.${context}`;
+Regeln: Aktions-Block nur wenn Nutzer wirklich eine Aktion will. Zuerst kurze Bestätigung, dann Block. Block wird dem Nutzer nicht angezeigt. Nutze fuer "page" exakt einen der erlaubten Werte.${context}`;
 
     const history = messages.slice(-6).map(m =>
       `${m.role === 'user' ? 'Nutzer' : 'BaitBuddy'}: ${m.content}`
