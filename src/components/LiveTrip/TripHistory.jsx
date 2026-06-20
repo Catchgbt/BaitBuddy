@@ -79,7 +79,7 @@ function TripHistory() {
       {/* Header mit Sync */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-bold text-cyan-300">📋 Tour-Verlauf</h3>
+          <h3 className="text-lg font-bold text-cyan-300">Tour-Verlauf</h3>
           <p className="text-xs text-gray-400">
             {stats && `${stats.totalTrips} Touren • ${stats.pendingTrips} ausstehend • ~${stats.estimatedSizeMB}MB`}
           </p>
@@ -214,7 +214,7 @@ function TripHistory() {
 
       {/* Info */}
       <div className="bg-gray-800/50 rounded-lg p-2 text-xs text-gray-400 italic">
-        💡 Touren werden automatisch lokal gespeichert. Bei Internetverbindung werden sie automatisch synchronisiert.
+        Touren werden automatisch lokal gespeichert. Bei Internetverbindung werden sie automatisch synchronisiert.
       </div>
     </div>
   );

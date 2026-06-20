@@ -135,7 +135,7 @@ class NotificationService {
 
       if (nextEvent.totalMinutes <= timeToEvent && !this.lastNotifications[notificationKey]) {
         await this.sendNotification(
-          '🌙 Optimale Solunar-Zeit!',
+          'Optimale Solunar-Zeit!',
           `${major.description}\nIn ${nextEvent.hours}h ${String(nextEvent.minutes).padStart(2, '0')}m\nQualität: ${major.quality}%`,
           { tag: notificationKey, badge: '🎣' }
         );
@@ -159,7 +159,7 @@ class NotificationService {
         const recommendation = TideService.getTideRecommendation(current);
 
         await this.sendNotification(
-          `🌊 ${current.nextEvent} nähert sich!`,
+          `${current.nextEvent} nähert sich!`,
           `${recommendation}\nIn ${current.timeToNext.hours}h ${String(current.timeToNext.minutes).padStart(2, '0')}m`,
           { tag: notificationKey, badge: '🌊' }
         );
@@ -260,7 +260,7 @@ class NotificationService {
   // Debug: Sende Test-Notification
   async sendTestNotification() {
     return this.sendNotification(
-      '🎣 Test-Notification',
+      'Test-Notification',
       'Dies ist eine Test-Benachrichtigung von BaitBuddy!',
       { tag: 'test_notification' }
     );

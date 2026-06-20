@@ -305,16 +305,16 @@ function generateExplanation(targetFish, season, waterTemp, waterType, successRa
   let explanation = "";
 
   if (successRate >= 80) {
-    explanation = `✅ Ausgezeichnet! Dein ${targetFish}-Mix hat eine hohe Erfolgswahrscheinlichkeit von ${successRate}%. `;
+    explanation = `Ausgezeichnet! Dein ${targetFish}-Mix hat eine hohe Erfolgswahrscheinlichkeit von ${successRate}%. `;
     explanation += `Die Kombination aus perfekter Zutaten-Balance, saisonalen Bedingungen und Wasser-Parametern ist ideal. `;
   } else if (successRate >= 60) {
-    explanation = `✓ Gut! Dein Rezept sollte ${successRate}% Erfolgschance haben. `;
+    explanation = `Gut! Dein Rezept sollte ${successRate}% Erfolgschance haben. `;
     explanation += `Es gibt noch Raum für Optimierung, aber die Grundmischung stimmt. `;
   } else if (successRate >= 40) {
-    explanation = `⚠️ Mittelmäßig. Dein Mix hat eine ${successRate}% Erfolgschance. `;
+    explanation = `Mittelmäßig. Dein Mix hat eine ${successRate}% Erfolgschance. `;
     explanation += `Überdenke die Zutaten oder passe die Jahreszeit/Temperatur an. `;
   } else {
-    explanation = `❌ Schwach. Mit nur ${successRate}% Erfolgschance solltest du dein Rezept überarbeiten. `;
+    explanation = `Schwach. Mit nur ${successRate}% Erfolgschance solltest du dein Rezept überarbeiten. `;
   }
 
   // Spezifische Hinweise
@@ -339,13 +339,13 @@ function generateExplanation(targetFish, season, waterTemp, waterType, successRa
  */
 function getRecommendation(successRate, targetFish) {
   if (successRate >= 85) {
-    return "🎯 Direkt am Wasser einsetzen — Top-Rezept!";
+    return "Direkt am Wasser einsetzen — Top-Rezept!";
   } else if (successRate >= 70) {
-    return "✓ Bewährtes Rezept — sollte funktionieren";
+    return "Bewährtes Rezept — sollte funktionieren";
   } else if (successRate >= 50) {
-    return "⚠️ Experimentelle Mischung — mit Vorsicht testen";
+    return "Experimentelle Mischung — mit Vorsicht testen";
   } else {
-    return "❌ Überarbeitung empfohlen — zu schwach für aktuellen Zustand";
+    return "Überarbeitung empfohlen — zu schwach für aktuellen Zustand";
   }
 }
 

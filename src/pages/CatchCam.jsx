@@ -492,7 +492,7 @@ function CatchCamInner() {
               {/* HUD Overlays */}
               <div className="absolute top-3 left-3 bg-black/60 text-white px-3 py-2 rounded-lg backdrop-blur-sm">
                 <div className="text-sm font-medium">
-                  {measureMode ? "📏 Messmodus aktiv" : "📍 Buddy-Lens"}
+                  {measureMode ? "Messmodus aktiv" : "Buddy-Lens"}
                 </div>
                 <div className="text-xs text-gray-300">
                   Marker: {markers.length} | Klicks: {refClicks.current.length}

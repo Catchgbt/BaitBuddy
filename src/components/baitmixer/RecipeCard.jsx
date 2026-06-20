@@ -46,11 +46,11 @@ export default function RecipeCard({
               {recipe.fish}
               {isPredefined ? (
                 <span className="ml-2 inline-block">
-                  ⭐ Vordefiniert
+                  Vordefiniert
                 </span>
               ) : (
                 <span className="ml-2 inline-block">
-                  📌 Eigenes Rezept
+                  Eigenes Rezept
                 </span>
               )}
             </p>

@@ -25,7 +25,7 @@ export default function CatchDetailModal({ catchItem, onClose, onEdit, spots }) 
     setIsAnalyzing(true);
 
     try {
-      toast.info("🔍 KI analysiert das Foto...", { duration: 3000 });
+      toast.info("KI analysiert das Foto...", { duration: 3000 });
 
       const response = await functions.invoke('analyzeCatchPhoto', {
         file_url: catchItem.photo_url
@@ -45,7 +45,7 @@ export default function CatchDetailModal({ catchItem, onClose, onEdit, spots }) 
         if (Object.keys(updates).length > 0) {
           await Catch.update(catchItem.id, updates);
           
-          toast.success("✨ Fang wurde mit KI-Daten aktualisiert!", {
+          toast.success("Fang wurde mit KI-Daten aktualisiert!", {
             description: analysisData.summary || "Analyse abgeschlossen",
             duration: 5000
           });

@@ -30,9 +30,9 @@ import QuickStartGrid from "@/components/baitmixer/QuickStartGrid";
 import { calculateSuccessRate } from "@/utils/baitPrognosis.utils";
 
 const TABS = [
-  { id: "quickstart", label: "🎯 Schnellstart", icon: "⭐" },
-  { id: "builder", label: "🔨 Rezept-Editor", icon: "⚙️" },
-  { id: "saved", label: "📌 Meine Rezepte", icon: "💾" }
+  { id: "quickstart", label: "Schnellstart", icon: "⭐" },
+  { id: "builder", label: "Rezept-Editor", icon: "⚙️" },
+  { id: "saved", label: "Meine Rezepte", icon: "💾" }
 ];
 
 export default function BaitMixerPro() {
@@ -409,7 +409,7 @@ Exportiert: ${exportData.exportDate}
               Erstelle optimierte Boilies & Anfütterung mit KI-Prognose
             </p>
             <p className="text-xs text-green-400 mt-2">
-              ✨ 48 vordefinierte Premium-Rezepte • Favoriten • Export • Vollständig optimiert
+              48 vordefinierte Premium-Rezepte • Favoriten • Export • Vollständig optimiert
             </p>
           </div>
 
@@ -462,8 +462,8 @@ Exportiert: ${exportData.exportDate}
                         value={mode}
                         onValueChange={setMode}
                         options={[
-                          { value: "boilies", label: "🎯 Boilies" },
-                          { value: "bait", label: "🪝 Anfütterung" }
+                          { value: "boilies", label: "Boilies" },
+                          { value: "bait", label: "Anfütterung" }
                         ]}
                       />
                     </div>

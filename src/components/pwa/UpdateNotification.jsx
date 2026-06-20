@@ -13,7 +13,7 @@ export default function UpdateNotification() {
     if (window.progressier) {
       window.progressier.on('update', () => {
         setShowUpdate(true);
-        toast.info('Neue Version verfügbar! 🚀', {
+        toast.info('Neue Version verfügbar!', {
           duration: 10000,
           description: 'Aktualisiere die App für neue Features'
         });

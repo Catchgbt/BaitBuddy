@@ -189,15 +189,15 @@ Sei konkret, praktisch und detailliert!`;
   };
 
   const getWeatherDescription = (code) => {
-    if ([0, 1].includes(code)) return "☀️ Sonnig & klar";
-    if ([2, 3].includes(code)) return "⛅ Teilweise bewölkt";
-    if ([45, 48].includes(code)) return "🌫️ Nebelig";
-    if ([51, 53, 55].includes(code)) return "🌦️ Nieselregen";
-    if ([61, 63, 65].includes(code)) return "🌧️ Regen";
-    if ([71, 73, 75, 77].includes(code)) return "❄️ Schneefall";
-    if ([80, 81, 82].includes(code)) return "🌦️ Schauer";
-    if ([95, 96, 99].includes(code)) return "⛈️ Gewitter";
-    return "🌤️ Wechselhaft";
+    if ([0, 1].includes(code)) return "Sonnig & klar";
+    if ([2, 3].includes(code)) return "Teilweise bewölkt";
+    if ([45, 48].includes(code)) return "Nebelig";
+    if ([51, 53, 55].includes(code)) return "Nieselregen";
+    if ([61, 63, 65].includes(code)) return "Regen";
+    if ([71, 73, 75, 77].includes(code)) return "Schneefall";
+    if ([80, 81, 82].includes(code)) return "Schauer";
+    if ([95, 96, 99].includes(code)) return "Gewitter";
+    return "Wechselhaft";
   };
 
   const getFishingCondition = () => {

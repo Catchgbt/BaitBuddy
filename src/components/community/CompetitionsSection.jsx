@@ -69,7 +69,7 @@ const PointsExplanation = () => (
 
     <div className="mt-4 pt-4 border-t border-cyan-500/20">
       <p className="text-xs text-gray-400">
-        💡 Tipp: Nutze die Ranking-Saison, um Premium-Zugang zu gewinnen!
+        Tipp: Nutze die Ranking-Saison, um Premium-Zugang zu gewinnen!
       </p>
     </div>
   </motion.div>
@@ -230,10 +230,10 @@ export default function CompetitionsSection({
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-white text-sm mb-1">{activity.title}</h3>
                     <p className="text-xs text-gray-400">
-                      {activity.competition_type === 'photo_contest' && '📸 Community Voting'}
-                      {activity.competition_type === 'most_catches' && '🎣 Team Wettbewerb'}
-                      {activity.competition_type === 'biggest_catch' && '🏆 Größter Fang'}
-                      {activity.competition_type === 'specific_species' && `🐟 Spezies: ${activity.target_species || 'Alle'}`}
+                      {activity.competition_type === 'photo_contest' && 'Community Voting'}
+                      {activity.competition_type === 'most_catches' && 'Team Wettbewerb'}
+                      {activity.competition_type === 'biggest_catch' && 'Größter Fang'}
+                      {activity.competition_type === 'specific_species' && `Spezies: ${activity.target_species || 'Alle'}`}
                       {' • '}
                       bis {new Date(activity.end_date).toLocaleDateString('de-DE')}
                     </p>

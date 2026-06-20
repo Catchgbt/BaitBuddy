@@ -644,8 +644,8 @@ export default function ProfilePage() {
           </div>
 
           <div className="text-xs text-gray-500 space-y-1">
-            <p>💡 Teile diesen Link mit deinen Freunden über WhatsApp, E-Mail oder Social Media</p>
-            <p>💡 Dein Premium wird automatisch verlängert, sobald sie sich registrieren</p>
+            <p>Teile diesen Link mit deinen Freunden über WhatsApp, E-Mail oder Social Media</p>
+            <p>Dein Premium wird automatisch verlängert, sobald sie sich registrieren</p>
           </div>
         </CardContent>
       </Card>

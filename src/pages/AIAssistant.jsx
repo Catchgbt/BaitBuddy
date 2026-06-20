@@ -98,15 +98,15 @@ function AIAssistantInner() {
       const currentUser = await User.me();
       setUser(currentUser);
       
-      const greeting = `${getPersonalizedGreeting(currentUser)}! 🎣
+      const greeting = `${getPersonalizedGreeting(currentUser)}!
 
 Ich bin dein KI-Angel-Buddy und helfe dir bei allem rund ums Angeln:
 
-🐟 **Fisch-Infos** - Alles über Hecht, Zander, Karpfen & Co.
-🌤️ **Wetter-Tipps** - Wann beißen die Fische am besten?
-🎣 **Köder-Empfehlungen** - Was funktioniert wann?
-📍 **Spot-Strategien** - Wie finde ich die besten Stellen?
-⏰ **Timing** - Beste Tageszeiten zum Angeln
+**Fisch-Infos** - Alles über Hecht, Zander, Karpfen & Co.
+**Wetter-Tipps** - Wann beißen die Fische am besten?
+**Köder-Empfehlungen** - Was funktioniert wann?
+**Spot-Strategien** - Wie finde ich die besten Stellen?
+**Timing** - Beste Tageszeiten zum Angeln
 
 Was möchtest du wissen?`;
 

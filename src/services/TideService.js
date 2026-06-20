@@ -241,11 +241,11 @@ class TideService {
     const minutesToNext = tideState.timeToNext.minutes;
 
     if (hoursToNext <= 1 && minutesToNext <= 30) {
-      return `🎯 Optimal! ${tideState.nextEvent} in ${hoursToNext}h ${minutesToNext}m - beste Fangzeit`;
+      return `Optimal! ${tideState.nextEvent} in ${hoursToNext}h ${minutesToNext}m - beste Fangzeit`;
     } else if (hoursToNext <= 3) {
-      return `📈 Gut. ${tideState.nextEvent} in ${hoursToNext}h ${minutesToNext}m`;
+      return `Gut. ${tideState.nextEvent} in ${hoursToNext}h ${minutesToNext}m`;
     } else {
-      return `⏳ Noch ${hoursToNext}h ${minutesToNext}m bis ${tideState.nextEvent}`;
+      return `Noch ${hoursToNext}h ${minutesToNext}m bis ${tideState.nextEvent}`;
     }
   }
 }

@@ -20,7 +20,7 @@ export default function PendingPhotoCard({ photo, spots, findNearestSpot, onAnal
             const nearest = findNearestSpot(photo.gps_lat, photo.gps_lon);
             if (nearest) {
                 setNearestSpot(nearest);
-                console.log(`📍 Nächster Spot gefunden: ${nearest.name} (${nearest.distance.toFixed(2)} km entfernt)`);
+                console.log(`Nächster Spot gefunden: ${nearest.name} (${nearest.distance.toFixed(2)} km entfernt)`);
             }
         }
     }, [photo, spots, findNearestSpot]);
@@ -29,7 +29,7 @@ export default function PendingPhotoCard({ photo, spots, findNearestSpot, onAnal
         setIsAnalyzing(true);
         
         try {
-            toast.info('🔍 Analysiere Foto mit KI...');
+            toast.info('Analysiere Foto mit KI...');
             
             // KI-Analyse durchführen
             const response = await functions.invoke('analyzeCatchPhoto', {
@@ -46,7 +46,7 @@ export default function PendingPhotoCard({ photo, spots, findNearestSpot, onAnal
                     length_cm: aiData.length_cm || null,
                     weight_kg: aiData.weight_kg || null,
                     catch_time: photo.captured_at || new Date().toISOString(),
-                    notes: `KI-Analyse: ${aiData.visual_details || 'Keine Details'}${nearestSpot ? `\n📍 Automatisch zugewiesen: ${nearestSpot.name}` : ''}`,
+                    notes: `KI-Analyse: ${aiData.visual_details || 'Keine Details'}${nearestSpot ? `\nAutomatisch zugewiesen: ${nearestSpot.name}` : ''}`,
                     spot_id: nearestSpot ? nearestSpot.id : null, // Automatischer Spot!
                     ai_analysis: aiData,
                     points_earned: aiData.length_cm ? (1 + Math.floor(aiData.length_cm / 10)) : 1
@@ -56,7 +56,7 @@ export default function PendingPhotoCard({ photo, spots, findNearestSpot, onAnal
                 await Catch.create(catchData);
 
                 const successMessage = nearestSpot 
-                    ? `${aiData.species_name || 'Unbekannt'} • ${aiData.length_cm ? Math.round(aiData.length_cm) + ' cm' : 'Länge unbekannt'} • 📍 ${nearestSpot.name}`
+                    ? `${aiData.species_name || 'Unbekannt'} • ${aiData.length_cm ? Math.round(aiData.length_cm) + ' cm' : 'Länge unbekannt'} • ${nearestSpot.name}`
                     : `${aiData.species_name || 'Unbekannt'} • ${aiData.length_cm ? Math.round(aiData.length_cm) + ' cm' : 'Länge unbekannt'}`;
 
                 toast.success('Fang gespeichert!', {

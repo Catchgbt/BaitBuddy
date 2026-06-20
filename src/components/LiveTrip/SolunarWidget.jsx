@@ -73,10 +73,10 @@ function SolunarWidget({ latitude, longitude, isActive }) {
   };
 
   const getQualityLabel = (quality) => {
-    if (quality >= 80) return 'Exzellent ✨';
-    if (quality >= 60) return 'Gut 👍';
-    if (quality >= 40) return 'Moderat ⚠️';
-    return 'Schwach ❌';
+    if (quality >= 80) return 'Exzellent';
+    if (quality >= 60) return 'Gut';
+    if (quality >= 40) return 'Moderat';
+    return 'Schwach';
   };
 
   return (
@@ -118,7 +118,7 @@ function SolunarWidget({ latitude, longitude, isActive }) {
           {/* Time until Major */}
           {nextMajor && (
             <div className="text-xs text-yellow-400 mt-1">
-              ⏰ in {nextMajor.hours}h {String(nextMajor.minutes).padStart(2, '0')}m
+              in {nextMajor.hours}h {String(nextMajor.minutes).padStart(2, '0')}m
             </div>
           )}
         </div>
@@ -142,7 +142,7 @@ function SolunarWidget({ latitude, longitude, isActive }) {
           {/* Time until Minor */}
           {nextMinor && (
             <div className="text-xs text-blue-400 mt-1">
-              ⏰ in {nextMinor.hours}h {String(nextMinor.minutes).padStart(2, '0')}m
+              in {nextMinor.hours}h {String(nextMinor.minutes).padStart(2, '0')}m
             </div>
           )}
         </div>
@@ -151,7 +151,7 @@ function SolunarWidget({ latitude, longitude, isActive }) {
       {/* Tip */}
       <div className="border-t border-purple-700/30 pt-2">
         <div className="text-xs text-purple-300 italic">
-          💡 {overallQuality >= 70 ? '🎯 Heute sehr gute Fangchancen!' : 'Warte auf bessere Mondphase für optimale Chancen'}
+          {overallQuality >= 70 ? 'Heute sehr gute Fangchancen!' : 'Warte auf bessere Mondphase für optimale Chancen'}
         </div>
       </div>
     </div>

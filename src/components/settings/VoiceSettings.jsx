@@ -112,7 +112,7 @@ export default function VoiceSettings() {
 
         {/* Hinweis */}
         <div className="text-xs text-gray-500 bg-gray-800/50 p-3 rounded-lg">
-          💡 Tipp: Die Sprechgeschwindigkeit beeinflusst, wie schnell der KI-Buddy antwortet.
+          Tipp: Die Sprechgeschwindigkeit beeinflusst, wie schnell der KI-Buddy antwortet.
         </div>
 
         {/* Speichern Button */}
