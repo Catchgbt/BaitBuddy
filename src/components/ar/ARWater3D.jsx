@@ -42,11 +42,18 @@ class SimpleOrbitControls {
   }
   
   _bindEvents() {
-    this.domElement.addEventListener('pointerdown', (e) => this._onPointerDown(e));
-    this.domElement.addEventListener('pointermove', (e) => this._onPointerMove(e));
-    this.domElement.addEventListener('pointerup', () => this._onPointerUp());
-    this.domElement.addEventListener('wheel', (e) => this._onWheel(e));
-    this.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
+    this._handlers = {
+      pointerdown: (e) => this._onPointerDown(e),
+      pointermove: (e) => this._onPointerMove(e),
+      pointerup: () => this._onPointerUp(),
+      wheel: (e) => this._onWheel(e),
+      contextmenu: (e) => e.preventDefault(),
+    };
+    this.domElement.addEventListener('pointerdown', this._handlers.pointerdown);
+    this.domElement.addEventListener('pointermove', this._handlers.pointermove);
+    this.domElement.addEventListener('pointerup', this._handlers.pointerup);
+    this.domElement.addEventListener('wheel', this._handlers.wheel);
+    this.domElement.addEventListener('contextmenu', this._handlers.contextmenu);
   }
   
   _onPointerDown(e) {
@@ -133,6 +140,13 @@ class SimpleOrbitControls {
   
   dispose() {
     this.enabled = false;
+    if (this._handlers) {
+      this.domElement.removeEventListener('pointerdown', this._handlers.pointerdown);
+      this.domElement.removeEventListener('pointermove', this._handlers.pointermove);
+      this.domElement.removeEventListener('pointerup', this._handlers.pointerup);
+      this.domElement.removeEventListener('wheel', this._handlers.wheel);
+      this.domElement.removeEventListener('contextmenu', this._handlers.contextmenu);
+    }
   }
 }
 
@@ -146,6 +160,7 @@ class SensorFusion {
     this.alpha = 0.15;
     this.headingFilter = 0.1;
     this._geoWatchId = null;
+    this._evtName = null;
     this._boundOrientation = this._onOrientation.bind(this);
   }
 
@@ -166,13 +181,13 @@ class SensorFusion {
       );
     }
 
-    const evtName = 'deviceorientationabsolute' in window ? 'deviceorientationabsolute' : 'deviceorientation';
-    window.addEventListener(evtName, this._boundOrientation, true);
+    this._evtName = 'deviceorientationabsolute' in window ? 'deviceorientationabsolute' : 'deviceorientation';
+    window.addEventListener(this._evtName, this._boundOrientation, true);
   }
 
   stop() {
     if (this._geoWatchId !== null) navigator.geolocation.clearWatch(this._geoWatchId);
-    window.removeEventListener('deviceorientation', this._boundOrientation);
+    if (this._evtName) window.removeEventListener(this._evtName, this._boundOrientation);
   }
 
   _onOrientation(e) {
@@ -526,6 +541,7 @@ export default function ARWater3D() {
     let renderer, scene, camera, controls, animationId;
     let video, videoTexture, videoPlane;
     let sensor, lodManager, clock;
+    let onResize;
 
     const init = async () => {
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -590,7 +606,7 @@ export default function ARWater3D() {
         const betaRad = ((pose.orientation.beta || 0) - 90) * Math.PI / 180;
         camera.rotation.x = betaRad * 0.3;
         
-        setStatus(`📍 ${pose.pos.lat.toFixed(5)}, ${pose.pos.lon.toFixed(5)} | 🧭 ${pose.heading.toFixed(0)}°`);
+        setStatus(`GPS: ${pose.pos.lat.toFixed(5)}, ${pose.pos.lon.toFixed(5)} | Kompass: ${pose.heading.toFixed(0)} Grad`);
       };
       sensor.start();
 
@@ -611,7 +627,7 @@ export default function ARWater3D() {
 
       addMockBathymetry(scene);
 
-      const onResize = () => {
+      onResize = () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -629,17 +645,21 @@ export default function ARWater3D() {
       };
       animate();
 
-      return () => {
-        cancelAnimationFrame(animationId);
-        window.removeEventListener('resize', onResize);
-        controls.dispose();
-        renderer.dispose();
-        sensor.stop();
-        if (lodManager) lodManager.dispose();
-      };
     };
 
     init();
+
+    return () => {
+      cancelAnimationFrame(animationId);
+      if (onResize) window.removeEventListener('resize', onResize);
+      if (controls) controls.dispose();
+      if (renderer) renderer.dispose();
+      if (sensor) sensor.stop();
+      if (lodManager) lodManager.dispose();
+      if (video && video.srcObject) {
+        video.srcObject.getTracks().forEach(t => t.stop());
+      }
+    };
   }, []);
 
   const addMockBathymetry = (scene) => {
@@ -669,13 +689,13 @@ export default function ARWater3D() {
 
   const loadRealBathymetry = async () => {
     if (!sensorRef.current || !sceneRef.current || !lodManagerRef.current) {
-      setStatus('⏳ Warte auf Initialisierung...');
+      setStatus('Warte auf Initialisierung...');
       return;
     }
 
     const { lat, lon } = sensorRef.current.pos;
     if (lat === 0 || lon === 0) {
-      setStatus('⚠️ GPS-Position noch nicht verfügbar');
+      setStatus('GPS-Position noch nicht verfügbar');
       return;
     }
 
@@ -687,7 +707,7 @@ export default function ARWater3D() {
       });
     } catch (error) {
       console.error('Fehler beim Laden:', error);
-      setStatus('❌ Fehler: ' + error.message);
+      setStatus('Fehler: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -790,10 +810,10 @@ export default function ARWater3D() {
             </div>
 
             <div className="text-xs text-gray-400 space-y-1">
-              <div>🔵 Blau = Flach (0-20m)</div>
-              <div>🟢 Grün = Mittel (20-50m)</div>
-              <div>🟡 Gelb = Tief (50-70m)</div>
-              <div>🔴 Rot = Sehr tief (70m+)</div>
+              <div>Blau = Flach (0-20m)</div>
+              <div>Gruen = Mittel (20-50m)</div>
+              <div>Gelb = Tief (50-70m)</div>
+              <div>Rot = Sehr tief (70m+)</div>
             </div>
           </Card>
         )}
