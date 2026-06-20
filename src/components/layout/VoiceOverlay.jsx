@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mic, Camera, Waves, ChevronRight, ChevronLeft, Zap, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { speakWithElevenLabs } from '@/components/utils/elevenLabsTTS';
+import { functions } from '@/api/frontendClient';
 
 const VoiceOverlay = ({ isOpen, onClose, currentPageName }) => {
   const [activeTab, setActiveTab] = useState('voice');
@@ -64,24 +65,28 @@ const VoiceOverlay = ({ isOpen, onClose, currentPageName }) => {
       const newMessage = { role: 'user', content: text };
       setChatHistory(prev => [...prev, newMessage]);
       setTranscript('');
-      
-      // Call catchgbtChat
-      const response = await fetch('/api/functions/catchgbtChat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, conversationHistory: chatHistory })
+
+      // Call catchgbtChat über den authentifizierten Client (/api/ai/chat).
+      // Backend erwartet { messages: [...] } und gibt { reply } zurück.
+      const messages = [...chatHistory, newMessage].map(m => ({
+        role: m.role === 'assistant' ? 'assistant' : 'user',
+        content: m.content
+      }));
+      const response = await functions.invoke('catchgbtChat', {
+        messages,
+        context: 'voice_overlay'
       });
-      
-      const data = await response.json();
-      const aiResponse = data.reply || 'Keine Antwort';
-      
+      const aiResponse = response?.data?.reply || response?.reply || 'Keine Antwort';
+
       setChatHistory(prev => [...prev, { role: 'assistant', content: aiResponse }]);
       setOrbState('speaking');
       
-      // TTS — primär ElevenLabs, Browser-TTS nur als Fallback
+      // TTS — primär ElevenLabs, Browser-TTS nur als Fallback.
+      // Push-to-talk: nach der Antwort zurück in den Ruhezustand, bis der Nutzer
+      // erneut auf das Mikrofon tippt (es läuft keine Daueraufnahme).
       const afterSpeech = () => {
-        setOrbState('listening');
-        setIsListening(true);
+        setOrbState('idle');
+        setIsListening(false);
       };
       try {
         await speakWithElevenLabs(aiResponse, {
@@ -105,16 +110,16 @@ const VoiceOverlay = ({ isOpen, onClose, currentPageName }) => {
   };
   
   const startListening = () => {
-    setIsListening(true);
-    setOrbState('listening');
-    setTranscript('');
-    
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       toast.error('Speech Recognition nicht verfügbar');
       return;
     }
-    
+
+    setIsListening(true);
+    setOrbState('listening');
+    setTranscript('');
+
     const recognition = new SpeechRecognition();
     recognition.lang = 'de-DE';
     
