@@ -113,6 +113,10 @@ export default function ARKnotenAssistent() {
   const arAnimIdRef = useRef(null);
   const mpHandsRef = useRef(null);
   const mpCameraRef = useRef(null);
+  const handLandmarksRef = useRef(null);
+  const currentStepRef = useRef(0);
+  const currentKnotRef = useRef("Palomar");
+  const arPhaseRef = useRef(0);
 
   const steps = KNOTS[currentKnot].steps;
   const step = steps[currentStep];
@@ -181,30 +185,39 @@ export default function ARKnotenAssistent() {
   };
 
   const onHandResults = (results) => {
-    setHandLandmarks((results.multiHandLandmarks && results.multiHandLandmarks.length > 0) ? results.multiHandLandmarks[0] : null);
-    setTracking(!!(results.multiHandLandmarks && results.multiHandLandmarks.length > 0));
+    const lms = (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) ? results.multiHandLandmarks[0] : null;
+    handLandmarksRef.current = lms;
+    setHandLandmarks(lms);
+    setTracking(!!lms);
   };
 
-  let arPhase = 0;
   const drawAR = () => {
-    arPhase += 0.04;
+    arPhaseRef.current += 0.04;
     arAnimIdRef.current = requestAnimationFrame(drawAR);
-    
-    const canvas = canvasRef.current;
-    if (!canvas || !handLandmarks) return;
 
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+    const canvas = canvasRef.current;
+    const landmarks = handLandmarksRef.current;
+    if (!canvas || !landmarks) return;
+
+    const newW = canvas.offsetWidth;
+    const newH = canvas.offsetHeight;
+    if (canvas.width !== newW || canvas.height !== newH) {
+      canvas.width = newW;
+      canvas.height = newH;
+    }
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const W = canvas.width;
     const H = canvas.height;
-    const arCfg = step.ar;
-    const knotColor = KNOTS[currentKnot].color;
+    const knotData = KNOTS[currentKnotRef.current];
+    const stepData = knotData.steps[currentStepRef.current];
+    const arCfg = stepData.ar;
+    const knotColor = knotData.color;
+    const arPhase = arPhaseRef.current;
 
     const lm = (idx) => {
-      const l = handLandmarks[idx];
+      const l = landmarks[idx];
       return { x: l.x * W, y: l.y * H };
     };
 
@@ -322,6 +335,7 @@ export default function ARKnotenAssistent() {
   const navigate = (dir) => {
     const next = currentStep + dir;
     if (next < 0 || next >= steps.length) return;
+    currentStepRef.current = next;
     setCurrentStep(next);
     speakText(steps[next].title + '. ' + steps[next].desc);
   };
@@ -391,6 +405,8 @@ export default function ARKnotenAssistent() {
     if (CMDS.weiter.some(k => text.includes(k))) { navigate(1); return; }
     if (CMDS.zurück.some(k => text.includes(k))) { navigate(-1); return; }
     if (CMDS.wiederholen.some(k => text.includes(k))) { repeatStep(); return; }
+    if (CMDS.langsamer.some(k => text.includes(k))) { setTtsSpeed(s => Math.max(0.5, s - 0.2)); return; }
+    if (CMDS.schneller.some(k => text.includes(k))) { setTtsSpeed(s => Math.min(2.0, s + 0.2)); return; }
   };
 
   return (
@@ -430,7 +446,7 @@ export default function ARKnotenAssistent() {
           {Object.keys(KNOTS).map(k => (
             <button
               key={k}
-              onClick={() => { setCurrentKnot(k); setCurrentStep(0); }}
+              onClick={() => { currentKnotRef.current = k; currentStepRef.current = 0; setCurrentKnot(k); setCurrentStep(0); }}
               className={`px-3 py-1 rounded text-xs font-medium transition ${
                 currentKnot === k ? 'bg-cyan-600 text-white' : 'bg-gray-700 text-gray-300'
               }`}
