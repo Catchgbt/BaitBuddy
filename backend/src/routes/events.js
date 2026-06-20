@@ -854,13 +854,15 @@ router.get('/events/user/current-points', requireAuth, async (req, res) => {
 router.get('/events/user/active-event', requireAuth, async (req, res) => {
   try {
     const now = new Date();
+    const nowIso = now.toISOString();
 
-    // Finde das nächste aktive Event für den User
+    // Finde das aktuell laufende (live) Event, das als naechstes endet
     const { data: activeEvent } = await supabase
       .from('events')
       .select('id, name, end_date, start_date')
       .eq('status', 'active')
-      .gt('end_date', now.toISOString())
+      .lte('start_date', nowIso)
+      .gt('end_date', nowIso)
       .order('end_date', { ascending: true })
       .limit(1)
       .single();
