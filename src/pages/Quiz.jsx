@@ -157,6 +157,7 @@ export default function QuizPage() {
         const userData = await User.me();
         setUser(userData);
       } catch (error) {
+        console.debug('Quiz: Benutzer nicht verfügbar (nicht eingeloggt):', error);
       } finally {
         setIsLoading(false);
       }
@@ -188,6 +189,7 @@ export default function QuizPage() {
             console.warn("User data not available, cannot save quiz progress.");
         }
     } catch (error) {
+        console.error('Quiz: Fortschritt konnte nicht gespeichert werden:', error);
     }
     setGameState('results');
   }, [correctCount, wrongCount, currentLevelData, runStartTime, score, user]);

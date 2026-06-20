@@ -276,6 +276,7 @@ function LandingPageContent() {
                 }
             }
         } catch (error) {
+            console.debug('Home: Benutzername konnte nicht geladen werden:', error);
         }
     };
 
