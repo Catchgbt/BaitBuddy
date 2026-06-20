@@ -111,7 +111,7 @@ function TideWidget({ latitude, longitude, isActive }) {
           <div className="space-y-1">
             {tideData.upcoming.slice(0, 3).map((event, idx) => (
               <div key={idx} className="flex justify-between text-xs text-gray-300">
-                <span>{event.type === 'high' ? '🌊 Hochwasser' : '⬇️ Niedrigwasser'}</span>
+                <span>{event.type === 'high' ? 'Hochwasser' : 'Niedrigwasser'}</span>
                 <span className="text-gray-400">
                   {new Date(event.t).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
                 </span>

@@ -44,22 +44,22 @@ export function getMotivationalGreeting(user) {
   
   const motivations = {
     morning: [
-      "Der frühe Vogel fängt den Wurm - und du den Fisch! 🎣",
+      "Der frühe Vogel fängt den Wurm - und du den Fisch!",
       "Ein perfekter Morgen für einen erfolgreichen Fang!",
       "Die besten Bisse kommen am Morgen!"
     ],
     day: [
-      "Bereit für dein nächstes Angel-Abenteuer? 🎣",
+      "Bereit für dein nächstes Angel-Abenteuer?",
       "Die Fische warten schon auf dich!",
       "Zeit, neue Spots zu erkunden!"
     ],
     evening: [
-      "Die Dämmerung ist oft die beste Zeit zum Angeln! 🌅",
+      "Die Dämmerung ist oft die beste Zeit zum Angeln!",
       "Perfekte Zeit für einen Abend am Wasser!",
       "Die Raubfische werden jetzt aktiv!"
     ],
     night: [
-      "Auch nachts sind die Fische aktiv! 🌙",
+      "Auch nachts sind die Fische aktiv!",
       "Plane deinen nächsten Trip!",
       "Noch wach? Perfekt für Nachtangeln!"
     ]
@@ -102,14 +102,14 @@ export function getDynamicDashboardGreeting(user, activity = {}) {
   
   // Spezielle Begrüßungen für neue Nutzer
   if (!activity.hasCatches && !activity.hasSpots) {
-    return `Willkommen, ${userName}! 🎣\nBereit für dein erstes Angel-Abenteuer?`;
+    return `Willkommen, ${userName}!\nBereit für dein erstes Angel-Abenteuer?`;
   }
   
   // Begrüßungen basierend auf aktiven Trips
   if (activity.hasActiveTrips) {
     const greetings = [
       `Willkommen zurück, ${userName}!\nDeine aktiven Trips warten auf dich!`,
-      `Hey ${userName}! 🎯\nBereit, deine Trips fortzusetzen?`,
+      `Hey ${userName}!\nBereit, deine Trips fortzusetzen?`,
       `Hallo ${userName}!\nZeit für dein nächstes Angel-Abenteuer!`
     ];
     return greetings[Math.floor(Math.random() * greetings.length)];
@@ -117,12 +117,12 @@ export function getDynamicDashboardGreeting(user, activity = {}) {
   
   // Tageszeitabhängige Begrüßungen
   if (hour >= 5 && hour < 12) {
-    return `Guten Morgen, ${userName}! ☀️\nPerfekte Zeit für einen Fang!`;
+    return `Guten Morgen, ${userName}!\nPerfekte Zeit für einen Fang!`;
   } else if (hour >= 12 && hour < 18) {
     return `Willkommen zurück, ${userName}!\nBereit für dein nächstes Angel-Abenteuer?`;
   } else if (hour >= 18 && hour < 22) {
-    return `Guten Abend, ${userName}! 🌅\nDie Raubfische werden jetzt aktiv!`;
+    return `Guten Abend, ${userName}!\nDie Raubfische werden jetzt aktiv!`;
   } else {
-    return `Hey ${userName}! 🌙\nAuch nachts ist Angeln spannend!`;
+    return `Hey ${userName}!\nAuch nachts ist Angeln spannend!`;
   }
 }

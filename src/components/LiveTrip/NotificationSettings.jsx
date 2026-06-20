@@ -102,14 +102,14 @@ function NotificationSettings({ isOpen, onClose }) {
         {permissionStatus === 'granted' && (
           <div className="bg-green-900/30 border border-green-700 rounded-lg p-3 flex items-center gap-2">
             <Bell className="w-4 h-4 text-green-400" />
-            <div className="text-xs text-green-300">Benachrichtigungen aktiviert ✓</div>
+            <div className="text-xs text-green-300">Benachrichtigungen aktiviert</div>
           </div>
         )}
 
         {/* Solunar Threshold */}
         <div>
           <label className="text-sm font-semibold text-gray-300 block mb-2">
-            🌙 Solunar-Schwelle: {settings.solunarThreshold}%
+            Solunar-Schwelle: {settings.solunarThreshold}%
           </label>
           <input
             type="range"
@@ -127,7 +127,7 @@ function NotificationSettings({ isOpen, onClose }) {
         {/* Prediction Threshold */}
         <div>
           <label className="text-sm font-semibold text-gray-300 block mb-2">
-            🤖 KI-Vorhersage-Schwelle: {settings.predictionThreshold}%
+            KI-Vorhersage-Schwelle: {settings.predictionThreshold}%
           </label>
           <input
             type="range"
@@ -145,7 +145,7 @@ function NotificationSettings({ isOpen, onClose }) {
         {/* Zeitfenster */}
         <div>
           <label className="text-sm font-semibold text-gray-300 block mb-2">
-            ⏰ Zeitfenster für Benachrichtigungen
+            Zeitfenster für Benachrichtigungen
           </label>
           <div className="flex gap-2 items-center">
             <input
@@ -182,7 +182,7 @@ function NotificationSettings({ isOpen, onClose }) {
         {/* Spezies Selection */}
         <div>
           <label className="text-sm font-semibold text-gray-300 block mb-2">
-            🎣 Für welche Arten benachrichtigen?
+            Für welche Arten benachrichtigen?
           </label>
           <div className="grid grid-cols-2 gap-2">
             {commonSpecies.map((species) => (
@@ -208,7 +208,7 @@ function NotificationSettings({ isOpen, onClose }) {
             disabled={permissionStatus !== 'granted'}
             className="w-full bg-purple-600 hover:bg-purple-500 disabled:bg-gray-700 text-white font-semibold py-2 rounded transition text-sm"
           >
-            🧪 Test-Benachrichtigung
+            Test-Benachrichtigung
           </button>
 
           <button
@@ -229,7 +229,7 @@ function NotificationSettings({ isOpen, onClose }) {
 
         {/* Info */}
         <div className="bg-gray-800/50 rounded-lg p-2 text-xs text-gray-400 italic">
-          💡 Benachrichtigungen funktionieren nur wenn der Browser offen ist. Für mobile App-Notifications werden Push-Services benötigt.
+          Benachrichtigungen funktionieren nur wenn der Browser offen ist. Für mobile App-Notifications werden Push-Services benötigt.
         </div>
       </div>
     </div>

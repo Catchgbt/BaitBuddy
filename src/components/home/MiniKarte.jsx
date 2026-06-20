@@ -112,7 +112,7 @@ export default function MiniKarte() {
                 </div>
                 {nearbyCount > 0 && (
                   <div className="text-xs text-blue-400 mt-1 flex items-center gap-1">
-                    🎯 Jetzt entdecken!
+                    Jetzt entdecken!
                   </div>
                 )}
               </div>
@@ -148,7 +148,7 @@ export default function MiniKarte() {
         ) : (
           <div className="text-center py-2">
             <div className="text-base font-semibold text-white mb-2">
-              Entdecke Angelplätze! 🗺️
+              Entdecke Angelplätze!
             </div>
             <div className="text-xs text-gray-400 mb-3">
               Finde Vereine, Angelparks und speichere deine eigenen Spots

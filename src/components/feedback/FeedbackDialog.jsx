@@ -68,7 +68,7 @@ export default function FeedbackDialog({ feature, onClose }) {
       });
 
       playSound('success');
-      toast.success("Danke für dein Feedback! 🙏", {
+      toast.success("Danke für dein Feedback!", {
         description: `Du hast ${FEATURE_NAMES[feature]} mit ${rating} ${rating === 1 ? 'Stern' : 'Sternen'} bewertet.`
       });
 
@@ -161,11 +161,11 @@ export default function FeedbackDialog({ feature, onClose }) {
                   animate={{ opacity: 1, y: 0 }}
                   className="text-center text-sm text-gray-300"
                 >
-                  {rating === 1 && "😟 Schade, was können wir besser machen?"}
-                  {rating === 2 && "😐 Okay, aber es gibt Verbesserungspotenzial"}
-                  {rating === 3 && "🙂 Ganz gut! Was fehlt dir noch?"}
-                  {rating === 4 && "😊 Super! Fast perfekt!"}
-                  {rating === 5 && "🤩 Fantastisch! Das freut uns riesig!"}
+                  {rating === 1 && "Schade, was können wir besser machen?"}
+                  {rating === 2 && "Okay, aber es gibt Verbesserungspotenzial"}
+                  {rating === 3 && "Ganz gut! Was fehlt dir noch?"}
+                  {rating === 4 && "Super! Fast perfekt!"}
+                  {rating === 5 && "Fantastisch! Das freut uns riesig!"}
                 </motion.div>
               )}
 

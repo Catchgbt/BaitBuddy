@@ -18,7 +18,7 @@ export default function FishingGame() {
     let powerInterval = null;
 
     try {
-      console.log('🎮 Initializing Enhanced Fishing Game...');
+      console.log('Initializing Enhanced Fishing Game...');
 
       // ----- Scene + Camera -----
       const scene = new THREE.Scene();
@@ -45,7 +45,7 @@ export default function FishingGame() {
       renderer.toneMappingExposure = 1.2;
       mountRef.current.appendChild(renderer.domElement);
 
-      console.log('✅ Renderer initialized');
+      console.log('Renderer initialized');
 
       // ----- Realistic Water -----
       const waterGeometry = new THREE.PlaneGeometry(1000, 1000, 128, 128);
@@ -141,7 +141,7 @@ export default function FishingGame() {
       const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x0077be, 0.4);
       scene.add(hemiLight);
 
-      console.log('✅ Realistic water and lighting added');
+      console.log('Realistic water and lighting added');
 
       // ----- Angel -----
       const rodGroup = new THREE.Group();
@@ -342,7 +342,7 @@ export default function FishingGame() {
       fishGroup.visible = false;
       scene.add(fishGroup);
 
-      console.log('✅ All objects created');
+      console.log('All objects created');
 
       // ----- Game State -----
       let currentState = 'ready';
@@ -385,7 +385,7 @@ export default function FishingGame() {
 
           if (elapsedTime > biteTime) {
             currentState = 'biting';
-            setMessage('🎣 BISS! Klicke jetzt!');
+            setMessage('BISS! Klicke jetzt!');
             setTimeout(() => {
               if (currentState === 'biting') {
                 currentState = 'ready';
@@ -426,7 +426,7 @@ export default function FishingGame() {
             const points = Math.floor(20 + Math.random() * 80);
             setScore(prev => prev + points);
             setFishCaught(prev => prev + 1);
-            setMessage(`🐟 Gefangen! +${points} Punkte!`);
+            setMessage(`Gefangen! +${points} Punkte!`);
             
             // Fisch vor Kamera positionieren
             fishGroup.visible = true;
@@ -531,7 +531,7 @@ export default function FishingGame() {
       };
       window.addEventListener('resize', onResize);
 
-      console.log('✅ Game fully initialized');
+      console.log('Game fully initialized');
 
       // ----- Cleanup -----
       return () => {
@@ -552,7 +552,7 @@ export default function FishingGame() {
         }
       };
     } catch (err) {
-      console.error('❌ Error initializing game:', err);
+      console.error('Error initializing game:', err);
       setError(err.message);
     }
   }, []);
@@ -572,7 +572,7 @@ export default function FishingGame() {
         textAlign: 'center'
       }}>
         <div>
-          <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>❌ Fehler</h2>
+          <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Fehler</h2>
           <p style={{ color: '#ff6b6b' }}>{error}</p>
           <p style={{ marginTop: '1rem', color: '#aaa' }}>
             Bitte lade die Seite neu oder kontaktiere den Support.
@@ -601,8 +601,8 @@ export default function FishingGame() {
         borderRadius: 12,
         backdropFilter: 'blur(8px)'
       }}>
-        <div style={{ marginBottom: 8 }}>🏆 Punkte: {score}</div>
-        <div>🐟 Gefangen: {fishCaught}</div>
+        <div style={{ marginBottom: 8 }}>Punkte: {score}</div>
+        <div>Gefangen: {fishCaught}</div>
       </div>
 
       <div style={{
@@ -668,7 +668,7 @@ export default function FishingGame() {
         backdropFilter: 'blur(8px)',
         border: '1px solid rgba(255,255,255,0.1)'
       }}>
-        <div style={{ fontWeight: '700', marginBottom: 8, fontSize: 16 }}>🎮 Steuerung</div>
+        <div style={{ fontWeight: '700', marginBottom: 8, fontSize: 16 }}>Steuerung</div>
         <div style={{ opacity: 0.9 }}>• Halten = Kraft laden</div>
         <div style={{ opacity: 0.9 }}>• Loslassen = Auswerfen</div>
         <div style={{ opacity: 0.9 }}>• LEERTASTE bei Biss</div>

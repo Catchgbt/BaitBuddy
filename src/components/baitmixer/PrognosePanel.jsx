@@ -119,7 +119,7 @@ export default function PrognosePanel({
           <div className="space-y-3 border-t border-gray-700 pt-4">
             <div>
               <label className="text-xs text-gray-400 block mb-2">
-                🌡️ Wassertemperatur (°C)
+                Wassertemperatur (°C)
               </label>
               <Input
                 type="number"
@@ -133,15 +133,15 @@ export default function PrognosePanel({
 
             <div>
               <label className="text-xs text-gray-400 block mb-2">
-                🌍 Jahreszeit
+                Jahreszeit
               </label>
               <MobileSelect
                 value={season}
                 onValueChange={onSeasonChange}
                 options={[
-                  { value: "summer", label: "☀️ Sommer" },
-                  { value: "winter", label: "❄️ Winter" },
-                  { value: "allround", label: "🔄 Ganzjahres" }
+                  { value: "summer", label: "Sommer" },
+                  { value: "winter", label: "Winter" },
+                  { value: "allround", label: "Ganzjahres" }
                 ]}
                 placeholder="Jahreszeit wählen"
               />
@@ -149,16 +149,16 @@ export default function PrognosePanel({
 
             <div>
               <label className="text-xs text-gray-400 block mb-2">
-                💧 Gewässer-Typ
+                Gewässer-Typ
               </label>
               <MobileSelect
                 value={waterType}
                 onValueChange={onWaterTypeChange}
                 options={[
-                  { value: "lake", label: "🏞️ See" },
-                  { value: "river", label: "🌊 Fluss" },
-                  { value: "canal", label: "🚤 Kanal" },
-                  { value: "pond", label: "🌿 Weiher" }
+                  { value: "lake", label: "See" },
+                  { value: "river", label: "Fluss" },
+                  { value: "canal", label: "Kanal" },
+                  { value: "pond", label: "Weiher" }
                 ]}
                 placeholder="Gewässer-Typ wählen"
               />

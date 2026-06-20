@@ -63,7 +63,7 @@ export function VoiceGreeting({ user, fullGreeting = false }) {
             transition: 'all 0.2s',
           }}
         >
-          {isSpeaking ? '⏸ Stopp' : '🔊 Hören'}
+          {isSpeaking ? 'Stopp' : 'Hören'}
         </button>
       </div>
     </div>

@@ -328,10 +328,10 @@ export default function RodBuilderGame() {
                     score >= 80 ? 'text-yellow-300' :
                     'text-red-300'
                   }`}>
-                    {score >= 120 ? '🏆 Perfekt! Exzellente Zusammenstellung!' :
-                     score >= 100 ? '⭐ Sehr gut! Fast perfekt!' :
-                     score >= 80 ? '👍 Gut! Funktioniert!' :
-                     '⚠️ Verbesserungsbedarf'}
+                    {score >= 120 ? 'Perfekt! Exzellente Zusammenstellung!' :
+                     score >= 100 ? 'Sehr gut! Fast perfekt!' :
+                     score >= 80 ? 'Gut! Funktioniert!' :
+                     'Verbesserungsbedarf'}
                   </p>
                 </CardContent>
               </Card>

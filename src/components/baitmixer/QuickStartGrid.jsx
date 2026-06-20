@@ -118,9 +118,9 @@ export default function QuickStartGrid({
                 onValueChange={setSelectedSeason}
                 options={[
                   { value: "all", label: "Alle Jahreszeiten" },
-                  { value: "summer", label: "☀️ Sommer" },
-                  { value: "winter", label: "❄️ Winter" },
-                  { value: "allround", label: "🔄 Ganzjahres" }
+                  { value: "summer", label: "Sommer" },
+                  { value: "winter", label: "Winter" },
+                  { value: "allround", label: "Ganzjahres" }
                 ]}
               />
             </div>
@@ -134,8 +134,8 @@ export default function QuickStartGrid({
                 value={sortBy}
                 onValueChange={setSortBy}
                 options={[
-                  { value: "success", label: "🎯 Best Success-Rate" },
-                  { value: "difficulty", label: "⭐ Schwierigkeit" },
+                  { value: "success", label: "Best Success-Rate" },
+                  { value: "difficulty", label: "Schwierigkeit" },
                   { value: "name", label: "A–Z Alphabetisch" }
                 ]}
               />

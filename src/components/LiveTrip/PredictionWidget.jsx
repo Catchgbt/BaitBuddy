@@ -117,9 +117,9 @@ function PredictionWidget({ latitude, longitude, isActive }) {
             {/* Factors (collapsed) */}
             {data.factors && (
               <div className="text-xs text-gray-400 mt-1 opacity-70">
-                🌊 Gezeiten: {data.factors.tideBoost > 0 ? '+' : ''}{data.factors.tideBoost} |
-                🌙 Solunar: {data.factors.solunarBoost > 0 ? '+' : ''}{Math.round(data.factors.solunarBoost)} |
-                ⏰ Zeit: {data.factors.timeBoost > 0 ? '+' : ''}{data.factors.timeBoost}
+                Gezeiten: {data.factors.tideBoost > 0 ? '+' : ''}{data.factors.tideBoost} |
+                Solunar: {data.factors.solunarBoost > 0 ? '+' : ''}{Math.round(data.factors.solunarBoost)} |
+                Zeit: {data.factors.timeBoost > 0 ? '+' : ''}{data.factors.timeBoost}
               </div>
             )}
           </div>
@@ -129,7 +129,7 @@ function PredictionWidget({ latitude, longitude, isActive }) {
       {/* AI Info */}
       <div className="border-t border-blue-700/30 pt-2">
         <div className="text-xs text-blue-300 italic space-y-1">
-          <div>💡 Die KI trainiert sich selbst mit deinen Fängen!</div>
+          <div>Die KI trainiert sich selbst mit deinen Fängen!</div>
           <div className="text-gray-400">Je mehr Fänge du loggst, desto besser die Vorhersagen.</div>
         </div>
       </div>

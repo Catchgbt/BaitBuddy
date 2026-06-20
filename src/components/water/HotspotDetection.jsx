@@ -169,7 +169,7 @@ export default function HotspotDetection({ waterData }) {
                           Zielfisch: {hotspot.targetSpecies}
                         </span>
                         <span className="px-2 py-1 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30">
-                          ⏰ {hotspot.bestTime}
+                          {hotspot.bestTime}
                         </span>
                       </div>
                     </div>

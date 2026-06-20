@@ -128,7 +128,7 @@ function VoiceLectureInner() {
         {/* Header */}
         <div style={{ marginBottom: 32 }}>
           <h1 style={{ fontSize: 32, fontWeight: 700, color: '#22d3c8', marginBottom: 8 }}>
-            🎙️ Voice Lectures
+            Voice Lectures
           </h1>
           <p style={{ fontSize: 14, color: '#8899aa', lineHeight: 1.6 }}>
             Lerne von erfahrenen Angelexperten. Wähle ein Thema und höre eine detaillierte Vorlesung.
@@ -233,7 +233,7 @@ function VoiceLectureInner() {
                   opacity: isGenerating ? 0.6 : 1
                 }}
               >
-                {isGenerating ? 'Generiere Vorlesung...' : '🎙️ Vorlesung starten'}
+                {isGenerating ? 'Generiere Vorlesung...' : 'Vorlesung starten'}
               </button>
             ) : (
               <div>
@@ -289,7 +289,7 @@ function VoiceLectureInner() {
                           cursor: 'pointer',
                         }}
                       >
-                        {isSpeaking ? '⏸ Pausieren' : '▶️ Vorlesen'}
+                        {isSpeaking ? 'Pausieren' : '▶Vorlesen'}
                       </button>
                       <div style={{ color: '#8899aa', fontSize: 12 }}>
                         {isSpeaking ? 'Sabrina liest vor...' : 'Klick auf Vorlesen zum Starten'}

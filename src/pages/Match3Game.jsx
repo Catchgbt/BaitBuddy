@@ -387,7 +387,7 @@ function Match3QuestGame() {
             />
           )}
         </div>
-        {questComplete && <div className="text-green-400 text-sm">✓ Abgeschlossen!</div>}
+        {questComplete && <div className="text-green-400 text-sm">Abgeschlossen!</div>}
       </div>
 
       {/* Spielfeld */}
@@ -420,8 +420,8 @@ function Match3QuestGame() {
                   }}
                   onClick={() => handleCellClick(r, c)}
                 >
-                  {cell?.special === 'row' && '↔️'}
-                  {cell?.special === 'col' && '↕️'}
+                  {cell?.special === 'row' && '↔'}
+                  {cell?.special === 'col' && '↕'}
                   {cell?.special === 'bomb' && '💥'}
                 </div>
               );
@@ -434,7 +434,7 @@ function Match3QuestGame() {
       {gameOver && (
         <div className="p-4 bg-gray-800/60 rounded-xl text-center">
           <div className={`text-2xl font-bold mb-2 ${won ? 'text-green-400' : 'text-red-400'}`}>
-            {won ? '🎉 Gewonnen!' : '😔 Verloren'}
+            {won ? 'Gewonnen!' : 'Verloren'}
           </div>
           <div className="text-white mb-4">
             Endpunktzahl: {score}

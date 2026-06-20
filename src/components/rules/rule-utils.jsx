@@ -110,7 +110,7 @@ export function checkCatchRules(allRules, fish, length, date, region) {
   if (warnings.length > 0) {
     return {
       type: 'warning',
-      message: '⚠️ Regelverstoß möglich!',
+      message: 'Regelverstoß möglich!',
       warnings,
       infos,
       applicableRules: relevantRules
@@ -119,7 +119,7 @@ export function checkCatchRules(allRules, fish, length, date, region) {
 
   return {
     type: 'success',
-    message: '✅ Alles in Ordnung! Keine Regelverstöße gefunden.',
+    message: 'Alles in Ordnung! Keine Regelverstöße gefunden.',
     warnings: [],
     infos,
     applicableRules: relevantRules

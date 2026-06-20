@@ -402,7 +402,7 @@ export default function WeatherAlertsSettings() {
               </>
             ) : (
               <>
-                💾 Einstellungen speichern
+                Einstellungen speichern
               </>
             )}
           </Button>

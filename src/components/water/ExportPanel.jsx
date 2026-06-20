@@ -113,12 +113,12 @@ export default function ExportPanel({ waterData }) {
 </head>
 <body>
   <div class="container">
-    <h1>🌊 Gewässer-Analyse Report</h1>
+    <h1>Gewässer-Analyse Report</h1>
     <p><strong>Standort:</strong> ${waterData.location.name}</p>
     <p><strong>Koordinaten:</strong> ${waterData.location.lat.toFixed(4)}°N, ${waterData.location.lon.toFixed(4)}°E</p>
     <p><strong>Zeitpunkt:</strong> ${new Date(waterData.timestamp).toLocaleString('de-DE')}</p>
     
-    <h2>📊 Wasser-Parameter</h2>
+    <h2>Wasser-Parameter</h2>
 `;
 
       Object.entries(waterData.parameters).forEach(([key, param]) => {
@@ -134,7 +134,7 @@ export default function ExportPanel({ waterData }) {
       });
 
       html += `
-    <h2>🤖 KI-Analyse</h2>
+    <h2>KI-Analyse</h2>
     <div class="score">${waterData.aiAnalysis.fishingScore}/100</div>
     <p><strong>Beste Angelzeit:</strong> ${waterData.aiAnalysis.bestTimeToFish}</p>
     <p><strong>Empfohlene Köder:</strong> ${waterData.aiAnalysis.recommendedBait.join(', ')}</p>
@@ -177,7 +177,7 @@ export default function ExportPanel({ waterData }) {
       return;
     }
 
-    const shareText = `🌊 Gewässer-Analyse\n\n📍 ${waterData.location.name}\n🎣 Fang-Score: ${waterData.aiAnalysis.fishingScore}/100\n🌡️ Temperatur: ${waterData.parameters.temperature.value.toFixed(1)}°C\n\nErstellt mit CatchGBT`;
+    const shareText = `Gewässer-Analyse\n\n${waterData.location.name}\nFang-Score: ${waterData.aiAnalysis.fishingScore}/100\nTemperatur: ${waterData.parameters.temperature.value.toFixed(1)}°C\n\nErstellt mit CatchGBT`;
 
     if (navigator.share) {
       try {

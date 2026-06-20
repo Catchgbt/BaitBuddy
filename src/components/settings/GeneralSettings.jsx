@@ -82,8 +82,8 @@ export default function GeneralSettings() {
                             label="Sprache"
                             placeholder="Sprache wählen"
                             options={[
-                                { value: 'de', label: 'Deutsch 🇩🇪' },
-                                { value: 'en', label: 'Englisch 🇬🇧' },
+                                { value: 'de', label: 'Deutsch' },
+                                { value: 'en', label: 'Englisch' },
                             ]}
                             className="bg-gray-800/50 border-gray-700 text-white"
                         />

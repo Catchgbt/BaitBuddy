@@ -240,11 +240,11 @@ class FishPredictionService {
 
   // Gebe Text-Empfehlung basierend auf Score
   getRecommendation(score) {
-    if (score >= 80) return '🎯 Exzellent';
-    if (score >= 60) return '✅ Gut';
-    if (score >= 40) return '⚠️ Moderat';
-    if (score >= 20) return '❌ Schwach';
-    return '🚫 Sehr schwach';
+    if (score >= 80) return 'Exzellent';
+    if (score >= 60) return 'Gut';
+    if (score >= 40) return 'Moderat';
+    if (score >= 20) return 'Schwach';
+    return 'Sehr schwach';
   }
 
   // Speichere Catch für Trainings-Daten

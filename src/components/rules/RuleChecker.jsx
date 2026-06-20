@@ -26,7 +26,7 @@ export default function RuleChecker({ species, lengthCm, catchDate, rules }) {
     if (rule.min_size_cm && lengthCm && Number(lengthCm) < rule.min_size_cm) {
       warnings.push({
         type: 'size',
-        message: `⚠️ Mindestmaß ${rule.min_size_cm} cm unterschritten (${lengthCm} cm)`,
+        message: `Mindestmaß ${rule.min_size_cm} cm unterschritten (${lengthCm} cm)`,
         region: rule.region
       });
     }
@@ -36,7 +36,7 @@ export default function RuleChecker({ species, lengthCm, catchDate, rules }) {
       if (today >= rule.closed_from && today <= rule.closed_to) {
         warnings.push({
           type: 'closed_season',
-          message: `🚫 Schonzeit: ${rule.closed_from} bis ${rule.closed_to}`,
+          message: `Schonzeit: ${rule.closed_from} bis ${rule.closed_to}`,
           region: rule.region
         });
       }
@@ -46,7 +46,7 @@ export default function RuleChecker({ species, lengthCm, catchDate, rules }) {
     if (rule.hook_limit) {
       infos.push({
         type: 'hook_limit',
-        message: `ℹ️ ${rule.hook_limit}`,
+        message: `ℹ${rule.hook_limit}`,
         region: rule.region
       });
     }
@@ -55,7 +55,7 @@ export default function RuleChecker({ species, lengthCm, catchDate, rules }) {
     if (rule.notes) {
       infos.push({
         type: 'notes',
-        message: `💡 ${rule.notes}`,
+        message: `${rule.notes}`,
         region: rule.region
       });
     }
@@ -66,7 +66,7 @@ export default function RuleChecker({ species, lengthCm, catchDate, rules }) {
       <Alert className="bg-emerald-900/20 border-emerald-800/50">
         <Info className="h-4 w-4 text-emerald-400" />
         <AlertDescription className="text-emerald-300">
-          ✅ Keine Regelverstöße für {species}
+          Keine Regelverstöße für {species}
         </AlertDescription>
       </Alert>
     );

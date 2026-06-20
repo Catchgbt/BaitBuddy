@@ -218,10 +218,10 @@ class SolunarService {
 
   // Gebe Empfehlung basierend auf Solunar-Qualität
   getRecommendation(quality) {
-    if (quality >= 80) return '🎯 Exzellent! Beste Fangzeit';
-    if (quality >= 60) return '✅ Gut. Sehr gute Bedingungen';
-    if (quality >= 40) return '⚠️ Moderat. Passable Bedingungen';
-    return '❌ Schwach. Ungünstige Bedingungen';
+    if (quality >= 80) return 'Exzellent! Beste Fangzeit';
+    if (quality >= 60) return 'Gut. Sehr gute Bedingungen';
+    if (quality >= 40) return 'Moderat. Passable Bedingungen';
+    return 'Schwach. Ungünstige Bedingungen';
   }
 }
 
