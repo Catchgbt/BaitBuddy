@@ -7,6 +7,7 @@ import {
   aggregateMonthlyLeaderboard,
   autoActivateRewards,
   addActivityPoints,
+  recalcParticipantTotals,
   ACTIVITY_POINTS
 } from '../lib/pointsCalculator.js';
 
@@ -283,36 +284,10 @@ router.post('/events/:id/submit', requireAuth, async (req, res) => {
 
     if (submissionError) return res.status(500).json({ error: submissionError.message });
 
-    // 3. Aktualisiere event_participants totale Punkte
-    const { data: participant } = await supabase
-      .from('event_participants')
-      .select('total_points, submission_count')
-      .eq('event_id', req.params.id)
-      .eq('user_id', req.user.email)
-      .single();
-
-    if (participant) {
-      await supabase
-        .from('event_participants')
-        .update({
-          total_points: (parseFloat(participant.total_points) || 0) + pointsResult.total,
-          submission_count: (participant.submission_count || 0) + 1
-        })
-        .eq('event_id', req.params.id)
-        .eq('user_id', req.user.email);
-    } else {
-      // User ist noch kein Teilnehmer: automatisch beitreten, damit die
-      // Punkte der Einreichung nicht verloren gehen.
-      await supabase
-        .from('event_participants')
-        .insert({
-          event_id: req.params.id,
-          user_id: req.user.email,
-          joined_at: new Date().toISOString(),
-          total_points: pointsResult.total,
-          submission_count: 1
-        });
-    }
+    // 3. Teilnehmer-Summen aus den Einreichungen neu berechnen. Legt den
+    //    Teilnehmer bei Bedarf an, sodass die Punkte nie verloren gehen, und
+    //    vermeidet Lost-Updates bei parallelen Einreichungen.
+    await recalcParticipantTotals(req.params.id, req.user.email, supabase);
 
     return res.status(201).json(submission);
   } catch (error) {
