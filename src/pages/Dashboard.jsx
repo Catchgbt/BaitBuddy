@@ -45,20 +45,72 @@ export default function Dashboard() {
 
   // Begrüße Nutzer mit KI-Stimme bei Dashboard-Einstieg
   useEffect(() => {
-    if (user && user.full_name && !greetingPlayed && speak) {
-      setGreetingPlayed(true);
-      const firstName = user.full_name.split(' ')[0];
-      const greetings = [
-        `Willkommen zurück, ${firstName}. Viel Erfolg beim Angeln heute.`,
-        `Hallo ${firstName}, schön dich wiederzusehen. Petri Heil für heute.`,
-        `${firstName}, schön dich zu sehen. Die Fische warten schon.`,
-        `Willkommen, ${firstName}. Heute könnte dein bester Fangtag werden.`
-      ];
-      const greeting = greetings[Math.floor(Math.random() * greetings.length)];
-      setTimeout(() => {
-        speak(greeting);
-      }, 500);
+    if (!user || !user.full_name || greetingPlayed || !speak) return;
+
+    setGreetingPlayed(true);
+
+    // Nicht bei jedem Dashboard-Aufruf begrüßen: max. einmal pro Zeitfenster.
+    const COOLDOWN_MS = 4 * 60 * 60 * 1000; // 4 Stunden
+    let lastTs = 0;
+    let lastGreeting = '';
+    try {
+      lastTs = Number(localStorage.getItem('bb_last_greeting_ts')) || 0;
+      lastGreeting = localStorage.getItem('bb_last_greeting_text') || '';
+    } catch (e) {
+      // localStorage nicht verfügbar - dann normal begrüßen
     }
+
+    if (Date.now() - lastTs < COOLDOWN_MS) return;
+
+    const firstName = user.full_name.split(' ')[0];
+    const hour = new Date().getHours();
+
+    // Tageszeit-abhängige, abwechslungsreiche Begrüßungen
+    let pool;
+    if (hour >= 5 && hour < 12) {
+      pool = [
+        `Guten Morgen, ${firstName}. Der frühe Angler fängt den Fisch.`,
+        `Morgen, ${firstName}. Die Beißzeit am Morgen ist oft die beste.`,
+        `Guten Morgen, ${firstName}. Ein frischer Tag, perfekt zum Angeln.`,
+        `Schön, dass du wach bist, ${firstName}. Petri Heil für heute Morgen.`
+      ];
+    } else if (hour >= 12 && hour < 18) {
+      pool = [
+        `Hallo ${firstName}, schön dich zu sehen. Die Fische warten schon.`,
+        `Willkommen zurück, ${firstName}. Viel Erfolg beim Angeln heute.`,
+        `Guten Tag, ${firstName}. Heute könnte dein bester Fangtag werden.`,
+        `Hey ${firstName}, bereit für ein paar gute Bisse?`
+      ];
+    } else if (hour >= 18 && hour < 22) {
+      pool = [
+        `Guten Abend, ${firstName}. Jetzt werden die Raubfische aktiv.`,
+        `Schönen Abend, ${firstName}. Die Dämmerung ist eine starke Beißzeit.`,
+        `Hallo ${firstName}, perfekte Zeit für einen Ansitz am Abend.`,
+        `Willkommen, ${firstName}. Der Abend gehört den großen Fischen.`
+      ];
+    } else {
+      pool = [
+        `Hallo ${firstName}. Auch nachts geht so mancher Räuber an den Haken.`,
+        `Noch wach, ${firstName}? Beste Zeit fürs Nachtangeln.`,
+        `Hey ${firstName}, plane in Ruhe deinen nächsten Trip.`,
+        `Willkommen, ${firstName}. Die Nacht ist still, die Fische nicht.`
+      ];
+    }
+
+    // Nicht dieselbe Begrüßung wie beim letzten Mal verwenden
+    let candidates = pool.filter(g => g !== lastGreeting);
+    if (candidates.length === 0) candidates = pool;
+    const greeting = candidates[Math.floor(Math.random() * candidates.length)];
+
+    try {
+      localStorage.setItem('bb_last_greeting_ts', String(Date.now()));
+      localStorage.setItem('bb_last_greeting_text', greeting);
+    } catch (e) {
+      // ignore
+    }
+
+    const timer = setTimeout(() => speak(greeting), 500);
+    return () => clearTimeout(timer);
   }, [user, greetingPlayed, speak]);
 
   useEffect(() => {
