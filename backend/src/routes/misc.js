@@ -206,6 +206,60 @@ router.post('/weather', optionalAuth, async (req, res) => {
   }
 });
 
+// Amtliche Unwetterwarnungen (DWD) für einen Standort. Quelle: Bright Sky –
+// eine offene, kostenlose API, die die offiziellen CAP-Warnungen des Deutschen
+// Wetterdienstes bereitstellt (analog zu Open-Meteo, kein eigener Backend-Dienst).
+const ALERT_SEVERITY_RANK = { extreme: 4, severe: 3, moderate: 2, minor: 1 };
+
+router.post('/weather/alerts', optionalAuth, async (req, res) => {
+  const lat = Number(req.body?.latitude);
+  const lon = Number(req.body?.longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+    return res.status(400).json({ error: 'latitude und longitude erforderlich' });
+  }
+  try {
+    const data = await fetch(
+      `https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`,
+      { headers: { Accept: 'application/json' } }
+    ).then(r => r.json());
+
+    const raw = Array.isArray(data?.alerts) ? data.alerts : [];
+    const now = Date.now();
+
+    const alerts = raw
+      // Abgelaufene Warnungen ausblenden
+      .filter(a => !a.expires || new Date(a.expires).getTime() >= now)
+      .map(a => ({
+        id: a.id ?? a.alert_id,
+        event: a.event_de || a.event_en || 'Wetterwarnung',
+        headline: a.headline_de || a.headline_en || '',
+        description: a.description_de || a.description_en || '',
+        instruction: a.instruction_de || a.instruction_en || '',
+        severity: (a.severity || 'moderate').toLowerCase(),
+        urgency: a.urgency || null,
+        certainty: a.certainty || null,
+        category: a.category || null,
+        onset: a.onset || a.effective || null,
+        expires: a.expires || null,
+      }))
+      // Schwerste/aktuellste zuerst
+      .sort((x, y) => {
+        const s = (ALERT_SEVERITY_RANK[y.severity] || 0) - (ALERT_SEVERITY_RANK[x.severity] || 0);
+        if (s !== 0) return s;
+        return new Date(x.onset || 0).getTime() - new Date(y.onset || 0).getTime();
+      });
+
+    return res.json({
+      alerts,
+      location: data?.location || null,
+      source: 'Deutscher Wetterdienst (DWD) via Bright Sky',
+      fetched_at: new Date().toISOString(),
+    });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
 // LiveTrip Cloud-Backup (TripSyncService). Der komplette Trip wird als jsonb
 // gespeichert; die id stammt aus dem lokalen IndexedDB-Trip, daher Upsert
 // (Idempotenz beim erneuten Synchronisieren). list liefert die Trips 1:1 zurück.

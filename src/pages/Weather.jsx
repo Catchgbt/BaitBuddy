@@ -7,6 +7,7 @@ import { InvokeLLM } from "@/integrations/Core";
 import { events } from "@/api/frontendClient";
 import { useEventActivityTracking } from "@/hooks/useEventActivityTracking";
 import WeatherAlertsSettings from "@/components/settings/WeatherAlertsSettings";
+import WeatherWarnings from "@/components/weather/WeatherWarnings";
 import { toast } from "sonner";
 import { backendTextToSpeech } from "@/functions/backendTextToSpeech";
 import { MapPin, AlertCircle, Thermometer, Wind, Droplets, Eye, Gauge, Cloud, Loader2 } from "lucide-react";
@@ -568,6 +569,7 @@ Sei konkret, praktisch und detailliert!`;
           </TabsContent>
 
           <TabsContent value="alerts" className="space-y-6">
+            <WeatherWarnings lat={currentLocation?.lat} lon={currentLocation?.lon} />
             <WeatherAlertsSettings />
           </TabsContent>
 

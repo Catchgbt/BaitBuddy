@@ -519,6 +519,8 @@ export const ai = {
 
 export const weather = {
   get: (lat, lng, spotName) => api.post('/api/weather', { latitude: lat, longitude: lng, spotName }),
+  // Amtliche Unwetterwarnungen (DWD) für den Standort
+  alerts: (lat, lng) => api.post('/api/weather/alerts', { latitude: lat, longitude: lng }),
 };
 
 export const community = {
