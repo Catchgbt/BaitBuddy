@@ -589,9 +589,12 @@ router.get('/admin/rewards/auto-activate', async (req, res) => {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
+    // Auf den Vormonat ausrichten - analog zu /admin/leaderboards/monthly/generate,
+    // das die pending Rewards fuer den abgeschlossenen Vormonat erzeugt.
     const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1);
+    const year = lastMonth.getFullYear();
+    const month = lastMonth.getMonth() + 1;
 
     const activated = await autoActivateRewards(year, month, supabase);
 
