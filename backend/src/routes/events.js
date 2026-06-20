@@ -808,28 +808,27 @@ router.get('/events/activities/list', optionalAuth, async (req, res) => {
   }
 });
 
-// Get current month points for user
+// Get points from currently running (live) events for user
 router.get('/events/user/current-points', requireAuth, async (req, res) => {
   try {
     const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
+    const nowIso = now.toISOString();
 
-    // Finde alle aktiven Events diesen Monat
+    // Finde alle aktuell laufenden (live) Events - unabhaengig vom Kalendermonat
     const { data: events } = await supabase
       .from('events')
       .select('id')
       .eq('status', 'active')
-      .gte('start_date', new Date(year, month - 1, 1).toISOString())
-      .lte('end_date', new Date(year, month, 0, 23, 59, 59).toISOString());
+      .lte('start_date', nowIso)
+      .gte('end_date', nowIso);
 
     if (!events || events.length === 0) {
-      return res.json({ total_points: 0, events: [], month, year });
+      return res.json({ total_points: 0, active_events: 0, participating_events: 0 });
     }
 
     const eventIds = events.map(e => e.id);
 
-    // Aggregiere Punkte vom User für alle Events diesen Monat
+    // Aggregiere die Punkte des Users ueber alle laufenden Events
     const { data: participants } = await supabase
       .from('event_participants')
       .select('total_points, event_id')
@@ -842,8 +841,6 @@ router.get('/events/user/current-points', requireAuth, async (req, res) => {
 
     return res.json({
       total_points: Math.round(total * 100) / 100,
-      month: month,
-      year: year,
       active_events: events.length,
       participating_events: participants?.length || 0
     });
