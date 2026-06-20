@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { toast } from "sonner";
 import { FixedSizeList as VirtualList } from "react-window";
 import { entities } from "@/api/frontendClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -86,10 +87,10 @@ export default function RulesSection() {
 
     setIsLoading(true);
     try {
-      alert("Import-Funktion ist aktuell deaktiviert");
+      toast.info("Import-Funktion ist aktuell deaktiviert");
     } catch (error) {
       console.error("Fehler beim Import:", error);
-      alert(`Fehler beim Import: ${error.message}`);
+      toast.error(`Fehler beim Import: ${error.message}`);
     } finally {
       setIsLoading(false);
     }

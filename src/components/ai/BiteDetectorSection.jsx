@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User } from "@/entities/User";
 import { Activity } from "lucide-react";
@@ -505,7 +506,7 @@ function BiteDetectorSectionInner() {
 
     } catch (error) {
       console.error("Failed to start bite detection:", error);
-      alert("Kamera konnte nicht gestartet werden. Bitte Berechtigungen prüfen.");
+      toast.error("Kamera konnte nicht gestartet werden. Bitte Berechtigungen prüfen.");
       setError("Kamera konnte nicht gestartet werden. Bitte Berechtigungen prüfen.");
       
       // Session stoppen bei Fehler - TEMPORÄR DEAKTIVIERT

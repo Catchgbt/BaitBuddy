@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "@/api/auth";
 import { api } from "@/api/frontendClient";
+import { toast } from "sonner";
 
 export default function EventCreate() {
   const navigate = useNavigate();
@@ -51,7 +52,7 @@ export default function EventCreate() {
   const handleCreateEvent = async (e) => {
     e.preventDefault();
     if (!formData.name.trim()) {
-      alert("Bitte Event-Namen eingeben");
+      toast.error("Bitte Event-Namen eingeben");
       return;
     }
 
@@ -72,12 +73,12 @@ export default function EventCreate() {
       if (response && response.id) {
         navigate(`/events/${response.id}`);
       } else {
-        alert("Event erfolgreich erstellt!");
+        toast.success("Event erfolgreich erstellt!");
         navigate("/events");
       }
     } catch (err) {
       console.error("Error creating event:", err);
-      alert(`Fehler beim Erstellen: ${err.message}`);
+      toast.error(`Fehler beim Erstellen: ${err.message}`);
     } finally {
       setCreating(false);
     }

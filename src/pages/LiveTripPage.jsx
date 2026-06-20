@@ -552,7 +552,7 @@ function CatchLoggerModal({ onClose, onSave }) {
 
   const handleSave = () => {
     if (!species) {
-      alert('Bitte Fischart auswählen');
+      toast.error('Bitte Fischart auswählen');
       return;
     }
     onSave({ species, weight, length, notes });

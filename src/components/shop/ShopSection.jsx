@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { User } from '@/entities/User';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Crown, Coins, CheckCircle } from 'lucide-react';
@@ -30,12 +31,12 @@ export default function ShopSection() {
 
   const handlePurchase = async (product) => {
     if (!user) {
-      alert("Bitte melde dich an, um Einkäufe zu tätigen.");
+      toast.error("Bitte melde dich an, um Einkäufe zu tätigen.");
       return;
     }
 
     if (user.credits < product.price) {
-      alert("Du hast nicht genügend Credits für diesen Einkauf.");
+      toast.error("Du hast nicht genügend Credits für diesen Einkauf.");
       return;
     }
 
@@ -64,7 +65,7 @@ export default function ShopSection() {
 
     } catch (error) {
       console.error("Fehler beim Kauf:", error);
-      alert("Ein Fehler ist aufgetreten. Bitte versuche es später erneut.");
+      toast.error("Ein Fehler ist aufgetreten. Bitte versuche es später erneut.");
     }
   };
 

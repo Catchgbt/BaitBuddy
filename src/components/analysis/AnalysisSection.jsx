@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { Catch, Spot } from "@/entities/all";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -84,8 +85,8 @@ export default function AnalysisSection() {
 
   const clearCache = () => {
     Object.keys(localStorage).forEach(k => { if (k.startsWith("fm_analysis_")) localStorage.removeItem(k); });
-    alert("Analyse-Cache gelöscht. Bitte Seite neu laden, um aktuelle Daten abzurufen.");
-    window.location.reload(); // Reload page to force re-fetch
+    toast.success("Analyse-Cache gelöscht. Daten werden neu geladen.");
+    setTimeout(() => window.location.reload(), 1200); // Reload page to force re-fetch
   };
 
   return (

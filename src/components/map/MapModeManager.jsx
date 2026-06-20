@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { ChevronRight, CheckCircle } from 'lucide-react';
 
 /**
@@ -40,7 +41,7 @@ function MapModeManager({
         '🌊 Sehe Gezeiten & Solunar-Daten in Echtzeit',
       ],
       actionText: 'Neuen Spot hinzufügen',
-      onAction: () => alert('Klicke auf ein Gewässer auf der Karte!'),
+      onAction: () => toast.info('Klicke auf ein Gewässer auf der Karte!'),
     },
     {
       id: 'visualizations',

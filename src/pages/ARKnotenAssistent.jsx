@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { toast } from 'sonner';
 
 const KNOTS = {
   "Palomar": {
@@ -148,7 +149,7 @@ export default function ARKnotenAssistent() {
       setCameraStarted(true);
       initMediaPipe();
     } catch(e) {
-      alert('Kamerazugriff verweigert: ' + e.message);
+      toast.error('Kamerazugriff verweigert: ' + e.message);
     }
   };
 

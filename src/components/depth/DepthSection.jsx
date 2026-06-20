@@ -1,5 +1,6 @@
 
 import React, { useState } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,12 +21,12 @@ export default function DepthSection() {
   }
 
   const clearTileCache = async () => {
-    if (!("caches" in window)) return alert("Cache API nicht verfügbar.");
+    if (!("caches" in window)) { toast.error("Cache API nicht verfügbar."); return; }
     const names = await caches.keys();
     for (const n of names) {
       if (n.includes("fishmaster-depth")) await caches.delete(n);
     }
-    alert("Depth-Cache geleert.");
+    toast.success("Depth-Cache geleert.");
   };
 
   return (
