@@ -788,24 +788,21 @@ router.post('/events/activities/track', requireAuth, async (req, res) => {
       return res.status(403).json({ error: 'User ist nicht Teilnehmer des Events' });
     }
 
-    // Anti-Farming: jede Aktivitaet zaehlt maximal einmal pro Tag pro Event.
-    // Verhindert beliebiges Hochfarmen von Punkten durch wiederholtes Auslosen.
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const { count: countToday } = await supabase
+    // Anti-Farming: jede Aktivitaet zaehlt pro Event und User nur ein einziges
+    // Mal. Verhindert beliebiges Hochfarmen von Punkten durch wiederholtes
+    // Auslosen derselben Aktivitaet.
+    const { count: alreadyCounted } = await supabase
       .from('event_submissions')
       .select('*', { count: 'exact', head: true })
       .eq('event_id', eventId)
       .eq('user_id', req.user.email)
-      .eq('species', `[${activityType}]`)
-      .gte('submitted_at', startOfDay.toISOString());
+      .eq('species', `[${activityType}]`);
 
-    if (countToday && countToday > 0) {
+    if (alreadyCounted && alreadyCounted > 0) {
       return res.json({
         ok: true,
         awarded: false,
-        message: 'Aktivitaet wurde heute bereits gezaehlt'
+        message: 'Aktivitaet wurde fuer dieses Event bereits gezaehlt'
       });
     }
 
