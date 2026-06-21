@@ -20,12 +20,26 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
-const createCustomIcon = (color, emoji, size = 32) => {
+// Weisse SVG-Icons (Lucide-Pfade) fuer die Karten-Marker - emoji-frei.
+// Jeder Eintrag ist der innere SVG-Inhalt, der zentriert in den Marker gezeichnet wird.
+const MARKER_ICONS = {
+  pin: '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
+  landmark: '<path d="M3 22h18"/><path d="M6 18v-7"/><path d="M10 18v-7"/><path d="M14 18v-7"/><path d="M18 18v-7"/><path d="M4 8 12 3l8 5Z"/>',
+  cart: '<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+  star: '<path fill="white" stroke="none" d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14l-5-4.87 6.91-1.01z"/>',
+  mountain: '<path d="m8 3 4 8 5-5 5 15H2z"/>',
+  fish: '<path d="M2 12c3-4 9-6 14-4-2 2.4-2 5.6 0 8-5 2-11 0-14-4Z"/><circle cx="15.5" cy="10.5" r="0.6" fill="white" stroke="none"/><path d="m18 8 4-2-1 6 1 6-4-2"/>',
+  waves: '<path d="M2 7c.6.5 1.2 1 2.5 1C7 8 7 6 9.5 6c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 17c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/>',
+};
+
+const createCustomIcon = (color, iconKey, size = 32) => {
+  const glyph = MARKER_ICONS[iconKey] || MARKER_ICONS.pin;
   const svgString = `
     <svg width="${size}" height="${size}" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="16" cy="16" r="14" fill="${color}" opacity="0.95" stroke="white" stroke-width="2"/>
       <circle cx="16" cy="16" r="12" fill="${color}" opacity="0.3"/>
-      <text x="16" y="20" text-anchor="middle" font-size="18" dominant-baseline="middle">${emoji}</text>
+      <g transform="translate(8 8) scale(0.6667)" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${glyph}</g>
     </svg>
   `;
   const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;
@@ -37,16 +51,16 @@ const createCustomIcon = (color, emoji, size = 32) => {
   });
 };
 
-const spotIcon = createCustomIcon("#3b82f6", "📍");
-const clubIcon = createCustomIcon("#10b981", "🏛️");
-const angelshopIcon = createCustomIcon("#eab308", "🛒", 28);
-const angelParkEuIcon = createCustomIcon("#ea580c", "🌍", 28);
-const locationIcon = createCustomIcon("#ef4444", "📌");
-const newSpotIcon = createCustomIcon("#f59e0b", "⭐");
-const tiefenkartenIcon = createCustomIcon("#a855f7", "🗻", 36);
-const forellenIcon = createCustomIcon("#ec4899", "🎣", 32);
-const bathymetrieIcon = createCustomIcon("#0ea5e9", "🌊", 34);
-const flussIcon = createCustomIcon("#06b6d4", "🏞️", 34);
+const spotIcon = createCustomIcon("#3b82f6", "pin");
+const clubIcon = createCustomIcon("#10b981", "landmark");
+const angelshopIcon = createCustomIcon("#eab308", "cart", 28);
+const angelParkEuIcon = createCustomIcon("#ea580c", "globe", 28);
+const locationIcon = createCustomIcon("#ef4444", "pin");
+const newSpotIcon = createCustomIcon("#f59e0b", "star");
+const tiefenkartenIcon = createCustomIcon("#a855f7", "mountain", 36);
+const forellenIcon = createCustomIcon("#ec4899", "fish", 32);
+const bathymetrieIcon = createCustomIcon("#0ea5e9", "waves", 34);
+const flussIcon = createCustomIcon("#06b6d4", "waves", 34);
 
 function MapEvents({ onMapClick }) {
   useMapEvents({
@@ -326,11 +340,11 @@ export default function MapView({
             <div className="text-sm max-w-xs">
               <strong className="text-base text-emerald-400">{club.name}</strong>
               <p className="text-xs text-gray-400 mt-1">
-                {club.category === 'club' ? '🏛️ Angelverein' : (club.typ ? `🎣 ${club.typ}` : '🎣 Angelpark')}
+                {club.category === 'club' ? 'Angelverein' : (club.typ ? `${club.typ}` : 'Angelpark')}
               </p>
               {club.address && (
                 <p className="text-xs text-gray-400 mt-1">
-                  📍 {club.address.city}
+                  {club.address.city}
                 </p>
               )}
               {Array.isArray(club.fische) && club.fische.length > 0 && (
@@ -350,7 +364,7 @@ export default function MapView({
                   rel="noopener noreferrer"
                   className="text-xs text-cyan-400 underline mt-2 inline-block hover:text-cyan-300"
                 >
-                  🌐 Website
+                  Website
                 </a>
               )}
             </div>
@@ -374,14 +388,14 @@ export default function MapView({
             <div className="text-sm max-w-xs">
               <strong className="text-base text-yellow-400">{shop.name}</strong>
               <p className="text-xs text-gray-400 mt-1">
-                🛒 Angelshop
+                Angelshop
               </p>
               <p className="text-xs text-gray-400 mt-1">
-                📍 {shop.city}
+                {shop.city}
               </p>
               {shop.street && (
                 <p className="text-xs text-gray-400 mt-1">
-                  📮 {shop.street}
+                  {shop.street}
                 </p>
               )}
             </div>
@@ -405,14 +419,14 @@ export default function MapView({
             <div className="text-sm max-w-xs">
               <strong className="text-base text-orange-400">{park.name}</strong>
               <p className="text-xs text-gray-400 mt-1">
-                🌍 {park.type || 'Angelpark'}
+                {park.type || 'Angelpark'}
               </p>
               <p className="text-xs text-gray-400 mt-1">
-                📍 {park.country}
+                {park.country}
               </p>
               {park.address && (
                 <p className="text-xs text-gray-400 mt-1">
-                  📮 {park.address}
+                  {park.address}
                 </p>
               )}
             </div>
@@ -434,16 +448,16 @@ export default function MapView({
         >
           <Popup>
             <div className="text-sm max-w-xs">
-              <strong className="text-base text-cyan-300">🏞️ {fluss.name}</strong>
+              <strong className="text-base text-cyan-300">{fluss.name}</strong>
               <p className="text-xs text-gray-400 mt-1">
-                📏 {fluss.laenge_km} km • {fluss.verlauf}
+                {fluss.laenge_km} km • {fluss.verlauf}
               </p>
               <p className="text-xs text-gray-300 mt-2">
-                <strong>🎣 Fischarten:</strong><br/>
+                <strong>Fischarten:</strong><br/>
                 {fluss.fischarten}
               </p>
               <p className="text-xs text-gray-300 mt-1">
-                <strong>📍 Angelplätze:</strong><br/>
+                <strong>Angelplätze:</strong><br/>
                 {fluss.angelgewaesser}
               </p>
               <p className="text-xs text-gray-400 mt-1">
@@ -469,14 +483,14 @@ export default function MapView({
         >
           <Popup>
             <div className="text-sm max-w-xs">
-              <strong className="text-base text-cyan-400">🌊 {bd.name}</strong>
+              <strong className="text-base text-cyan-400">{bd.name}</strong>
               <p className="text-xs text-gray-400 mt-1">
                 Bathymetrie (Tiefenkarte)
               </p>
               <p className="text-xs text-gray-300 mt-2">
-                📊 GEBCO 2026 Daten<br/>
-                📏 ~500m Auflösung<br/>
-                🗺️ Bounding Box verfügbar
+                GEBCO 2026 Daten<br/>
+                ~500m Auflösung<br/>
+                Bounding Box verfügbar
               </p>
               <p className="text-xs text-gray-500 mt-2">
                 <em>Daten verfügbar sobald GeoTIFF heruntergeladen</em>
@@ -502,14 +516,14 @@ export default function MapView({
             <div className="text-sm max-w-xs">
               <strong className="text-base text-pink-400">{fs.name}</strong>
               <p className="text-xs text-gray-400 mt-1">
-                🌍 {fs.land} • {fs.region}
+                {fs.land} • {fs.region}
               </p>
               <p className="text-xs text-gray-400 mt-1">
-                🎣 {fs.forellenarten}
+                {fs.forellenarten}
               </p>
               {fs.bemerkungen && (
                 <p className="text-xs text-gray-300 mt-1">
-                  💡 {fs.bemerkungen}
+                  {fs.bemerkungen}
                 </p>
               )}
               {fs.website && (
@@ -519,7 +533,7 @@ export default function MapView({
                   rel="noopener noreferrer"
                   className="text-xs text-pink-400 underline mt-2 inline-block hover:text-pink-300"
                 >
-                  🌐 Website
+                  Website
                 </a>
               )}
             </div>
@@ -543,7 +557,7 @@ export default function MapView({
             <div className="text-sm max-w-xs">
               <strong className="text-base text-violet-400">{tk.name}</strong>
               <p className="text-xs text-gray-400 mt-1">
-                📍 {tk.region}
+                {tk.region}
               </p>
               <p className="text-xs text-gray-400 mt-1">
                 {tk.beschreibung}
@@ -554,7 +568,7 @@ export default function MapView({
                 rel="noopener noreferrer"
                 className="text-xs text-violet-400 underline mt-2 inline-block hover:text-violet-300"
               >
-                📄 PDF öffnen
+                PDF öffnen
               </a>
             </div>
           </Popup>

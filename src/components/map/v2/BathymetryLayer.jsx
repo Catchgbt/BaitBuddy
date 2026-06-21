@@ -64,7 +64,7 @@ function BathymetryLayer({ selectedBundesland = null, opacity = 0.6, visible = t
       const div = L.DomUtil.create('div', 'bathymetry-info');
       div.innerHTML = `
         <div style="background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; font-size: 12px;">
-          <strong>🌊 Bathymetrie</strong><br>
+          <strong>Bathymetrie</strong><br>
           ${selectedBundesland}<br>
           <small>GeoTIFF laden...</small>
         </div>

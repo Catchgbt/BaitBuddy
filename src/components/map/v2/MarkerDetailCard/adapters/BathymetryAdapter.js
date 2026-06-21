@@ -26,32 +26,32 @@ export async function normalizeBathymetry(bathymetry) {
 
     infos: [
       {
-        icon: '🌊',
+        icon: '',
         label: 'Typ',
         value: 'Bathymetrie-Daten'
       },
       {
-        icon: '🏘️',
+        icon: '',
         label: 'Bundesland',
         value: bathymetry.bundesland
       },
       bathymetry.data_source && {
-        icon: '📊',
+        icon: '',
         label: 'Quelle',
         value: bathymetry.data_source
       },
       bathymetry.resolution && {
-        icon: '⚙️',
+        icon: '',
         label: 'Auflösung',
         value: bathymetry.resolution
       },
       bathymetry.year && {
-        icon: '📅',
+        icon: '',
         label: 'Jahr',
         value: bathymetry.year
       },
       bathymetry.coverage && {
-        icon: '📍',
+        icon: '',
         label: 'Abdeckung',
         value: bathymetry.coverage
       }
@@ -65,20 +65,20 @@ export async function normalizeBathymetry(bathymetry) {
     actions: [
       {
         id: 'view-map',
-        label: '🌊 Karte anzeigen',
-        icon: '🌊',
+        label: 'Karte anzeigen',
+        icon: '',
         variant: 'primary'
       },
       {
         id: 'download-data',
-        label: '⬇️ Daten laden',
-        icon: '⬇️',
+        label: 'Daten laden',
+        icon: '',
         variant: 'secondary'
       },
       {
         id: 'info',
-        label: 'ℹ️ Details',
-        icon: 'ℹ️',
+        label: 'ℹDetails',
+        icon: 'ℹ',
         variant: 'secondary'
       }
     ]

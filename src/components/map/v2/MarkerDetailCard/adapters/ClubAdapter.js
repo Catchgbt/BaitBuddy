@@ -25,27 +25,27 @@ export async function normalizeClub(club) {
 
     infos: [
       {
-        icon: isClub ? '🏛️' : '🌳',
+        icon: isClub ? '' : '',
         label: isClub ? 'Typ' : 'Typ',
         value: isClub ? 'Angelverein' : 'Angelpark'
       },
       club.address?.street && {
-        icon: '📍',
+        icon: '',
         label: 'Adresse',
         value: `${club.address.street}${club.address.city ? `, ${club.address.city}` : ''}`
       },
       club.phone && {
-        icon: '📞',
+        icon: '',
         label: 'Telefon',
         value: club.phone
       },
       club.email && {
-        icon: '📧',
+        icon: '',
         label: 'Email',
         value: club.email
       },
       club.website && {
-        icon: '🌐',
+        icon: '',
         label: 'Website',
         value: club.website.replace(/^https?:\/\//, '')
       }
@@ -56,20 +56,20 @@ export async function normalizeClub(club) {
     actions: [
       club.website && {
         id: 'website',
-        label: '🌐 Website besuchen',
-        icon: '🌐',
+        label: 'Website besuchen',
+        icon: '',
         variant: 'primary'
       },
       club.phone && {
         id: 'call',
-        label: '📞 Anrufen',
-        icon: '📞',
+        label: 'Anrufen',
+        icon: '',
         variant: 'primary'
       },
       {
         id: 'navigate',
-        label: '🗺️ Navigation',
-        icon: '🗺️',
+        label: 'Navigation',
+        icon: '',
         variant: 'secondary'
       }
     ].filter(Boolean)

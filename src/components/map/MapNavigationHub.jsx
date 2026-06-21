@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronRight, Layers, Eye, EyeOff } from 'lucide-react';
+import { ChevronRight, Layers, Eye, EyeOff, Sparkles, Antenna, Mountain, Droplets, Satellite, Zap, Rocket, MapPin, Map, Fish, Palette, Waves, Bot, Moon, Target, Bell, BarChart3 } from 'lucide-react';
 
 /**
  * MapNavigationHub - Zentrale Steuerstelle für alle Kartenfunktionen
@@ -16,8 +16,8 @@ function MapNavigationHub({
 
   const categories = {
     'new-features': {
-      title: '✨ NEU: 6 Advanced Features',
-      icon: '🎉',
+      title: 'NEU: 6 Advanced Features',
+      icon: Sparkles,
       description: 'Alle neuen Funktionen in dieser Version',
       features: [
         {
@@ -25,7 +25,7 @@ function MapNavigationHub({
           name: 'Phase 1: Offline Tile-Caching',
           description: 'Automatisches Caching von Kartenkacheln für vollständig offline funktionierende Touren',
           difficulty: 'easy',
-          icon: '📡',
+          icon: Antenna,
           tooltip: 'Aktiviert automatisch - speichert Tiles während du die Karte nutzt',
         },
         {
@@ -33,7 +33,7 @@ function MapNavigationHub({
           name: 'Phase 2: Relief-Shading',
           description: 'Mapzen Terrain Normal Maps für 3D-ähnliche Geländevisualisierung',
           difficulty: 'easy',
-          icon: '🏔️',
+          icon: Mountain,
           tooltip: 'Gibt der Karte ein plastisches Aussehen - Klick auf Hub zum Aktivieren',
         },
         {
@@ -41,7 +41,7 @@ function MapNavigationHub({
           name: 'Phase 3: 3D-Terrain',
           description: 'Canvas-basierte Höhenvisualisierung mit Konturlinien',
           difficulty: 'medium',
-          icon: '🗻',
+          icon: Mountain,
           tooltip: 'Immersive 3D-Ansicht - nutze mit Relief-Shading zusammen',
         },
         {
@@ -49,7 +49,7 @@ function MapNavigationHub({
           name: 'Phase 4: Hydrographische Analyse',
           description: 'Wasser-Temperatur (Heatmap), Strömungen, Tiefe & Qualitätsbewertung',
           difficulty: 'medium',
-          icon: '💧',
+          icon: Droplets,
           tooltip: 'Zeigt optimale Fangzonen basierend auf Wasserparametern',
         },
         {
@@ -57,7 +57,7 @@ function MapNavigationHub({
           name: 'Phase 5: Satelliten-Bilder',
           description: 'USGS & Sentinel-2 Multi-spektrale Satellitendaten in Echtzeit',
           difficulty: 'medium',
-          icon: '🛰️',
+          icon: Satellite,
           tooltip: 'Beste ab Zoom 10+ - zeigt präzise Luftaufnahmen',
         },
         {
@@ -65,14 +65,14 @@ function MapNavigationHub({
           name: 'Phase 6: Cache-Optimierung',
           description: 'LRU-Eviction, automatische Komprimierung & Hit-Rate-Tracking',
           difficulty: 'hard',
-          icon: '⚡',
+          icon: Zap,
           tooltip: 'Intelligent - passt Cache-Größe automatisch an',
         },
       ],
     },
     'quick-start': {
-      title: '⚡ Schnelleinstieg',
-      icon: '🚀',
+      title: 'Schnelleinstieg',
+      icon: Rocket,
       description: 'Die wichtigsten Funktionen',
       features: [
         {
@@ -80,27 +80,27 @@ function MapNavigationHub({
           name: 'Spot hinzufügen',
           description: 'Klicke auf die Karte um einen neuen Angelplatz zu markieren',
           difficulty: 'easy',
-          icon: '📍',
+          icon: MapPin,
         },
         {
           id: 'view-spots',
           name: 'Meine Spots anzeigen',
           description: 'Sehe alle deine Angelplätze auf der Karte',
           difficulty: 'easy',
-          icon: '🗺️',
+          icon: Map,
         },
         {
           id: 'live-trip',
           name: 'Live-Tour starten',
           description: 'Starte GPS-Tracking und Fang-Logging während du angelst',
           difficulty: 'easy',
-          icon: '🎣',
+          icon: Fish,
         },
       ],
     },
     'visualization': {
-      title: '🎨 Visualisierungen',
-      icon: '🎨',
+      title: 'Visualisierungen',
+      icon: Palette,
       description: 'Verschiedene Kartenansichten & Layer',
       features: [
         {
@@ -108,7 +108,7 @@ function MapNavigationHub({
           name: 'Relief-Shading',
           description: 'Zeigt Geländeformen durch Schattierung - für bessere räumliche Wahrnehmung',
           difficulty: 'easy',
-          icon: '🏔️',
+          icon: Mountain,
           tooltip: 'Schalte aus wenn die Karte zu dunkel wird',
         },
         {
@@ -116,7 +116,7 @@ function MapNavigationHub({
           name: '3D-Gelände',
           description: 'Canvas-basierte 3D-Höhenvisualisierung mit Konturlinien',
           difficulty: 'medium',
-          icon: '🗻',
+          icon: Mountain,
           tooltip: 'Kann Performance beeinflussen - nutze mit Relief-Shading zusammen',
         },
         {
@@ -124,14 +124,14 @@ function MapNavigationHub({
           name: 'Satelliten-Bilder',
           description: 'Präzise Luftaufnahmen von USGS und Sentinel-2',
           difficulty: 'medium',
-          icon: '🛰️',
+          icon: Satellite,
           tooltip: 'Beste bei Zoom-Level 10+',
         },
       ],
     },
     'water-analysis': {
-      title: '💧 Gewässeranalyse',
-      icon: '💧',
+      title: 'Gewässeranalyse',
+      icon: Droplets,
       description: 'Wissenschaftliche Wasser- & Gezeitendaten',
       features: [
         {
@@ -139,7 +139,7 @@ function MapNavigationHub({
           name: 'Gezeiten (Echtzeit)',
           description: 'Aktuelle Gezeitenhöhe + 7-Tage-Vorhersage von NOAA',
           difficulty: 'easy',
-          icon: '🌊',
+          icon: Waves,
           tooltip: 'Optimal: ±1h vor/nach Hoch- oder Niedrigwasser',
         },
         {
@@ -147,14 +147,14 @@ function MapNavigationHub({
           name: 'Hydrographische Daten',
           description: 'Wasser-Temperatur (Heatmap), Strömungen, Tiefe & Qualität',
           difficulty: 'medium',
-          icon: '💧',
+          icon: Droplets,
           tooltip: 'Zeigt wo das Wasser am warmsten/kältesten ist',
         },
       ],
     },
     'smart-features': {
-      title: '🤖 Intelligente Features',
-      icon: '🤖',
+      title: 'Intelligente Features',
+      icon: Bot,
       description: 'KI-gestützte Vorhersagen & Echtzeitwarnungen',
       features: [
         {
@@ -162,7 +162,7 @@ function MapNavigationHub({
           name: 'Solunar-Kalender',
           description: 'Mondphase + optimale Fresszeiten basierend auf Astronomie',
           difficulty: 'medium',
-          icon: '🌙',
+          icon: Moon,
           tooltip: 'Beste Fänge: 1h vor/nach Major-Events (Mond-Transit)',
         },
         {
@@ -170,7 +170,7 @@ function MapNavigationHub({
           name: 'KI-Fang-Vorhersage',
           description: 'Machine Learning Vorhersagen basierend auf Gezeiten + Solunar + deinen Fängen',
           difficulty: 'hard',
-          icon: '🎯',
+          icon: Target,
           tooltip: 'Lerne deine Arten kennen: Je mehr Daten, desto besser die Vorhersage',
         },
         {
@@ -178,14 +178,14 @@ function MapNavigationHub({
           name: 'Smart Notifications',
           description: 'Push-Benachrichtigungen bei optimalen Angelbedingungen',
           difficulty: 'easy',
-          icon: '🔔',
+          icon: Bell,
           tooltip: 'Aktiviere: Einstellungen → Benachrichtigungen',
         },
       ],
     },
     'performance': {
-      title: '⚡ Performance & Offline',
-      icon: '⚡',
+      title: 'Performance & Offline',
+      icon: Zap,
       description: 'Cache-Optimierung & Offline-Funktionalität',
       features: [
         {
@@ -193,7 +193,7 @@ function MapNavigationHub({
           name: 'Offline-Tile-Caching',
           description: 'Automatisches Caching von Kartenkacheln für Offline-Nutzung',
           difficulty: 'easy',
-          icon: '📡',
+          icon: Antenna,
           tooltip: 'Aktiviert automatisch - keine Aktion nötig',
         },
         {
@@ -201,7 +201,7 @@ function MapNavigationHub({
           name: 'Cache-Statistiken',
           description: 'Hit-Rate, Größe & Komprimierung deines Caches',
           difficulty: 'medium',
-          icon: '📊',
+          icon: BarChart3,
           tooltip: 'Unten links im Live-Trip-Modus',
         },
       ],
@@ -211,19 +211,19 @@ function MapNavigationHub({
   const modes = [
     {
       id: 'guided',
-      name: '🎓 Geführt',
+      name: 'Geführt',
       description: 'Features werden Schritt für Schritt erklärt',
       features: ['Tooltips & Tipps', 'Guided Tours', 'Kontexthilfe'],
     },
     {
       id: 'simple',
-      name: '🎯 Einfach',
+      name: 'Einfach',
       description: 'Nur häufigste Funktionen sichtbar',
       features: ['Vereinfachte UI', 'Schnellzugriffe', 'Minimal Features'],
     },
     {
       id: 'advanced',
-      name: '⚙️ Erweitert',
+      name: 'Erweitert',
       description: 'Alle Features sofort zugänglich',
       features: ['Alle Layer', 'Erweiterte Optionen', 'Keine Einschränkungen'],
     },
@@ -245,11 +245,11 @@ function MapNavigationHub({
   const getDifficultyLabel = (difficulty) => {
     switch (difficulty) {
       case 'easy':
-        return '✅ Einfach';
+        return 'Einfach';
       case 'medium':
-        return '⚡ Mittel';
+        return 'Mittel';
       case 'hard':
-        return '🔥 Fortgeschritten';
+        return 'Fortgeschritten';
       default:
         return 'Standard';
     }
@@ -279,7 +279,7 @@ function MapNavigationHub({
       <div className="sticky top-0 bg-gray-900/98 border-b border-cyan-700 p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className="text-2xl">🗺️</div>
+            <div className="text-2xl"></div>
             <h1 className="text-lg font-bold text-cyan-300">Map Navigation Hub</h1>
           </div>
           <button
@@ -338,7 +338,7 @@ function MapNavigationHub({
                   : 'bg-gray-800 border-gray-700 hover:border-gray-600'
               }`}
             >
-              <div className="text-lg">{cat.icon}</div>
+              <div className="text-cyan-300">{cat.icon ? <cat.icon className="w-5 h-5" /> : null}</div>
               <div className="font-semibold text-sm text-cyan-300 mt-1">{cat.title}</div>
               <div className="text-xs text-gray-400">{cat.description}</div>
             </button>
@@ -349,7 +349,7 @@ function MapNavigationHub({
         {currentCategory && (
           <div className="space-y-2">
             <h3 className="font-semibold text-cyan-400 flex items-center gap-2">
-              {currentCategory.icon} {currentCategory.title}
+              {currentCategory.icon ? <currentCategory.icon className="w-4 h-4" /> : null} {currentCategory.title}
             </h3>
 
             {currentCategory.features.map(feature => (
@@ -361,7 +361,7 @@ function MapNavigationHub({
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-xl">{feature.icon}</span>
+                      <span className="text-cyan-300">{feature.icon ? <feature.icon className="w-5 h-5" /> : null}</span>
                       <span className="font-semibold text-gray-200">{feature.name}</span>
                       <span className={`text-xs px-2 py-0.5 rounded border ${getDifficultyColor(feature.difficulty)}`}>
                         {getDifficultyLabel(feature.difficulty)}
@@ -369,7 +369,7 @@ function MapNavigationHub({
                     </div>
                     <p className="text-xs text-gray-400 mt-1">{feature.description}</p>
                     {feature.tooltip && (
-                      <p className="text-xs text-yellow-600 mt-1 italic">💡 {feature.tooltip}</p>
+                      <p className="text-xs text-yellow-600 mt-1 italic">{feature.tooltip}</p>
                     )}
                   </div>
                   <ChevronRight className="w-5 h-5 text-gray-500 group-hover:text-cyan-400 transition" />
@@ -390,7 +390,7 @@ function MapNavigationHub({
           {hideHints ? 'Tipps anzeigen' : 'Tipps verbergen'}
         </button>
         <div className="text-xs text-gray-500">
-          💡 Klick auf Features um sie zu aktivieren
+          Klick auf Features um sie zu aktivieren
         </div>
       </div>
     </div>

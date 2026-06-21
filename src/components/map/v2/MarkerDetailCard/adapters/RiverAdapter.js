@@ -20,41 +20,41 @@ export async function normalizeRiver(river) {
 
     infos: [
       {
-        icon: '📏',
+        icon: '',
         label: 'Länge',
         value: `${river.laenge_km} km`
       },
       {
-        icon: '🗺️',
+        icon: '',
         label: 'Verlauf',
         value: river.verlauf
       },
       {
-        icon: '🏘️',
+        icon: '',
         label: 'Bundesländer',
         value: Array.isArray(river.bundeslaender)
           ? river.bundeslaender.join(', ')
           : river.bundeslaender
       },
       {
-        icon: '🎣',
+        icon: '',
         label: 'Fischarten',
         value: river.fischarten
       },
       {
-        icon: '⚡',
+        icon: '',
         label: 'Schwierigkeit',
         value: river.schwierigkeit
       },
       river.wichtige_orte && {
-        icon: '🏙️',
+        icon: '',
         label: 'Wichtige Orte',
         value: Array.isArray(river.wichtige_orte)
           ? river.wichtige_orte.join(', ')
           : river.wichtige_orte
       },
       river.angelgewaesser && {
-        icon: '🎯',
+        icon: '',
         label: 'Angelgewässer',
         value: river.angelgewaesser
       }
@@ -65,14 +65,14 @@ export async function normalizeRiver(river) {
     actions: [
       {
         id: 'show-on-map',
-        label: '🗺️ Auf Karte zeigen',
-        icon: '🗺️',
+        label: 'Auf Karte zeigen',
+        icon: '',
         variant: 'primary'
       },
       {
         id: 'add-to-trips',
-        label: '📋 Zur Reise hinzufügen',
-        icon: '📋',
+        label: 'Zur Reise hinzufügen',
+        icon: '',
         variant: 'secondary'
       }
     ]

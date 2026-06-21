@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 
-const FALLBACK_ICON = '🗺️';
+const FALLBACK_ICON = '';
 
 function HeroImage({
   src,

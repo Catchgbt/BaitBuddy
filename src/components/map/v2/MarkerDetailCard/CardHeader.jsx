@@ -1,17 +1,19 @@
 import React from 'react';
+import { MapPin, Landmark, Waves, Mountain, Fish, Trees } from 'lucide-react';
 
 function CardHeader({ marker, markerType }) {
   const getTypeIcon = () => {
     const iconMap = {
-      spot: '📍',
-      club: '🏛️',
-      fluss: '🏞️',
-      tiefenkarte: '🗻',
-      forellensee: '🎣',
-      bathymetrie: '🌊',
-      park: '🌳'
+      spot: MapPin,
+      club: Landmark,
+      fluss: Waves,
+      tiefenkarte: Mountain,
+      forellensee: Fish,
+      bathymetrie: Waves,
+      park: Trees
     };
-    return iconMap[markerType] || '📍';
+    const Icon = iconMap[markerType] || MapPin;
+    return <Icon className="w-7 h-7" />;
   };
 
   const getRegionDisplay = () => {
@@ -31,14 +33,6 @@ function CardHeader({ marker, markerType }) {
     return null;
   };
 
-  const getCountryFlag = () => {
-    if (marker.land === 'Österreich') return '🇦🇹';
-    if (marker.land === 'Schweiz') return '🇨🇭';
-    if (marker.land === 'Slowenien') return '🇸🇮';
-    if (marker.land === 'Deutschland' || !marker.land) return '🇩🇪';
-    return '🌍';
-  };
-
   const regionDisplay = getRegionDisplay();
 
   return (
@@ -50,7 +44,6 @@ function CardHeader({ marker, markerType }) {
           </h2>
           {regionDisplay && (
             <p className="text-xs sm:text-sm text-gray-400 mt-1 flex items-center gap-1">
-              <span>{getCountryFlag()}</span>
               {regionDisplay}
             </p>
           )}

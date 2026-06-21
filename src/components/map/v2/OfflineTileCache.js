@@ -21,7 +21,7 @@ class OfflineTileCache {
     try {
       this.db = await this.openIndexedDB();
       await this.cleanOldTiles();
-      console.log('✓ OfflineTileCache initialized');
+      console.log('OfflineTileCache initialized');
     } catch (error) {
       console.warn('OfflineTileCache initialization failed:', error);
     }
@@ -196,7 +196,7 @@ class OfflineTileCache {
         this.cache.set(item.url, URL.createObjectURL(blob));
         await this.saveTileData(item.url, blob);
         await this.removeFromQueue(item.url);
-        console.log(`✓ Cached tile: ${item.url}`);
+        console.log(`Cached tile: ${item.url}`);
       }
     } catch (error) {
       console.warn(`Failed to cache tile ${item.url}:`, error);
@@ -347,14 +347,14 @@ class OfflineTileCache {
    */
   handleOnline() {
     this.isOnline = true;
-    console.log('📡 Online detected - starting tile prefetch');
+    console.log('Online detected - starting tile prefetch');
     // Resume queued downloads
     this.processDownloadQueue();
   }
 
   handleOffline() {
     this.isOnline = false;
-    console.log('🔌 Offline detected - using cached tiles');
+    console.log('Offline detected - using cached tiles');
   }
 }
 

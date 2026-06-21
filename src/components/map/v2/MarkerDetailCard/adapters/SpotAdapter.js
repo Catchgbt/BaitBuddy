@@ -21,22 +21,22 @@ export async function normalizeSpot(spot) {
 
     infos: [
       spot.water_type && {
-        icon: '💧',
+        icon: '',
         label: 'Gewässer',
         value: spot.water_type.charAt(0).toUpperCase() + spot.water_type.slice(1)
       },
       spot.depth_meters && {
-        icon: '📏',
+        icon: '',
         label: 'Tiefe',
         value: `${spot.depth_meters}m`
       },
       spot.fish_species && {
-        icon: '🎣',
+        icon: '',
         label: 'Fischarten',
         value: spot.fish_species
       },
       {
-        icon: '📍',
+        icon: '',
         label: 'Koordinaten',
         value: `${spot.latitude.toFixed(4)}, ${spot.longitude.toFixed(4)}`
       }
@@ -47,26 +47,26 @@ export async function normalizeSpot(spot) {
     actions: [
       {
         id: 'set-location',
-        label: '📍 Als Standort',
-        icon: '📍',
+        label: 'Als Standort',
+        icon: '',
         variant: 'primary'
       },
       {
         id: 'sports',
-        label: '⚽ Sportarten',
-        icon: '⚽',
+        label: 'Sportarten',
+        icon: '',
         variant: 'secondary'
       },
       {
         id: 'navigate',
-        label: '🗺️ Navigation',
-        icon: '🗺️',
+        label: 'Navigation',
+        icon: '',
         variant: 'secondary'
       },
       {
         id: 'edit',
-        label: '✏️ Bearbeiten',
-        icon: '✏️',
+        label: 'Bearbeiten',
+        icon: '',
         variant: 'secondary'
       }
     ]

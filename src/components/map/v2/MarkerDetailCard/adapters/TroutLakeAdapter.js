@@ -20,34 +20,34 @@ export async function normalizeTroutLake(see) {
 
     infos: [
       {
-        icon: '🎣',
+        icon: '',
         label: 'Typ',
         value: 'Forellensee'
       },
       see.land && {
-        icon: '🌍',
+        icon: '',
         label: 'Land',
         value: see.land
       },
       see.region && {
-        icon: '🗺️',
+        icon: '',
         label: 'Region',
         value: see.region
       },
       see.forellenarten && {
-        icon: '🐟',
+        icon: '',
         label: 'Forellensorten',
         value: Array.isArray(see.forellenarten)
           ? see.forellenarten.join(', ')
           : see.forellenarten
       },
       see.adresse && {
-        icon: '📍',
+        icon: '',
         label: 'Adresse',
         value: see.adresse
       },
       see.bemerkungen && {
-        icon: '📝',
+        icon: '',
         label: 'Besonderheiten',
         value: see.bemerkungen
       }
@@ -58,20 +58,20 @@ export async function normalizeTroutLake(see) {
     actions: [
       see.website && {
         id: 'website',
-        label: '🌐 Website',
-        icon: '🌐',
+        label: 'Website',
+        icon: '',
         variant: 'primary'
       },
       {
         id: 'navigate',
-        label: '🗺️ Navigation',
-        icon: '🗺️',
+        label: 'Navigation',
+        icon: '',
         variant: 'primary'
       },
       {
         id: 'add-trip',
-        label: '📋 Zu Reise hinzufügen',
-        icon: '📋',
+        label: 'Zu Reise hinzufügen',
+        icon: '',
         variant: 'secondary'
       }
     ].filter(Boolean)
