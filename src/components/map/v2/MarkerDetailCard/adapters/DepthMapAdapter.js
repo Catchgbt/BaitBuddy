@@ -21,32 +21,32 @@ export async function normalizeDepthMap(tiefenkarte) {
 
     infos: [
       {
-        icon: '🗻',
+        icon: '',
         label: 'Typ',
         value: 'Bathymetrie-Karte'
       },
       {
-        icon: '💧',
+        icon: '',
         label: 'Fluss',
         value: tiefenkarte.fluss
       },
       tiefenkarte.region && {
-        icon: '🗺️',
+        icon: '',
         label: 'Region',
         value: tiefenkarte.region
       },
       tiefenkarte.bundesland && {
-        icon: '🏘️',
+        icon: '',
         label: 'Bundesland',
         value: tiefenkarte.bundesland
       },
       tiefenkarte.tiefenbereich && {
-        icon: '📏',
+        icon: '',
         label: 'Tiefenbereich',
         value: tiefenkarte.tiefenbereich
       },
       tiefenkarte.auflosung && {
-        icon: '⚙️',
+        icon: '',
         label: 'Auflösung',
         value: tiefenkarte.auflosung
       }
@@ -57,20 +57,20 @@ export async function normalizeDepthMap(tiefenkarte) {
     actions: [
       {
         id: 'open-map',
-        label: '🗺️ Karte öffnen',
-        icon: '🗺️',
+        label: 'Karte öffnen',
+        icon: '',
         variant: 'primary'
       },
       {
         id: 'download',
-        label: '⬇️ Herunterladen',
-        icon: '⬇️',
+        label: 'Herunterladen',
+        icon: '',
         variant: 'secondary'
       },
       {
         id: 'info',
-        label: 'ℹ️ Mehr Infos',
-        icon: 'ℹ️',
+        label: 'ℹMehr Infos',
+        icon: 'ℹ',
         variant: 'secondary'
       }
     ]

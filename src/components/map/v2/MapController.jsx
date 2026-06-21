@@ -443,7 +443,7 @@ function MapController() {
 
            <div aria-live="polite" aria-atomic="true">
              <div className="text-xs text-gray-300 px-2 py-1 bg-gray-900/50 rounded" role="status">
-               🗺️ {filteredSpots.length} Spots • 🏛️ {filteredClubs.length} Vereine • 🛒 {filteredAngelshops.length} Shops • 🌍 {filteredAngelparksEu.length} EU Parks • 💧 {filteredWaters.length} Gewässer • 🗻 {filteredTiefenkarten.length} Tiefenkarten • 🎣 {filteredForellenseen.length} Seen • 🌊 {filteredBathymetrie.length} Bathymetrie • 🏞️ {filteredFluesse.length} Flüsse
+               {filteredSpots.length} Spots • {filteredClubs.length} Vereine • {filteredAngelshops.length} Shops • {filteredAngelparksEu.length} EU Parks • {filteredWaters.length} Gewässer • {filteredTiefenkarten.length} Tiefenkarten • {filteredForellenseen.length} Seen • {filteredBathymetrie.length} Bathymetrie • {filteredFluesse.length} Flüsse
              </div>
            </div>
 
@@ -457,7 +457,7 @@ function MapController() {
                    : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
                }`}
              >
-               📍 Spots
+               Spots
              </button>
              <button
                onClick={() => setFilters({ ...filters, clubs: !filters.clubs })}
@@ -467,7 +467,7 @@ function MapController() {
                    : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
                }`}
              >
-               🏛️ Vereine
+               Vereine
              </button>
              <button
                onClick={() => setFilters({ ...filters, parks: !filters.parks })}
@@ -477,7 +477,7 @@ function MapController() {
                    : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
                }`}
              >
-               🎣 Parks
+               Parks
              </button>
              <button
                onClick={() => setFilters({ ...filters, angelshops: !filters.angelshops })}
@@ -487,7 +487,7 @@ function MapController() {
                    : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
                }`}
              >
-               🛒 Shops
+               Shops
              </button>
              <button
                onClick={() => setFilters({ ...filters, angelparksEu: !filters.angelparksEu })}
@@ -497,7 +497,7 @@ function MapController() {
                    : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
                }`}
              >
-               🌍 EU Parks
+               EU Parks
              </button>
              <button
                onClick={() => setFilters({ ...filters, waters: !filters.waters })}
@@ -507,7 +507,7 @@ function MapController() {
                    : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
                }`}
              >
-               💧 Gewässer
+               Gewässer
              </button>
              <button
                onClick={() => setFilters({ ...filters, tiefenkarten: !filters.tiefenkarten })}
@@ -517,7 +517,7 @@ function MapController() {
                    : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
                }`}
              >
-               🗻 Tiefenkarten
+               Tiefenkarten
              </button>
              <button
                onClick={() => setFilters({ ...filters, forellenseen: !filters.forellenseen })}
@@ -527,7 +527,7 @@ function MapController() {
                    : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
                }`}
              >
-               🎣 Forellenseen
+               Forellenseen
              </button>
              <button
                onClick={() => setFilters({ ...filters, bathymetrie: !filters.bathymetrie })}
@@ -537,7 +537,7 @@ function MapController() {
                    : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
                }`}
              >
-               🌊 Bathymetrie
+               Bathymetrie
              </button>
              <button
                onClick={() => setFilters({ ...filters, fluesse: !filters.fluesse })}
@@ -547,7 +547,7 @@ function MapController() {
                    : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
                }`}
              >
-               🏞️ Flüsse
+               Flüsse
              </button>
            </div>
           </div>
@@ -597,7 +597,7 @@ function MapController() {
                 </div>
                 <div className="mt-3 pt-2 border-t border-gray-700/50">
                   <p className="text-xs text-gray-400">
-                    💡 <strong>Tipp:</strong> Klicke auf die Karte um einen neuen Spot zu markieren, oder auf einen Marker für Details & Navigation.
+                    <strong>Tipp:</strong> Klicke auf die Karte um einen neuen Spot zu markieren, oder auf einen Marker für Details & Navigation.
                   </p>
                 </div>
               </div>

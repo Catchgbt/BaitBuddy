@@ -25,7 +25,7 @@ function MapLayerControls({
       id: 'hillshade',
       label: 'Relief-Shading',
       description: 'Geländerelief-Visualisierung',
-      icon: '🏔️',
+      icon: '',
       enabled: hillshadeEnabled,
       onToggle: onHillshadeToggle
     },
@@ -33,7 +33,7 @@ function MapLayerControls({
       id: '3d-terrain',
       label: '3D Terrain',
       description: 'Dreidimensionale Höhenvisualisierung',
-      icon: '🗻',
+      icon: '',
       enabled: terrain3DEnabled,
       onToggle: on3DTerrainToggle
     },
@@ -41,7 +41,7 @@ function MapLayerControls({
       id: 'hydrographic',
       label: 'Hydrographische Daten',
       description: 'Wasser-Temperatur, Strömung, Tiefe',
-      icon: '💧',
+      icon: '',
       enabled: hydrographicEnabled,
       onToggle: onHydrographicToggle
     },
@@ -49,7 +49,7 @@ function MapLayerControls({
       id: 'satellite',
       label: 'Satelliten-Bilder',
       description: 'Multi-spektrale Satellitendaten',
-      icon: '🛰️',
+      icon: '',
       enabled: satelliteEnabled,
       onToggle: onSatelliteToggle
     }
@@ -128,7 +128,7 @@ function MapLayerControls({
 
           {/* Info */}
           <div className="mt-4 p-3 bg-gray-800 rounded border border-gray-700 text-xs text-gray-400">
-            <p className="font-semibold text-gray-300 mb-1">💡 Tipps:</p>
+            <p className="font-semibold text-gray-300 mb-1">Tipps:</p>
             <ul className="space-y-1 text-gray-500">
               <li>• Relief-Shading für bessere Geländewahrnehmung</li>
               <li>• 3D Terrain für immersive Erkundung</li>
@@ -140,7 +140,7 @@ function MapLayerControls({
           {/* Performance note */}
           {enabledCount >= 3 && (
             <div className="mt-3 p-2 bg-yellow-900/30 rounded border border-yellow-700/50 text-xs text-yellow-600">
-              ⚠️ Viele aktive Layer können die Performance beeinflussen
+              Viele aktive Layer können die Performance beeinflussen
             </div>
           )}
         </div>
