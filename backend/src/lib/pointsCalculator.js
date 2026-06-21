@@ -346,16 +346,20 @@ export async function autoActivateRewards(year, month, supabase) {
 
     for (const winner of winners) {
       try {
+        // Rang-1-Reward laut PLACEMENT_REWARDS (Pro-Plan, 30 Tage) - nicht
+        // mehr faelschlich 'basic' hardcoden.
+        const reward = PLACEMENT_REWARDS[1];
+        const durationDays = reward.duration_days || 30;
         const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 30);
+        expiresAt.setDate(expiresAt.getDate() + durationDays);
 
         const { data: rewardActivation, error: rewardError } = await supabase
           .from('reward_activations')
           .upsert({
             user_id: winner.user_id,
             leaderboard_id: winner.id,
-            plan_id: 'basic',
-            duration_days: 30,
+            plan_id: reward.plan_type || 'pro',
+            duration_days: durationDays,
             expires_at: expiresAt.toISOString(),
             status: 'active'
           }, { onConflict: 'user_id' })
