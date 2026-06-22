@@ -337,7 +337,7 @@ export default function AIBuddyWidget() {
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                className="w-80 max-h-80 rounded-3xl shadow-2xl overflow-hidden flex flex-col bg-white border-2 border-blue-200"
+                className="w-80 max-h-96 rounded-3xl shadow-2xl overflow-hidden flex flex-col bg-white border-2 border-blue-200"
               >
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
