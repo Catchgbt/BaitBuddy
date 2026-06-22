@@ -51,6 +51,10 @@ function CatchStatsContent() {
       bySpecies[s].catches.push(c);
     });
 
+    // Gesamtzahl der Arten vor dem Top-10-Slice festhalten — die Kennzahl
+    // "Arten" darf nicht auf 10 gedeckelt werden, nur das Diagramm zeigt Top 10.
+    const speciesCount = Object.keys(bySpecies).length;
+
     const speciesCountData = Object.entries(bySpecies)
       .map(([name, d]) => ({ name, count: d.count }))
       .sort((a, b) => b.count - a.count)
@@ -95,7 +99,7 @@ function CatchStatsContent() {
     const totalWeight = withWeight.reduce((s, c) => s + c.weight_kg, 0);
     const maxCatch = catches.reduce((best, c) => (!best || (c.weight_kg || 0) > (best.weight_kg || 0) ? c : best), null);
 
-    return { speciesCountData, speciesWeightData, monthlyData, baitData, totalWeight, maxCatch, withWeight };
+    return { speciesCount, speciesCountData, speciesWeightData, monthlyData, baitData, totalWeight, maxCatch, withWeight };
   }, [catches]);
 
   if (isLoading) {
@@ -125,7 +129,7 @@ function CatchStatsContent() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: "Fänge gesamt", value: catches.length, Icon: Hash, color: "text-cyan-400", bg: "from-cyan-900/30 to-cyan-900/10", border: "border-cyan-800/40" },
-          { label: "Arten", value: stats?.speciesCountData.length, Icon: Fish, color: "text-emerald-400", bg: "from-emerald-900/30 to-emerald-900/10", border: "border-emerald-800/40" },
+          { label: "Arten", value: stats?.speciesCount, Icon: Fish, color: "text-emerald-400", bg: "from-emerald-900/30 to-emerald-900/10", border: "border-emerald-800/40" },
           {
             label: "Gesamtgewicht",
             value: stats?.totalWeight ? `${stats.totalWeight.toFixed(1)} kg` : "—",
