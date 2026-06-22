@@ -58,13 +58,21 @@ function parseCsv(text) {
 
 function parseGpx(text) {
   const points = [];
-  const ptRe = /<(?:trkpt|wpt|rtept)\b[^>]*\blat="([-\d.]+)"[^>]*\blon="([-\d.]+)"[^>]*>([\s\S]*?)<\/(?:trkpt|wpt|rtept)>/gi;
+  // Punkt-Element samt Attributen und Inhalt greifen. lat/lon werden separat
+  // ausgelesen, weil XML keine Attribut-Reihenfolge garantiert (lon kann vor lat
+  // stehen) und sowohl doppelte als auch einfache Anfuehrungszeichen zulaesst —
+  // eine feste lat-vor-lon-Reihenfolge wuerde solche gueltigen Dateien verwerfen.
+  const ptRe = /<(?:trkpt|wpt|rtept)\b([^>]*)>([\s\S]*?)<\/(?:trkpt|wpt|rtept)>/gi;
+  const attr = (attrs, name) => {
+    const m = attrs.match(new RegExp(`\\b${name}\\s*=\\s*["']([-\\d.]+)["']`, 'i'));
+    return m ? parseFloat(m[1]) : NaN;
+  };
   let m;
   while ((m = ptRe.exec(text)) !== null) {
-    const lat = parseFloat(m[1]);
-    const lon = parseFloat(m[2]);
+    const lat = attr(m[1], 'lat');
+    const lon = attr(m[1], 'lon');
     // Nur echte Tiefenangaben verwenden (<ele> ist GPS-Höhe, keine Tiefe).
-    const depthMatch = m[3].match(/<depth>([-\d.]+)<\/depth>/i);
+    const depthMatch = m[2].match(/<depth>([-\d.]+)<\/depth>/i);
     if (!depthMatch) continue;
     const depth = Math.abs(parseFloat(depthMatch[1]));
     if (isValidPoint(lat, lon, depth)) points.push({ lat, lon, depth });
