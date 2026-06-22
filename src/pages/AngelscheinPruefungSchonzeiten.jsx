@@ -9,6 +9,7 @@ import { auth } from "@/api/auth";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
+import { isInClosedSeason } from "@/lib/closedSeason";
 
 export default function AngelscheinPruefungSchonzeiten() {
   useFeatureTracking("angelschein_pruefung");
@@ -193,26 +194,7 @@ export default function AngelscheinPruefungSchonzeiten() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const isCurrentlyClosedSeason = (closedFrom, closedTo) => {
-    if (!closedFrom || !closedTo) return false;
-    const today = new Date();
-    const currentYear = today.getFullYear();
-
-    const [fromMonth, fromDay] = closedFrom.split('-').slice(1).map(Number);
-    const [toMonth, toDay] = closedTo.split('-').slice(1).map(Number);
-
-    let fromDate = new Date(currentYear, fromMonth - 1, fromDay);
-    let toDate = new Date(currentYear, toMonth - 1, toDay);
-
-    if (fromDate > toDate) {
-        if (today < fromDate && today < toDate) {
-            fromDate = new Date(currentYear - 1, fromMonth - 1, fromDay);
-        } else if (today > fromDate && today > toDate) {
-            toDate = new Date(currentYear + 1, toMonth - 1, toDay);
-        }
-    }
-    return today >= fromDate && today <= toDate;
-  };
+  const isCurrentlyClosedSeason = (closedFrom, closedTo) => isInClosedSeason(closedFrom, closedTo);
 
   return (
     <>

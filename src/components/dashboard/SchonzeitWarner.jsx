@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { entities } from "@/api/frontendClient";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { isInClosedSeason, nextClosedSeasonStart } from "@/lib/closedSeason";
 
 export default function SchonzeitWarner() {
   const [bundesland, setBundesland] = useState(null);
@@ -59,22 +60,12 @@ export default function SchonzeitWarner() {
   const in14Days = new Date(today);
   in14Days.setDate(today.getDate() + 14);
 
-  const isInSchonzeit = (rule) => {
-    if (!rule.closed_from || !rule.closed_to) return false;
-    const from = new Date(rule.closed_from);
-    const to = new Date(rule.closed_to);
-    from.setHours(0, 0, 0, 0);
-    to.setHours(23, 59, 59, 999);
-    if (from > to) {
-      return today >= from || today <= to;
-    }
-    return today >= from && today <= to;
-  };
+  const isInSchonzeit = (rule) => isInClosedSeason(rule.closed_from, rule.closed_to, today);
 
   const startsSchonzeitSoon = (rule) => {
     if (!rule.closed_from || isInSchonzeit(rule)) return false;
-    const from = new Date(rule.closed_from);
-    from.setHours(0, 0, 0, 0);
+    const from = nextClosedSeasonStart(rule.closed_from, today);
+    if (!from) return false;
     return from > today && from <= in14Days;
   };
 
