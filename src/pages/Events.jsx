@@ -16,7 +16,7 @@ function getCountdown(endDate) {
   return `${hours}h`;
 }
 
-const PointsBreakdown = () => (
+const PointsBreakdown = ({ totalPoints, participatingEvents }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -51,25 +51,20 @@ const PointsBreakdown = () => (
     </div>
 
     <div className="mt-6 pt-6 border-t border-slate-700">
-      <p className="text-xs text-gray-400 mb-3">Beispiel-Berechnung:</p>
-      <div className="bg-slate-950/50 rounded-lg p-3 space-y-1 text-xs">
-        <div className="flex justify-between text-gray-300">
-          <span>Basiswert</span>
-          <span className="text-cyan-400">100</span>
+      <div className="bg-slate-950/50 rounded-lg p-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Award className="w-4 h-4 text-green-400" />
+          <span className="text-sm text-gray-300">Deine Gesamtpunkte</span>
         </div>
-        <div className="flex justify-between text-gray-300">
-          <span>Länge: 65cm × 5</span>
-          <span className="text-blue-400">325</span>
-        </div>
-        <div className="flex justify-between text-gray-300">
-          <span>10 Community-Likes × 1</span>
-          <span className="text-purple-400">10</span>
-        </div>
-        <div className="border-t border-slate-700 mt-2 pt-2 flex justify-between font-bold text-white">
-          <span>Gesamtpunkte</span>
-          <span className="text-green-400">435</span>
-        </div>
+        <span className="text-2xl font-bold text-green-400 tabular-nums">
+          {Math.round(totalPoints || 0)}
+        </span>
       </div>
+      {participatingEvents > 0 && (
+        <p className="text-xs text-gray-500 mt-2">
+          Aus {participatingEvents} {participatingEvents === 1 ? "Veranstaltung" : "Veranstaltungen"}
+        </p>
+      )}
     </div>
   </motion.div>
 );
@@ -222,16 +217,19 @@ export default function Events() {
   const [loading, setLoading] = useState(true);
   const [joined, setJoined] = useState(new Set());
   const [leaderboards, setLeaderboards] = useState({});
+  const [pointsSummary, setPointsSummary] = useState({ total_points: 0, participating_events: 0 });
 
   const loadData = useCallback(async () => {
     try {
-      const [comps, user] = await Promise.all([
+      const [comps, user, points] = await Promise.all([
         api.get('/api/events'),
-        auth.me().catch(() => null)
+        auth.me().catch(() => null),
+        api.get('/api/events/user/current-points').catch(() => null)
       ]);
 
       setCompetitions(Array.isArray(comps) ? comps : []);
       setCurrentUser(user);
+      if (points) setPointsSummary(points);
 
       if (Array.isArray(comps) && comps.length > 0 && user) {
         const leaderboardsMap = {};
@@ -295,7 +293,10 @@ export default function Events() {
       </motion.div>
 
       {/* Points System */}
-      <PointsBreakdown />
+      <PointsBreakdown
+        totalPoints={pointsSummary.total_points}
+        participatingEvents={pointsSummary.participating_events}
+      />
 
       {/* Events */}
       {competitions.length > 0 ? (

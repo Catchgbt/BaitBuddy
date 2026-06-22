@@ -811,40 +811,35 @@ router.get('/events/activities/list', optionalAuth, async (req, res) => {
   }
 });
 
-// Get points from currently running (live) events for user
+// Get total points across ALL of the user's event participations
+// (unabhaengig vom Event-Status: live, beendet oder geplant). So bleiben
+// einmal erspielte Punkte dauerhaft im Header sichtbar.
 router.get('/events/user/current-points', requireAuth, async (req, res) => {
   try {
     const now = new Date();
     const nowIso = now.toISOString();
 
-    // Finde alle aktuell laufenden (live) Events - unabhaengig vom Kalendermonat
-    const { data: events } = await supabase
-      .from('events')
-      .select('id')
-      .eq('status', 'active')
-      .lte('start_date', nowIso)
-      .gte('end_date', nowIso);
-
-    if (!events || events.length === 0) {
-      return res.json({ total_points: 0, active_events: 0, participating_events: 0 });
-    }
-
-    const eventIds = events.map(e => e.id);
-
-    // Aggregiere die Punkte des Users ueber alle laufenden Events
+    // Alle Teilnahmen des Users laden und Punkte aufsummieren
     const { data: participants } = await supabase
       .from('event_participants')
       .select('total_points, event_id')
-      .eq('user_id', req.user.email)
-      .in('event_id', eventIds);
+      .eq('user_id', req.user.email);
 
     const total = participants
       ? participants.reduce((sum, p) => sum + (parseFloat(p.total_points) || 0), 0)
       : 0;
 
+    // Anzahl der aktuell live laufenden Events (rein informativ fuer die UI)
+    const { count: activeEventsCount } = await supabase
+      .from('events')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'active')
+      .lte('start_date', nowIso)
+      .gte('end_date', nowIso);
+
     return res.json({
       total_points: Math.round(total * 100) / 100,
-      active_events: events.length,
+      active_events: activeEventsCount || 0,
       participating_events: participants?.length || 0
     });
   } catch (error) {
