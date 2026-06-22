@@ -22,6 +22,7 @@ import LazyImage from '@/components/images/LazyImage';
 import { AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
+import { toLocalDatetimeInputValue } from "@/lib/utils";
 
 export default function Logbook() {
   useFeatureTracking("catch_log");
@@ -51,7 +52,7 @@ export default function Logbook() {
   const [weightKg, setWeightKg] = useState("");
   const [baitUsed, setBaitUsed] = useState("");
   const [notes, setNotes] = useState("");
-  const [catchTime, setCatchTime] = useState(new Date().toISOString().slice(0, 16));
+  const [catchTime, setCatchTime] = useState(toLocalDatetimeInputValue(new Date()));
   const [editingCatch, setEditingCatch] = useState(null);
 
   // ---- Upload / analysis ----
@@ -130,7 +131,7 @@ export default function Logbook() {
   const resetForm = useCallback(() => {
     setPhotoUrl(""); setSpecies(""); setSpotId(""); setLengthCm("");
     setWeightKg(""); setBaitUsed(""); setNotes("");
-    setCatchTime(new Date().toISOString().slice(0, 16));
+    setCatchTime(toLocalDatetimeInputValue(new Date()));
     setEditingCatch(null);
   }, []);
 
@@ -288,7 +289,7 @@ export default function Logbook() {
     setWeightKg(catchItem.weight_kg?.toString() || "");
     setBaitUsed(catchItem.bait_used || "");
     setNotes(catchItem.notes || "");
-    setCatchTime(catchItem.catch_time ? new Date(catchItem.catch_time).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16));
+    setCatchTime(toLocalDatetimeInputValue(catchItem.catch_time || new Date()));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
@@ -417,7 +418,7 @@ export default function Logbook() {
                         if (output.weight_kg) setWeightKg(String(output.weight_kg));
                         if (output.bait_used) setBaitUsed(output.bait_used);
                         if (output.notes) setNotes(output.notes);
-                        if (output.catch_time) setCatchTime(new Date(output.catch_time).toISOString().slice(0, 16));
+                        if (output.catch_time) setCatchTime(toLocalDatetimeInputValue(output.catch_time));
                         toast.success("Felder automatisch ausgefüllt!");
                       } else {
                         toast.warning("KI konnte keine Daten erkennen");

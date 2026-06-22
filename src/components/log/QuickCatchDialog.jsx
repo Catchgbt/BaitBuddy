@@ -16,13 +16,14 @@ import { functions } from "@/api/frontendClient";
 import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { toLocalDatetimeInputValue } from "@/lib/utils";
 
 export default function QuickCatchDialog() {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [spots, setSpots] = useState([]);
   const [form, setForm] = useState({
-    species: "", spot_id: "", length_cm: "", weight_kg: "", bait_used: "", notes: "", catch_time: new Date().toISOString().slice(0,16), photo_url: ""
+    species: "", spot_id: "", length_cm: "", weight_kg: "", bait_used: "", notes: "", catch_time: toLocalDatetimeInputValue(new Date()), photo_url: ""
   });
   const [ruleWarnings, setRuleWarnings] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -201,7 +202,7 @@ export default function QuickCatchDialog() {
       weight_kg: "",
       bait_used: "",
       notes: "",
-      catch_time: new Date().toISOString().slice(0,16),
+      catch_time: toLocalDatetimeInputValue(new Date()),
       photo_url: ""
     });
   };
@@ -232,7 +233,7 @@ export default function QuickCatchDialog() {
         weight_kg: "",
         bait_used: "",
         notes: "",
-        catch_time: new Date().toISOString().slice(0,16),
+        catch_time: toLocalDatetimeInputValue(new Date()),
         photo_url: ""
       });
     } catch (error) {
@@ -791,7 +792,7 @@ export default function QuickCatchDialog() {
             <Button
               onClick={() => {
                 setShowBiteDetectorPrompt(false);
-                setForm(prev => ({ ...prev, catch_time: new Date().toISOString().slice(0, 16) }));
+                setForm(prev => ({ ...prev, catch_time: toLocalDatetimeInputValue(new Date()) }));
                 setOpen(true);
               }}
               className="bg-emerald-600 hover:bg-emerald-700"
@@ -852,7 +853,7 @@ export default function QuickCatchDialog() {
                   weight_kg: "",
                   bait_used: "",
                   notes: "",
-                  catch_time: new Date().toISOString().slice(0,16),
+                  catch_time: toLocalDatetimeInputValue(new Date()),
                   photo_url: ""
                 });
               }}
