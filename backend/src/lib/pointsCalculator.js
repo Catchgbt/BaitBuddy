@@ -290,30 +290,47 @@ export async function aggregateMonthlyLeaderboard(year, month, supabase) {
       userEventCount[p.user_id] += 1;
     });
 
+    // Bestehende Eintraege des Monats laden, um die Aggregation idempotent zu
+    // machen: Wird sie erneut ausgefuehrt (z.B. manueller Re-Trigger nach einem
+    // Claim), darf ein bereits 'claimed' markierter Gewinner NICHT auf 'pending'
+    // zurueckgesetzt werden — sonst wuerde autoActivateRewards die Belohnung ein
+    // zweites Mal gewaehren.
+    const { data: existingRows } = await supabase
+      .from('monthly_leaderboards')
+      .select('user_id, reward_status')
+      .eq('year', year)
+      .eq('month', month);
+    const existingStatus = {};
+    for (const row of existingRows || []) existingStatus[row.user_id] = row.reward_status;
+
     const leaderboard = Object.entries(userMonthlyPoints)
       .sort((a, b) => b[1] - a[1])
-      .map(([userId, totalPoints], index) => ({
-        year,
-        month,
-        user_id: userId,
-        total_points: totalPoints,
-        event_count: userEventCount[userId],
-        rank: index + 1,
-        reward_status: index === 0 ? 'pending' : 'not_eligible',
-        expires_at: new Date(year + 1, month - 1, 1).toISOString()
-      }));
+      .map(([userId, totalPoints], index) => {
+        const isWinner = index === 0;
+        // Gewinner: bereits eingeloesten Status ('claimed') beibehalten, sonst
+        // 'pending'. Nicht-Gewinner immer explizit 'not_eligible' setzen (statt das
+        // Feld wegzulassen), damit sowohl der Spalten-Default 'pending' als auch ein
+        // veralteter Status aus einem frueheren Lauf (z.B. nach Rang-Wechsel)
+        // ueberschrieben wird.
+        const reward_status = isWinner
+          ? (existingStatus[userId] === 'claimed' ? 'claimed' : 'pending')
+          : 'not_eligible';
+        return {
+          year,
+          month,
+          user_id: userId,
+          total_points: totalPoints,
+          event_count: userEventCount[userId],
+          rank: index + 1,
+          reward_status,
+          expires_at: isWinner ? new Date(year + 1, month - 1, 1).toISOString() : null,
+        };
+      });
 
     for (const entry of leaderboard) {
-      if (entry.reward_status === 'not_eligible') {
-        delete entry.reward_status;
-        delete entry.expires_at;
-      }
-
       const { error: upsertError } = await supabase
         .from('monthly_leaderboards')
-        .upsert({
-          ...entry
-        }, { onConflict: 'year,month,user_id' });
+        .upsert({ ...entry }, { onConflict: 'year,month,user_id' });
 
       if (upsertError) {
         console.error('Fehler beim Speichern des Leaderboards:', upsertError);
