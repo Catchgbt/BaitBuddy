@@ -4,10 +4,23 @@ import { Trophy, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
+const CACHE_KEY = 'bb_header_points';
+
+// Zuletzt bekannten Punktestand aus dem lokalen Cache lesen, damit das Widget
+// sofort einen Wert anzeigt und nicht erst auf den (bei Cold-Start langsamen)
+// API-Call wartet.
+function readCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function EventHeaderWidget() {
-  const [points, setPoints] = useState(0);
-  const [activeEvent, setActiveEvent] = useState(null);
-  const [loaded, setLoaded] = useState(false);
+  const [points, setPoints] = useState(() => readCache()?.points ?? 0);
+  const [activeEvent, setActiveEvent] = useState(() => readCache()?.activeEvent ?? null);
 
   useEffect(() => {
     loadData();
@@ -21,15 +34,19 @@ export default function EventHeaderWidget() {
         events.getCurrentPoints(),
         events.getActiveEvent()
       ]);
-      setPoints(pointsData?.total_points || 0);
-      setActiveEvent(eventData?.active_event || null);
-      setLoaded(true);
+      const nextPoints = pointsData?.total_points || 0;
+      const nextEvent = eventData?.active_event || null;
+      setPoints(nextPoints);
+      setActiveEvent(nextEvent);
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ points: nextPoints, activeEvent: nextEvent }));
+      } catch {
+        // localStorage nicht verfuegbar - Anzeige funktioniert trotzdem
+      }
     } catch {
-      setLoaded(true);
+      // Netzwerk-/Auth-Fehler: zuletzt bekannten Stand weiter anzeigen
     }
   };
-
-  if (!loaded) return null;
 
   return (
     <Link to={createPageUrl('Events')}>
