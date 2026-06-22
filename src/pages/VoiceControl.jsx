@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { resolvePage } from "@/lib/voicePages";
+import { isInClosedSeason as isInClosedSeasonShared } from "@/lib/closedSeason";
 
 function parseActionFromReply(text) {
   if (!text) return { clean: text, action: null };
@@ -490,26 +491,6 @@ function VoiceBuddy() {
       .catch(err => {});
   }, [currentLocation]);
 
-  // Ist gerade Schonzeit?
-  const isInClosedSeason = (rule) => {
-    if (!rule.closed_from || !rule.closed_to) return false;
-    const today = new Date();
-    const currentMonthDay = `${today.getMonth() + 1}-${today.getDate()}`; // "MM-DD" format
-
-    const [fromMonth, fromDay] = rule.closed_from.split('-').slice(1).map(Number); // Get month-day from "YYYY-MM-DD"
-    const [toMonth, toDay] = rule.closed_to.split('-').slice(1).map(Number);
-
-    // This handles closed seasons that cross year boundaries (e.g., Dec 1 - Jan 31)
-    if (fromMonth > toMonth) { // Season crosses year end
-        return (today.getMonth() + 1 > fromMonth || (today.getMonth() + 1 === fromMonth && today.getDate() >= fromDay)) ||
-               (today.getMonth() + 1 < toMonth || (today.getMonth() + 1 === toMonth && today.getDate() <= toDay));
-    } else if (fromMonth < toMonth) { // Season within the same year
-        return (today.getMonth() + 1 > fromMonth || (today.getMonth() + 1 === fromMonth && today.getDate() >= fromDay)) &&
-               (today.getMonth() + 1 < toMonth || (today.getMonth() + 1 === toMonth && today.getDate() <= toDay));
-    } else { // Season within the same month
-        return today.getDate() >= fromDay && today.getDate() <= toDay;
-    }
-  };
 
   // Formatiere Datum
   const formatDate = (dateStr) => {
@@ -636,11 +617,8 @@ function VoiceBuddy() {
         let summary = `${r.region || 'Allgemein'}: `;
         if (r.min_size_cm) summary += `${r.min_size_cm} Zentimeter Mindestmaß`;
         
-        const todayISO = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-        const inClosedSeason = r.closed_from && r.closed_to && 
-          todayISO >= r.closed_from && 
-          todayISO <= r.closed_to;
-        
+        const inClosedSeason = isInClosedSeasonShared(r.closed_from, r.closed_to);
+
         if (inClosedSeason) {
           summary += `, aktuell Schonzeit`;
         } else if (r.closed_from && r.closed_to) {

@@ -17,6 +17,7 @@ import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toLocalDatetimeInputValue } from "@/lib/utils";
+import { isInClosedSeason } from "@/lib/closedSeason";
 
 export default function QuickCatchDialog() {
   const { t } = useLanguage();
@@ -324,8 +325,8 @@ export default function QuickCatchDialog() {
     allRules.filter(r => String(r.fish || "").toLowerCase() === speciesLower).forEach(r => {
       if (r.min_size_cm && form.length_cm && Number(form.length_cm) < r.min_size_cm) warns.push(`Mindestmaß ${r.min_size_cm} cm unterschritten (${form.length_cm} cm).`);
       if (r.closed_from && r.closed_to) {
-        const d = form.catch_time ? new Date(form.catch_time).toISOString().slice(0,10) : new Date().toISOString().slice(0,10);
-        if (d >= r.closed_from && d <= r.closed_to) warns.push(`Schonzeit: ${r.closed_from}–${r.closed_to}.`);
+        const atDate = form.catch_time ? new Date(form.catch_time) : new Date();
+        if (isInClosedSeason(r.closed_from, r.closed_to, atDate)) warns.push(`Schonzeit: ${r.closed_from}–${r.closed_to}.`);
       }
     });
     setRuleWarnings(warns);
