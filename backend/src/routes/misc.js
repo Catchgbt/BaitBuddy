@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase.js';
 import { Buffer } from 'buffer';
 import path from 'path';
 import { parseDepthFile } from '../lib/depthParser.js';
+import { isInClosedSeason } from '../lib/closedSeason.js';
 
 const router = Router();
 
@@ -28,11 +29,13 @@ router.get('/fishing/rules', optionalAuth, async (req, res) => {
 });
 
 router.get('/fishing/rules/active', optionalAuth, async (req, res) => {
-  const today = new Date().toISOString().slice(0, 10);
-  const { data, error } = await supabase.from('rule_entries').select('*')
-    .lte('closed_from', today).gte('closed_to', today);
+  // Schonzeiten sind jaehrlich wiederkehrend, aber mit konkretem Jahr gespeichert.
+  // Daher alle Regeln laden und jahres-agnostisch nach Monat/Tag filtern statt per
+  // Volldatum-Vergleich in der DB (der nur im geseedeten Jahr getroffen haette).
+  const { data, error } = await supabase.from('rule_entries').select('*').limit(500);
   if (error) return res.status(500).json({ error: error.message });
-  return res.json(data || []);
+  const active = (data || []).filter(r => isInClosedSeason(r.closed_from, r.closed_to));
+  return res.json(active);
 });
 
 router.get('/fishing/clubs', optionalAuth, async (req, res) => {

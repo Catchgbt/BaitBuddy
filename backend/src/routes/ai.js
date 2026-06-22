@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
 import { invokeLLM } from '../lib/llm.js';
+import { isInClosedSeason } from '../lib/closedSeason.js';
 
 const router = Router();
 
@@ -71,8 +72,7 @@ router.post('/ai/chat', requireAuth, async (req, res) => {
     if (wantsRules) {
       const { data: rules } = await supabase.from('rule_entries').select('*').limit(30);
       if (rules?.length) {
-        const today = new Date().toISOString().slice(0, 10);
-        const active = rules.filter(r => r.closed_from <= today && r.closed_to >= today);
+        const active = rules.filter(r => isInClosedSeason(r.closed_from, r.closed_to));
         if (active.length) {
           contextParts.push('AKTIVE SCHONZEITEN:\n' + active.map(r =>
             `- ${r.fish} (${r.region}): bis ${r.closed_to}`
