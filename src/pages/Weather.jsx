@@ -296,6 +296,14 @@ Sei konkret, praktisch und detailliert!`;
   const hourly = weatherData.hourly;
   const condition = getFishingCondition();
 
+  // open-meteo liefert die Stundenwerte ab 00:00 des aktuellen Tages. Fuer
+  // "Naechste 24 Stunden" ab der aktuellen Stunde einsteigen, sonst zeigt die
+  // Liste bereits vergangene Stunden des heutigen Tages.
+  const nowHour = new Date();
+  nowHour.setMinutes(0, 0, 0);
+  let hourlyStart = (hourly?.time || []).findIndex(t => new Date(t).getTime() >= nowHour.getTime());
+  if (hourlyStart < 0) hourlyStart = 0;
+
   return (
     <div className="min-h-screen bg-gray-950 p-4 pb-32">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -544,9 +552,8 @@ Sei konkret, praktisch und detailliert!`;
               <CardContent>
                 <div className="overflow-x-auto">
                   <div className="flex gap-4 pb-2">
-                    {hourly.time.slice(0, 24).map((time, i) => {
-                      const hour = new Date(time).getHours();
-                      const isNight = hour < 6 || hour > 20;
+                    {hourly.time.slice(hourlyStart, hourlyStart + 24).map((time, idx) => {
+                      const i = hourlyStart + idx;
                       return (
                         <div key={i} className="flex-shrink-0 w-20 text-center p-3 bg-gray-800/30 rounded-lg">
                           <div className="text-xs text-gray-400 mb-2">
