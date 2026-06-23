@@ -174,7 +174,7 @@ export default function DevicesPage() {
             <p className="text-gray-400 text-sm">
               {selectedDevice.id === 'smartwatch' 
                 ? 'Verbinde Smartwatches und HR-Monitore via Bluetooth Low Energy'
-                : 'Verbinde BLE-Geräte, Echolote, Kameras und weitere Hardware direkt mit CatchGBT'}
+                : 'Verbinde BLE-Geräte, Echolote, Kameras und weitere Hardware direkt mit BaitBuddy'}
             </p>
           </div>
           <DeviceHub />

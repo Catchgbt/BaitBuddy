@@ -126,7 +126,7 @@ export default function FeedbackDialog({ feature, onClose }) {
                 Wie gefällt dir {featureName}?
               </CardTitle>
               <p className="text-sm text-gray-400 mt-2">
-                Dein Feedback hilft uns, CatchGbt zu verbessern
+                Dein Feedback hilft uns, BaitBuddy zu verbessern
               </p>
             </CardHeader>
 

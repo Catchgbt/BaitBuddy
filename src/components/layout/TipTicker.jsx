@@ -9,7 +9,7 @@ const trialOffer = "Limitiertes Angebot: 10 Tage alle Premium-Funktionen fuer nu
 
 const featureTips = [
   "Dashboard: Dein zentraler Ueberblick mit Wetter, Spots und KI-Empfehlungen auf einen Blick.",
-  "KI-Buddy CatchGBT: Persoenlicher Angel-Assistent fuer Tipps, Strategien und Fragen rund ums Angeln.",
+  "KI-Buddy BaitBuddy: Persoenlicher Angel-Assistent fuer Tipps, Strategien und Fragen rund ums Angeln.",
   "Digitales Fangbuch: Dokumentiere jeden Fang mit Foto, Gewicht, Laenge und Standort.",
   "Interaktive Angelkarte: Finde Spots, Vereine, Angelparks und Gewaesser in deiner Naehe.",
   "Eigene Spots: Speichere deine Lieblingsplaetze und teile sie privat mit Freunden.",
@@ -73,7 +73,7 @@ const getDefaultTips = (user, location) => {
   } else {
     tips.push({
       icon: <Lightbulb className="w-4 h-4 text-yellow-400" />,
-      text: "Willkommen bei CatchGbt!",
+      text: "Willkommen bei BaitBuddy!",
     });
   }
 

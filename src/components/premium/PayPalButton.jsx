@@ -12,8 +12,8 @@ export default function PayPalButton({ planId, planName, planPrice, onSuccess })
 
   const planFeatures = features[planId] || features.premium;
 
-  const mailSubject = encodeURIComponent(`CatchGBT Premium Upgrade – ${planName} (${planPrice} EUR)`);
-  const mailBody = encodeURIComponent(`Hallo CatchGBT-Team,\n\nichmoechte den ${planName}-Plan fuer ${planPrice} EUR/Monat upgraden.\n\nBitte sendet mir die Zahlungsdetails.\n\nVielen Dank!`);
+  const mailSubject = encodeURIComponent(`BaitBuddy Premium Upgrade – ${planName} (${planPrice} EUR)`);
+  const mailBody = encodeURIComponent(`Hallo BaitBuddy-Team,\n\nichmoechte den ${planName}-Plan fuer ${planPrice} EUR/Monat upgraden.\n\nBitte sendet mir die Zahlungsdetails.\n\nVielen Dank!`);
   const mailtoLink = `mailto:support@catchgbt.de?subject=${mailSubject}&body=${mailBody}`;
 
   return (

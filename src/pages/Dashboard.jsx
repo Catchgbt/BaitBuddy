@@ -492,7 +492,7 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
               <Brain className="w-7 h-7 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-bold text-white mb-1">KI-Buddy CatchGBT</h3>
+              <h3 className="text-lg font-bold text-white mb-1">KI-Buddy BaitBuddy</h3>
               <p className="text-sm text-gray-300 leading-snug">
                 Frag mich alles rund ums Angeln — oder steuere die App per Voice!
               </p>

@@ -19,6 +19,11 @@ echo -e "${BLUE}📦 Schritt 1: Frontend-Build (Vite)${NC}"
 npm run build
 echo -e "${GREEN}✓ Frontend erfolgreich gebaut${NC}\n"
 
+# Schritt 1b: Capacitor-Sync (Web-Assets + native Config in das Android-Projekt kopieren)
+echo -e "${BLUE}🔄 Schritt 1b: Capacitor-Sync (Android)${NC}"
+npx cap sync android
+echo -e "${GREEN}✓ Capacitor-Sync abgeschlossen${NC}\n"
+
 # Schritt 2: Überprüfung der Keystore-Datei
 echo -e "${BLUE}🔐 Schritt 2: Überprüfung der Keystore-Datei${NC}"
 if [ -f "android/keystore.properties" ]; then

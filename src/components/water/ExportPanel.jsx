@@ -143,8 +143,8 @@ export default function ExportPanel({ waterData }) {
     <p><strong>Mondphase-Einfluss:</strong> ${waterData.aiAnalysis.moonPhaseImpact}</p>
     
     <div class="footer">
-      <p>Generiert von CatchGBT Satelliten-Gewässeranalyse</p>
-      <p>© ${new Date().getFullYear()} CatchGBT - Alle Rechte vorbehalten</p>
+      <p>Generiert von BaitBuddy Satelliten-Gewässeranalyse</p>
+      <p>© ${new Date().getFullYear()} BaitBuddy - Alle Rechte vorbehalten</p>
     </div>
   </div>
 </body>
@@ -177,7 +177,7 @@ export default function ExportPanel({ waterData }) {
       return;
     }
 
-    const shareText = `Gewässer-Analyse\n\n${waterData.location.name}\nFang-Score: ${waterData.aiAnalysis.fishingScore}/100\nTemperatur: ${waterData.parameters.temperature.value.toFixed(1)}°C\n\nErstellt mit CatchGBT`;
+    const shareText = `Gewässer-Analyse\n\n${waterData.location.name}\nFang-Score: ${waterData.aiAnalysis.fishingScore}/100\nTemperatur: ${waterData.parameters.temperature.value.toFixed(1)}°C\n\nErstellt mit BaitBuddy`;
 
     if (navigator.share) {
       try {

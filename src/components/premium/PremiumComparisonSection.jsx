@@ -110,7 +110,7 @@ export default function PremiumComparisonSection() {
           Standard vs. Premium
         </div>
         <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-          Entdecke alle Funktionen von CatchGbt und erfahre, welche Vorteile dir Premium bietet.
+          Entdecke alle Funktionen von BaitBuddy und erfahre, welche Vorteile dir Premium bietet.
         </p>
         {isPremium && (
           <div className="flex items-center justify-center gap-2">

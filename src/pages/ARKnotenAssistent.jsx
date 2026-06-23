@@ -417,7 +417,7 @@ export default function ARKnotenAssistent() {
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
         
         <div className="absolute top-4 left-4 z-10">
-          <div className="text-2xl font-bold text-cyan-400">CatchGBT</div>
+          <div className="text-2xl font-bold text-cyan-400">BaitBuddy</div>
         </div>
         
         <div className="absolute top-4 right-4 z-10">

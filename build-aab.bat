@@ -19,6 +19,16 @@ if errorlevel 1 (
 echo ✓ Frontend erfolgreich gebaut
 echo.
 
+REM Schritt 1b: Capacitor-Sync (Web-Assets + native Config in das Android-Projekt kopieren)
+echo 🔄 Schritt 1b: Capacitor-Sync (Android)
+call npx cap sync android
+if errorlevel 1 (
+    echo ❌ Capacitor-Sync fehlgeschlagen
+    exit /b 1
+)
+echo ✓ Capacitor-Sync abgeschlossen
+echo.
+
 REM Schritt 2: Überprüfung der Keystore-Datei
 echo 🔐 Schritt 2: Überprüfung der Keystore-Datei
 if exist "android\keystore.properties" (

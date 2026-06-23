@@ -12,10 +12,10 @@ export default function Tutorials() {
           <MonitorPlay className="w-8 h-8 text-cyan-400" />
           <div>
             <h1 className="text-3xl font-bold text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]">
-              CatchGbt Tutorials
+              BaitBuddy Tutorials
             </h1>
             <p className="text-gray-400 text-sm mt-1">
-              Lerne alles über CatchGbt mit interaktiven Anleitungen
+              Lerne alles über BaitBuddy mit interaktiven Anleitungen
             </p>
           </div>
         </div>
@@ -33,7 +33,7 @@ export default function Tutorials() {
                 </CardHeader>
                 <CardContent className="space-y-4 flex-grow">
                   <p className="text-gray-300 text-base leading-relaxed">
-                    Hier findest du interaktive Anleitungen, um das Beste aus deiner CatchGbt App herauszuholen.
+                    Hier findest du interaktive Anleitungen, um das Beste aus deiner BaitBuddy App herauszuholen.
                     Wische nach rechts, um fortzufahren und die wichtigsten Funktionen kennenzulernen.
                   </p>
                   <div className="text-center py-4">

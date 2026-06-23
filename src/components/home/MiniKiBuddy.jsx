@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { catchgbtChat } from "@/functions/catchgbtChat";
 import { textToSpeech } from "@/functions/textToSpeech";
 
-const SYSTEM_PROMPT = `Du bist CatchGBT, ein erfahrener Angel-Assistent. Du hilfst Anglern mit Tipps zu Fischarten, Koeder, Spots, Wetter, Ausruestung und Technik. Antworte auf Deutsch, freundlich und direkt. Halte Antworten kurz und praxisnah.`;
+const SYSTEM_PROMPT = `Du bist BaitBuddy, ein erfahrener Angel-Assistent. Du hilfst Anglern mit Tipps zu Fischarten, Koeder, Spots, Wetter, Ausruestung und Technik. Antworte auf Deutsch, freundlich und direkt. Halte Antworten kurz und praxisnah.`;
 
 // Globale Referenz auf aktuelle Audio-Wiedergabe, damit alte Wiedergaben gestoppt werden koennen
 let currentAudioRef = null;

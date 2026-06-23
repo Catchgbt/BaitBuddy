@@ -98,7 +98,7 @@ Die besten Spots sind oft versteckt.
 
 **Tools:** Google Maps Satellitenansicht zeigt oft vielversprechende Strukturen.
 
-Mit der CatchGbt Karte kannst du deine Spots speichern und Notizen hinterlegen!`,
+Mit der BaitBuddy Karte kannst du deine Spots speichern und Notizen hinterlegen!`,
 
   `**Karpfenangeln - Ausruestung:**
 
@@ -126,7 +126,7 @@ Im Winter konzentrieren sich Fische an bestimmten Stellen.
 
 **Strategien:** Langsame Koeadfuehrung, tiefe Zonen bevorzugen, unglueckliche Stellen meiden.
 
-Hol dir das volle CatchGbt-Erlebnis mit einem kostenlosen Account!`
+Hol dir das volle BaitBuddy-Erlebnis mit einem kostenlosen Account!`
 ];
 
 export function getRandomDemoResponse(questionText) {

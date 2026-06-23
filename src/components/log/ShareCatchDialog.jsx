@@ -21,7 +21,7 @@ function buildCaption(catchItem) {
   }
   const head = parts.join(': ');
   const body = stats.length ? `\n${stats.join(' | ')}` : '';
-  return `${head}${body}\n\n#angeln #catchgbt #fishing #petriheil`;
+  return `${head}${body}\n\n#angeln #baitbuddy #fishing #petriheil`;
 }
 
 async function downloadImage(url, filename) {
