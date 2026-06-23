@@ -1,14 +1,22 @@
 {
-  "name": "Catchly – KI Angelbegleiter",
-  "short_name": "Catchly",
+  "id": "/",
+  "name": "BaitBuddy – KI Angelbegleiter",
+  "short_name": "BaitBuddy",
   "description": "Dein KI-gestützter Angelbegleiter mit Fangbuch, Spots und Wetteranalyse",
-  "start_url": "/",
+  "lang": "de",
+  "dir": "ltr",
+  "start_url": "/?source=pwa",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#0a0f1a",
   "theme_color": "#0e7490",
   "orientation": "portrait-primary",
+  "categories": ["sports", "lifestyle", "navigation"],
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
