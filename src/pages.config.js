@@ -98,6 +98,7 @@ const VoiceLecture = lazy(() => import('./pages/VoiceLecture'));
 const WaterAnalysis = lazy(() => import('./pages/WaterAnalysis'));
 const Weather = lazy(() => import('./pages/Weather'));
 const WeatherAlerts = lazy(() => import('./pages/WeatherAlerts'));
+const WorldCup2026 = lazy(() => import('./pages/WorldCup2026'));
 import __Layout from './Layout.jsx';
 
 
@@ -148,6 +149,7 @@ export const PAGES = {
     "WaterAnalysis": WaterAnalysis,
     "Weather": Weather,
     "WeatherAlerts": WeatherAlerts,
+    "WorldCup2026": WorldCup2026,
 }
 
 export const pagesConfig = {
