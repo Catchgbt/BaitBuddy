@@ -14,7 +14,7 @@ export default function AGB() {
           
           <h2 className="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">§ 1 Geltungsbereich</h2>
           <p>
-            Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für die Nutzung der Catchly-App und aller damit verbundenen Dienste, 
+            Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für die Nutzung der BaitBuddy-App und aller damit verbundenen Dienste, 
             die von Sebastian Schorn (nachfolgend "Anbieter") bereitgestellt werden.
           </p>
           <p>
@@ -23,7 +23,7 @@ export default function AGB() {
 
           <h2 className="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">§ 2 Leistungsbeschreibung</h2>
           <p>
-            Catchly ist eine digitale Anwendung für Angler, die folgende Funktionen bietet:
+            BaitBuddy ist eine digitale Anwendung für Angler, die folgende Funktionen bietet:
           </p>
           <ul>
             <li>Digitales Fangbuch zur Dokumentation von Fängen</li>

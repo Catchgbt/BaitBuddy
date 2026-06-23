@@ -266,7 +266,7 @@ function DeviceIntegrationInner() {
         >
           <h1 className="text-4xl font-bold text-white mb-3">Smart Geräte-Integration</h1>
           <p className="text-gray-400 text-lg max-w-3xl mx-auto">
-            Verbinde professionelle Angel-Hardware mit CatchGbt für automatisierte Datenerfassung, 
+            Verbinde professionelle Angel-Hardware mit BaitBuddy für automatisierte Datenerfassung, 
             präzise Analysen und intelligente Fang-Vorhersagen.
           </p>
         </motion.div>
@@ -420,7 +420,7 @@ function DeviceIntegrationInner() {
                             <div className="lg:w-80">
                               <h4 className="text-white font-medium mb-3 flex items-center gap-2">
                                 <Zap className="w-4 h-4 text-emerald-400" />
-                                CatchGbt Integration
+                                BaitBuddy Integration
                               </h4>
                               <div className="space-y-3">
                                 {Object.entries(device.integration).map(([type, description]) => (

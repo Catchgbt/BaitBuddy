@@ -35,7 +35,7 @@ export default function TrialOfferPopup({ currentPlan, onPurchaseSuccess }) {
   const handlePurchase = async () => {
     if (!isGooglePlayBillingAvailable()) {
       toast.error("Käufe nur in der Android-App", {
-        description: "Bitte nutze die CatchGBT Android-App im Play Store."
+        description: "Bitte nutze die BaitBuddy Android-App im Play Store."
       });
       return;
     }
@@ -77,7 +77,7 @@ export default function TrialOfferPopup({ currentPlan, onPurchaseSuccess }) {
             Alle Premium-Funktionen testen
           </DialogTitle>
           <DialogDescription className="text-center text-gray-400 pt-2">
-            Schalte für 10 Tage alle Funktionen frei und entdecke das volle Potenzial von CatchGBT.
+            Schalte für 10 Tage alle Funktionen frei und entdecke das volle Potenzial von BaitBuddy.
           </DialogDescription>
         </DialogHeader>
 

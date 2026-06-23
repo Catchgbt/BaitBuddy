@@ -12,7 +12,7 @@ export default function ShopPage() {
         
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]">
-            CatchGbt Shop
+            BaitBuddy Shop
           </h1>
           <p className="text-gray-400">
             Demnächst verfügbar: Ausrüstung, Merchandise und mehr!
@@ -41,7 +41,7 @@ export default function ShopPage() {
           <Card className="glass-morphism border-gray-800 rounded-2xl">
             <CardHeader>
               <CardTitle className="text-cyan-400 drop-shadow-[0_0_12px_rgba(34,211,238,0.7)]">
-                CatchGbt Merchandise
+                BaitBuddy Merchandise
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -49,7 +49,7 @@ export default function ShopPage() {
                 <div className="text-6xl mb-4">M</div>
                 <h3 className="text-lg font-semibold text-white mb-2">Bald verfügbar!</h3>
                 <p className="text-gray-400 text-sm">
-                  T-Shirts, Caps und mehr mit dem CatchGbt Logo.
+                  T-Shirts, Caps und mehr mit dem BaitBuddy Logo.
                 </p>
               </div>
             </CardContent>

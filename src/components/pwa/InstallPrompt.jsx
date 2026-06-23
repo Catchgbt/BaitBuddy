@@ -68,7 +68,7 @@ export default function InstallPrompt() {
 
                 <div className="flex-1 min-w-0">
                   <h3 className="text-white font-semibold text-sm mb-1">
-                    CatchGBT installieren
+                    BaitBuddy installieren
                   </h3>
                   <p className="text-gray-400 text-xs mb-3">
                     Zum Startbildschirm hinzufuegen fuer schnelleren Zugriff und Offline-Nutzung

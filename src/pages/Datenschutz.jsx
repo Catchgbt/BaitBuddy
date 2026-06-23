@@ -18,7 +18,7 @@ export default function Datenschutz() {
       <Card className="glass-morphism border-gray-800 rounded-2xl">
         <CardHeader>
           <CardTitle className="text-cyan-400 drop-shadow-[0_0_12px_rgba(34,211,238,0.7)] text-xl sm:text-2xl">
-            Datenschutzerklärung - Catchly
+            Datenschutzerklärung - BaitBuddy
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -41,7 +41,7 @@ export default function Datenschutz() {
           </Section>
 
           <Section number="3" title="Verarbeitete Daten">
-            <p>Die App „Catchly" verarbeitet - abhängig von der Nutzung - folgende Daten:</p>
+            <p>Die App „BaitBuddy" verarbeitet - abhängig von der Nutzung - folgende Daten:</p>
             <ul className="list-disc pl-6 space-y-1">
               <li>Geräte- und Nutzungsdaten (z. B. Betriebssystem, App-Version, technische Logdaten)</li>
               <li>Standortdaten (GPS) nur nach aktiver Einwilligung des Nutzers</li>

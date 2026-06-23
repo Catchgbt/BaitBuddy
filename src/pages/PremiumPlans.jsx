@@ -138,7 +138,7 @@ export default function PremiumPlans() {
       popular: false,
       features: [
         'Alles aus Free',
-        'KI-Buddy Chat (unbegrenzt) - CatchGBT',
+        'KI-Buddy Chat (unbegrenzt) - BaitBuddy',
         'KI-Foto-Analyse von Faengen (unbegrenzt)',
         'Wetter 5 Tage + Wetter-Alarme',
         'Eigene Spots speichern & verwalten',

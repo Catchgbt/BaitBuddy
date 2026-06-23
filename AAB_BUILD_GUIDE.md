@@ -46,6 +46,9 @@ versionName "X.Y.Z"  // Semantic versioning (z.B. "1.0.0", "1.0.1", "1.1.0")
 # Frontend App bauen
 npm run build
 
+# Capacitor-Sync: Web-Assets + native Config ins Android-Projekt kopieren
+npx cap sync android
+
 # Android-Build mit Gradle
 cd android
 ./gradlew bundleRelease   # Erstellt AAB-Datei
@@ -91,8 +94,8 @@ bundletool install-apks --apks=app.apks
    ```
 5. Überprüfe:
    - **Release Notes** (Deutsch/English)
-   - **Privacy Policy URL**: https://bait-buddy.vercel.app/privacy
-   - **Terms of Service**: https://bait-buddy.vercel.app/terms
+   - **Privacy Policy URL** (öffentlich erreichbar, ohne Login): https://vecxtgwxqzrogthqqdys.supabase.co/functions/v1/legal/datenschutz
+   - **Terms of Service** (öffentlich erreichbar, ohne Login): https://vecxtgwxqzrogthqqdys.supabase.co/functions/v1/legal/agb
    - **App Screenshots** (4.7", 5.4", 7.3" Tablets)
    - **App Title** (50 Zeichen max)
    - **Short Description** (80 Zeichen max)

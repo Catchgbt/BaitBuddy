@@ -82,7 +82,7 @@ function requestNativeToken(nonce) {
  * 1. Holt Token von der nativen Schicht
  * 2. Schickt ihn an das Backend zur Verifizierung
  *
- * @param {string} packageName - Der Package-Name der Android-App (z.B. "com.catchly.app")
+ * @param {string} packageName - Der Package-Name der Android-App (z.B. "app.baitbuddy.mobile")
  * @returns {Promise<{available: boolean, trusted?: boolean, verdict?: object, error?: string}>}
  */
 export async function checkIntegrity(packageName) {

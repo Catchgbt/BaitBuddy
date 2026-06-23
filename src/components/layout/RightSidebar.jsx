@@ -18,7 +18,7 @@ export default function RightSidebar({ isOpen, setIsOpen, currentPageName }) {
   { name: "Licenses", title: "Angelschein & Lizenzen", icon: Award },
   { name: "Rules", title: "Regeln & Schonzeiten", icon: FileText },
   { name: "Settings", title: "Einstellungen", icon: Settings },
-  { name: "Website", title: "CatchGbt Website", icon: Globe, external: true, url: "https://catchgbt-q7scna.manus.space/" }];
+  { name: "Website", title: "BaitBuddy Website", icon: Globe, external: true, url: "https://catchgbt-q7scna.manus.space/" }];
 
 
   const handleItemClick = () => {
