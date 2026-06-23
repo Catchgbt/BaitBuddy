@@ -20,6 +20,7 @@ import { usePredictivePrefetch } from "@/hooks/usePredictivePrefetch";
 import PageContainer from "@/components/layout/PageContainer";
 import CommunityPostDialog from "@/components/community/CommunityPostDialog";
 import WeatherWarningBanner from "@/components/weather/WeatherWarningBanner";
+import WaterScene from "@/components/home/WaterScene";
 
 export default function Dashboard() {
   const queryClient = useQueryClient();
@@ -414,8 +415,9 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
+      <div className="min-h-screen flex items-center justify-center">
+        <WaterScene />
+        <div className="flex flex-col items-center gap-3 relative z-10">
           <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
           <div className="text-cyan-400/70 text-sm font-medium tracking-wide">Dashboard lädt...</div>
         </div>
@@ -424,8 +426,10 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
   }
 
     return (
+    <>
+    <WaterScene />
     <PageContainer maxWidth="max-w-7xl" enableSwipeRefresh={true} onRefresh={loadData}>
-      <div 
+      <div
         ref={statusAnnouncementRef}
         role="status"
         aria-live="polite"
@@ -633,5 +637,6 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
         onOpenChange={setShowCommunityDialog}
       />
     </PageContainer>
+    </>
     );
     }
