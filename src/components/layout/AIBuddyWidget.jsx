@@ -479,7 +479,7 @@ export default function AIBuddyWidget() {
 
   const smallBubbleStyle = {
     position: 'absolute',
-    bottom: AVATAR_SIZE + 12,
+    ...(isOnBottom ? { bottom: AVATAR_SIZE + 12 } : { top: AVATAR_SIZE + 12 }),
     ...(isOnRight ? { right: 0 } : { left: 0 }),
   };
 
@@ -505,10 +505,6 @@ export default function AIBuddyWidget() {
         className: `absolute -top-2 ${isOnRight ? 'right-6' : 'left-6'} w-0 h-0 border-l-[6px] border-r-[6px] border-b-[6px] border-l-transparent border-r-transparent border-b-blue-200`,
       };
 
-  if (isHidden) {
-    return null;
-  }
-
   return (
     <>
       <style>{BUDDY_TEXT_CSS}</style>
@@ -523,9 +519,9 @@ export default function AIBuddyWidget() {
           height: AVATAR_SIZE,
         }}
       >
-        {/* Small Buddy Voice Bubble */}
+        {/* Small Buddy Voice Bubble — nur wenn nicht versteckt */}
         <AnimatePresence>
-          {showSmallBubble && (
+          {!isHidden && showSmallBubble && (
             <motion.div
               initial={{ opacity: 0, scale: 0.8, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -539,9 +535,9 @@ export default function AIBuddyWidget() {
           )}
         </AnimatePresence>
 
-        {/* Chat Bubble */}
+        {/* Chat Bubble — nur wenn nicht versteckt */}
         <AnimatePresence>
-          {isOpen && (
+          {!isHidden && isOpen && (
             <motion.div
               variants={bubbleVariants}
               initial="hidden"
