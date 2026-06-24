@@ -445,4 +445,85 @@ Antworte AUSSCHLIESSLICH mit einem gültigen JSON-Objekt in exakt diesem Format,
   }
 });
 
+// ── OpenAI Realtime (Echtzeit-Sprachgespräch, Speech-to-Speech) ──────────────
+// Mintet ein kurzlebiges Ephemeral-Token. Der echte OPENAI_API_KEY bleibt
+// ausschließlich serverseitig; der Browser baut damit direkt die WebRTC-
+// Verbindung zu OpenAI auf. Der Key wird tolerant auch unter abweichenden
+// Variablennamen gefunden (OPENAI_API_KEY, Openai_key, …).
+function getOpenAIKey() {
+  return process.env.OPENAI_API_KEY
+    || Object.entries(process.env).find(([k, v]) => /open.?_?ai/i.test(k) && /key|token|secret/i.test(k) && v)?.[1]
+    || null;
+}
+
+router.post('/ai/realtime-session', requireAuth, async (req, res) => {
+  const apiKey = getOpenAIKey();
+  if (!apiKey) {
+    const envNames = Object.keys(process.env).filter(k => /open|realtime|voice/i.test(k)).sort();
+    return res.status(503).json({
+      error: 'Voice nicht konfiguriert. Bitte OPENAI_API_KEY als Vercel-Umgebungsvariable setzen.',
+      env_names: envNames
+    });
+  }
+
+  const model = process.env.OPENAI_REALTIME_MODEL || 'gpt-4o-realtime-preview-2024-12-17';
+  const voice = process.env.OPENAI_REALTIME_VOICE || 'verse';
+
+  try {
+    // Persönlichen Kontext laden, damit sich das Gespräch echt anfühlt
+    const parts = [];
+    const { data: catches } = await supabase
+      .from('catches').select('species,length_cm,bait_used,catch_time')
+      .eq('created_by', req.user.email)
+      .order('catch_time', { ascending: false }).limit(8);
+    if (catches?.length) {
+      parts.push('Letzte Fänge: ' + catches.map(c =>
+        `${c.species || '?'} (${c.length_cm || '?'}cm${c.bait_used ? ', Köder ' + c.bait_used : ''})`
+      ).join(', '));
+    }
+    try {
+      const { data: rules } = await supabase.from('rule_entries').select('fish,region,closed_from,closed_to').limit(40);
+      const active = (rules || []).filter(r => isInClosedSeason(r.closed_from, r.closed_to));
+      if (active.length) {
+        parts.push('Aktive Schonzeiten gerade: ' + active.map(r => `${r.fish} (${r.region}) bis ${r.closed_to}`).join(', '));
+      }
+    } catch { /* Schonzeiten optional */ }
+    const ctx = parts.length ? `\n\nWas du über diesen Angler weißt:\n- ${parts.join('\n- ')}` : '';
+
+    const instructions = `Du bist BaitBuddy – ein erfahrener, sympathischer Angel-Kumpel und Experte. `
+      + `Du sprichst Deutsch und redest locker und natürlich wie in einem echten Gespräch am Wasser, `
+      + `nicht wie ein steifer Assistent. Halte deine Antworten kurz und gesprächig (meist 1 bis 3 Sätze), `
+      + `nutze Alltagssprache, stell auch mal eine kurze Rückfrage und zeig echtes Interesse. `
+      + `Du hilfst bei Ködern, Montagen, Techniken, Wetter, Schonzeiten, Spots und allem rund ums Angeln. `
+      + `Wenn du etwas nicht sicher weißt, sag es ehrlich statt zu raten. `
+      + `Sprich keine Sonderzeichen, Sternchen oder Aufzählungspunkte aus – formuliere alles als flüssige Sätze.` + ctx;
+
+    const r = await fetch('https://api.openai.com/v1/realtime/sessions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'OpenAI-Beta': 'realtime=v1'
+      },
+      body: JSON.stringify({
+        model,
+        voice,
+        modalities: ['audio', 'text'],
+        instructions,
+        input_audio_transcription: { model: 'whisper-1' },
+        turn_detection: { type: 'server_vad', threshold: 0.5, prefix_padding_ms: 300, silence_duration_ms: 600, create_response: true }
+      })
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      console.error('[Realtime Session Error]', data?.error || data);
+      return res.status(502).json({ error: data?.error?.message || 'OpenAI Realtime Fehler' });
+    }
+    return res.json({ ok: true, client_secret: data.client_secret, model, voice });
+  } catch (e) {
+    console.error('[Realtime Session Error]', e.message);
+    return res.status(500).json({ error: e.message });
+  }
+});
+
 export default router;

@@ -247,6 +247,7 @@ export const entities = entitiesProxy;
 // ── Function → Endpoint Mapping ───────────────────────────────────────────────
 const FUNCTION_MAP = {
   catchgbtChat:           (d) => api.post('/api/ai/chat', d),
+  realtimeSession:        (d) => api.post('/api/ai/realtime-session', d || {}),
   getPlanStatus:          ()  => api.get('/api/premium/status'),
   textToSpeech:           (d) => api.post('/api/ai/tts', d),
   backendTextToSpeech:    (d) => api.post('/api/ai/tts', d),

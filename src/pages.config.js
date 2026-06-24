@@ -93,6 +93,7 @@ const StartFishing = lazy(() => import('./pages/StartFishing'));
 const TripPlanner = lazy(() => import('./pages/TripPlanner'));
 const Tutorials = lazy(() => import('./pages/Tutorials'));
 const UsedGear = lazy(() => import('./pages/UsedGear'));
+const VoiceChat = lazy(() => import('./pages/VoiceChat'));
 const VoiceControl = lazy(() => import('./pages/VoiceControl'));
 const VoiceLecture = lazy(() => import('./pages/VoiceLecture'));
 const WaterAnalysis = lazy(() => import('./pages/WaterAnalysis'));
@@ -143,6 +144,7 @@ export const PAGES = {
     "TripPlanner": TripPlanner,
     "Tutorials": Tutorials,
     "UsedGear": UsedGear,
+    "VoiceChat": VoiceChat,
     "VoiceControl": VoiceControl,
     "VoiceLecture": VoiceLecture,
     "WaterAnalysis": WaterAnalysis,
