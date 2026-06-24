@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { api } from '@/api/client';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { Send, Volume2, VolumeX, Mic, MicOff } from 'lucide-react';
+import { Send, Volume2, VolumeX, Mic, MicOff, Phone } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AIAssistant() {
@@ -104,7 +104,7 @@ export default function AIAssistant() {
         );
       });
 
-      const { reply, action } = await api.post('/api/chat', {
+      const { reply, action } = await api.post('/ai/chat', {
         messages: [...messages, userMsg],
         userLocation: loc
       });
@@ -155,20 +155,29 @@ export default function AIAssistant() {
           <h1 className="text-lg font-bold text-white">🤖 KI Angel-Assistent</h1>
           <p className="text-xs text-gray-500">Powered by Claude AI</p>
         </div>
-        <button
-          onClick={() => {
-            if (speaking) stopSpeaking();
-            setAutoSpeak(v => !v);
-          }}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all border ${
-            autoSpeak
-              ? 'bg-cyan-900/40 border-cyan-700 text-cyan-400'
-              : 'bg-gray-800 border-gray-700 text-gray-500'
-          }`}
-        >
-          {autoSpeak ? <Volume2 size={14} /> : <VolumeX size={14} />}
-          {autoSpeak ? 'Ton an' : 'Ton aus'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate('/app/voice')}
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold shadow-lg transition-colors"
+            title="Echtzeit-Sprachgespräch starten"
+          >
+            <Phone size={16} /> Live reden
+          </button>
+          <button
+            onClick={() => {
+              if (speaking) stopSpeaking();
+              setAutoSpeak(v => !v);
+            }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all border ${
+              autoSpeak
+                ? 'bg-cyan-900/40 border-cyan-700 text-cyan-400'
+                : 'bg-gray-800 border-gray-700 text-gray-500'
+            }`}
+          >
+            {autoSpeak ? <Volume2 size={14} /> : <VolumeX size={14} />}
+            {autoSpeak ? 'Ton an' : 'Ton aus'}
+          </button>
+        </div>
       </div>
 
       {/* Nachrichten */}
