@@ -9,7 +9,7 @@ import { ai } from '@/api/frontendClient';
 import { useElevenLabsVoice } from '@/hooks/useElevenLabsVoice';
 import { speakWithBrowserTTS } from '@/components/utils/browserTTS';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Mic, Send, X, MessageCircle } from 'lucide-react';
+import { Mic, Send, X } from 'lucide-react';
 
 const STORAGE_KEY = 'buddy-widget-pos';
 const VISITED_PAGES_KEY = 'buddy-visited-pages';
@@ -482,21 +482,6 @@ export default function AIBuddyWidget() {
 
           {/* Avatar with Voice Toggle */}
           <div className="flex items-center gap-2">
-            {/* Voice Toggle Button */}
-            <motion.button
-              onClick={handleToggleBuddyVoice}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className={`p-2 rounded-full transition-colors ${
-                buddyVoiceEnabled
-                  ? 'bg-blue-500 text-white hover:bg-blue-600'
-                  : 'bg-gray-300 text-gray-600 hover:bg-gray-400'
-              }`}
-              title={buddyVoiceEnabled ? 'KI Buddy Voice aktiviert' : 'KI Buddy Voice deaktiviert'}
-            >
-              <MessageCircle size={18} />
-            </motion.button>
-
             {/* Avatar Button */}
             <motion.button
               key={currentPage}
