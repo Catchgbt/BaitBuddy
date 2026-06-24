@@ -1,0 +1,17 @@
+{
+  "extends": "./jsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "maxNodeModuleJsDepth": 0,
+    "ignoreDeprecations": "5.0"
+  },
+  "include": [
+    "src/vite-env.d.ts",
+    "src/services/**/*.js",
+    "src/api/**/*.js",
+    "src/utils/**/*.js",
+    "src/entities/**/*.js",
+    "src/integrations/**/*.js"
+  ],
+  "exclude": ["node_modules", "dist"]
+}

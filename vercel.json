@@ -1,17 +1,50 @@
 {
-  "buildCommand": "cd frontend && npm install && npm run build",
-  "outputDirectory": "frontend/dist",
-  "installCommand": "cd frontend && npm install",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install --legacy-peer-deps && cd backend && npm install",
   "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/[...path]" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ],
+  "headers": [
     {
-      "source": "/api/:path*",
-      "destination": "https://yejiqenqdzupauddjcyi.supabase.co/functions/v1/api/:path*"
+      "source": "/sw.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+        { "key": "Service-Worker-Allowed", "value": "/" }
+      ]
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "source": "/manifest.json",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=3600" }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/icons/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=604800" }
+      ]
     }
   ],
-  "cleanUrls": true,
-  "trailingSlash": false
+  "crons": [
+    {
+      "path": "/api/admin/events/auto-archive",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/admin/rewards/auto-activate",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/admin/leaderboards/monthly/generate",
+      "schedule": "0 0 1 * *"
+    }
+  ]
 }

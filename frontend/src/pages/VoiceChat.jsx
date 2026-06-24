@@ -177,7 +177,7 @@ export default function VoiceChat() {
           <h1 className="text-lg font-bold text-white">🎙️ Live-Gespräch</h1>
           <p className="text-xs text-gray-500">Echtzeit-Sprache · OpenAI Realtime</p>
         </div>
-        <button onClick={() => { hangUp(); navigate('/chat'); }} className="p-2 text-gray-500 hover:text-white">
+        <button onClick={() => { hangUp(); navigate('/app/chat'); }} className="p-2 text-gray-500 hover:text-white">
           <X size={20} />
         </button>
       </div>

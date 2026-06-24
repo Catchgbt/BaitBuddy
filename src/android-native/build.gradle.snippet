@@ -1,0 +1,10 @@
+// In app/build.gradle innerhalb des dependencies { } Blocks einfuegen:
+
+dependencies {
+    def billing_version = "8.3.0"
+    implementation "com.android.billingclient:billing:$billing_version"
+    implementation "com.android.billingclient:billing-ktx:$billing_version"
+
+    // Coroutines fuer asynchrone Billing-Calls
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
+}

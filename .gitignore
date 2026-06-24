@@ -1,5 +1,47 @@
-node_modules/
-dist/
-.env.local
-.DS_Store
+#env
+.env
+.env.*
+
+# Logs
+logs
+*.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+.vite
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+.env
+
+# Android / Capacitor
+android/.gradle/
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/build/
+android/local.properties
+android/.idea/
+android/*.iml
+# Signing secrets — NEVER commit
+android/keystore.properties
+android/app/*.keystore
+android/app/*.jks
+*.aab
+*.apkbathymetry_data/
+*.log

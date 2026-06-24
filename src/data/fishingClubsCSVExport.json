@@ -1,0 +1,8226 @@
+[
+  {
+    "id": "68e9726e8247a0fd4ea4d870",
+    "name": "Deutscher Angelfischerverband e.V. (DAFV)",
+    "category": "club",
+    "city": "Berlin",
+    "postal_code": "10117",
+    "street": "Reinhardtstraße 14",
+    "coordinates": {
+      "lat": 52.5234,
+      "lng": 13.3883
+    },
+    "website": "https://www.dafv.de/",
+    "phone": "030 97104379",
+    "email": "info@dafv.de",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d871",
+    "name": "Sport- und Angelverein Breitehorn e.V.",
+    "category": "club",
+    "city": "Berlin",
+    "postal_code": "14089",
+    "street": null,
+    "coordinates": {
+      "lat": 52.4472,
+      "lng": 13.2044
+    },
+    "website": "",
+    "phone": "030 3651000",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d872",
+    "name": "AV Sonntagsfreude e.V. Berlin",
+    "category": "club",
+    "city": "Berlin",
+    "postal_code": "14109",
+    "street": null,
+    "coordinates": {
+      "lat": 52.4269,
+      "lng": 13.1896
+    },
+    "website": "",
+    "phone": "+49 30 72019466",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d873",
+    "name": "Sportfischerverein Wilmersdorf 1947 e.V.",
+    "category": "club",
+    "city": "Berlin",
+    "postal_code": "12349",
+    "street": null,
+    "coordinates": {
+      "lat": 52.4607,
+      "lng": 13.4712
+    },
+    "website": "https://sfvw.jimdo.com/",
+    "phone": "030-32511447",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d874",
+    "name": "Marzahner Angel- und Naturfreunde EISVOGEL e.V.",
+    "category": "club",
+    "city": "Berlin",
+    "postal_code": "12685",
+    "street": null,
+    "coordinates": {
+      "lat": 52.5426,
+      "lng": 13.5607
+    },
+    "website": "http://www.angelzeit.de/",
+    "phone": "030-5454393",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d875",
+    "name": "Angelverein Bergedorf-West/Allermöhe e.V.",
+    "category": "club",
+    "city": "Hamburg",
+    "postal_code": "21033",
+    "street": null,
+    "coordinates": {
+      "lat": 53.4883,
+      "lng": 10.2055
+    },
+    "website": "http://www.av-bewe.de/",
+    "phone": "040 7355919",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d876",
+    "name": "Angel Sport Verein Overhaken",
+    "category": "club",
+    "city": "Hamburg",
+    "postal_code": "22111",
+    "street": null,
+    "coordinates": {
+      "lat": 53.5099,
+      "lng": 10.1256
+    },
+    "website": "http://www.asv-overhaken.de/",
+    "phone": "040 659 93 064",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d877",
+    "name": "Sportfischerverein Oldenburg e.V.",
+    "category": "club",
+    "city": "Oldenburg",
+    "postal_code": "26135",
+    "street": null,
+    "coordinates": {
+      "lat": 53.1435,
+      "lng": 8.2146
+    },
+    "website": "https://www.sportfischerverein-oldenburg.de/",
+    "phone": "0441 – 2048480",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d878",
+    "name": "Angler-Verein Nienburg/Weser e.V.",
+    "category": "club",
+    "city": "Nienburg",
+    "postal_code": "31582",
+    "street": null,
+    "coordinates": {
+      "lat": 52.6386,
+      "lng": 9.2084
+    },
+    "website": "",
+    "phone": "05021/912882",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d879",
+    "name": "ASV Münchhausen-Wersten 1932 e.V.",
+    "category": "club",
+    "city": "Düsseldorf",
+    "postal_code": "40227",
+    "street": null,
+    "coordinates": {
+      "lat": 51.2105,
+      "lng": 6.8078
+    },
+    "website": "http://www.asv-muenchhausen-wersten.de/",
+    "phone": "+49 211 78 24 87",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d87a",
+    "name": "Sportfischer-Club Dortmund e.V.",
+    "category": "club",
+    "city": "Dortmund",
+    "postal_code": "44319",
+    "street": null,
+    "coordinates": {
+      "lat": 51.4967,
+      "lng": 7.4397
+    },
+    "website": "http://www.sfcdo.de/",
+    "phone": "0231 213768",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d87b",
+    "name": "SAV Paderborn 1886 e.V.",
+    "category": "club",
+    "city": "Paderborn",
+    "postal_code": "33106",
+    "street": null,
+    "coordinates": {
+      "lat": 51.7189,
+      "lng": 8.7544
+    },
+    "website": "https://paderborner-angelverein.de/",
+    "phone": "+49 5251 91186",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d87c",
+    "name": "Angelgemeinschaft St Hubert Escheln EV",
+    "category": "club",
+    "city": "Kempen",
+    "postal_code": "47906",
+    "street": null,
+    "coordinates": {
+      "lat": 51.3641,
+      "lng": 6.4187
+    },
+    "website": "",
+    "phone": "0 21 52 96 18 69",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d87d",
+    "name": "Bezirksfischereiverein München e.V.",
+    "category": "club",
+    "city": "München",
+    "postal_code": "81739",
+    "street": null,
+    "coordinates": {
+      "lat": 48.1076,
+      "lng": 11.6532
+    },
+    "website": "http://www.bfvm.de/",
+    "phone": "",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d87e",
+    "name": "Angelsportverein Landshut Bayern e.V.",
+    "category": "club",
+    "city": "Landshut",
+    "postal_code": "84028",
+    "street": null,
+    "coordinates": {
+      "lat": 48.5441,
+      "lng": 12.1469
+    },
+    "website": "http://www.asv-landshut.de/",
+    "phone": "",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d87f",
+    "name": "Fischereiverein Augsburg e.V.",
+    "category": "club",
+    "city": "Augsburg",
+    "postal_code": "86152",
+    "street": null,
+    "coordinates": {
+      "lat": 48.3668,
+      "lng": 10.8986
+    },
+    "website": "http://www.fva-ev.de/",
+    "phone": "",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d880",
+    "name": "ASV Hof e.V.",
+    "category": "club",
+    "city": "Hof",
+    "postal_code": "95030",
+    "street": null,
+    "coordinates": {
+      "lat": 50.3217,
+      "lng": 11.9218
+    },
+    "website": "http://www.asv-hof.de/",
+    "phone": "",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d881",
+    "name": "Württembergischer Anglerverein Stuttgart e.V.",
+    "category": "club",
+    "city": "Stuttgart",
+    "postal_code": "70378",
+    "street": null,
+    "coordinates": {
+      "lat": 48.8348,
+      "lng": 9.2017
+    },
+    "website": "http://www.wav-stuttgart.de/",
+    "phone": "",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d882",
+    "name": "Angelsportverein Sindelfingen e.V.",
+    "category": "club",
+    "city": "Sindelfingen",
+    "postal_code": "71067",
+    "street": null,
+    "coordinates": {
+      "lat": 48.7134,
+      "lng": 9.0021
+    },
+    "website": "http://www.asv-sindelfingen.de/",
+    "phone": "",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d883",
+    "name": "Fischereiverein Heilbronn e.V.",
+    "category": "club",
+    "city": "Heilbronn",
+    "postal_code": "74072",
+    "street": null,
+    "coordinates": {
+      "lat": 49.1427,
+      "lng": 9.2109
+    },
+    "website": "http://www.fv-heilbronn.de/",
+    "phone": "",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d884",
+    "name": "Anglerverein Karlsruhe 1897 e.V.",
+    "category": "club",
+    "city": "Karlsruhe",
+    "postal_code": "76185",
+    "street": null,
+    "coordinates": {
+      "lat": 49.0069,
+      "lng": 8.4037
+    },
+    "website": "http://www.anglerverein-karlsruhe.de/",
+    "phone": "",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d885",
+    "name": "ASV Herborn-Seelbach",
+    "category": "club",
+    "city": "Herborn",
+    "postal_code": "35745",
+    "street": null,
+    "coordinates": {
+      "lat": 50.6796,
+      "lng": 8.3036
+    },
+    "website": "",
+    "phone": "02772 63293",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d886",
+    "name": "Frankfurter Fischereiverein von 1875 e.V.",
+    "category": "club",
+    "city": "Frankfurt",
+    "postal_code": "60433",
+    "street": null,
+    "coordinates": {
+      "lat": 50.1852,
+      "lng": 8.6792
+    },
+    "website": "http://www.frankfurter-fischereiverein.de/",
+    "phone": "",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d887",
+    "name": "Angelsportverein Bad Vilbel 53/67 e.V.",
+    "category": "club",
+    "city": "Bad Vilbel",
+    "postal_code": "61118",
+    "street": null,
+    "coordinates": {
+      "lat": 50.1781,
+      "lng": 8.7398
+    },
+    "website": "http://www.asv-bad-vilbel.de/",
+    "phone": "",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d888",
+    "name": "Anglerverein Flotthafen Stralsund e.V.",
+    "category": "club",
+    "city": "Stralsund",
+    "postal_code": "18439",
+    "street": null,
+    "coordinates": {
+      "lat": 54.3088,
+      "lng": 13.0874
+    },
+    "website": "",
+    "phone": "03831 – 293260",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d889",
+    "name": "Anglerverein Neubrandenburg e.V.",
+    "category": "club",
+    "city": "Neubrandenburg",
+    "postal_code": "17033",
+    "street": null,
+    "coordinates": {
+      "lat": 53.5574,
+      "lng": 13.2602
+    },
+    "website": "http://www.anglerverein-neubrandenburg.de/",
+    "phone": "",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d88a",
+    "name": "1. Güstrower Anglerverein 1923 e.V.",
+    "category": "club",
+    "city": "Güstrow",
+    "postal_code": "18273",
+    "street": null,
+    "coordinates": {
+      "lat": 53.7974,
+      "lng": 12.1759
+    },
+    "website": "http://www.guestrower-angelverein.de/",
+    "phone": "",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d88b",
+    "name": "Anglervereinigung Leipzig '95 e.V.",
+    "category": "club",
+    "city": "Leipzig",
+    "postal_code": "04209",
+    "street": null,
+    "coordinates": {
+      "lat": 51.3172,
+      "lng": 12.328
+    },
+    "website": "http://www.avl-95.de/",
+    "phone": "0341 – 2270466",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d88c",
+    "name": "Angelverein Dresden-Blasewitz e.V.",
+    "category": "club",
+    "city": "Dresden",
+    "postal_code": "01237",
+    "street": null,
+    "coordinates": {
+      "lat": 51.0527,
+      "lng": 13.7906
+    },
+    "website": "",
+    "phone": "0351 2571327",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d88d",
+    "name": "Chemnitzer Anglerverein 94 e.V.",
+    "category": "club",
+    "city": "Chemnitz",
+    "postal_code": "09128",
+    "street": null,
+    "coordinates": {
+      "lat": 50.8357,
+      "lng": 12.9213
+    },
+    "website": "http://www.chemnitzer-anglerverein-94ev.de/",
+    "phone": "",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d88e",
+    "name": "Angelverein Cottbus Nord e.V.",
+    "category": "club",
+    "city": "Kolkwitz – Zahsow",
+    "postal_code": "03099",
+    "street": null,
+    "coordinates": {
+      "lat": 51.7565,
+      "lng": 14.4146
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d88f",
+    "name": "1. Potsdamer Anglerverein e.V.",
+    "category": "club",
+    "city": "Potsdam",
+    "postal_code": "14467",
+    "street": null,
+    "coordinates": {
+      "lat": 52.3906,
+      "lng": 13.0645
+    },
+    "website": "http://www.1pav.de/",
+    "phone": "",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d890",
+    "name": "Angelverein Neptun e.V.",
+    "category": "club",
+    "city": "Frankfurt/Oder",
+    "postal_code": "15236",
+    "street": null,
+    "coordinates": {
+      "lat": 52.3471,
+      "lng": 14.5506
+    },
+    "website": "http://www.av-neptun.de/",
+    "phone": "",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d891",
+    "name": "Angelverein Urnshausen e.V.",
+    "category": "club",
+    "city": "Urnshausen",
+    "postal_code": "36457",
+    "street": null,
+    "coordinates": {
+      "lat": 50.6833,
+      "lng": 10.2167
+    },
+    "website": "",
+    "phone": "0369647451",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e9726e8247a0fd4ea4d892",
+    "name": "Angelsportverein Hess. Lichtenau 1961 e.V",
+    "category": "club",
+    "city": "Hessisch Lichtenau",
+    "postal_code": "37235",
+    "street": null,
+    "coordinates": {
+      "lat": 51.1993,
+      "lng": 9.7195
+    },
+    "website": "http://www.asvheli.de/",
+    "phone": "",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e973ce224276e2f52f3aa4",
+    "name": "Fischers Park",
+    "category": "spot",
+    "city": "Wermelskirchen",
+    "postal_code": "42929",
+    "street": "Staehlsmühler Strasse 6",
+    "coordinates": {
+      "lat": 51.1392,
+      "lng": 7.2105
+    },
+    "website": "https://www.fischerspark.de",
+    "phone": "",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e973ce224276e2f52f3aa5",
+    "name": "Angelpark Lüneburger Heide",
+    "category": "spot",
+    "city": "Lüneburg",
+    "postal_code": "",
+    "street": null,
+    "coordinates": {
+      "lat": 53.2504,
+      "lng": 10.4143
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e973ce224276e2f52f3aa6",
+    "name": "Angelpark Oosbachtal",
+    "category": "spot",
+    "city": "Oosbachtal",
+    "postal_code": "",
+    "street": null,
+    "coordinates": {
+      "lat": 50.3342,
+      "lng": 7.5985
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e973ce224276e2f52f3aa7",
+    "name": "Fischhaus Letscher",
+    "category": "spot",
+    "city": "Altensteig",
+    "postal_code": "72213",
+    "street": "Zinsbachtal",
+    "coordinates": {
+      "lat": 48.5865,
+      "lng": 8.6045
+    },
+    "website": "",
+    "phone": "07453 / 4100",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e973ce224276e2f52f3aa8",
+    "name": "Ermstalfischerei",
+    "category": "spot",
+    "city": "Bad Urach",
+    "postal_code": "72574",
+    "street": "Enge 1",
+    "coordinates": {
+      "lat": 48.4918,
+      "lng": 9.4005
+    },
+    "website": "",
+    "phone": "07125 / 933862",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e973ce224276e2f52f3aa9",
+    "name": "Angel- und Freizeithof Weseloh",
+    "category": "spot",
+    "city": "Bruchhausen-Vilsen",
+    "postal_code": "27305",
+    "street": "Weseloher Str. 42",
+    "coordinates": {
+      "lat": 52.8293,
+      "lng": 8.9901
+    },
+    "website": "",
+    "phone": "04247 998996",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e973ce224276e2f52f3aaa",
+    "name": "Angelpark Tüschenbroich",
+    "category": "spot",
+    "city": "Tüschenbroich",
+    "postal_code": "",
+    "street": null,
+    "coordinates": {
+      "lat": 51.1206,
+      "lng": 6.2617
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e973ce224276e2f52f3aab",
+    "name": "Angelpark Teichhof",
+    "category": "spot",
+    "city": "Schleswig-Holstein",
+    "postal_code": "",
+    "street": null,
+    "coordinates": {
+      "lat": 54.5189,
+      "lng": 9.5595
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e973ce224276e2f52f3aac",
+    "name": "Angelpark Barweiler Mühle",
+    "category": "spot",
+    "city": "Barweiler",
+    "postal_code": "",
+    "street": null,
+    "coordinates": {
+      "lat": 50.3578,
+      "lng": 6.8456
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "68e973ce224276e2f52f3aad",
+    "name": "Angelpark Letscher",
+    "category": "spot",
+    "city": "Altensteig",
+    "postal_code": "72213",
+    "street": "Zinsbachwiesen 7",
+    "coordinates": {
+      "lat": 48.5865,
+      "lng": 8.6045
+    },
+    "website": "",
+    "phone": "07453 4100",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "6915bdb9e6492f5408032639",
+    "name": "Angler-Verein Achim e.V.",
+    "category": "club",
+    "city": "Achim",
+    "postal_code": "28832",
+    "street": "Achimer Bruch 9",
+    "coordinates": {
+      "lat": 53.0192108494,
+      "lng": 9.0187293291
+    },
+    "website": "https://www.anglerverein-achim.de",
+    "phone": "04202 61969",
+    "email": "info@anglerverein-achim.de",
+    "source": "Offizielle Kontaktseite des Vereins"
+  },
+  {
+    "id": "6915bdb9e6492f540803263a",
+    "name": "MAN Eisvogel e.V. Berlin",
+    "category": "club",
+    "city": "Berlin",
+    "postal_code": "12685",
+    "street": "Bruno-Baum-Straße 36",
+    "coordinates": {
+      "lat": 52.5396761,
+      "lng": 13.5447446
+    },
+    "website": "https://www.angelzeit.de",
+    "phone": "030 5454393",
+    "email": "",
+    "source": "Eintrag im Branchenverzeichnis (Cylex)"
+  },
+  {
+    "id": "6915bdb9e6492f540803263d",
+    "name": "Fischhaus Letscher & Angelpark",
+    "category": "spot",
+    "city": "Altensteig",
+    "postal_code": "72213",
+    "street": "Zinsbachwiesen 7",
+    "coordinates": {
+      "lat": 48.58135,
+      "lng": 8.57391
+    },
+    "website": "https://www.fischhaus-letscher.de",
+    "phone": "07453 4100",
+    "email": "info@fischhaus-letscher.de",
+    "source": "Offizielle Anfahrtsinfo (Website)"
+  },
+  {
+    "id": "6915bdb9e6492f540803263e",
+    "name": "Angelpark Neue Mühle",
+    "category": "spot",
+    "city": "Brandenburg an der Havel",
+    "postal_code": "14776",
+    "street": "Neue Mühle 3",
+    "coordinates": {
+      "lat": 52.344575,
+      "lng": 12.483269
+    },
+    "website": "https://www.angelpark-neue-muehle.de",
+    "phone": "0160 93112017",
+    "email": "petri-heil@angelpark-neue-muehle.de",
+    "source": "Offizielle Website des Angelparks"
+  },
+  {
+    "id": "698db1e032622784220c6741",
+    "name": "Fischers Park",
+    "category": "spot",
+    "city": "Wermelskirchen",
+    "postal_code": "42929",
+    "street": "Staelsmühler Str. 6",
+    "coordinates": {
+      "lat": 51.1368,
+      "lng": 7.0791
+    },
+    "website": "",
+    "phone": "+49 151 2201 2772",
+    "email": "info@fischers-park.de",
+    "source": "manual_import"
+  },
+  {
+    "id": "698db1e032622784220c6742",
+    "name": "Angelpark Teichhof",
+    "category": "spot",
+    "city": "Pahlen",
+    "postal_code": "25794",
+    "street": "Hauptstr. 116",
+    "coordinates": {
+      "lat": 54.1462,
+      "lng": 9.2583
+    },
+    "website": "",
+    "phone": "04803 205",
+    "email": "info@angelpark-teichhof.de",
+    "source": "manual_import"
+  },
+  {
+    "id": "698db1e032622784220c6743",
+    "name": "Angelpark Schermbeck",
+    "category": "spot",
+    "city": "Schermbeck",
+    "postal_code": "46514",
+    "street": "Am Paeppelnberg 44",
+    "coordinates": {
+      "lat": 51.6778,
+      "lng": 6.7594
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "698db1e032622784220c6744",
+    "name": "Angelpark Altenwalde",
+    "category": "spot",
+    "city": "Cuxhaven",
+    "postal_code": "27478",
+    "street": "Seeburg 6",
+    "coordinates": {
+      "lat": 53.8653,
+      "lng": 8.5741
+    },
+    "website": "",
+    "phone": "04723 713733",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "698db1e032622784220c6745",
+    "name": "Angelpark Zur Wurt",
+    "category": "spot",
+    "city": "Cappel",
+    "postal_code": "27632",
+    "street": "Wurster Str. 1",
+    "coordinates": {
+      "lat": 53.5729,
+      "lng": 8.7936
+    },
+    "website": "",
+    "phone": "04741 1228",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "698db1e032622784220c6746",
+    "name": "Forellenhof Etzel",
+    "category": "spot",
+    "city": "Friedeburg",
+    "postal_code": "26446",
+    "street": "Alter Postweg 11",
+    "coordinates": {
+      "lat": 53.5587,
+      "lng": 7.6134
+    },
+    "website": "",
+    "phone": "0174 2703734",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "698db1e032622784220c6747",
+    "name": "Angelteiche Beverstedt",
+    "category": "spot",
+    "city": "Beverstedt",
+    "postal_code": "27616",
+    "street": "Wehldorfer Straße 8",
+    "coordinates": {
+      "lat": 53.4841,
+      "lng": 8.7937
+    },
+    "website": "",
+    "phone": "04747 873330",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "698db1e032622784220c6748",
+    "name": "Forellenhof Fischer",
+    "category": "spot",
+    "city": "Geestland",
+    "postal_code": "27624",
+    "street": "Hüttenstraße 2",
+    "coordinates": {
+      "lat": 53.6795,
+      "lng": 8.5512
+    },
+    "website": "",
+    "phone": "04745 7076",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "698db1e032622784220c6749",
+    "name": "Angelsee Henjesweg",
+    "category": "spot",
+    "city": "Hude",
+    "postal_code": "27798",
+    "street": "Henjesweg",
+    "coordinates": {
+      "lat": 53.0702,
+      "lng": 8.5533
+    },
+    "website": "",
+    "phone": "0160 96804767",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "698db1e032622784220c674a",
+    "name": "Püchert Forellenhof",
+    "category": "spot",
+    "city": "Bienenbüttel-Grünhagen",
+    "postal_code": "29553",
+    "street": "Lüneburger Str. 6",
+    "coordinates": {
+      "lat": 53.0671,
+      "lng": 10.2301
+    },
+    "website": "",
+    "phone": "05823 1500",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "698db1e032622784220c674b",
+    "name": "Forellenhof Benecke",
+    "category": "spot",
+    "city": "Jelmstorf",
+    "postal_code": "29585",
+    "street": "An den Fischteichen 1",
+    "coordinates": {
+      "lat": 53.5043,
+      "lng": 10.3204
+    },
+    "website": "",
+    "phone": "05823 1811",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "698db1e032622784220c674c",
+    "name": "Fischzucht-Angelpark Weller",
+    "category": "spot",
+    "city": "Neuwied",
+    "postal_code": "56567",
+    "street": "Aubachstraße 85",
+    "coordinates": {
+      "lat": 50.4352,
+      "lng": 7.4585
+    },
+    "website": "",
+    "phone": "02631 953530",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "698db1e032622784220c674d",
+    "name": "Angelpark Steinfeld",
+    "category": "spot",
+    "city": "Steinfeld",
+    "postal_code": "49439",
+    "street": "Dammer Str. 25",
+    "coordinates": {
+      "lat": 52.5126,
+      "lng": 7.708
+    },
+    "website": "",
+    "phone": "0160 90367820",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "698db1e032622784220c674e",
+    "name": "Angelpark Wegberg",
+    "category": "spot",
+    "city": "Wegberg",
+    "postal_code": "41844",
+    "street": "In Bollenberg 34",
+    "coordinates": {
+      "lat": 51.2415,
+      "lng": 6.2847
+    },
+    "website": "",
+    "phone": "02434 5840",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "698db1e032622784220c674f",
+    "name": "Angelpark Tüschenbroich",
+    "category": "spot",
+    "city": "Wegberg",
+    "postal_code": "41844",
+    "street": "Zur Ulrichskapelle 2",
+    "coordinates": {
+      "lat": 51.2396,
+      "lng": 6.2931
+    },
+    "website": "",
+    "phone": "0172 6069402",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "698db1e032622784220c6750",
+    "name": "Angelpark Hahn",
+    "category": "spot",
+    "city": "Wipperfürth",
+    "postal_code": "51688",
+    "street": "Halver Str. 3",
+    "coordinates": {
+      "lat": 51.1503,
+      "lng": 7.3564
+    },
+    "website": "",
+    "phone": "0157 74279462",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "698db1e032622784220c6751",
+    "name": "Angelparadies Viedt",
+    "category": "spot",
+    "city": "Witten",
+    "postal_code": "58456",
+    "street": "Am Masling 54",
+    "coordinates": {
+      "lat": 51.4339,
+      "lng": 7.3579
+    },
+    "website": "",
+    "phone": "02302 75703",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "698db1e032622784220c6752",
+    "name": "Angelpark Krumbachsmühle",
+    "category": "spot",
+    "city": "Asbach",
+    "postal_code": "53567",
+    "street": "Krumbachsmühle 2",
+    "coordinates": {
+      "lat": 50.5674,
+      "lng": 7.4195
+    },
+    "website": "",
+    "phone": "02683 948878",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "698db1e032622784220c6753",
+    "name": "Pfälzer Wald Forellen",
+    "category": "spot",
+    "city": "Eußerthal",
+    "postal_code": "76857",
+    "street": "Dörrental 1",
+    "coordinates": {
+      "lat": 49.2391,
+      "lng": 8.0533
+    },
+    "website": "",
+    "phone": "+49 6345 9496750",
+    "email": "info@pfaelzerwaldforellen.de",
+    "source": "manual_import"
+  },
+  {
+    "id": "698db1e032622784220c6754",
+    "name": "Angelhof Schulte Sienbeck",
+    "category": "spot",
+    "city": "Waltrop",
+    "postal_code": "45731",
+    "street": "Münsterstraße 203",
+    "coordinates": {
+      "lat": 51.6331,
+      "lng": 7.2102
+    },
+    "website": "",
+    "phone": "01575 1462300",
+    "email": "",
+    "source": "manual_import"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccc0",
+    "name": "Laghetto Le Roste",
+    "category": "spot",
+    "city": "Arquà Petrarca",
+    "postal_code": null,
+    "street": "Via Chiaviche",
+    "coordinates": {
+      "lat": 45.258,
+      "lng": 11.785
+    },
+    "website": "",
+    "phone": "",
+    "email": "asdlagoleroste@gmail.com",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccc1",
+    "name": "Lago Cordovado Pesca Sportiva",
+    "category": "spot",
+    "city": "Cordovado",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.85,
+      "lng": 12.88
+    },
+    "website": "",
+    "phone": "",
+    "email": "info@lagocordovado.eu",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccc2",
+    "name": "Lago Azzurro Vigonza",
+    "category": "spot",
+    "city": "Vigonza",
+    "postal_code": null,
+    "street": "Via Bagnoli 16",
+    "coordinates": {
+      "lat": 45.49,
+      "lng": 11.94
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccc3",
+    "name": "Laghetto delle Rose",
+    "category": "spot",
+    "city": "Arquà Petrarca",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.258,
+      "lng": 11.785
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccc4",
+    "name": "Lago Verde Torreglia",
+    "category": "spot",
+    "city": "Torreglia",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.34,
+      "lng": 11.73
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccc5",
+    "name": "Lago al Boschetto",
+    "category": "spot",
+    "city": "Piombino Dese",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.58,
+      "lng": 12.0
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccc6",
+    "name": "Laghetto Roberta",
+    "category": "spot",
+    "city": "Due Carrare",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.39,
+      "lng": 11.85
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccc7",
+    "name": "Paradiso dei Pescatori",
+    "category": "spot",
+    "city": "Merlara",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.17,
+      "lng": 11.42
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccc8",
+    "name": "LAGO GHOST PARK",
+    "category": "spot",
+    "city": "S. Giorgio in Bosco",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.71,
+      "lng": 11.82
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccc9",
+    "name": "Lago Franzoni",
+    "category": "spot",
+    "city": "Lombardei",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.5,
+      "lng": 9.5
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccca",
+    "name": "Lago del Cigno Borgosatollo",
+    "category": "spot",
+    "city": "Borgosatollo",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.48,
+      "lng": 10.24
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95eccccb",
+    "name": "Lago Azzurro Mozzanica",
+    "category": "spot",
+    "city": "Mozzanica",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.47,
+      "lng": 9.68
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95eccccc",
+    "name": "Laghetto Smeraldo Ghisalba",
+    "category": "spot",
+    "city": "Ghisalba",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.59,
+      "lng": 9.82
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95eccccd",
+    "name": "Happy & Vaia 2 Montirone",
+    "category": "spot",
+    "city": "Montirone",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.44,
+      "lng": 10.12
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccce",
+    "name": "Lago Blu Casal Cermelli",
+    "category": "spot",
+    "city": "Casal Cermelli",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 44.83,
+      "lng": 8.62
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95eccccf",
+    "name": "Lago Sirio Canavese",
+    "category": "spot",
+    "city": "Canavese",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.4,
+      "lng": 7.8
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccd0",
+    "name": "Lago Nero Canavese",
+    "category": "spot",
+    "city": "Canavese",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.4,
+      "lng": 7.8
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccd1",
+    "name": "Lago Pistono",
+    "category": "spot",
+    "city": "Canavese",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.4,
+      "lng": 7.8
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccd2",
+    "name": "Lago delle Meraviglie Pomezia",
+    "category": "spot",
+    "city": "Pomezia",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 41.67,
+      "lng": 12.5
+    },
+    "website": "pescacongliamici.altervista.org",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccd3",
+    "name": "Jacklands Trout Lakes",
+    "category": "spot",
+    "city": "Somerset",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 51.35,
+      "lng": -2.75
+    },
+    "website": "westcountryfishing.co.uk",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccd4",
+    "name": "Chew Valley Lake",
+    "category": "spot",
+    "city": "Chew Valley Somerset",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 51.33,
+      "lng": -2.63
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccd5",
+    "name": "Blagdon Lake",
+    "category": "spot",
+    "city": "Blagdon Somerset",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 51.33,
+      "lng": -2.71
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccd6",
+    "name": "Pochard Lake Trout Fishery",
+    "category": "spot",
+    "city": "LU7 0FW",
+    "postal_code": null,
+    "street": "Heath Road Stockgrove",
+    "coordinates": {
+      "lat": 51.95,
+      "lng": -0.58
+    },
+    "website": "pochardlakefishing.co.uk",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccd7",
+    "name": "Clatworthy Reservoir",
+    "category": "spot",
+    "city": "Clatworthy Somerset",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 51.07,
+      "lng": -3.35
+    },
+    "website": "wessexwater.co.uk",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccd8",
+    "name": "Rutland Water",
+    "category": "spot",
+    "city": "Rutland",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 52.65,
+      "lng": -0.68
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccd9",
+    "name": "Farmoor Reservoir",
+    "category": "spot",
+    "city": "Farmoor Oxford",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 51.75,
+      "lng": -1.35
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccda",
+    "name": "Étangs de Romainville",
+    "category": "spot",
+    "city": "Yvelines",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 48.8,
+      "lng": 2.1
+    },
+    "website": "truite78.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccdb",
+    "name": "Pisciculture de Villette",
+    "category": "spot",
+    "city": "Villette Yvelines",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 48.9,
+      "lng": 1.9
+    },
+    "website": "pisciculture.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccdc",
+    "name": "Etang de pêche Entrecasteaux",
+    "category": "spot",
+    "city": "Entrecasteaux",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 43.53,
+      "lng": 6.17
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccdd",
+    "name": "Forellenseen Weidachsee",
+    "category": "spot",
+    "city": "Weidachsee Tirol",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 47.3,
+      "lng": 11.5
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccde",
+    "name": "Hager-Angelpark Kössen",
+    "category": "spot",
+    "city": "Kössen Tirol",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 47.67,
+      "lng": 12.4
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c91f7f31efec95ecccdf",
+    "name": "Bichlacher Angelteiche",
+    "category": "spot",
+    "city": "Bichlach / Kössen",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 47.65,
+      "lng": 12.35
+    },
+    "website": "angelteiche.at",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c9f909756a1e9219a75f",
+    "name": "Spring Valley Trout Farm",
+    "category": "spot",
+    "city": "Dexter",
+    "postal_code": "MI 48130",
+    "street": "12190 Island Lake Rd",
+    "coordinates": {
+      "lat": 42.338,
+      "lng": -83.89
+    },
+    "website": "springvalleytroutfarm.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c9f909756a1e9219a760",
+    "name": "Big Brown Fish & Pay Lakes",
+    "category": "spot",
+    "city": "Effort",
+    "postal_code": "PA 18330",
+    "street": null,
+    "coordinates": {
+      "lat": 41.0,
+      "lng": -75.43
+    },
+    "website": "bigbrownfish.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c9f909756a1e9219a761",
+    "name": "Rushing Waters Fisheries",
+    "category": "spot",
+    "city": "Palmyra",
+    "postal_code": "WI",
+    "street": null,
+    "coordinates": {
+      "lat": 43.17,
+      "lng": -88.59
+    },
+    "website": "rushingwaters.net",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c9f909756a1e9219a762",
+    "name": "Watersmeet Trout Hatchery & Fish Farm",
+    "category": "spot",
+    "city": "Watersmeet",
+    "postal_code": "MI 49969",
+    "street": "25640 Old US Hwy 2 E",
+    "coordinates": {
+      "lat": 46.27,
+      "lng": -89.18
+    },
+    "website": "watersmeettrouthatchery.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c9f909756a1e9219a763",
+    "name": "Limestone Springs Preserve",
+    "category": "spot",
+    "city": "Pennsylvania",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 40.44,
+      "lng": -79.996
+    },
+    "website": "limestonespringspreserve.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c9f909756a1e9219a764",
+    "name": "Cold Spring Harbor Fish Hatchery",
+    "category": "spot",
+    "city": "Cold Spring Harbor",
+    "postal_code": "NY 11724",
+    "street": "1660 Route 25A",
+    "coordinates": {
+      "lat": 40.87,
+      "lng": -73.45
+    },
+    "website": "cshfishhatchery.org",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c9f909756a1e9219a765",
+    "name": "Paradise Fishing Preserve",
+    "category": "spot",
+    "city": "Poconos",
+    "postal_code": "PA",
+    "street": null,
+    "coordinates": {
+      "lat": 41.1,
+      "lng": -75.3
+    },
+    "website": "paradisetrout.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c9f909756a1e9219a766",
+    "name": "Grandfather Trout Farm",
+    "category": "spot",
+    "city": "Boone Area",
+    "postal_code": "NC",
+    "street": null,
+    "coordinates": {
+      "lat": 36.21,
+      "lng": -81.67
+    },
+    "website": "exploreboone.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c9f909756a1e9219a767",
+    "name": "Trout Farm at Rock Springs",
+    "category": "spot",
+    "city": "West Virginia",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 37.77,
+      "lng": -81.18
+    },
+    "website": "troutfarmatrocksprings.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c9f909756a1e9219a768",
+    "name": "Cedarbrook Trout Farm",
+    "category": "spot",
+    "city": "Michigan",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 44.31,
+      "lng": -85.41
+    },
+    "website": "greatlakesfisheriestrail.org",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c9f909756a1e9219a769",
+    "name": "Carpenter's Brook Fish Hatchery",
+    "category": "spot",
+    "city": "Onondaga County",
+    "postal_code": "NY",
+    "street": null,
+    "coordinates": {
+      "lat": 43.05,
+      "lng": -76.15
+    },
+    "website": "onondagacountyparks.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c9f909756a1e9219a76a",
+    "name": "Hiawatha Sportsman's Club",
+    "category": "spot",
+    "city": "Upper Peninsula",
+    "postal_code": "MI",
+    "street": null,
+    "coordinates": {
+      "lat": 46.5,
+      "lng": -87.4
+    },
+    "website": "hiawathaclub.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c9f909756a1e9219a76b",
+    "name": "Black Mountain Trout Ponds",
+    "category": "spot",
+    "city": "Suches",
+    "postal_code": "GA",
+    "street": null,
+    "coordinates": {
+      "lat": 34.77,
+      "lng": -84.1
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990c9f909756a1e9219a76c",
+    "name": "Montebello Camping & Fishing Resort",
+    "category": "spot",
+    "city": "Nelson County",
+    "postal_code": "VA",
+    "street": null,
+    "coordinates": {
+      "lat": 37.83,
+      "lng": -79.13
+    },
+    "website": "montebellova.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ca344c68bf0b051f6f3a",
+    "name": "Big Brown Fish & Pay Lakes",
+    "category": "spot",
+    "city": "Effort",
+    "postal_code": "PA 18330",
+    "street": "2668 Route 115",
+    "coordinates": {
+      "lat": 41.0,
+      "lng": -75.43
+    },
+    "website": "bigbrownfish.com",
+    "phone": "570-629-0427",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ca344c68bf0b051f6f3b",
+    "name": "Springside Trout Farm",
+    "category": "spot",
+    "city": "New Holland",
+    "postal_code": "PA",
+    "street": null,
+    "coordinates": {
+      "lat": 40.1,
+      "lng": -76.1
+    },
+    "website": "springsidetroutfarm.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ca344c68bf0b051f6f3c",
+    "name": "Limestone Springs Preserve",
+    "category": "spot",
+    "city": "Pennsylvania",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 40.44,
+      "lng": -79.996
+    },
+    "website": "limestonespringspreserve.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ca344c68bf0b051f6f3d",
+    "name": "Paradise Fishing Preserve",
+    "category": "spot",
+    "city": "Cresco",
+    "postal_code": "PA 18326",
+    "street": "123 Hatchery Drive",
+    "coordinates": {
+      "lat": 41.28,
+      "lng": -75.28
+    },
+    "website": "paradisetrout.com",
+    "phone": "570-629-0422",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ca344c68bf0b051f6f3e",
+    "name": "Laurel Hill Trout Farm",
+    "category": "spot",
+    "city": "Somerset",
+    "postal_code": "PA 15501",
+    "street": "4366 Rt. 31",
+    "coordinates": {
+      "lat": 40.0,
+      "lng": -79.0
+    },
+    "website": "laurelhilltroutfarm.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ca344c68bf0b051f6f3f",
+    "name": "Rainbow Paradise Trout Farm",
+    "category": "spot",
+    "city": "Pennsylvania",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 40.5,
+      "lng": -75.5
+    },
+    "website": "rainbowparadisetroutfarm.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ca344c68bf0b051f6f40",
+    "name": "Trout Farm at Rock Springs",
+    "category": "spot",
+    "city": "West Virginia",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 37.77,
+      "lng": -81.18
+    },
+    "website": "troutfarmatrocksprings.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ca344c68bf0b051f6f41",
+    "name": "Orndorff's Rainbow Trout Farm",
+    "category": "spot",
+    "city": "Shenandoah County",
+    "postal_code": "VA",
+    "street": null,
+    "coordinates": {
+      "lat": 38.8,
+      "lng": -78.5
+    },
+    "website": "visitshenandoahcounty.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ca344c68bf0b051f6f42",
+    "name": "Seven Springs Trout Pond",
+    "category": "spot",
+    "city": "Tazewell",
+    "postal_code": "VA",
+    "street": null,
+    "coordinates": {
+      "lat": 37.1,
+      "lng": -81.5
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ca344c68bf0b051f6f43",
+    "name": "Grandfather Trout Farm",
+    "category": "spot",
+    "city": "Banner Elk",
+    "postal_code": "NC 28604",
+    "street": "10767 Highway 105 S",
+    "coordinates": {
+      "lat": 36.15,
+      "lng": -81.85
+    },
+    "website": "exploreboone.com",
+    "phone": "828-963-5098",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ca344c68bf0b051f6f44",
+    "name": "Morgan Mill Trout Farm",
+    "category": "spot",
+    "city": "Pennsylvania/WV Area",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 40.0,
+      "lng": -79.5
+    },
+    "website": "morganmilltroutfarm.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ca344c68bf0b051f6f45",
+    "name": "Angler's Cove Fish And Pay Ponds",
+    "category": "spot",
+    "city": "Pocono",
+    "postal_code": "PA",
+    "street": null,
+    "coordinates": {
+      "lat": 41.05,
+      "lng": -75.35
+    },
+    "website": "visitpa.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ca344c68bf0b051f6f46",
+    "name": "Elk Springs Resort Trout Pay Ponds",
+    "category": "spot",
+    "city": "West Virginia",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 38.0,
+      "lng": -80.5
+    },
+    "website": "elkspringswv.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ca344c68bf0b051f6f47",
+    "name": "Mountaineer Trout Farm",
+    "category": "spot",
+    "city": "West Virginia Mountains",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 38.5,
+      "lng": -80.0
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ca64cbe13c5df0d133b0",
+    "name": "Grandfather Trout Farm",
+    "category": "spot",
+    "city": "Banner Elk",
+    "postal_code": "NC 28604",
+    "street": "10767 Highway 105 S",
+    "coordinates": {
+      "lat": 36.15,
+      "lng": -81.85
+    },
+    "website": "exploreboone.com",
+    "phone": "828-963-5098",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ca64cbe13c5df0d133b1",
+    "name": "Cooper Creek Trout Farm & Pond",
+    "category": "spot",
+    "city": "Bryson City",
+    "postal_code": "NC",
+    "street": "3365 Coopers Creek Rd",
+    "coordinates": {
+      "lat": 35.43,
+      "lng": -83.45
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ca64cbe13c5df0d133b2",
+    "name": "Andy's Trout Farm & Cabins",
+    "category": "spot",
+    "city": "Dillard",
+    "postal_code": "GA",
+    "street": null,
+    "coordinates": {
+      "lat": 34.97,
+      "lng": -83.38
+    },
+    "website": "andystroutfarm.com",
+    "phone": "706-746-2550",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ca64cbe13c5df0d133b3",
+    "name": "Morgan Mill Trout Farm",
+    "category": "spot",
+    "city": "Brevard",
+    "postal_code": "NC",
+    "street": "Morgan Mill Rd",
+    "coordinates": {
+      "lat": 35.2,
+      "lng": -82.75
+    },
+    "website": "morganmilltroutfarm.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ca64cbe13c5df0d133b4",
+    "name": "Otter Creek Trout Farm",
+    "category": "spot",
+    "city": "Topton",
+    "postal_code": "NC",
+    "street": null,
+    "coordinates": {
+      "lat": 35.37,
+      "lng": -83.9
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ca64cbe13c5df0d133b5",
+    "name": "Buck Creek Trout Farm",
+    "category": "spot",
+    "city": "Marion",
+    "postal_code": "NC",
+    "street": "74 Rainbow Trout Drive",
+    "coordinates": {
+      "lat": 35.68,
+      "lng": -82.0
+    },
+    "website": "destinationmcdowell.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ca64cbe13c5df0d133b6",
+    "name": "HollyDay Farms Fishing Pond",
+    "category": "spot",
+    "city": "Union County",
+    "postal_code": "NC",
+    "street": null,
+    "coordinates": {
+      "lat": 35.0,
+      "lng": -80.5
+    },
+    "website": "everydayisahollyday.org/hollydayfarmsfishingpond",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ca64cbe13c5df0d133b7",
+    "name": "Persimmon Creek RV Park Trout Pond",
+    "category": "spot",
+    "city": "Persimmon Creek RV Park",
+    "postal_code": "NC",
+    "street": null,
+    "coordinates": {
+      "lat": 35.5,
+      "lng": -83.0
+    },
+    "website": "persimmoncreekrvpark.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ca64cbe13c5df0d133b8",
+    "name": "Noccalula Falls Park",
+    "category": "spot",
+    "city": "Gadsden",
+    "postal_code": "AL",
+    "street": null,
+    "coordinates": {
+      "lat": 34.03,
+      "lng": -86.0
+    },
+    "website": "cityofgadsden.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ca64cbe13c5df0d133b9",
+    "name": "Brook Haven Private Water",
+    "category": "spot",
+    "city": "Western NC / North GA Mountains",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 35.1,
+      "lng": -83.5
+    },
+    "website": "flyfishingthesmokies.net",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cab5f2a76f28b0a90e7e",
+    "name": "Rainbow Trout Farm",
+    "category": "spot",
+    "city": "Sandy",
+    "postal_code": "OR 97055",
+    "street": "52560 E Sylvan Dr",
+    "coordinates": {
+      "lat": 45.41,
+      "lng": -122.25
+    },
+    "website": "rainbowtroutfarm.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cab5f2a76f28b0a90e7f",
+    "name": "Tahoe Trout Farm",
+    "category": "spot",
+    "city": "South Lake Tahoe",
+    "postal_code": "CA 96150",
+    "street": "1023 Blue Lake Ave",
+    "coordinates": {
+      "lat": 38.93,
+      "lng": -119.98
+    },
+    "website": "tahoetroutfarm.com",
+    "phone": "530-541-1481",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cab5f2a76f28b0a90e80",
+    "name": "Cold Springs Trout Farm",
+    "category": "spot",
+    "city": "Ogden",
+    "postal_code": "UT",
+    "street": null,
+    "coordinates": {
+      "lat": 41.2,
+      "lng": -111.95
+    },
+    "website": "coldspringstroutfarm.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cab5f2a76f28b0a90e81",
+    "name": "Mountain Valley Trout Farm",
+    "category": "spot",
+    "city": "Smithfield",
+    "postal_code": "UT",
+    "street": null,
+    "coordinates": {
+      "lat": 41.83,
+      "lng": -111.83
+    },
+    "website": "mountainvalleytroutandtennis.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cab5f2a76f28b0a90e82",
+    "name": "Sedona Rainbow Trout Farm",
+    "category": "spot",
+    "city": "Sedona",
+    "postal_code": "AZ",
+    "street": null,
+    "coordinates": {
+      "lat": 34.87,
+      "lng": -111.76
+    },
+    "website": "sedonarainbowtroutfarm.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cab5f2a76f28b0a90e83",
+    "name": "Horning's Hideout",
+    "category": "spot",
+    "city": "North Plains",
+    "postal_code": "OR",
+    "street": null,
+    "coordinates": {
+      "lat": 45.6,
+      "lng": -122.95
+    },
+    "website": "horningshideout.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cab5f2a76f28b0a90e84",
+    "name": "Gold Creek Trout Farm",
+    "category": "spot",
+    "city": "Woodinville",
+    "postal_code": "WA 98072",
+    "street": "15844 148th Ave NE",
+    "coordinates": {
+      "lat": 47.74,
+      "lng": -122.15
+    },
+    "website": "goldcreektroutfarm.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cab5f2a76f28b0a90e85",
+    "name": "Mount Evans Trout Fishing",
+    "category": "spot",
+    "city": "Idaho Springs",
+    "postal_code": "CO",
+    "street": null,
+    "coordinates": {
+      "lat": 39.74,
+      "lng": -105.51
+    },
+    "website": "mtevanstroutfishingco.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cab5f2a76f28b0a90e86",
+    "name": "Mexican John Ranch Trout Pond",
+    "category": "spot",
+    "city": "Montana ranch area",
+    "postal_code": "MT",
+    "street": null,
+    "coordinates": {
+      "lat": 45.0,
+      "lng": -109.0
+    },
+    "website": "mtmjranch.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cab5f2a76f28b0a90e87",
+    "name": "Shady Lakes Trout & Bass Fishing",
+    "category": "spot",
+    "city": "Albuquerque",
+    "postal_code": "NM",
+    "street": null,
+    "coordinates": {
+      "lat": 35.08,
+      "lng": -106.65
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cadb39b1102a7b400a42",
+    "name": "Pisciculture de Villette",
+    "category": "spot",
+    "city": "Villette",
+    "postal_code": "Yvelines",
+    "street": null,
+    "coordinates": {
+      "lat": 48.9,
+      "lng": 1.9
+    },
+    "website": "pisciculture.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cadb39b1102a7b400a43",
+    "name": "Étangs Des 3 Fontaines",
+    "category": "spot",
+    "city": "Centre",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 47.0,
+      "lng": 2.0
+    },
+    "website": "etangdestroisfontaines.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cadb39b1102a7b400a44",
+    "name": "Moulin Hubeau",
+    "category": "spot",
+    "city": "Île-de-France",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 48.8,
+      "lng": 2.1
+    },
+    "website": "moulinhubeau.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cadb39b1102a7b400a45",
+    "name": "Etang de pêche Entrecasteaux",
+    "category": "spot",
+    "city": "Provence Verte",
+    "postal_code": "Var",
+    "street": null,
+    "coordinates": {
+      "lat": 43.53,
+      "lng": 6.17
+    },
+    "website": "la-provence-verte.net",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cadb39b1102a7b400a46",
+    "name": "Pisciculture des Sources d'Elle",
+    "category": "spot",
+    "city": "Sources d'Elle",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 46.0,
+      "lng": 2.0
+    },
+    "website": "sourcesdelle.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cadb39b1102a7b400a47",
+    "name": "Etang du Château",
+    "category": "spot",
+    "city": "Centre",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 47.0,
+      "lng": 3.0
+    },
+    "website": "etangduchateau.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cadb39b1102a7b400a48",
+    "name": "Etang des Sources Malzy",
+    "category": "spot",
+    "city": "Malzy",
+    "postal_code": "Aisne",
+    "street": null,
+    "coordinates": {
+      "lat": 49.8,
+      "lng": 3.5
+    },
+    "website": "etang-des-sources.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cadb39b1102a7b400a49",
+    "name": "La Truite des Pyrénées",
+    "category": "spot",
+    "city": "Lau-Balagnas",
+    "postal_code": "Hautes-Pyrénées",
+    "street": null,
+    "coordinates": {
+      "lat": 42.9,
+      "lng": -0.1
+    },
+    "website": "lourdes-infotourisme.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cadb39b1102a7b400a4a",
+    "name": "Pêche à la truite Parentis en Born",
+    "category": "spot",
+    "city": "Parentis en Born",
+    "postal_code": "Landes",
+    "street": null,
+    "coordinates": {
+      "lat": 44.35,
+      "lng": -1.07
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cadb39b1102a7b400a4b",
+    "name": "Étangs du Plateau des Landes",
+    "category": "spot",
+    "city": "Helfaut",
+    "postal_code": "Pas-de-Calais",
+    "street": null,
+    "coordinates": {
+      "lat": 50.7,
+      "lng": 2.3
+    },
+    "website": "lesetangsduplateaudeslandes.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf418",
+    "name": "Les Étangs de Romainville",
+    "category": "spot",
+    "city": "Magny-les-Hameaux",
+    "postal_code": "Yvelines",
+    "street": null,
+    "coordinates": {
+      "lat": 48.75,
+      "lng": 2.05
+    },
+    "website": "truite78.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf419",
+    "name": "Pisciculture de Villette",
+    "category": "spot",
+    "city": "Villette",
+    "postal_code": "Yvelines",
+    "street": null,
+    "coordinates": {
+      "lat": 48.9,
+      "lng": 1.9
+    },
+    "website": "pisciculture.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf41a",
+    "name": "Moulin Hubeau",
+    "category": "spot",
+    "city": "Île-de-France",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 48.8,
+      "lng": 2.1
+    },
+    "website": "moulinhubeau.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf41b",
+    "name": "Étangs Des 3 Fontaines",
+    "category": "spot",
+    "city": "Centre",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 47.0,
+      "lng": 2.0
+    },
+    "website": "etangdestroisfontaines.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf41c",
+    "name": "Etang de pêche Entrecasteaux",
+    "category": "spot",
+    "city": "Entrecasteaux",
+    "postal_code": "Var",
+    "street": null,
+    "coordinates": {
+      "lat": 43.53,
+      "lng": 6.17
+    },
+    "website": "la-provence-verte.net",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf41d",
+    "name": "Pisciculture des Sources d'Elle",
+    "category": "spot",
+    "city": "Sources d'Elle",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 46.0,
+      "lng": 2.0
+    },
+    "website": "sourcesdelle.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf41e",
+    "name": "Etang du Château",
+    "category": "spot",
+    "city": "Centre",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 47.0,
+      "lng": 3.0
+    },
+    "website": "etangduchateau.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf41f",
+    "name": "Etang des Sources Malzy",
+    "category": "spot",
+    "city": "Malzy",
+    "postal_code": "Aisne",
+    "street": null,
+    "coordinates": {
+      "lat": 49.8,
+      "lng": 3.5
+    },
+    "website": "etang-des-sources.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf420",
+    "name": "La Truite des Pyrénées",
+    "category": "spot",
+    "city": "Pyrénées",
+    "postal_code": "Hautes-Pyrénées",
+    "street": null,
+    "coordinates": {
+      "lat": 42.9,
+      "lng": -0.1
+    },
+    "website": "lourdes-infotourisme.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf421",
+    "name": "Étangs du Plateau des Landes",
+    "category": "spot",
+    "city": "Helfaut area",
+    "postal_code": "Pas-de-Calais",
+    "street": null,
+    "coordinates": {
+      "lat": 50.7,
+      "lng": 2.3
+    },
+    "website": "lesetangsduplateaudeslandes.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf422",
+    "name": "Val Ferman Étangs",
+    "category": "spot",
+    "city": "Île-de-France",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 48.8,
+      "lng": 2.2
+    },
+    "website": "valferman.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf423",
+    "name": "Au Petit Pêcheur du Moulin Plateau",
+    "category": "spot",
+    "city": "Saint Germain des Près",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 48.5,
+      "lng": 2.3
+    },
+    "website": "aupetitpecheur.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf424",
+    "name": "La Truite St Martin",
+    "category": "spot",
+    "city": "La Truite St Martin",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 46.0,
+      "lng": 3.0
+    },
+    "website": "latruite-st-martin.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf425",
+    "name": "Pisciculture du Moulin de Guiral",
+    "category": "spot",
+    "city": "Saint-Martin-le-Redon",
+    "postal_code": "Lot",
+    "street": null,
+    "coordinates": {
+      "lat": 44.5,
+      "lng": 0.9
+    },
+    "website": "tourisme-lot.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf426",
+    "name": "Le Pré de l'Etang",
+    "category": "spot",
+    "city": "Ermenonville",
+    "postal_code": "Île-de-France",
+    "street": null,
+    "coordinates": {
+      "lat": 49.13,
+      "lng": 2.7
+    },
+    "website": "lepredeletang.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf427",
+    "name": "Etangs de Manqueville",
+    "category": "spot",
+    "city": "Manqueville",
+    "postal_code": "Nord",
+    "street": null,
+    "coordinates": {
+      "lat": 50.5,
+      "lng": 2.5
+    },
+    "website": "etangs-manqueville.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf428",
+    "name": "Étangs de la Folie",
+    "category": "spot",
+    "city": "Oise",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 49.2,
+      "lng": 2.4
+    },
+    "website": "oisetourisme.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf429",
+    "name": "Les Étangs de Cilly",
+    "category": "spot",
+    "city": "Les Étangs de Cilly",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 48.0,
+      "lng": 3.0
+    },
+    "website": "lesetangsdecilly.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf42a",
+    "name": "Pisciculture des Chutes d'Aston",
+    "category": "spot",
+    "city": "Toulouse",
+    "postal_code": "Occitanie",
+    "street": null,
+    "coordinates": {
+      "lat": 43.6,
+      "lng": 1.4
+    },
+    "website": "truites-aston.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf42b",
+    "name": "Etang de pêche Aimargues",
+    "category": "spot",
+    "city": "Aimargues",
+    "postal_code": "Gard",
+    "street": null,
+    "coordinates": {
+      "lat": 43.68,
+      "lng": 4.41
+    },
+    "website": "tripadvisor.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf42c",
+    "name": "PassionAquatic",
+    "category": "spot",
+    "city": "Lagnes",
+    "postal_code": "Provence",
+    "street": null,
+    "coordinates": {
+      "lat": 43.9,
+      "lng": 5.1
+    },
+    "website": "islesurlasorguetourisme.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf42d",
+    "name": "Etang de pêche Mallemort",
+    "category": "spot",
+    "city": "Mallemort",
+    "postal_code": "Provence-Alpes-Côte d'Azur",
+    "street": null,
+    "coordinates": {
+      "lat": 43.73,
+      "lng": 5.17
+    },
+    "website": "provence-alpes-cotedazur.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf42e",
+    "name": "Domaine du Moulin Authier",
+    "category": "spot",
+    "city": "Domaine Moulin Authier",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 46.0,
+      "lng": 3.0
+    },
+    "website": "moulinauthier.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf42f",
+    "name": "Etang Seigneur",
+    "category": "spot",
+    "city": "Le Chateley",
+    "postal_code": "Jura",
+    "street": null,
+    "coordinates": {
+      "lat": 46.8,
+      "lng": 5.5
+    },
+    "website": "jura-tourism.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf430",
+    "name": "Etang Grand Bernardier",
+    "category": "spot",
+    "city": "Jura",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 46.7,
+      "lng": 5.6
+    },
+    "website": "jura-tourism.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf431",
+    "name": "Etang du Grand Truge",
+    "category": "spot",
+    "city": "Commenailles",
+    "postal_code": "Jura",
+    "street": null,
+    "coordinates": {
+      "lat": 46.9,
+      "lng": 5.4
+    },
+    "website": "jura-tourism.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf432",
+    "name": "Pisciculture Bône",
+    "category": "spot",
+    "city": "Allier",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 46.3,
+      "lng": 3.4
+    },
+    "website": "aqua-tourisme.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf433",
+    "name": "La Truite de la Petite Montagne",
+    "category": "spot",
+    "city": "Jura",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 46.5,
+      "lng": 5.9
+    },
+    "website": "aqua-tourisme.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf434",
+    "name": "Les Truites du Gouet",
+    "category": "spot",
+    "city": "Le Pénity",
+    "postal_code": "22160",
+    "street": null,
+    "coordinates": {
+      "lat": 48.5,
+      "lng": -2.8
+    },
+    "website": "aqua-tourisme.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf435",
+    "name": "Etang de Pirot",
+    "category": "spot",
+    "city": "Cérilly",
+    "postal_code": "Allier",
+    "street": null,
+    "coordinates": {
+      "lat": 46.6,
+      "lng": 2.8
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf436",
+    "name": "Lac du Bouchet",
+    "category": "spot",
+    "city": "Haute-Loire",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.0,
+      "lng": 3.7
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf437",
+    "name": "Etang de Lers",
+    "category": "spot",
+    "city": "Lers",
+    "postal_code": "Pyrénées",
+    "street": null,
+    "coordinates": {
+      "lat": 42.8,
+      "lng": 1.4
+    },
+    "website": "leurredelapeche.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf438",
+    "name": "Lac Pavin",
+    "category": "spot",
+    "city": "Puy-de-Dôme",
+    "postal_code": "Auvergne",
+    "street": null,
+    "coordinates": {
+      "lat": 45.5,
+      "lng": 2.9
+    },
+    "website": "leurredelapeche.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf439",
+    "name": "Etang de l'île Mystérieuse",
+    "category": "spot",
+    "city": "Bussy Saint-Georges",
+    "postal_code": "Seine-et-Marne",
+    "street": null,
+    "coordinates": {
+      "lat": 48.85,
+      "lng": 2.7
+    },
+    "website": "federationpeche77.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf43a",
+    "name": "Etang du Pâtis",
+    "category": "spot",
+    "city": "Meaux",
+    "postal_code": "Seine-et-Marne",
+    "street": null,
+    "coordinates": {
+      "lat": 48.95,
+      "lng": 2.88
+    },
+    "website": "federationpeche77.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf43b",
+    "name": "Etang de Monthyon",
+    "category": "spot",
+    "city": "Monthyon",
+    "postal_code": "Seine-et-Marne",
+    "street": null,
+    "coordinates": {
+      "lat": 49.01,
+      "lng": 2.83
+    },
+    "website": "federationpeche77.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf43c",
+    "name": "Etang de la Loy",
+    "category": "spot",
+    "city": "Gouvernes",
+    "postal_code": "Seine-et-Marne",
+    "street": null,
+    "coordinates": {
+      "lat": 48.86,
+      "lng": 2.68
+    },
+    "website": "federationpeche77.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf43d",
+    "name": "Etang de Ravannes",
+    "category": "spot",
+    "city": "Ecuelles",
+    "postal_code": "Seine-et-Marne",
+    "street": null,
+    "coordinates": {
+      "lat": 48.36,
+      "lng": 2.83
+    },
+    "website": "federationpeche77.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf43e",
+    "name": "Ferme du Haubert",
+    "category": "spot",
+    "city": "Brueil-en-Vexin",
+    "postal_code": "Yvelines",
+    "street": null,
+    "coordinates": {
+      "lat": 49.0,
+      "lng": 1.9
+    },
+    "website": "bienvenue-a-la-ferme.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf43f",
+    "name": "Malowe Nature",
+    "category": "spot",
+    "city": "Rosay",
+    "postal_code": "Yvelines",
+    "street": null,
+    "coordinates": {
+      "lat": 48.9,
+      "lng": 1.7
+    },
+    "website": "bienvenue-a-la-ferme.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf440",
+    "name": "Les Sources d'Eclimont",
+    "category": "spot",
+    "city": "Abbeville-la-Rivière",
+    "postal_code": "Essonne",
+    "street": null,
+    "coordinates": {
+      "lat": 48.5,
+      "lng": 2.3
+    },
+    "website": "bienvenue-a-la-ferme.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf441",
+    "name": "Etang de Laveyssière",
+    "category": "spot",
+    "city": "Île-de-France",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 48.7,
+      "lng": 2.4
+    },
+    "website": "achigan.net",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf442",
+    "name": "Etang Plaine Sud Choisy-le-Roi",
+    "category": "spot",
+    "city": "Choisy-le-Roi",
+    "postal_code": "Île-de-France",
+    "street": null,
+    "coordinates": {
+      "lat": 48.76,
+      "lng": 2.41
+    },
+    "website": "achigan.net",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf443",
+    "name": "Etang des Mazières",
+    "category": "spot",
+    "city": "Île-de-France",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 48.8,
+      "lng": 2.3
+    },
+    "website": "achigan.net",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf444",
+    "name": "Etang de Saint-Quentin",
+    "category": "spot",
+    "city": "Île-de-France",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 48.9,
+      "lng": 2.2
+    },
+    "website": "achigan.net",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf445",
+    "name": "Pisciculture du Cheiron",
+    "category": "spot",
+    "city": "Provence",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 43.8,
+      "lng": 6.5
+    },
+    "website": "kidiklik.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf446",
+    "name": "Etang de la Fontaine",
+    "category": "spot",
+    "city": "Saint-Michel-en-l'Herm",
+    "postal_code": "Vendée",
+    "street": null,
+    "coordinates": {
+      "lat": 46.3,
+      "lng": -1.3
+    },
+    "website": "vendee-tourisme.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cb3d8badb8bd8dbdf447",
+    "name": "Pêche pour Tous",
+    "category": "spot",
+    "city": "Pêche pour Tous",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 48.0,
+      "lng": 2.0
+    },
+    "website": "pechepourtous.net",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0c3",
+    "name": "Pisciculture de Monchel",
+    "category": "spot",
+    "city": "Monchel sur Canche",
+    "postal_code": "Pas-de-Calais",
+    "street": null,
+    "coordinates": {
+      "lat": 50.3,
+      "lng": 2.1
+    },
+    "website": "pisciculturedemonchel.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0c4",
+    "name": "Etang des Fargues",
+    "category": "spot",
+    "city": "La Salvetat-Peyralès",
+    "postal_code": "Aveyron",
+    "street": null,
+    "coordinates": {
+      "lat": 44.2,
+      "lng": 2.4
+    },
+    "website": "tourisme-aveyron.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0c5",
+    "name": "Pisciculture du Moulin de Guiral",
+    "category": "spot",
+    "city": "Saint-Martin-le-Redon",
+    "postal_code": "Lot",
+    "street": null,
+    "coordinates": {
+      "lat": 44.5,
+      "lng": 0.9
+    },
+    "website": "tourisme-lot.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0c6",
+    "name": "Etang de la Fontaine",
+    "category": "spot",
+    "city": "Saint-Michel-en-l'Herm",
+    "postal_code": "Vendée",
+    "street": null,
+    "coordinates": {
+      "lat": 46.3,
+      "lng": -1.3
+    },
+    "website": "vendee-tourisme.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0c7",
+    "name": "Etang de Mallemort",
+    "category": "spot",
+    "city": "Mallemort",
+    "postal_code": "Bouches-du-Rhône",
+    "street": null,
+    "coordinates": {
+      "lat": 43.73,
+      "lng": 5.17
+    },
+    "website": "etangdepechemallemort13.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0c8",
+    "name": "Zone de Loisirs Lac de Picarel",
+    "category": "spot",
+    "city": "Saissac",
+    "postal_code": "Aude",
+    "street": null,
+    "coordinates": {
+      "lat": 43.36,
+      "lng": 2.16
+    },
+    "website": "lacdepicarel.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0c9",
+    "name": "Etangs de Lamberville",
+    "category": "spot",
+    "city": "Lamberville",
+    "postal_code": "Seine-Maritime",
+    "street": null,
+    "coordinates": {
+      "lat": 49.5,
+      "lng": 0.8
+    },
+    "website": "quibervillesurmer-auffay-tourisme.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0ca",
+    "name": "Pisciculture Auvergne Truites",
+    "category": "spot",
+    "city": "Saint-Diéry",
+    "postal_code": "Puy-de-Dôme",
+    "street": null,
+    "coordinates": {
+      "lat": 45.5,
+      "lng": 3.0
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0cb",
+    "name": "PassionAquatic",
+    "category": "spot",
+    "city": "Lagnes",
+    "postal_code": "Vaucluse",
+    "street": null,
+    "coordinates": {
+      "lat": 43.9,
+      "lng": 5.1
+    },
+    "website": "islesurlasorguetourisme.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0cc",
+    "name": "Etangs du Point du Jour",
+    "category": "spot",
+    "city": "Saint-Germain-de-Tallevende",
+    "postal_code": "Calvados",
+    "street": null,
+    "coordinates": {
+      "lat": 48.9,
+      "lng": -0.9
+    },
+    "website": "paysdevire-normandie-tourisme.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0cd",
+    "name": "Paradis Aquatique",
+    "category": "spot",
+    "city": "Douwend",
+    "postal_code": "Seine-Maritime",
+    "street": null,
+    "coordinates": {
+      "lat": 49.7,
+      "lng": 0.8
+    },
+    "website": "paradisaquatique.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0ce",
+    "name": "Etang des Durrenbachmatten",
+    "category": "spot",
+    "city": "Saint-Hippolyte",
+    "postal_code": "Haut-Rhin",
+    "street": null,
+    "coordinates": {
+      "lat": 48.2,
+      "lng": 7.1
+    },
+    "website": "ribeauville-riquewihr.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0cf",
+    "name": "Etang du Colvert",
+    "category": "spot",
+    "city": "Colvert area",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 48.8,
+      "lng": 2.5
+    },
+    "website": "etang-colvert-peche.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0d0",
+    "name": "Etangs de Sacy le Grand",
+    "category": "spot",
+    "city": "Sacy-le-Grand",
+    "postal_code": "Oise",
+    "street": null,
+    "coordinates": {
+      "lat": 49.36,
+      "lng": 2.62
+    },
+    "website": "etangs-de-sacy.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0d1",
+    "name": "Etang des Fauvettes",
+    "category": "spot",
+    "city": "Val-d'Oise",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 49.1,
+      "lng": 2.2
+    },
+    "website": "etangdesfauvettes.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0d2",
+    "name": "Les Etangs du Moulin de Rollequin",
+    "category": "spot",
+    "city": "Fère-en-Tardenois",
+    "postal_code": "Aisne",
+    "street": null,
+    "coordinates": {
+      "lat": 49.2,
+      "lng": 3.5
+    },
+    "website": "lesportesdelachampagne.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0d3",
+    "name": "Montlognon Pêche",
+    "category": "spot",
+    "city": "Montlognon",
+    "postal_code": "Oise",
+    "street": null,
+    "coordinates": {
+      "lat": 49.3,
+      "lng": 2.7
+    },
+    "website": "montlognon-peche.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0d4",
+    "name": "Etang de Barrandon",
+    "category": "spot",
+    "city": "Saint-Étienne-du-Valdonnez",
+    "postal_code": "Lozère",
+    "street": null,
+    "coordinates": {
+      "lat": 44.5,
+      "lng": 3.6
+    },
+    "website": "tourisme-occitanie.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0d5",
+    "name": "Etang de Vaccarès",
+    "category": "spot",
+    "city": "Camargue",
+    "postal_code": "Provence",
+    "street": null,
+    "coordinates": {
+      "lat": 43.6,
+      "lng": 4.5
+    },
+    "website": "clevacances.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0d6",
+    "name": "Etang Plaine Sud Choisy-le-Roi",
+    "category": "spot",
+    "city": "Choisy-le-Roi",
+    "postal_code": "Val-de-Marne",
+    "street": null,
+    "coordinates": {
+      "lat": 48.76,
+      "lng": 2.41
+    },
+    "website": "tourisme-valdemarne.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0d7",
+    "name": "Etang de Villecresnes",
+    "category": "spot",
+    "city": "Villecresnes",
+    "postal_code": "Val-de-Marne",
+    "street": null,
+    "coordinates": {
+      "lat": 48.72,
+      "lng": 2.54
+    },
+    "website": "tourisme-valdemarne.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0d8",
+    "name": "Etang de Bazouges",
+    "category": "spot",
+    "city": "Hédé-Bazouges",
+    "postal_code": "Ille-et-Vilaine",
+    "street": null,
+    "coordinates": {
+      "lat": 48.3,
+      "lng": -1.75
+    },
+    "website": "ille-et-vilaine-tourisme.bzh",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0d9",
+    "name": "Etang de la Plage Bleue",
+    "category": "spot",
+    "city": "Valenton area",
+    "postal_code": "Val-de-Marne",
+    "street": null,
+    "coordinates": {
+      "lat": 48.75,
+      "lng": 2.45
+    },
+    "website": "tourisme-valdemarne.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0da",
+    "name": "Domaine du Moulin Rouge",
+    "category": "spot",
+    "city": "Yonne",
+    "postal_code": "Bourgogne",
+    "street": null,
+    "coordinates": {
+      "lat": 47.8,
+      "lng": 3.5
+    },
+    "website": "tourisme-yonne.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0db",
+    "name": "Etang de Lers",
+    "category": "spot",
+    "city": "Pyrénées",
+    "postal_code": "Ariège",
+    "street": null,
+    "coordinates": {
+      "lat": 42.8,
+      "lng": 1.4
+    },
+    "website": "leurredelapeche.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0dc",
+    "name": "Lac Pavin",
+    "category": "spot",
+    "city": "Puy-de-Dôme",
+    "postal_code": "Auvergne",
+    "street": null,
+    "coordinates": {
+      "lat": 45.5,
+      "lng": 2.9
+    },
+    "website": "leurredelapeche.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0dd",
+    "name": "Etang de l'Île Mystérieuse",
+    "category": "spot",
+    "city": "Bussy Saint-Georges",
+    "postal_code": "Seine-et-Marne",
+    "street": null,
+    "coordinates": {
+      "lat": 48.85,
+      "lng": 2.7
+    },
+    "website": "federationpeche77.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0de",
+    "name": "Etang du Pâtis",
+    "category": "spot",
+    "city": "Meaux",
+    "postal_code": "Seine-et-Marne",
+    "street": null,
+    "coordinates": {
+      "lat": 48.95,
+      "lng": 2.88
+    },
+    "website": "federationpeche77.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0df",
+    "name": "Etang de Monthyon",
+    "category": "spot",
+    "city": "Monthyon",
+    "postal_code": "Seine-et-Marne",
+    "street": null,
+    "coordinates": {
+      "lat": 49.01,
+      "lng": 2.83
+    },
+    "website": "federationpeche77.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0e0",
+    "name": "Etang de la Loy",
+    "category": "spot",
+    "city": "Gouvernes",
+    "postal_code": "Seine-et-Marne",
+    "street": null,
+    "coordinates": {
+      "lat": 48.86,
+      "lng": 2.68
+    },
+    "website": "federationpeche77.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0e1",
+    "name": "Etang de Ravannes",
+    "category": "spot",
+    "city": "Ecuelles",
+    "postal_code": "Seine-et-Marne",
+    "street": null,
+    "coordinates": {
+      "lat": 48.36,
+      "lng": 2.83
+    },
+    "website": "federationpeche77.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0e2",
+    "name": "Ferme du Haubert",
+    "category": "spot",
+    "city": "Brueil-en-Vexin",
+    "postal_code": "Yvelines",
+    "street": null,
+    "coordinates": {
+      "lat": 49.0,
+      "lng": 1.9
+    },
+    "website": "bienvenue-a-la-ferme.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0e3",
+    "name": "Malowe Nature",
+    "category": "spot",
+    "city": "Rosay",
+    "postal_code": "Yvelines",
+    "street": null,
+    "coordinates": {
+      "lat": 48.9,
+      "lng": 1.7
+    },
+    "website": "bienvenue-a-la-ferme.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0e4",
+    "name": "Les Sources d'Eclimont",
+    "category": "spot",
+    "city": "Abbeville-la-Rivière",
+    "postal_code": "Essonne",
+    "street": null,
+    "coordinates": {
+      "lat": 48.5,
+      "lng": 2.3
+    },
+    "website": "bienvenue-a-la-ferme.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0e5",
+    "name": "Pisciculture du Cheiron",
+    "category": "spot",
+    "city": "Provence",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 43.8,
+      "lng": 6.5
+    },
+    "website": "kidiklik.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0e6",
+    "name": "Pêche pour Tous",
+    "category": "spot",
+    "city": "Île-de-France",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 48.0,
+      "lng": 2.0
+    },
+    "website": "pechepourtous.net",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0e7",
+    "name": "Etang de Pirot",
+    "category": "spot",
+    "city": "Cérilly",
+    "postal_code": "Allier",
+    "street": null,
+    "coordinates": {
+      "lat": 46.6,
+      "lng": 2.8
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0e8",
+    "name": "Lac du Bouchet",
+    "category": "spot",
+    "city": "Haute-Loire",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.0,
+      "lng": 3.7
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0e9",
+    "name": "Les Truites du Gouet",
+    "category": "spot",
+    "city": "Le Pénity",
+    "postal_code": "22160",
+    "street": null,
+    "coordinates": {
+      "lat": 48.5,
+      "lng": -2.8
+    },
+    "website": "aqua-tourisme.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0ea",
+    "name": "La Truite de Carlet",
+    "category": "spot",
+    "city": "Saignon",
+    "postal_code": "Luberon",
+    "street": null,
+    "coordinates": {
+      "lat": 43.9,
+      "lng": 5.3
+    },
+    "website": "provenceguide.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0eb",
+    "name": "Pisciculture du Claireau",
+    "category": "spot",
+    "city": "Appeville-Annebault",
+    "postal_code": "Normandie",
+    "street": null,
+    "coordinates": {
+      "lat": 49.4,
+      "lng": 0.5
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0ec",
+    "name": "Etang Noir",
+    "category": "spot",
+    "city": "Île-de-France",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 48.8,
+      "lng": 2.2
+    },
+    "website": "truite78.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0ed",
+    "name": "Etang de la Risle",
+    "category": "spot",
+    "city": "Risle area",
+    "postal_code": "Normandie",
+    "street": null,
+    "coordinates": {
+      "lat": 49.2,
+      "lng": 0.6
+    },
+    "website": "tourisme-pontaudemer-rislenormande.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0ee",
+    "name": "Etang de Honnecourt",
+    "category": "spot",
+    "city": "Honnecourt-sur-Escaut",
+    "postal_code": "Hauts-de-France",
+    "street": null,
+    "coordinates": {
+      "lat": 50.0,
+      "lng": 3.2
+    },
+    "website": "fermeaquaponiquecambresis.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0ef",
+    "name": "Etang des Poissons d'Argent",
+    "category": "spot",
+    "city": "Aigues-Mortes",
+    "postal_code": "Gard",
+    "street": null,
+    "coordinates": {
+      "lat": 43.57,
+      "lng": 4.19
+    },
+    "website": "tourismegard.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0f0",
+    "name": "Etang de Manqueville",
+    "category": "spot",
+    "city": "Manqueville",
+    "postal_code": "Nord",
+    "street": null,
+    "coordinates": {
+      "lat": 50.5,
+      "lng": 2.5
+    },
+    "website": "etangs-manqueville.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0f1",
+    "name": "Etangs de la Folie",
+    "category": "spot",
+    "city": "Oise",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 49.2,
+      "lng": 2.4
+    },
+    "website": "oisetourisme.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0f2",
+    "name": "Les Étangs de Cilly",
+    "category": "spot",
+    "city": "Cilly area",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 48.0,
+      "lng": 3.0
+    },
+    "website": "lesetangsdecilly.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0f3",
+    "name": "Pisciculture des Chutes d'Aston",
+    "category": "spot",
+    "city": "Toulouse area",
+    "postal_code": "Occitanie",
+    "street": null,
+    "coordinates": {
+      "lat": 43.6,
+      "lng": 1.4
+    },
+    "website": "truites-aston.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbaa5752535f59f2e0f4",
+    "name": "Etang de pêche Aimargues",
+    "category": "spot",
+    "city": "Aimargues",
+    "postal_code": "Gard",
+    "street": null,
+    "coordinates": {
+      "lat": 43.68,
+      "lng": 4.41
+    },
+    "website": "tripadvisor.fr",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec9774878e",
+    "name": "Naturix Pesca",
+    "category": "spot",
+    "city": "Toledo",
+    "postal_code": "Castilla-La Mancha",
+    "street": null,
+    "coordinates": {
+      "lat": 39.8,
+      "lng": -4.0
+    },
+    "website": "naturixpesca.es",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec9774878f",
+    "name": "DueroNatura Lago",
+    "category": "spot",
+    "city": "Zamora",
+    "postal_code": "Castilla y León",
+    "street": null,
+    "coordinates": {
+      "lat": 41.5,
+      "lng": -5.7
+    },
+    "website": "dueronatura.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec97748790",
+    "name": "Piscifactoría Las Fuentes",
+    "category": "spot",
+    "city": "Toledo",
+    "postal_code": "Castilla-La Mancha",
+    "street": null,
+    "coordinates": {
+      "lat": 39.9,
+      "lng": -4.1
+    },
+    "website": "piscifactorialasfuentes.es",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec97748791",
+    "name": "NUSI Lago de Pesca",
+    "category": "spot",
+    "city": "Santa Cruz de Campezo",
+    "postal_code": "Álava",
+    "street": null,
+    "coordinates": {
+      "lat": 42.67,
+      "lng": -2.35
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec97748792",
+    "name": "Coto intensivo Leitzaran",
+    "category": "spot",
+    "city": "Leitzaran",
+    "postal_code": "Gipuzkoa",
+    "street": null,
+    "coordinates": {
+      "lat": 43.2,
+      "lng": -1.9
+    },
+    "website": "urruzuno.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec97748793",
+    "name": "Coto Alfarrás",
+    "category": "spot",
+    "city": "Alfarrás",
+    "postal_code": "Lleida",
+    "street": null,
+    "coordinates": {
+      "lat": 41.8,
+      "lng": 0.9
+    },
+    "website": "viajespescamosca.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec97748794",
+    "name": "Embalse de Mequinenza",
+    "category": "spot",
+    "city": "El Mar de Aragón",
+    "postal_code": "Zaragoza",
+    "street": null,
+    "coordinates": {
+      "lat": 41.37,
+      "lng": 0.3
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec97748795",
+    "name": "Embalse de El Villar",
+    "category": "spot",
+    "city": "Tricio",
+    "postal_code": "La Rioja",
+    "street": null,
+    "coordinates": {
+      "lat": 42.35,
+      "lng": -2.8
+    },
+    "website": "larioja.org",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec97748796",
+    "name": "Coto intensivo Anguciana",
+    "category": "spot",
+    "city": "Anguciana",
+    "postal_code": "La Rioja",
+    "street": null,
+    "coordinates": {
+      "lat": 42.55,
+      "lng": -2.9
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec97748797",
+    "name": "Embalse de Vilagudín",
+    "category": "spot",
+    "city": "Vilagudín",
+    "postal_code": "A Coruña",
+    "street": null,
+    "coordinates": {
+      "lat": 43.2,
+      "lng": -8.3
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec97748798",
+    "name": "Coto intensivo Río Tormes",
+    "category": "spot",
+    "city": "Río Tormes",
+    "postal_code": "Salamanca",
+    "street": null,
+    "coordinates": {
+      "lat": 41.05,
+      "lng": -5.91
+    },
+    "website": "riberafishing.es",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec97748799",
+    "name": "Río Cares",
+    "category": "spot",
+    "city": "Río Cares",
+    "postal_code": "Asturias",
+    "street": null,
+    "coordinates": {
+      "lat": 43.32,
+      "lng": -4.61
+    },
+    "website": "riberafishing.es",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec9774879a",
+    "name": "Río Irati",
+    "category": "spot",
+    "city": "Río Irati",
+    "postal_code": "Navarra",
+    "street": null,
+    "coordinates": {
+      "lat": 42.95,
+      "lng": -1.2
+    },
+    "website": "riberafishing.es",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec9774879b",
+    "name": "Ibones de Anayet",
+    "category": "spot",
+    "city": "Anayet",
+    "postal_code": "Huesca",
+    "street": null,
+    "coordinates": {
+      "lat": 42.7,
+      "lng": -0.4
+    },
+    "website": "kalikunnan.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec9774879c",
+    "name": "Embalse Ibai-Eder",
+    "category": "spot",
+    "city": "Gipuzkoa",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 43.1,
+      "lng": -2.1
+    },
+    "website": "kalikunnan.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec9774879d",
+    "name": "Embalse Tranco de Beas",
+    "category": "spot",
+    "city": "Tranco",
+    "postal_code": "Jaén",
+    "street": null,
+    "coordinates": {
+      "lat": 38.1,
+      "lng": -2.8
+    },
+    "website": "kalikunnan.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec9774879e",
+    "name": "Lago de Sanabria",
+    "category": "spot",
+    "city": "Sanabria",
+    "postal_code": "Zamora",
+    "street": null,
+    "coordinates": {
+      "lat": 42.1,
+      "lng": -6.7
+    },
+    "website": "kalikunnan.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec9774879f",
+    "name": "Lago Banyoles",
+    "category": "spot",
+    "city": "Girona",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 42.12,
+      "lng": 2.76
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec977487a0",
+    "name": "Delta del Ebro",
+    "category": "spot",
+    "city": "Delta Ebro",
+    "postal_code": "Tarragona",
+    "street": null,
+    "coordinates": {
+      "lat": 40.7,
+      "lng": 0.8
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec977487a1",
+    "name": "Embalse Puente Viejas",
+    "category": "spot",
+    "city": "Puente Viejas",
+    "postal_code": "Madrid",
+    "street": null,
+    "coordinates": {
+      "lat": 40.9,
+      "lng": -3.6
+    },
+    "website": "ifema.es",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec977487a2",
+    "name": "Embalse Pedrezuela",
+    "category": "spot",
+    "city": "Pedrezuela",
+    "postal_code": "Madrid",
+    "street": null,
+    "coordinates": {
+      "lat": 40.95,
+      "lng": -3.7
+    },
+    "website": "ifema.es",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec977487a3",
+    "name": "Coto intensivo Río Leitzaran",
+    "category": "spot",
+    "city": "Leitzaran",
+    "postal_code": "Gipuzkoa",
+    "street": null,
+    "coordinates": {
+      "lat": 43.2,
+      "lng": -1.9
+    },
+    "website": "urruzuno.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec977487a4",
+    "name": "Coto El Villar",
+    "category": "spot",
+    "city": "Tricio",
+    "postal_code": "La Rioja",
+    "street": null,
+    "coordinates": {
+      "lat": 42.35,
+      "lng": -2.8
+    },
+    "website": "larioja.org",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec977487a5",
+    "name": "Piscifactoría DueroNatura",
+    "category": "spot",
+    "city": "Zamora",
+    "postal_code": "Castilla y León",
+    "street": null,
+    "coordinates": {
+      "lat": 41.5,
+      "lng": -5.7
+    },
+    "website": "dueronatura.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec977487a6",
+    "name": "Coto Noguera Ribagorçana",
+    "category": "spot",
+    "city": "Pirineo",
+    "postal_code": "Lleida",
+    "street": null,
+    "coordinates": {
+      "lat": 42.0,
+      "lng": 0.8
+    },
+    "website": "viajespescamosca.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec977487a7",
+    "name": "Coto Río Tormes Chorrón",
+    "category": "spot",
+    "city": "Salamanca",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 41.05,
+      "lng": -5.91
+    },
+    "website": "pescacastillayleon.es",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec977487a8",
+    "name": "Coto Río Tormes Galisancho",
+    "category": "spot",
+    "city": "Galisancho",
+    "postal_code": "Salamanca",
+    "street": null,
+    "coordinates": {
+      "lat": 41.1,
+      "lng": -5.85
+    },
+    "website": "pescacastillayleon.es",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec977487a9",
+    "name": "Coto Río Tormes Alba",
+    "category": "spot",
+    "city": "Alba de Tormes",
+    "postal_code": "Salamanca",
+    "street": null,
+    "coordinates": {
+      "lat": 41.15,
+      "lng": -5.9
+    },
+    "website": "pescacastillayleon.es",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec977487aa",
+    "name": "Coto Río Tormes Villagonzalo",
+    "category": "spot",
+    "city": "Villagonzalo",
+    "postal_code": "Salamanca",
+    "street": null,
+    "coordinates": {
+      "lat": 41.0,
+      "lng": -5.95
+    },
+    "website": "pescacastillayleon.es",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec977487ab",
+    "name": "Coto Río Sella",
+    "category": "spot",
+    "city": "Asturias",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 43.4,
+      "lng": -5.1
+    },
+    "website": "asturias.es",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec977487ac",
+    "name": "Embalse Tranco",
+    "category": "spot",
+    "city": "Jaén",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 38.1,
+      "lng": -2.8
+    },
+    "website": "andalucia.org",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec977487ad",
+    "name": "Lago Sanabria",
+    "category": "spot",
+    "city": "Zamora",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 42.1,
+      "lng": -6.7
+    },
+    "website": "zamora.es",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec977487ae",
+    "name": "Delta Ebro",
+    "category": "spot",
+    "city": "Ebro",
+    "postal_code": "Tarragona",
+    "street": null,
+    "coordinates": {
+      "lat": 40.7,
+      "lng": 0.8
+    },
+    "website": "tarragona.cat",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cbfecc2814ec977487af",
+    "name": "Coto Anguciana",
+    "category": "spot",
+    "city": "Anguciana",
+    "postal_code": "La Rioja",
+    "street": null,
+    "coordinates": {
+      "lat": 42.55,
+      "lng": -2.9
+    },
+    "website": "larioja.org",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be2516413",
+    "name": "Naturix Pesca",
+    "category": "spot",
+    "city": "Toledo",
+    "postal_code": "Castilla-La Mancha",
+    "street": null,
+    "coordinates": {
+      "lat": 39.8,
+      "lng": -4.0
+    },
+    "website": "naturixpesca.es",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be2516414",
+    "name": "DueroNatura Lago",
+    "category": "spot",
+    "city": "Duero area",
+    "postal_code": "Zamora",
+    "street": null,
+    "coordinates": {
+      "lat": 41.5,
+      "lng": -5.7
+    },
+    "website": "dueronatura.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be2516415",
+    "name": "Piscifactoria Las Fuentes",
+    "category": "spot",
+    "city": "Toledo area",
+    "postal_code": "Toledo",
+    "street": null,
+    "coordinates": {
+      "lat": 39.9,
+      "lng": -4.1
+    },
+    "website": "piscifactorialasfuentes.es",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be2516416",
+    "name": "NUSI Lago de Pesca",
+    "category": "spot",
+    "city": "Santa Cruz de Campezo",
+    "postal_code": "Alava",
+    "street": null,
+    "coordinates": {
+      "lat": 42.67,
+      "lng": -2.35
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be2516417",
+    "name": "Coto intensivo Leitzaran",
+    "category": "spot",
+    "city": "Leitzaran",
+    "postal_code": "Gipuzkoa",
+    "street": null,
+    "coordinates": {
+      "lat": 43.2,
+      "lng": -1.9
+    },
+    "website": "urruzuno.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be2516418",
+    "name": "Coto Alfarras",
+    "category": "spot",
+    "city": "Alfarras",
+    "postal_code": "Lleida",
+    "street": null,
+    "coordinates": {
+      "lat": 41.8,
+      "lng": 0.9
+    },
+    "website": "viajespescamosca.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be2516419",
+    "name": "Embalse de Mequinenza",
+    "category": "spot",
+    "city": "El Mar de Aragon",
+    "postal_code": "Zaragoza",
+    "street": null,
+    "coordinates": {
+      "lat": 41.37,
+      "lng": 0.3
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be251641a",
+    "name": "Embalse de El Villar",
+    "category": "spot",
+    "city": "Tricio",
+    "postal_code": "La Rioja",
+    "street": null,
+    "coordinates": {
+      "lat": 42.35,
+      "lng": -2.8
+    },
+    "website": "larioja.org",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be251641b",
+    "name": "Coto intensivo Anguciana",
+    "category": "spot",
+    "city": "Anguciana",
+    "postal_code": "La Rioja",
+    "street": null,
+    "coordinates": {
+      "lat": 42.55,
+      "lng": -2.9
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be251641c",
+    "name": "Embalse de Vilagudin",
+    "category": "spot",
+    "city": "Vilagudin",
+    "postal_code": "A Coruna",
+    "street": null,
+    "coordinates": {
+      "lat": 43.2,
+      "lng": -8.3
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be251641d",
+    "name": "Coto intensivo Rio Tormes",
+    "category": "spot",
+    "city": "Rio Tormes",
+    "postal_code": "Salamanca",
+    "street": null,
+    "coordinates": {
+      "lat": 41.05,
+      "lng": -5.91
+    },
+    "website": "riberafishing.es",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be251641e",
+    "name": "Rio Cares",
+    "category": "spot",
+    "city": "Rio Cares",
+    "postal_code": "Asturias",
+    "street": null,
+    "coordinates": {
+      "lat": 43.32,
+      "lng": -4.61
+    },
+    "website": "riberafishing.es",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be251641f",
+    "name": "Rio Irati",
+    "category": "spot",
+    "city": "Rio Irati",
+    "postal_code": "Navarra",
+    "street": null,
+    "coordinates": {
+      "lat": 42.95,
+      "lng": -1.2
+    },
+    "website": "riberafishing.es",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be2516420",
+    "name": "Ibones de Anayet",
+    "category": "spot",
+    "city": "Anayet",
+    "postal_code": "Huesca",
+    "street": null,
+    "coordinates": {
+      "lat": 42.7,
+      "lng": -0.4
+    },
+    "website": "kalikunnan.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be2516421",
+    "name": "Embalse Ibai-Eder",
+    "category": "spot",
+    "city": "Gipuzkoa",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 43.1,
+      "lng": -2.1
+    },
+    "website": "kalikunnan.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be2516422",
+    "name": "Embalse Tranco de Beas",
+    "category": "spot",
+    "city": "Tranco",
+    "postal_code": "Jaen",
+    "street": null,
+    "coordinates": {
+      "lat": 38.1,
+      "lng": -2.8
+    },
+    "website": "kalikunnan.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be2516423",
+    "name": "Lago de Sanabria",
+    "category": "spot",
+    "city": "Sanabria",
+    "postal_code": "Zamora",
+    "street": null,
+    "coordinates": {
+      "lat": 42.1,
+      "lng": -6.7
+    },
+    "website": "kalikunnan.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be2516424",
+    "name": "Lago Banyoles",
+    "category": "spot",
+    "city": "Girona",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 42.12,
+      "lng": 2.76
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be2516425",
+    "name": "Delta del Ebro",
+    "category": "spot",
+    "city": "Delta Ebro",
+    "postal_code": "Tarragona",
+    "street": null,
+    "coordinates": {
+      "lat": 40.7,
+      "lng": 0.8
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be2516426",
+    "name": "Embalse Puente Viejas",
+    "category": "spot",
+    "city": "Puente Viejas",
+    "postal_code": "Madrid",
+    "street": null,
+    "coordinates": {
+      "lat": 40.9,
+      "lng": -3.6
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be2516427",
+    "name": "Embalse Pedrezuela",
+    "category": "spot",
+    "city": "Pedrezuela",
+    "postal_code": "Madrid",
+    "street": null,
+    "coordinates": {
+      "lat": 40.95,
+      "lng": -3.7
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be2516428",
+    "name": "Coto Noguera Ribagorçana",
+    "category": "spot",
+    "city": "Pirineo",
+    "postal_code": "Lleida",
+    "street": null,
+    "coordinates": {
+      "lat": 42.0,
+      "lng": 0.8
+    },
+    "website": "viajespescamosca.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be2516429",
+    "name": "Coto Rio Tormes Chorron",
+    "category": "spot",
+    "city": "Salamanca",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 41.05,
+      "lng": -5.91
+    },
+    "website": "pescacastillayleon.es",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be251642a",
+    "name": "Coto Rio Tormes Galisancho",
+    "category": "spot",
+    "city": "Galisancho",
+    "postal_code": "Salamanca",
+    "street": null,
+    "coordinates": {
+      "lat": 41.1,
+      "lng": -5.85
+    },
+    "website": "pescacastillayleon.es",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be251642b",
+    "name": "Coto Rio Tormes Alba",
+    "category": "spot",
+    "city": "Alba de Tormes",
+    "postal_code": "Salamanca",
+    "street": null,
+    "coordinates": {
+      "lat": 41.15,
+      "lng": -5.9
+    },
+    "website": "pescacastillayleon.es",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be251642c",
+    "name": "Coto Rio Tormes Villagonzalo",
+    "category": "spot",
+    "city": "Villagonzalo",
+    "postal_code": "Salamanca",
+    "street": null,
+    "coordinates": {
+      "lat": 41.0,
+      "lng": -5.95
+    },
+    "website": "pescacastillayleon.es",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc128927700be251642d",
+    "name": "Coto Rio Sella",
+    "category": "spot",
+    "city": "Asturias",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 43.4,
+      "lng": -5.1
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25311",
+    "name": "Laghetto delle Rose",
+    "category": "spot",
+    "city": "Arquà Petrarca",
+    "postal_code": "PD",
+    "street": null,
+    "coordinates": {
+      "lat": 45.258,
+      "lng": 11.785
+    },
+    "website": "",
+    "phone": "",
+    "email": "asdlagoderose@gmail.com",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25312",
+    "name": "Lago Azzurro Vigonza",
+    "category": "spot",
+    "city": "Vigonza",
+    "postal_code": "PD",
+    "street": null,
+    "coordinates": {
+      "lat": 45.49,
+      "lng": 11.94
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25313",
+    "name": "Laghetto Roberta",
+    "category": "spot",
+    "city": "Due Carrare",
+    "postal_code": "PD",
+    "street": null,
+    "coordinates": {
+      "lat": 45.39,
+      "lng": 11.85
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25314",
+    "name": "Lago al Boschetto",
+    "category": "spot",
+    "city": "Piombino Dese",
+    "postal_code": "PD",
+    "street": null,
+    "coordinates": {
+      "lat": 45.58,
+      "lng": 12.0
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25315",
+    "name": "Lago Verde Torreglia",
+    "category": "spot",
+    "city": "Torreglia",
+    "postal_code": "PD",
+    "street": null,
+    "coordinates": {
+      "lat": 45.34,
+      "lng": 11.73
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25316",
+    "name": "Paradiso dei Pescatori",
+    "category": "spot",
+    "city": "Merlara",
+    "postal_code": "PD",
+    "street": null,
+    "coordinates": {
+      "lat": 45.17,
+      "lng": 11.42
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25317",
+    "name": "LAGO GHOST PARK",
+    "category": "spot",
+    "city": "S. Giorgio in Bosco",
+    "postal_code": "PD",
+    "street": null,
+    "coordinates": {
+      "lat": 45.71,
+      "lng": 11.82
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25318",
+    "name": "Laghi Euganei",
+    "category": "spot",
+    "city": "Veggiano",
+    "postal_code": "PD",
+    "street": null,
+    "coordinates": {
+      "lat": 45.3,
+      "lng": 11.7
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25319",
+    "name": "Laghetto di Fontaniva",
+    "category": "spot",
+    "city": "Fontaniva",
+    "postal_code": "PD",
+    "street": null,
+    "coordinates": {
+      "lat": 45.6,
+      "lng": 11.75
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af2531a",
+    "name": "Laghetto La Madonnina",
+    "category": "spot",
+    "city": "Pozzonovo",
+    "postal_code": "PD",
+    "street": null,
+    "coordinates": {
+      "lat": 45.2,
+      "lng": 11.8
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af2531b",
+    "name": "Laghetto S. Pietro in Gu'",
+    "category": "spot",
+    "city": "San Pietro in Gu",
+    "postal_code": "PD",
+    "street": null,
+    "coordinates": {
+      "lat": 45.55,
+      "lng": 11.65
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af2531c",
+    "name": "Pesca Sportiva Ponte Alto",
+    "category": "spot",
+    "city": "Selvazzano Dentro",
+    "postal_code": "PD",
+    "street": null,
+    "coordinates": {
+      "lat": 45.4,
+      "lng": 11.8
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af2531d",
+    "name": "A.S.D. Matti Pessetti",
+    "category": "spot",
+    "city": "Terrassa Padovana",
+    "postal_code": "PD",
+    "street": null,
+    "coordinates": {
+      "lat": 45.25,
+      "lng": 11.9
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af2531e",
+    "name": "Laghetto Sinigaglia",
+    "category": "spot",
+    "city": "Saletto",
+    "postal_code": "PD",
+    "street": null,
+    "coordinates": {
+      "lat": 45.23,
+      "lng": 11.53
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af2531f",
+    "name": "Oasi No Stress",
+    "category": "spot",
+    "city": "Este",
+    "postal_code": "PD",
+    "street": null,
+    "coordinates": {
+      "lat": 45.23,
+      "lng": 11.67
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25320",
+    "name": "Alle Sorgenti",
+    "category": "spot",
+    "city": "Fontaniva",
+    "postal_code": "PD",
+    "street": null,
+    "coordinates": {
+      "lat": 45.6,
+      "lng": 11.75
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25321",
+    "name": "La Fattoria delle Bontà",
+    "category": "spot",
+    "city": "Merlara",
+    "postal_code": "PD",
+    "street": null,
+    "coordinates": {
+      "lat": 45.17,
+      "lng": 11.42
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25322",
+    "name": "Laghetto di Piazzola sul Brenta",
+    "category": "spot",
+    "city": "Piazzola sul Brenta",
+    "postal_code": "PD",
+    "street": null,
+    "coordinates": {
+      "lat": 45.54,
+      "lng": 11.83
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25323",
+    "name": "Parco dei Cigni",
+    "category": "spot",
+    "city": "Piombino Dese",
+    "postal_code": "PD",
+    "street": null,
+    "coordinates": {
+      "lat": 45.58,
+      "lng": 12.0
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25324",
+    "name": "Lago del Cigno Borgosatollo",
+    "category": "spot",
+    "city": "Borgosatollo",
+    "postal_code": "BS",
+    "street": null,
+    "coordinates": {
+      "lat": 45.48,
+      "lng": 10.24
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25325",
+    "name": "Lago Azzurro Mozzanica",
+    "category": "spot",
+    "city": "Mozzanica",
+    "postal_code": "BG",
+    "street": null,
+    "coordinates": {
+      "lat": 45.47,
+      "lng": 9.68
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25326",
+    "name": "Laghetto Smeraldo Ghisalba",
+    "category": "spot",
+    "city": "Ghisalba",
+    "postal_code": "BG",
+    "street": null,
+    "coordinates": {
+      "lat": 45.59,
+      "lng": 9.82
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25327",
+    "name": "Happy & Vaia 2",
+    "category": "spot",
+    "city": "Montirone",
+    "postal_code": "BS",
+    "street": null,
+    "coordinates": {
+      "lat": 45.44,
+      "lng": 10.12
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25328",
+    "name": "Lago Franzoni",
+    "category": "spot",
+    "city": "Lombardia",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.5,
+      "lng": 9.5
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25329",
+    "name": "Lago Blu Casal Cermelli",
+    "category": "spot",
+    "city": "Casal Cermelli",
+    "postal_code": "AL",
+    "street": null,
+    "coordinates": {
+      "lat": 44.83,
+      "lng": 8.62
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af2532a",
+    "name": "Lago Sirio Canavese",
+    "category": "spot",
+    "city": "Canavese",
+    "postal_code": "TO",
+    "street": null,
+    "coordinates": {
+      "lat": 45.4,
+      "lng": 7.8
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af2532b",
+    "name": "Lago Nero Canavese",
+    "category": "spot",
+    "city": "Canavese",
+    "postal_code": "TO",
+    "street": null,
+    "coordinates": {
+      "lat": 45.4,
+      "lng": 7.8
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af2532c",
+    "name": "Lago Pistono",
+    "category": "spot",
+    "city": "Canavese",
+    "postal_code": "TO",
+    "street": null,
+    "coordinates": {
+      "lat": 45.4,
+      "lng": 7.8
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af2532d",
+    "name": "Lago dei Due Cornacchia",
+    "category": "spot",
+    "city": "Firenze Prov.",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 43.8,
+      "lng": 11.2
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af2532e",
+    "name": "Lago Molinuccio",
+    "category": "spot",
+    "city": "Sant'Agata Scarperia",
+    "postal_code": "FI",
+    "street": null,
+    "coordinates": {
+      "lat": 43.95,
+      "lng": 11.35
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af2532f",
+    "name": "Laghi di Bellavalle",
+    "category": "spot",
+    "city": "Barberino Mugello",
+    "postal_code": "FI",
+    "street": null,
+    "coordinates": {
+      "lat": 43.95,
+      "lng": 11.3
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25330",
+    "name": "Lago del Cavallino",
+    "category": "spot",
+    "city": "Toscana",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 43.9,
+      "lng": 11.0
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25331",
+    "name": "Laghi Malvado 2.0",
+    "category": "spot",
+    "city": "Toscana",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 43.8,
+      "lng": 11.1
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25332",
+    "name": "Lago dei Cavalieri",
+    "category": "spot",
+    "city": "Pistoia",
+    "postal_code": "PT",
+    "street": null,
+    "coordinates": {
+      "lat": 43.93,
+      "lng": 10.92
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25333",
+    "name": "Laghetto degli Orsi",
+    "category": "spot",
+    "city": "Cesiomaggiore",
+    "postal_code": "BL",
+    "street": null,
+    "coordinates": {
+      "lat": 46.1,
+      "lng": 12.0
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25334",
+    "name": "Lago di Vedana",
+    "category": "spot",
+    "city": "Veneto",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 46.2,
+      "lng": 12.1
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25335",
+    "name": "Lago Asinina Inferiore",
+    "category": "spot",
+    "city": "Bergamo",
+    "postal_code": "BG",
+    "street": null,
+    "coordinates": {
+      "lat": 45.9,
+      "lng": 9.8
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25336",
+    "name": "Lago Gleno",
+    "category": "spot",
+    "city": "Valle Seriana",
+    "postal_code": "BG",
+    "street": null,
+    "coordinates": {
+      "lat": 45.95,
+      "lng": 9.85
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25337",
+    "name": "Laghi Venerecolo",
+    "category": "spot",
+    "city": "Lombardia",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.8,
+      "lng": 9.9
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25338",
+    "name": "Lago Becco",
+    "category": "spot",
+    "city": "Val Brembana",
+    "postal_code": "BG",
+    "street": null,
+    "coordinates": {
+      "lat": 45.95,
+      "lng": 9.85
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25339",
+    "name": "Lago Carona",
+    "category": "spot",
+    "city": "Lombardia",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.7,
+      "lng": 9.7
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af2533a",
+    "name": "Laghetto Cantone",
+    "category": "spot",
+    "city": "Emilia",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 44.5,
+      "lng": 11.0
+    },
+    "website": "laghettocantone.it",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af2533b",
+    "name": "Parco Rio Pesca alla Trota",
+    "category": "spot",
+    "city": "Emilia",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 44.8,
+      "lng": 10.3
+    },
+    "website": "pescasportivario.it",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af2533c",
+    "name": "Laghetto La Fonte",
+    "category": "spot",
+    "city": "Villafranca",
+    "postal_code": "VR",
+    "street": null,
+    "coordinates": {
+      "lat": 45.4,
+      "lng": 10.9
+    },
+    "website": "pescanet.it",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af2533d",
+    "name": "Laghetto di Salorno",
+    "category": "spot",
+    "city": "Salorno",
+    "postal_code": "BZ",
+    "street": null,
+    "coordinates": {
+      "lat": 46.24,
+      "lng": 11.21
+    },
+    "website": "pescanet.it",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af2533e",
+    "name": "Laghetto Conca Verde",
+    "category": "spot",
+    "city": "Madonna di Campiglio",
+    "postal_code": "TN",
+    "street": null,
+    "coordinates": {
+      "lat": 46.23,
+      "lng": 10.83
+    },
+    "website": "campigliodolomiti.it",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af2533f",
+    "name": "Lagomago",
+    "category": "spot",
+    "city": "Caderzone Terme",
+    "postal_code": "TN",
+    "street": null,
+    "coordinates": {
+      "lat": 46.15,
+      "lng": 10.75
+    },
+    "website": "",
+    "phone": "",
+    "email": "lagomago@caderzone.net",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25340",
+    "name": "Laghetto Salmerino Alpino",
+    "category": "spot",
+    "city": "Madonna di Campiglio",
+    "postal_code": "TN",
+    "street": null,
+    "coordinates": {
+      "lat": 46.23,
+      "lng": 10.83
+    },
+    "website": "campigliodolomiti.it",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25341",
+    "name": "Lago Pesorto",
+    "category": "spot",
+    "city": "Lombardia",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.6,
+      "lng": 9.5
+    },
+    "website": "lagopesorto.it",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25342",
+    "name": "Laghetto di Giaveno",
+    "category": "spot",
+    "city": "Giaveno",
+    "postal_code": "TO",
+    "street": null,
+    "coordinates": {
+      "lat": 45.05,
+      "lng": 7.35
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25343",
+    "name": "Lago Sirio - Pistono",
+    "category": "spot",
+    "city": "Canavese",
+    "postal_code": "TO",
+    "street": null,
+    "coordinates": {
+      "lat": 45.4,
+      "lng": 7.8
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25344",
+    "name": "Lago di Resia",
+    "category": "spot",
+    "city": "Curon Venosta",
+    "postal_code": "BZ",
+    "street": null,
+    "coordinates": {
+      "lat": 46.8,
+      "lng": 10.5
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25345",
+    "name": "Laghetto Green Village",
+    "category": "spot",
+    "city": "Lombardia",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.5,
+      "lng": 9.2
+    },
+    "website": "pescafacile.it",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25346",
+    "name": "Laghetto Trota Blu",
+    "category": "spot",
+    "city": "Torino Prov.",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.1,
+      "lng": 7.7
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25347",
+    "name": "Rainbow Park",
+    "category": "spot",
+    "city": "Padova area",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.4,
+      "lng": 11.9
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25348",
+    "name": "Trota Felice",
+    "category": "spot",
+    "city": "Arezzo",
+    "postal_code": "AR",
+    "street": null,
+    "coordinates": {
+      "lat": 43.46,
+      "lng": 11.88
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25349",
+    "name": "Lago Verde Pesca",
+    "category": "spot",
+    "city": "Emilia",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 44.5,
+      "lng": 11.0
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af2534a",
+    "name": "Laghetto di Grosotto",
+    "category": "spot",
+    "city": "Grosotto",
+    "postal_code": "SO",
+    "street": null,
+    "coordinates": {
+      "lat": 46.49,
+      "lng": 10.26
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af2534b",
+    "name": "Lago Teaterno",
+    "category": "spot",
+    "city": "Chieti",
+    "postal_code": "CH",
+    "street": null,
+    "coordinates": {
+      "lat": 42.1,
+      "lng": 14.4
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af2534c",
+    "name": "Lago delle Meraviglie",
+    "category": "spot",
+    "city": "Pomezia",
+    "postal_code": "RM",
+    "street": null,
+    "coordinates": {
+      "lat": 41.67,
+      "lng": 12.5
+    },
+    "website": "pescacongliamici.altervista.org",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af2534d",
+    "name": "Lago Ghost Park",
+    "category": "spot",
+    "city": "S. Giorgio in Bosco",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.71,
+      "lng": 11.82
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af2534e",
+    "name": "Laghetto Giacomazzo",
+    "category": "spot",
+    "city": "S. Martino di Lupari",
+    "postal_code": "PD",
+    "street": null,
+    "coordinates": {
+      "lat": 45.65,
+      "lng": 11.78
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af2534f",
+    "name": "Laghetto La Sorgente",
+    "category": "spot",
+    "city": "Fontaniva",
+    "postal_code": "PD",
+    "street": null,
+    "coordinates": {
+      "lat": 45.6,
+      "lng": 11.75
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25350",
+    "name": "Bacino Barin",
+    "category": "spot",
+    "city": "Fontaniva",
+    "postal_code": "PD",
+    "street": null,
+    "coordinates": {
+      "lat": 45.6,
+      "lng": 11.75
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25351",
+    "name": "Lago Mondo Verde",
+    "category": "spot",
+    "city": "Castelfranco Veneto",
+    "postal_code": "TV",
+    "street": null,
+    "coordinates": {
+      "lat": 45.67,
+      "lng": 11.93
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25352",
+    "name": "Lago Zapparè",
+    "category": "spot",
+    "city": "Trevignano",
+    "postal_code": "TV",
+    "street": null,
+    "coordinates": {
+      "lat": 45.74,
+      "lng": 12.05
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25353",
+    "name": "Lago 2001",
+    "category": "spot",
+    "city": "Castelminio",
+    "postal_code": "TV",
+    "street": null,
+    "coordinates": {
+      "lat": 45.6,
+      "lng": 12.0
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25354",
+    "name": "Nuovo Lago Maggiore",
+    "category": "spot",
+    "city": "Lombardia",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.6,
+      "lng": 9.2
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25355",
+    "name": "Lago di Cingoli",
+    "category": "spot",
+    "city": "Cingoli",
+    "postal_code": "MC",
+    "street": null,
+    "coordinates": {
+      "lat": 43.38,
+      "lng": 13.22
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25356",
+    "name": "Lago di Garda area",
+    "category": "spot",
+    "city": "Garda",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 45.6,
+      "lng": 10.6
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25357",
+    "name": "Lago di Ledro",
+    "category": "spot",
+    "city": "Ledro",
+    "postal_code": "TN",
+    "street": null,
+    "coordinates": {
+      "lat": 45.88,
+      "lng": 10.76
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25358",
+    "name": "Lago Ritorto",
+    "category": "spot",
+    "city": "Madonna di Campiglio",
+    "postal_code": "TN",
+    "street": null,
+    "coordinates": {
+      "lat": 46.23,
+      "lng": 10.83
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af25359",
+    "name": "Lago Lambin",
+    "category": "spot",
+    "city": "Trentino",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 46.2,
+      "lng": 10.8
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cc60499e69681af2535a",
+    "name": "Lago Nambino",
+    "category": "spot",
+    "city": "Trentino",
+    "postal_code": null,
+    "street": null,
+    "coordinates": {
+      "lat": 46.22,
+      "lng": 10.82
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a10d",
+    "name": "Łowisko Złoty Pstrąg",
+    "category": "spot",
+    "city": "Boguszyn k. Kłodzka",
+    "postal_code": "Dolnośląskie",
+    "street": null,
+    "coordinates": {
+      "lat": 50.4,
+      "lng": 16.65
+    },
+    "website": "zlotypstrag.pl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a10e",
+    "name": "Raj Pstrąga",
+    "category": "spot",
+    "city": "Goszów k. Kłodzka",
+    "postal_code": "Dolnośląskie",
+    "street": null,
+    "coordinates": {
+      "lat": 50.45,
+      "lng": 16.7
+    },
+    "website": "rajpstraga.pl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a10f",
+    "name": "Siedlisko Pstrąga",
+    "category": "spot",
+    "city": "Mysłakowice k. Jeleniej Góry",
+    "postal_code": "Dolnośląskie",
+    "street": null,
+    "coordinates": {
+      "lat": 50.85,
+      "lng": 15.8
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a110",
+    "name": "Łowisko Pstrągowe Karpacz",
+    "category": "spot",
+    "city": "Karpacz",
+    "postal_code": "Dolnośląskie",
+    "street": null,
+    "coordinates": {
+      "lat": 50.78,
+      "lng": 15.76
+    },
+    "website": "dabrowka.karpacz.pl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a111",
+    "name": "Łowisko Kormoran nr 2",
+    "category": "spot",
+    "city": "Okolice Wrocławia",
+    "postal_code": "Dolnośląskie",
+    "street": null,
+    "coordinates": {
+      "lat": 51.1,
+      "lng": 17.0
+    },
+    "website": "kormoran.org.pl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a112",
+    "name": "Łowisko Wieniec",
+    "category": "spot",
+    "city": "Wieniec k. Bochni",
+    "postal_code": "Małopolskie",
+    "street": null,
+    "coordinates": {
+      "lat": 49.95,
+      "lng": 20.45
+    },
+    "website": "kazior5.pl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a113",
+    "name": "Łowisko Rybka",
+    "category": "spot",
+    "city": "Krzyszkowice k. Myślenic",
+    "postal_code": "Małopolskie",
+    "street": null,
+    "coordinates": {
+      "lat": 49.9,
+      "lng": 19.92
+    },
+    "website": "lowiskorybka.pl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a114",
+    "name": "Łowisko Bobrowisko",
+    "category": "spot",
+    "city": "Pomorskie",
+    "postal_code": "Pomorskie",
+    "street": null,
+    "coordinates": {
+      "lat": 54.2,
+      "lng": 18.0
+    },
+    "website": "znajdzlowisko.pl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a115",
+    "name": "Łowisko Bobrowa Przystań",
+    "category": "spot",
+    "city": "Pomorskie",
+    "postal_code": "Pomorskie",
+    "street": null,
+    "coordinates": {
+      "lat": 54.1,
+      "lng": 18.2
+    },
+    "website": "znajdzlowisko.pl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a116",
+    "name": "Łowisko CarpShop Lakes",
+    "category": "spot",
+    "city": "Pomorskie",
+    "postal_code": "Pomorskie",
+    "street": null,
+    "coordinates": {
+      "lat": 54.3,
+      "lng": 18.5
+    },
+    "website": "znajdzlowisko.pl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a117",
+    "name": "Chata na Skraju Puszczy",
+    "category": "spot",
+    "city": "Pomorskie",
+    "postal_code": "Pomorskie",
+    "street": null,
+    "coordinates": {
+      "lat": 54.0,
+      "lng": 17.8
+    },
+    "website": "znajdzlowisko.pl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a118",
+    "name": "Łowisko Jeleń",
+    "category": "spot",
+    "city": "Kociewie k. Gniewu",
+    "postal_code": "Pomorskie",
+    "street": null,
+    "coordinates": {
+      "lat": 53.85,
+      "lng": 18.8
+    },
+    "website": "odkryjpomorze.pl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a119",
+    "name": "Łowisko Świnobudy",
+    "category": "spot",
+    "city": "Kaszuby",
+    "postal_code": "Pomorskie",
+    "street": null,
+    "coordinates": {
+      "lat": 54.1,
+      "lng": 18.0
+    },
+    "website": "odkryjpomorze.pl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a11a",
+    "name": "Łowisko Niedamowo",
+    "category": "spot",
+    "city": "Kaszuby k. Kościerzyny",
+    "postal_code": "Pomorskie",
+    "street": null,
+    "coordinates": {
+      "lat": 54.05,
+      "lng": 17.95
+    },
+    "website": "odkryjpomorze.pl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a11b",
+    "name": "Łowisko Gosławice",
+    "category": "spot",
+    "city": "Konin area",
+    "postal_code": "Wielkopolskie",
+    "street": null,
+    "coordinates": {
+      "lat": 52.25,
+      "lng": 18.25
+    },
+    "website": "wedkarz.pro",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a11c",
+    "name": "Łowisko Rembertów",
+    "category": "spot",
+    "city": "Rembertów k. Warszawy",
+    "postal_code": "Mazowieckie",
+    "street": null,
+    "coordinates": {
+      "lat": 52.25,
+      "lng": 21.15
+    },
+    "website": "rybyrembertow.pl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a11d",
+    "name": "Łowisko Szczęsne",
+    "category": "spot",
+    "city": "Okolice Warszawy",
+    "postal_code": "Mazowieckie",
+    "street": null,
+    "coordinates": {
+      "lat": 52.2,
+      "lng": 21.0
+    },
+    "website": "lowiskoszczesne.pl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a11e",
+    "name": "Łowisko Pstrągowe Dąbrówka",
+    "category": "spot",
+    "city": "Dąbrówka k. Karpacza",
+    "postal_code": "Dolnośląskie",
+    "street": null,
+    "coordinates": {
+      "lat": 50.8,
+      "lng": 15.7
+    },
+    "website": "dabrowka.karpacz.pl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a11f",
+    "name": "Łowisko Agrostawy",
+    "category": "spot",
+    "city": "Małopolskie",
+    "postal_code": "Małopolskie",
+    "street": null,
+    "coordinates": {
+      "lat": 50.0,
+      "lng": 19.9
+    },
+    "website": "kazior5.pl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a120",
+    "name": "Gospodarstwo Rybackie Płośnica",
+    "category": "spot",
+    "city": "Płośnica",
+    "postal_code": "Kujawsko-Pomorskie",
+    "street": null,
+    "coordinates": {
+      "lat": 53.25,
+      "lng": 19.3
+    },
+    "website": "e-turysta.pl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a121",
+    "name": "Łowisko Jarosławki",
+    "category": "spot",
+    "city": "Jarosławki",
+    "postal_code": "Zachodniopomorskie",
+    "street": null,
+    "coordinates": {
+      "lat": 53.8,
+      "lng": 15.0
+    },
+    "website": "zpw.pl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a122",
+    "name": "Łowisko Mikrusy",
+    "category": "spot",
+    "city": "Okolice Nowego Targu",
+    "postal_code": "Małopolskie",
+    "street": null,
+    "coordinates": {
+      "lat": 49.48,
+      "lng": 20.03
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a123",
+    "name": "Łowisko Dziki Ślad",
+    "category": "spot",
+    "city": "Dolny Śląsk",
+    "postal_code": "Dolnośląskie",
+    "street": null,
+    "coordinates": {
+      "lat": 50.5,
+      "lng": 16.8
+    },
+    "website": "znajdzlowisko.pl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a124",
+    "name": "Łowisko Ostroróg staw nr 5",
+    "category": "spot",
+    "city": "Ostroróg",
+    "postal_code": "Wielkopolskie",
+    "street": null,
+    "coordinates": {
+      "lat": 52.7,
+      "lng": 16.15
+    },
+    "website": "znajdzlowisko.pl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a125",
+    "name": "Łowisko Jezioro Kłodnickie",
+    "category": "spot",
+    "city": "Kłodnica area",
+    "postal_code": "Śląskie",
+    "street": null,
+    "coordinates": {
+      "lat": 50.2,
+      "lng": 18.5
+    },
+    "website": "znajdzlowisko.pl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a126",
+    "name": "Łowisko Antoniów i Rybka",
+    "category": "spot",
+    "city": "Antoniów",
+    "postal_code": "Dolnośląskie",
+    "street": null,
+    "coordinates": {
+      "lat": 50.6,
+      "lng": 16.9
+    },
+    "website": "znajdzlowisko.pl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a127",
+    "name": "Łowisko Pstrągowe Szczawnica",
+    "category": "spot",
+    "city": "Szczawnica",
+    "postal_code": "Małopolskie",
+    "street": null,
+    "coordinates": {
+      "lat": 49.42,
+      "lng": 20.48
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a128",
+    "name": "Łowisko Pstrągowe nr 2 Kormoran",
+    "category": "spot",
+    "city": "Kormoran area",
+    "postal_code": "Dolnośląskie",
+    "street": null,
+    "coordinates": {
+      "lat": 51.1,
+      "lng": 17.0
+    },
+    "website": "kormoran.org.pl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a129",
+    "name": "Łowisko mieszane nr 3 Kormoran",
+    "category": "spot",
+    "city": "Kormoran",
+    "postal_code": "Dolnośląskie",
+    "street": null,
+    "coordinates": {
+      "lat": 51.1,
+      "lng": 17.0
+    },
+    "website": "kormoran.org.pl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990ccab854fd449d536a12a",
+    "name": "Łowisko Pstrągowe Mysłakowice Siedlisko",
+    "category": "spot",
+    "city": "Mysłakowice",
+    "postal_code": "Dolnośląskie",
+    "street": null,
+    "coordinates": {
+      "lat": 50.85,
+      "lng": 15.8
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd238817d32d3fcd296c",
+    "name": "Forellenvijvers De Henricushoeve",
+    "category": "spot",
+    "city": "Oostburg",
+    "postal_code": "Zeeland",
+    "street": null,
+    "coordinates": {
+      "lat": 51.32,
+      "lng": 3.52
+    },
+    "website": "visseninoostburg.nl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd238817d32d3fcd296d",
+    "name": "Forellenvijvers De Slegge",
+    "category": "spot",
+    "city": "Noord-Brabant area",
+    "postal_code": "Noord-Brabant",
+    "street": null,
+    "coordinates": {
+      "lat": 51.5,
+      "lng": 5.0
+    },
+    "website": "bdta.be",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd238817d32d3fcd296e",
+    "name": "Forellenvisvijver De Kolk",
+    "category": "spot",
+    "city": "Gelderland",
+    "postal_code": "Gelderland",
+    "street": null,
+    "coordinates": {
+      "lat": 52.0,
+      "lng": 5.8
+    },
+    "website": "bdta.be",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd238817d32d3fcd296f",
+    "name": "Forelvisvijvers Beek en Bron",
+    "category": "spot",
+    "city": "Beek en Donk area",
+    "postal_code": "Noord-Brabant",
+    "street": null,
+    "coordinates": {
+      "lat": 51.57,
+      "lng": 5.63
+    },
+    "website": "bdta.be",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd238817d32d3fcd2970",
+    "name": "Westernpark Jumping Henk",
+    "category": "spot",
+    "city": "Limburg",
+    "postal_code": "Limburg",
+    "street": null,
+    "coordinates": {
+      "lat": 51.2,
+      "lng": 5.9
+    },
+    "website": "bdta.be",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd238817d32d3fcd2971",
+    "name": "De Forelpoel",
+    "category": "spot",
+    "city": "Gelderland",
+    "postal_code": "Gelderland",
+    "street": null,
+    "coordinates": {
+      "lat": 52.0,
+      "lng": 5.5
+    },
+    "website": "vissenenvakantie.nl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd238817d32d3fcd2972",
+    "name": "De Forelvijver van Berlage",
+    "category": "spot",
+    "city": "Zuiderdiep",
+    "postal_code": "Drenthe",
+    "street": null,
+    "coordinates": {
+      "lat": 52.9,
+      "lng": 6.3
+    },
+    "website": "fishinginfo.eu",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd238817d32d3fcd2973",
+    "name": "Forellen vijver 't Anker",
+    "category": "spot",
+    "city": "Pannerden",
+    "postal_code": "Gelderland",
+    "street": null,
+    "coordinates": {
+      "lat": 51.95,
+      "lng": 6.04
+    },
+    "website": "fishinginfo.eu",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd238817d32d3fcd2974",
+    "name": "Toms Creek Forelvijvers",
+    "category": "spot",
+    "city": "Toms Creek area",
+    "postal_code": "Noord-Brabant",
+    "street": null,
+    "coordinates": {
+      "lat": 51.6,
+      "lng": 5.2
+    },
+    "website": "tomscreek.nl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd238817d32d3fcd2975",
+    "name": "Forellenvisvijvers Zederik",
+    "category": "spot",
+    "city": "Zederik",
+    "postal_code": "Utrecht",
+    "street": null,
+    "coordinates": {
+      "lat": 52.0,
+      "lng": 5.05
+    },
+    "website": "forelvisvijverszederik.nl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd238817d32d3fcd2976",
+    "name": "Forellenvijver Heioord",
+    "category": "spot",
+    "city": "Neeritter",
+    "postal_code": "Limburg",
+    "street": null,
+    "coordinates": {
+      "lat": 51.17,
+      "lng": 5.83
+    },
+    "website": "heioord.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd238817d32d3fcd2977",
+    "name": "Forelvisserij Maurik",
+    "category": "spot",
+    "city": "Maurik",
+    "postal_code": "Gelderland",
+    "street": null,
+    "coordinates": {
+      "lat": 51.95,
+      "lng": 5.42
+    },
+    "website": "forelvisserijmaurik.nl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd238817d32d3fcd2978",
+    "name": "Forellenvijver aan de Grens",
+    "category": "spot",
+    "city": "Baarle-Nassau",
+    "postal_code": "Noord-Brabant",
+    "street": null,
+    "coordinates": {
+      "lat": 51.44,
+      "lng": 4.93
+    },
+    "website": "forellenvijveraandegrens.nl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd238817d32d3fcd2979",
+    "name": "Forelvijver Cothen",
+    "category": "spot",
+    "city": "Cothen",
+    "postal_code": "Utrecht",
+    "street": null,
+    "coordinates": {
+      "lat": 52.0,
+      "lng": 5.38
+    },
+    "website": "forelvijvercothen.nl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd238817d32d3fcd297a",
+    "name": "Port de Peche",
+    "category": "spot",
+    "city": "Terheijden",
+    "postal_code": "Noord-Brabant",
+    "street": null,
+    "coordinates": {
+      "lat": 51.64,
+      "lng": 4.75
+    },
+    "website": "portdepeche.nl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd238817d32d3fcd297b",
+    "name": "Forellenvijver Breukink",
+    "category": "spot",
+    "city": "Rha",
+    "postal_code": "Gelderland",
+    "street": null,
+    "coordinates": {
+      "lat": 52.05,
+      "lng": 6.27
+    },
+    "website": "forellenvijver.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd238817d32d3fcd297c",
+    "name": "Forellenvijvers Geulhof",
+    "category": "spot",
+    "city": "Limburg area",
+    "postal_code": "Limburg",
+    "street": null,
+    "coordinates": {
+      "lat": 50.8,
+      "lng": 5.9
+    },
+    "website": "geulhof.nl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd238817d32d3fcd297d",
+    "name": "Forellenvijver 't Nijlan",
+    "category": "spot",
+    "city": "Ameland",
+    "postal_code": "Friesland",
+    "street": null,
+    "coordinates": {
+      "lat": 53.45,
+      "lng": 5.63
+    },
+    "website": "totalfishing.nl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd238817d32d3fcd297e",
+    "name": "Forellenvijver Het Oosterseveld",
+    "category": "spot",
+    "city": "Oosterveldseweg",
+    "postal_code": "Friesland",
+    "street": null,
+    "coordinates": {
+      "lat": 52.95,
+      "lng": 6.2
+    },
+    "website": "fishinginfo.eu",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd238817d32d3fcd297f",
+    "name": "Cafe zaal de Schutskooi Forellenvijvers",
+    "category": "spot",
+    "city": "Schutskooi area",
+    "postal_code": "Noord-Brabant",
+    "street": null,
+    "coordinates": {
+      "lat": 51.5,
+      "lng": 5.0
+    },
+    "website": "cafezaaldeschutskooi.nl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd3bfb44a432d761208b",
+    "name": "Forellenvijvers De Henricushoeve",
+    "category": "spot",
+    "city": "Oostburg",
+    "postal_code": "Zeeland",
+    "street": null,
+    "coordinates": {
+      "lat": 51.32,
+      "lng": 3.52
+    },
+    "website": "visseninoostburg.nl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd3bfb44a432d761208c",
+    "name": "Forellenvijvers De Slegge",
+    "category": "spot",
+    "city": "Noord-Brabant area",
+    "postal_code": "Noord-Brabant",
+    "street": null,
+    "coordinates": {
+      "lat": 51.5,
+      "lng": 5.0
+    },
+    "website": "bdta.be",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd3bfb44a432d761208d",
+    "name": "Forellenvisvijver De Kolk",
+    "category": "spot",
+    "city": "Gelderland",
+    "postal_code": "Gelderland",
+    "street": null,
+    "coordinates": {
+      "lat": 52.0,
+      "lng": 5.8
+    },
+    "website": "bdta.be",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd3bfb44a432d761208e",
+    "name": "Forelvisvijvers Beek en Bron",
+    "category": "spot",
+    "city": "Beek en Donk area",
+    "postal_code": "Noord-Brabant",
+    "street": null,
+    "coordinates": {
+      "lat": 51.57,
+      "lng": 5.63
+    },
+    "website": "bdta.be",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd3bfb44a432d761208f",
+    "name": "Westernpark Jumping Henk",
+    "category": "spot",
+    "city": "Limburg",
+    "postal_code": "Limburg",
+    "street": null,
+    "coordinates": {
+      "lat": 51.2,
+      "lng": 5.9
+    },
+    "website": "bdta.be",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd3bfb44a432d7612090",
+    "name": "De Forelpoel",
+    "category": "spot",
+    "city": "Gelderland",
+    "postal_code": "Gelderland",
+    "street": null,
+    "coordinates": {
+      "lat": 52.0,
+      "lng": 5.5
+    },
+    "website": "vissenenvakantie.nl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd3bfb44a432d7612091",
+    "name": "De Forelvijver van Berlage",
+    "category": "spot",
+    "city": "Zuiderdiep",
+    "postal_code": "Drenthe",
+    "street": null,
+    "coordinates": {
+      "lat": 52.9,
+      "lng": 6.3
+    },
+    "website": "fishinginfo.eu",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd3bfb44a432d7612092",
+    "name": "Forellen vijver 't Anker",
+    "category": "spot",
+    "city": "Pannerden",
+    "postal_code": "Gelderland",
+    "street": null,
+    "coordinates": {
+      "lat": 51.95,
+      "lng": 6.04
+    },
+    "website": "fishinginfo.eu",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd3bfb44a432d7612093",
+    "name": "Toms Creek Forelvijvers",
+    "category": "spot",
+    "city": "Toms Creek area",
+    "postal_code": "Noord-Brabant",
+    "street": null,
+    "coordinates": {
+      "lat": 51.6,
+      "lng": 5.2
+    },
+    "website": "tomscreek.nl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd3bfb44a432d7612094",
+    "name": "Forellenvisvijvers Zederik",
+    "category": "spot",
+    "city": "Zederik",
+    "postal_code": "Utrecht",
+    "street": null,
+    "coordinates": {
+      "lat": 52.0,
+      "lng": 5.05
+    },
+    "website": "forelvisvijverszederik.nl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd3bfb44a432d7612095",
+    "name": "Forellenvijver Heioord",
+    "category": "spot",
+    "city": "Neeritter",
+    "postal_code": "Limburg",
+    "street": null,
+    "coordinates": {
+      "lat": 51.17,
+      "lng": 5.83
+    },
+    "website": "heioord.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd3bfb44a432d7612096",
+    "name": "Forelvisserij Maurik",
+    "category": "spot",
+    "city": "Maurik",
+    "postal_code": "Gelderland",
+    "street": null,
+    "coordinates": {
+      "lat": 51.95,
+      "lng": 5.42
+    },
+    "website": "forelvisserijmaurik.nl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd3bfb44a432d7612097",
+    "name": "Forellenvijver aan de Grens",
+    "category": "spot",
+    "city": "Baarle-Nassau",
+    "postal_code": "Noord-Brabant",
+    "street": null,
+    "coordinates": {
+      "lat": 51.44,
+      "lng": 4.93
+    },
+    "website": "forellenvijveraandegrens.nl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd3bfb44a432d7612098",
+    "name": "Forelvijver Cothen",
+    "category": "spot",
+    "city": "Cothen",
+    "postal_code": "Utrecht",
+    "street": null,
+    "coordinates": {
+      "lat": 52.0,
+      "lng": 5.38
+    },
+    "website": "forelvijvercothen.nl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd3bfb44a432d7612099",
+    "name": "Port de Peche",
+    "category": "spot",
+    "city": "Terheijden",
+    "postal_code": "Noord-Brabant",
+    "street": null,
+    "coordinates": {
+      "lat": 51.64,
+      "lng": 4.75
+    },
+    "website": "portdepeche.nl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd3bfb44a432d761209a",
+    "name": "Forellenvijver Breukink",
+    "category": "spot",
+    "city": "Rha",
+    "postal_code": "Gelderland",
+    "street": null,
+    "coordinates": {
+      "lat": 52.05,
+      "lng": 6.27
+    },
+    "website": "forellenvijver.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd3bfb44a432d761209b",
+    "name": "Forellenvijvers Geulhof",
+    "category": "spot",
+    "city": "Mechelen",
+    "postal_code": "Limburg area",
+    "street": null,
+    "coordinates": {
+      "lat": 50.8,
+      "lng": 5.9
+    },
+    "website": "geulhof.nl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd3bfb44a432d761209c",
+    "name": "Forellenvijver 't Nijlan",
+    "category": "spot",
+    "city": "Ameland",
+    "postal_code": "Friesland",
+    "street": null,
+    "coordinates": {
+      "lat": 53.45,
+      "lng": 5.63
+    },
+    "website": "totalfishing.nl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd3bfb44a432d761209d",
+    "name": "Forellenvijver Het Oosterseveld",
+    "category": "spot",
+    "city": "Oosterveldseweg",
+    "postal_code": "Friesland",
+    "street": null,
+    "coordinates": {
+      "lat": 52.95,
+      "lng": 6.2
+    },
+    "website": "fishinginfo.eu",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cd3bfb44a432d761209e",
+    "name": "Cafe zaal de Schutskooi Forellenvijvers",
+    "category": "spot",
+    "city": "Schutskooi area",
+    "postal_code": "Noord-Brabant",
+    "street": null,
+    "coordinates": {
+      "lat": 51.5,
+      "lng": 5.0
+    },
+    "website": "cafezaaldeschutskooi.nl",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d467a",
+    "name": "Forellensee Weidachsee",
+    "category": "spot",
+    "city": "Weidach",
+    "postal_code": "Tirol",
+    "street": null,
+    "coordinates": {
+      "lat": 47.3,
+      "lng": 11.5
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d467b",
+    "name": "Hager Angelpark",
+    "category": "spot",
+    "city": "Kossen",
+    "postal_code": "Tirol",
+    "street": null,
+    "coordinates": {
+      "lat": 47.67,
+      "lng": 12.4
+    },
+    "website": "hager-angelpark.at",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d467c",
+    "name": "Bochra-See",
+    "category": "spot",
+    "city": "Stumm",
+    "postal_code": "Tirol",
+    "street": null,
+    "coordinates": {
+      "lat": 47.28,
+      "lng": 11.92
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d467d",
+    "name": "Furholz Teich",
+    "category": "spot",
+    "city": "Furholz Wien",
+    "postal_code": "Wien Umgebung",
+    "street": null,
+    "coordinates": {
+      "lat": 48.2,
+      "lng": 16.3
+    },
+    "website": "fischundwasser.at",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d467e",
+    "name": "Forellensee Millstatter See",
+    "category": "spot",
+    "city": "Millstatt",
+    "postal_code": "Karnten",
+    "street": null,
+    "coordinates": {
+      "lat": 46.8,
+      "lng": 13.57
+    },
+    "website": "millstaettersee.at",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d467f",
+    "name": "Forellenteich Faaker See",
+    "category": "spot",
+    "city": "Faak",
+    "postal_code": "Karnten",
+    "street": null,
+    "coordinates": {
+      "lat": 46.57,
+      "lng": 13.92
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d4680",
+    "name": "Forellensee Steiermark Graz",
+    "category": "spot",
+    "city": "Graz Umgebung",
+    "postal_code": "Steiermark",
+    "street": null,
+    "coordinates": {
+      "lat": 47.07,
+      "lng": 15.44
+    },
+    "website": "hejfish.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d4681",
+    "name": "Salzburg Forellenseen",
+    "category": "spot",
+    "city": "Salzburg",
+    "postal_code": "Salzburg",
+    "street": null,
+    "coordinates": {
+      "lat": 47.8,
+      "lng": 13.04
+    },
+    "website": "hejfish.com",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d4682",
+    "name": "Forellensee Bad Ischl",
+    "category": "spot",
+    "city": "Bad Ischl",
+    "postal_code": "Oberosterreich",
+    "street": null,
+    "coordinates": {
+      "lat": 47.71,
+      "lng": 13.62
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d4683",
+    "name": "Forellenteich Hallstatt",
+    "category": "spot",
+    "city": "Hallstatt",
+    "postal_code": "Oberosterreich",
+    "street": null,
+    "coordinates": {
+      "lat": 47.56,
+      "lng": 13.65
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d4684",
+    "name": "Forellensee Lunz am See",
+    "category": "spot",
+    "city": "Lunz",
+    "postal_code": "Niederosterreich",
+    "street": null,
+    "coordinates": {
+      "lat": 47.86,
+      "lng": 15.03
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d4685",
+    "name": "Forellenteich Erlaufsee",
+    "category": "spot",
+    "city": "Erlaufsee",
+    "postal_code": "Niederosterreich",
+    "street": null,
+    "coordinates": {
+      "lat": 47.82,
+      "lng": 15.27
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d4686",
+    "name": "Forellensee Lunzer See",
+    "category": "spot",
+    "city": "Lunzer See",
+    "postal_code": "Niederosterreich",
+    "street": null,
+    "coordinates": {
+      "lat": 47.86,
+      "lng": 15.03
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d4687",
+    "name": "Forellensee Attersee",
+    "category": "spot",
+    "city": "Attersee",
+    "postal_code": "Oberosterreich",
+    "street": null,
+    "coordinates": {
+      "lat": 47.91,
+      "lng": 13.54
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d4688",
+    "name": "Forellenteich Traunsee",
+    "category": "spot",
+    "city": "Traunsee",
+    "postal_code": "Oberosterreich",
+    "street": null,
+    "coordinates": {
+      "lat": 47.89,
+      "lng": 13.83
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d4689",
+    "name": "Forellensee Mondsee",
+    "category": "spot",
+    "city": "Mondsee",
+    "postal_code": "Oberosterreich",
+    "street": null,
+    "coordinates": {
+      "lat": 47.86,
+      "lng": 13.35
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d468a",
+    "name": "Forellenteich Wolfgangsee",
+    "category": "spot",
+    "city": "Wolfgangsee",
+    "postal_code": "Salzburg",
+    "street": null,
+    "coordinates": {
+      "lat": 47.74,
+      "lng": 13.46
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d468b",
+    "name": "Forellensee Fuschlsee",
+    "category": "spot",
+    "city": "Fuschl",
+    "postal_code": "Salzburg",
+    "street": null,
+    "coordinates": {
+      "lat": 47.79,
+      "lng": 13.3
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d468c",
+    "name": "Forellenteich Irrsee",
+    "category": "spot",
+    "city": "Irrsee",
+    "postal_code": "Oberosterreich",
+    "street": null,
+    "coordinates": {
+      "lat": 47.91,
+      "lng": 13.32
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d468d",
+    "name": "Forellensee Zeller See",
+    "category": "spot",
+    "city": "Zell am See",
+    "postal_code": "Salzburg",
+    "street": null,
+    "coordinates": {
+      "lat": 47.32,
+      "lng": 12.8
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d468e",
+    "name": "Forellensee Sihlsee",
+    "category": "spot",
+    "city": "Schwyz area",
+    "postal_code": "Schwyz",
+    "street": null,
+    "coordinates": {
+      "lat": 47.03,
+      "lng": 8.77
+    },
+    "website": "schweizer-angelforum.ch",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d468f",
+    "name": "Forellenteich Aegerisee",
+    "category": "spot",
+    "city": "Aegerisee",
+    "postal_code": "Zug",
+    "street": null,
+    "coordinates": {
+      "lat": 47.17,
+      "lng": 8.64
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d4690",
+    "name": "Forellensee Walensee",
+    "category": "spot",
+    "city": "Walensee",
+    "postal_code": "St. Gallen",
+    "street": null,
+    "coordinates": {
+      "lat": 47.12,
+      "lng": 9.2
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d4691",
+    "name": "Forellenteich Zurichsee",
+    "category": "spot",
+    "city": "Zurichsee",
+    "postal_code": "Zurich",
+    "street": null,
+    "coordinates": {
+      "lat": 47.28,
+      "lng": 8.55
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d4692",
+    "name": "Forellensee Thunersee",
+    "category": "spot",
+    "city": "Thunersee",
+    "postal_code": "Bern",
+    "street": null,
+    "coordinates": {
+      "lat": 46.69,
+      "lng": 7.72
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d4693",
+    "name": "Forellenteich Brienzersee",
+    "category": "spot",
+    "city": "Brienzersee",
+    "postal_code": "Bern",
+    "street": null,
+    "coordinates": {
+      "lat": 46.79,
+      "lng": 8.03
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d4694",
+    "name": "Forellensee Vierwaldstattersee",
+    "category": "spot",
+    "city": "Vierwaldstattersee",
+    "postal_code": "Luzern",
+    "street": null,
+    "coordinates": {
+      "lat": 47.0,
+      "lng": 8.3
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d4695",
+    "name": "Forellenteich Lac de Joux",
+    "category": "spot",
+    "city": "Joux",
+    "postal_code": "Waadt",
+    "street": null,
+    "coordinates": {
+      "lat": 46.62,
+      "lng": 6.27
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d4696",
+    "name": "Forellensee Lac Leman",
+    "category": "spot",
+    "city": "Genfersee",
+    "postal_code": "Genf",
+    "street": null,
+    "coordinates": {
+      "lat": 46.5,
+      "lng": 6.5
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d4697",
+    "name": "Forellenteich Lac de Neuchatel",
+    "category": "spot",
+    "city": "Neuenburgersee",
+    "postal_code": "Neuenburg",
+    "street": null,
+    "coordinates": {
+      "lat": 46.9,
+      "lng": 6.85
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d4698",
+    "name": "Forellensee Ribnik Bohinj",
+    "category": "spot",
+    "city": "Bohinj",
+    "postal_code": "Bohinj",
+    "street": null,
+    "coordinates": {
+      "lat": 46.27,
+      "lng": 13.78
+    },
+    "website": "fishinginslovenia.si",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d4699",
+    "name": "Ribnik Soca Umgebung",
+    "category": "spot",
+    "city": "Soca",
+    "postal_code": "Soca Valley",
+    "street": null,
+    "coordinates": {
+      "lat": 46.35,
+      "lng": 13.6
+    },
+    "website": "fishinginslovenia.si",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d469a",
+    "name": "Ribnik Idrijca",
+    "category": "spot",
+    "city": "Idrija",
+    "postal_code": "Idrija",
+    "street": null,
+    "coordinates": {
+      "lat": 46.0,
+      "lng": 14.03
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d469b",
+    "name": "Ribnik Ljubljanica",
+    "category": "spot",
+    "city": "Ljubljana Umgebung",
+    "postal_code": "Ljubljana",
+    "street": null,
+    "coordinates": {
+      "lat": 46.05,
+      "lng": 14.5
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d469c",
+    "name": "Ribnik Krka",
+    "category": "spot",
+    "city": "Krka",
+    "postal_code": "Novo Mesto",
+    "street": null,
+    "coordinates": {
+      "lat": 45.8,
+      "lng": 15.17
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d469d",
+    "name": "Ribnik Savinja",
+    "category": "spot",
+    "city": "Savinja",
+    "postal_code": "Celje",
+    "street": null,
+    "coordinates": {
+      "lat": 46.23,
+      "lng": 15.26
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d469e",
+    "name": "Ribnik Drava",
+    "category": "spot",
+    "city": "Drava",
+    "postal_code": "Maribor",
+    "street": null,
+    "coordinates": {
+      "lat": 46.55,
+      "lng": 15.65
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d469f",
+    "name": "Ribnik Mura",
+    "category": "spot",
+    "city": "Mura",
+    "postal_code": "Prekmurje",
+    "street": null,
+    "coordinates": {
+      "lat": 46.65,
+      "lng": 16.0
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d46a0",
+    "name": "Ribnik Kolpa",
+    "category": "spot",
+    "city": "Kolpa",
+    "postal_code": "Metlika",
+    "street": null,
+    "coordinates": {
+      "lat": 45.65,
+      "lng": 15.32
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d46a1",
+    "name": "Ribnik Kupa",
+    "category": "spot",
+    "city": "Kupa",
+    "postal_code": "Grenze Kroatien",
+    "street": null,
+    "coordinates": {
+      "lat": 45.5,
+      "lng": 15.5
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d46a2",
+    "name": "Ribnik Unec",
+    "category": "spot",
+    "city": "Unec",
+    "postal_code": "Unec",
+    "street": null,
+    "coordinates": {
+      "lat": 45.9,
+      "lng": 14.3
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d46a3",
+    "name": "Ribnik Reka",
+    "category": "spot",
+    "city": "Reka",
+    "postal_code": "Kocevje",
+    "street": null,
+    "coordinates": {
+      "lat": 45.65,
+      "lng": 14.85
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d46a4",
+    "name": "Ribnik Pivka",
+    "category": "spot",
+    "city": "Pivka",
+    "postal_code": "Pivka",
+    "street": null,
+    "coordinates": {
+      "lat": 45.83,
+      "lng": 14.2
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d46a5",
+    "name": "Ribnik Cerknisko Jezero",
+    "category": "spot",
+    "city": "Cerknisko",
+    "postal_code": "Cerknisko",
+    "street": null,
+    "coordinates": {
+      "lat": 45.78,
+      "lng": 14.38
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d46a6",
+    "name": "Ribnik Planinsko Polje",
+    "category": "spot",
+    "city": "Planina",
+    "postal_code": "Planina",
+    "street": null,
+    "coordinates": {
+      "lat": 45.83,
+      "lng": 14.25
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d46a7",
+    "name": "Ribnik Logarska Dolina",
+    "category": "spot",
+    "city": "Logarska",
+    "postal_code": "Logarska Dolina",
+    "street": null,
+    "coordinates": {
+      "lat": 46.41,
+      "lng": 14.62
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d46a8",
+    "name": "Ribnik Kamniška Bistrica",
+    "category": "spot",
+    "city": "Kamnik",
+    "postal_code": "Kamnik",
+    "street": null,
+    "coordinates": {
+      "lat": 46.22,
+      "lng": 14.61
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d46a9",
+    "name": "Ribnik Kokra",
+    "category": "spot",
+    "city": "Kokra",
+    "postal_code": "Jezersko",
+    "street": null,
+    "coordinates": {
+      "lat": 46.38,
+      "lng": 14.5
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d46aa",
+    "name": "Ribnik Trziška Bistrica",
+    "category": "spot",
+    "city": "Trzič",
+    "postal_code": "Trzič",
+    "street": null,
+    "coordinates": {
+      "lat": 46.36,
+      "lng": 14.31
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d46ab",
+    "name": "Ribnik Sava Bohinjka",
+    "category": "spot",
+    "city": "Bohinj",
+    "postal_code": "Bohinj",
+    "street": null,
+    "coordinates": {
+      "lat": 46.27,
+      "lng": 13.78
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d46ac",
+    "name": "Ribnik Sava Dolinka",
+    "category": "spot",
+    "city": "Kranjska Gora",
+    "postal_code": "Kranjska Gora",
+    "street": null,
+    "coordinates": {
+      "lat": 46.48,
+      "lng": 13.78
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  },
+  {
+    "id": "6990cda356dc31f9b30d46ad",
+    "name": "Ribnik Sava",
+    "category": "spot",
+    "city": "Radovljica",
+    "postal_code": "Radovljica",
+    "street": null,
+    "coordinates": {
+      "lat": 46.34,
+      "lng": 14.17
+    },
+    "website": "",
+    "phone": "",
+    "email": "",
+    "source": "user_provided"
+  }
+]

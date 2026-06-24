@@ -1,0 +1,178 @@
+[
+  {
+    "id": "rhein",
+    "name": "Rhein",
+    "laenge_km": 1326,
+    "verlauf": "Schweiz → Deutschland → Niederlande",
+    "bundeslaender": ["Baden-Württemberg", "Rheinland-Pfalz", "Nordrhein-Westfalen"],
+    "wichtige_orte": ["Konstanz", "Straßburg", "Mainz", "Köln", "Rotterdam"],
+    "fischarten": "Hecht, Zander, Barsch, Karpfen, Aal",
+    "angelgewaesser": "Besonders um Köln, Düsseldorf, Bonn",
+    "schwierigkeit": "Mittel bis schwer (Strömung)",
+    "koordinaten": {
+      "lat": 51.4,
+      "lng": 6.7
+    },
+    "beschreibung": "Europas wichtigster Strom, ideal für Großfischerei"
+  },
+  {
+    "id": "donau",
+    "name": "Donau",
+    "laenge_km": 2857,
+    "verlauf": "Schwarzwald → Schwarzes Meer",
+    "bundeslaender": ["Baden-Württemberg", "Bayern"],
+    "wichtige_orte": ["Ulm", "Regensburg", "Passau"],
+    "fischarten": "Huchen, Äsche, Barbe, Nase, Zander",
+    "angelgewaesser": "Obere Donau (Bayern, Schwaben)",
+    "schwierigkeit": "Mittel (Strömung aber nicht so stark wie Rhein)",
+    "koordinaten": {
+      "lat": 48.5,
+      "lng": 10.8
+    },
+    "beschreibung": "Europas zweitlängster Fluss mit exzellenter Fischerei"
+  },
+  {
+    "id": "main",
+    "name": "Main",
+    "laenge_km": 524,
+    "verlauf": "Franken → Rhein",
+    "bundeslaender": ["Bayern", "Hessen", "Nordrhein-Westfalen"],
+    "wichtige_orte": ["Würzburg", "Frankfurt", "Mainz"],
+    "fischarten": "Zander, Hecht, Barsch, Karpfen, Aal",
+    "angelgewaesser": "Main-Linie (Stauseen)",
+    "schwierigkeit": "Mittel",
+    "koordinaten": {
+      "lat": 49.9,
+      "lng": 8.7
+    },
+    "beschreibung": "Wichtiger Rhein-Nebenfluss mit guten Angelplätzen"
+  },
+  {
+    "id": "mosel",
+    "name": "Mosel",
+    "laenge_km": 561,
+    "verlauf": "Frankreich → Rhein",
+    "bundeslaender": ["Rheinland-Pfalz"],
+    "wichtige_orte": ["Trier", "Bernkastel"],
+    "fischarten": "Hecht, Zander, Barsch, Nase",
+    "angelgewaesser": "Moseltal (Stauseen)",
+    "schwierigkeit": "Leicht bis mittel",
+    "koordinaten": {
+      "lat": 49.75,
+      "lng": 6.6
+    },
+    "beschreibung": "Romantischer Fluss mit pittoresken Angelplätzen"
+  },
+  {
+    "id": "elbe",
+    "name": "Elbe",
+    "laenge_km": 1091,
+    "verlauf": "Tschechien → Nordseee",
+    "bundeslaender": ["Sachsen", "Sachsen-Anhalt", "Brandenburg", "Schleswig-Holstein"],
+    "wichtige_orte": ["Dresden", "Torgau", "Magdeburg", "Hamburg"],
+    "fischarten": "Hecht, Zander, Brasse, Schleie, Aal",
+    "angelgewaesser": "Unterelbe (Hamburg), Mittelelbe (Magdeburg)",
+    "schwierigkeit": "Mittel",
+    "koordinaten": {
+      "lat": 52.5,
+      "lng": 13.4
+    },
+    "beschreibung": "Nordteuropas wichtigste Wasserstraße mit vielen Seen"
+  },
+  {
+    "id": "weser",
+    "name": "Weser",
+    "laenge_km": 452,
+    "verlauf": "Waldeck → Nordsee",
+    "bundeslaender": ["Hessen", "Niedersachsen", "Bremen"],
+    "wichtige_orte": ["Kassel", "Hannoversch Münden", "Minden", "Bremen"],
+    "fischarten": "Hecht, Zander, Barsch, Brasse, Aal",
+    "angelgewaesser": "Weserbergland, Unterweser",
+    "schwierigkeit": "Leicht bis mittel",
+    "koordinaten": {
+      "lat": 53.0,
+      "lng": 8.8
+    },
+    "beschreibung": "Beliebter Fluss mit schöner Landschaft und guten Fischen"
+  },
+  {
+    "id": "ems",
+    "name": "Ems",
+    "laenge_km": 371,
+    "verlauf": "Teutoburger Wald → Nordsee",
+    "bundeslaender": ["Niedersachsen", "Nordrhein-Westfalen"],
+    "wichtige_orte": ["Rheine", "Lingen", "Emden"],
+    "fischarten": "Hecht, Zander, Brasse, Aal",
+    "angelgewaesser": "Emsdeich",
+    "schwierigkeit": "Mittel",
+    "koordinaten": {
+      "lat": 53.3,
+      "lng": 7.0
+    },
+    "beschreibung": "Wichtiger Grenzfluss mit salzigen Unterläufen"
+  },
+  {
+    "id": "oder",
+    "name": "Oder",
+    "laenge_km": 854,
+    "verlauf": "Polen → Ostsee",
+    "bundeslaender": ["Brandenburg"],
+    "wichtige_orte": ["Kostrzyn", "Frankfurt/Oder", "Stettin"],
+    "fischarten": "Hecht, Zander, Barsch, Brasse",
+    "angelgewaesser": "Oder-Spree-Kanal",
+    "schwierigkeit": "Mittel",
+    "koordinaten": {
+      "lat": 53.8,
+      "lng": 14.5
+    },
+    "beschreibung": "Grenzfluss zu Polen mit guten Hecht- und Zander-Populations"
+  },
+  {
+    "id": "neckar",
+    "name": "Neckar",
+    "laenge_km": 367,
+    "verlauf": "Schwarzwald → Rhein",
+    "bundeslaender": ["Baden-Württemberg"],
+    "wichtige_orte": ["Tübingen", "Stuttgart", "Heidelberg"],
+    "fischarten": "Hecht, Zander, Barsch, Nase, Äsche",
+    "angelgewaesser": "Neckarpegel (Stuttgart)",
+    "schwierigkeit": "Mittel",
+    "koordinaten": {
+      "lat": 49.1,
+      "lng": 8.7
+    },
+    "beschreibung": "Attraktiver Fluss mit urbanen Angelplätzen"
+  },
+  {
+    "id": "spree",
+    "name": "Spree",
+    "laenge_km": 398,
+    "verlauf": "Lausitz → Elbe",
+    "bundeslaender": ["Brandenburg", "Berlin"],
+    "wichtige_orte": ["Berlin", "Königs Wusterhausen"],
+    "fischarten": "Hecht, Zander, Barsch, Brasse",
+    "angelgewaesser": "Berliner Seen (Müggelsee)",
+    "schwierigkeit": "Leicht",
+    "koordinaten": {
+      "lat": 52.45,
+      "lng": 13.5
+    },
+    "beschreibung": "Stadtnatur mit vielen Seen und guten Angelplätzen"
+  },
+  {
+    "id": "isar",
+    "name": "Isar",
+    "laenge_km": 295,
+    "verlauf": "Karwendel → Donau",
+    "bundeslaender": ["Bayern"],
+    "wichtige_orte": ["Mittenwald", "München", "Landshut"],
+    "fischarten": "Äsche, Barbe, Huchen, Nase",
+    "angelgewaesser": "Isartal (München Umgebung)",
+    "schwierigkeit": "Mittel (Gebirgsfluss)",
+    "koordinaten": {
+      "lat": 48.3,
+      "lng": 11.6
+    },
+    "beschreibung": "Bergfluss mit kristallklarem Wasser und Forellen"
+  }
+]

@@ -1,0 +1,366 @@
+[
+  {
+    "id": "eu-park-000",
+    "name": "Angelpark Genhodder",
+    "category": "angelpark_eu",
+    "country": "Deutschland",
+    "type": "Angelpark",
+    "address": "Genhodder 38, 41179 Mönchengladbach",
+    "coordinates": {
+      "lat": 51.1585,
+      "lng": 6.3861
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-001",
+    "name": "Angelpark Wagner",
+    "category": "angelpark_eu",
+    "country": "Deutschland",
+    "type": "Angelpark",
+    "address": "Gronauer Str. 110, 61118 Bad Vilbel",
+    "coordinates": {
+      "lat": 50.1571,
+      "lng": 8.7226
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-002",
+    "name": "Angelpark Tellingstedt",
+    "category": "angelpark_eu",
+    "country": "Deutschland",
+    "type": "Angelpark",
+    "address": "Heideweg 1, 25782 Tellingstedt",
+    "coordinates": {
+      "lat": 54.2353,
+      "lng": 8.9353
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-003",
+    "name": "Angelpark Millerscheid",
+    "category": "angelpark_eu",
+    "country": "Deutschland",
+    "type": "Angelpark",
+    "address": "Millerscheid 1, 53809 Ruppichteroth",
+    "coordinates": {
+      "lat": 50.8889,
+      "lng": 7.2667
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-004",
+    "name": "Angelpark Letscher",
+    "category": "angelpark_eu",
+    "country": "Deutschland",
+    "type": "Angelpark",
+    "address": "Schafhaus 1, 72218 Wildberg",
+    "coordinates": {
+      "lat": 48.6783,
+      "lng": 8.5617
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-005",
+    "name": "Hoby Put & Take",
+    "category": "angelpark_eu",
+    "country": "Dänemark",
+    "type": "Put & Take",
+    "address": "Hobyvej 58, 4900 Nakskov",
+    "coordinates": {
+      "lat": 54.8187,
+      "lng": 11.152000000000001
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-006",
+    "name": "Ågårdens Put & Take",
+    "category": "angelpark_eu",
+    "country": "Dänemark",
+    "type": "Put & Take",
+    "address": "Ågårdsvej 4, 6630 Rødding",
+    "coordinates": {
+      "lat": 55.1207,
+      "lng": 9.054
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-007",
+    "name": "Pinds Mølle Put & Take",
+    "category": "angelpark_eu",
+    "country": "Dänemark",
+    "type": "Put & Take",
+    "address": "Pinds Mølle Vej 35, 8362 Hørning",
+    "coordinates": {
+      "lat": 56.2627,
+      "lng": 9.696
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-008",
+    "name": "Lodbjerg Hede Ørredsø",
+    "category": "angelpark_eu",
+    "country": "Dänemark",
+    "type": "Put & Take",
+    "address": "Lodbjerg Hede Vej 1, 6950 Ringkøbing",
+    "coordinates": {
+      "lat": 55.947,
+      "lng": 8.2303
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-009",
+    "name": "Tollundgaard Put & Take",
+    "category": "angelpark_eu",
+    "country": "Dänemark",
+    "type": "Put & Take",
+    "address": "Tollundvej 3, 7442 Engesvang",
+    "coordinates": {
+      "lat": 55.8707,
+      "lng": 9.2873
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-010",
+    "name": "Seymour Fishery",
+    "category": "angelpark_eu",
+    "country": "UK",
+    "type": "Fishery",
+    "address": "Sloway Ln, Stretcholt, Bridgwater, TA6 4SR",
+    "coordinates": {
+      "lat": 51.1331,
+      "lng": -2.9859
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-011",
+    "name": "Star Carr Lakes",
+    "category": "angelpark_eu",
+    "country": "UK",
+    "type": "Fishery",
+    "address": "Hempholme Lane, Brandesburton, Driffield, YO25 8RU",
+    "coordinates": {
+      "lat": 53.990500000000004,
+      "lng": -0.4305
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-012",
+    "name": "The Folly Lakes",
+    "category": "angelpark_eu",
+    "country": "UK",
+    "type": "Fishery",
+    "address": "A15 Glinton Bypass, Peterborough",
+    "coordinates": {
+      "lat": 52.5699,
+      "lng": -0.2532
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-013",
+    "name": "Swan Valley Lakes",
+    "category": "angelpark_eu",
+    "country": "UK",
+    "type": "Fishery",
+    "address": "Swan Lake Park, Yateley, GU17 0DL",
+    "coordinates": {
+      "lat": 51.311699999999995,
+      "lng": -0.8217
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-014",
+    "name": "Horcott Lakes",
+    "category": "angelpark_eu",
+    "country": "UK",
+    "type": "Fishery",
+    "address": "Horcott Road, Fairford, GL7 4BX",
+    "coordinates": {
+      "lat": 51.816100000000006,
+      "lng": -1.7508
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-015",
+    "name": "Forellenvijver De Berenkuil",
+    "category": "angelpark_eu",
+    "country": "Niederlande",
+    "type": "Forellenvijver",
+    "address": "Berkenweg 42, 3881 LN Putten",
+    "coordinates": {
+      "lat": 52.245,
+      "lng": 5.4117
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-016",
+    "name": "Forellenvijver 't Mun",
+    "category": "angelpark_eu",
+    "country": "Niederlande",
+    "type": "Forellenvijver",
+    "address": "Munstraat 4, 6629 AZ Appeltern",
+    "coordinates": {
+      "lat": 51.9283,
+      "lng": 5.7617
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-017",
+    "name": "De Kool",
+    "category": "angelpark_eu",
+    "country": "Niederlande",
+    "type": "Forellenvijver",
+    "address": "Heelweg 32, 7055 AT Heelweg",
+    "coordinates": {
+      "lat": 52.0627,
+      "lng": 5.8127
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-018",
+    "name": "Forellenvijver Heioord",
+    "category": "angelpark_eu",
+    "country": "Niederlande",
+    "type": "Forellenvijver",
+    "address": "Heioord 1, 6015 AS Neeritter",
+    "coordinates": {
+      "lat": 51.965700000000005,
+      "lng": 6.032299999999999
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-019",
+    "name": "Wild Bijzonder Vissen",
+    "category": "angelpark_eu",
+    "country": "Niederlande",
+    "type": "Forellenvijver",
+    "address": "Vierhuizenweg 5, 8171 MC Vaassen",
+    "coordinates": {
+      "lat": 52.2197,
+      "lng": 6.0197
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-020",
+    "name": "Forellenvijvers De Pelikaan",
+    "category": "angelpark_eu",
+    "country": "Belgien",
+    "type": "Forellenvijver",
+    "address": "Gruitroderlaan 1, 3670 Oudsbergen",
+    "coordinates": {
+      "lat": 51.2283,
+      "lng": 5.2783
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-021",
+    "name": "Forelvijver De Plas",
+    "category": "angelpark_eu",
+    "country": "Belgien",
+    "type": "Forellenvijver",
+    "address": "Verrebroek, Belgien",
+    "coordinates": {
+      "lat": 51.3137,
+      "lng": 4.1303
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-022",
+    "name": "Riveo",
+    "category": "angelpark_eu",
+    "country": "Belgien",
+    "type": "Centre d'interprétation de la rivière",
+    "address": "Rue de la Plage 2, 6990 Hotton",
+    "coordinates": {
+      "lat": 50.185300000000005,
+      "lng": 5.252
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-023",
+    "name": "Łowisko Wygonin",
+    "category": "angelpark_eu",
+    "country": "Polen",
+    "type": "Łowisko komercyjne",
+    "address": "Wygonin, Polen",
+    "coordinates": {
+      "lat": 51.932300000000005,
+      "lng": 19.3323
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-024",
+    "name": "Łowisko Halinów",
+    "category": "angelpark_eu",
+    "country": "Polen",
+    "type": "Łowisko",
+    "address": "Halinów, Polen",
+    "coordinates": {
+      "lat": 52.052,
+      "lng": 21.435299999999998
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-025",
+    "name": "Łowisko Gosławice",
+    "category": "angelpark_eu",
+    "country": "Polen",
+    "type": "Łowisko karpiowe",
+    "address": "Gosławice, Polen",
+    "coordinates": {
+      "lat": 51.7823,
+      "lng": 19.3323
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-026",
+    "name": "Pêcherie du Val de l'Eure",
+    "category": "angelpark_eu",
+    "country": "Frankreich",
+    "type": "Pêcherie",
+    "address": "Saint-Georges-sur-Eure",
+    "coordinates": {
+      "lat": 48.7627,
+      "lng": 1.4293
+    },
+    "source": "angelparks_europe_md"
+  },
+  {
+    "id": "eu-park-027",
+    "name": "Étangs de la Minière",
+    "category": "angelpark_eu",
+    "country": "Frankreich",
+    "type": "Étangs de pêche",
+    "address": "Guyancourt",
+    "coordinates": {
+      "lat": 48.7687,
+      "lng": 2.0519999999999996
+    },
+    "source": "angelparks_europe_md"
+  }
+]

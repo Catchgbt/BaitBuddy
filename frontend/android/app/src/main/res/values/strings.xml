@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BaitBuddy</string>
+    <string name="title_activity_main">BaitBuddy</string>
+    <string name="package_name">com.base68bb3d3b9f83dc1f55ef532b.app</string>
+    <string name="custom_url_scheme">com.base68bb3d3b9f83dc1f55ef532b.app</string>
+</resources>

@@ -1,0 +1,22 @@
+{
+  "appId": "app.baitbuddy.mobile",
+  "appName": "BaitBuddy",
+  "webDir": "dist",
+  "backgroundColor": "#0a0f1a",
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": true,
+      "autoHide": true,
+      "fadeDuration": 500
+    }
+  },
+  "android": {
+    "allowMixedContent": false,
+    "minWebViewVersion": 90
+  },
+  "server": {
+    "androidScheme": "https",
+    "hostname": "localhost",
+    "url": "https://bait-buddy.vercel.app"
+  }
+}

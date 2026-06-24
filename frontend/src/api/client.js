@@ -1,8 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
+import { Capacitor } from '@capacitor/core';
 
-const BACKEND = import.meta.env.VITE_BACKEND_URL;
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const BACKEND = Capacitor.isNativePlatform()
+  ? 'https://bait-buddy.vercel.app'
+  : (import.meta.env.VITE_BACKEND_URL ?? '');
+
+function validUrl(val) {
+  try { return /^https?:\/\/.+/.test(val) && !!new URL(val) && val; } catch { return ''; }
+}
+
+const SUPABASE_URL = validUrl(import.meta.env.VITE_SUPABASE_URL) || 'https://placeholder.supabase.co';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 

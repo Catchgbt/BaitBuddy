@@ -10,23 +10,23 @@ export default function Community() {
 
   const { data: comps } = useQuery({
     queryKey: ['competitions'],
-    queryFn: () => api.get('/api/competitions')
+    queryFn: () => api.get('/api/events')
   });
 
   const { data: leaderboard } = useQuery({
     queryKey: ['leaderboard', selectedComp],
-    queryFn: () => api.get(`/api/competitions/${selectedComp}/leaderboard`),
+    queryFn: () => api.get(`/api/events/${selectedComp}/leaderboard`),
     enabled: !!selectedComp
   });
 
   const like = useMutation({
-    mutationFn: (id) => api.post(`/api/submissions/${id}/like`, {}),
+    mutationFn: (id) => api.post(`/api/community/voting/${id}/like`, {}),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['leaderboard'] }); toast.success('Geliked!'); },
     onError: e => toast.error(e.message)
   });
 
-  const competitions = comps?.competitions || [];
-  const board = leaderboard?.leaderboard || [];
+  const competitions = comps || [];
+  const board = leaderboard || [];
 
   return (
     <div className="p-4 space-y-4">
@@ -73,15 +73,20 @@ export default function Community() {
               }`}>{i + 1}</span>
               <div className="flex-1">
                 <p className="text-white text-sm font-medium">{entry.species || '?'}{entry.length_cm ? ` · ${entry.length_cm}cm` : ''}</p>
-                <p className="text-gray-500 text-xs">{entry.user_id}</p>
+                <p className="text-gray-500 text-xs">{entry.user_id?.split('@')[0] || 'Angler'}</p>
               </div>
-              <button onClick={() => like.mutate(entry.id)}
+              <button onClick={(e) => { e.stopPropagation(); like.mutate(entry.id); }}
                 className="flex items-center gap-1 text-gray-500 hover:text-red-400 transition-colors">
                 <Heart size={16} />
-                <span className="text-xs">{entry.community_likes || 0}</span>
+                <span className="text-xs">{entry.total_score || entry.length_cm || 0}</span>
               </button>
             </div>
           ))}
+          {board.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              <p className="text-sm">Noch keine Einträge</p>
+            </div>
+          )}
         </div>
       )}
     </div>

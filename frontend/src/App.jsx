@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import Layout from './Layout';
+import LandingPage from './pages/LandingPage';
 import Home from './pages/Home';
 import AIAssistant from './pages/AIAssistant';
 import VoiceChat from './pages/VoiceChat';
@@ -10,6 +11,9 @@ import Log from './pages/Log';
 import Map from './pages/Map';
 import Community from './pages/Community';
 import Premium from './pages/Premium';
+import Profile from './pages/Profile';
+import Knots from './pages/Knots';
+import Schonzeiten from './pages/Schonzeiten';
 import Login from './pages/Login';
 
 const queryClient = new QueryClient();
@@ -24,8 +28,9 @@ function ProtectedRoute({ children }) {
 function AppRoutes() {
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+      <Route path="/app" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Home />} />
         <Route path="chat" element={<AIAssistant />} />
         <Route path="voice" element={<VoiceChat />} />
@@ -33,7 +38,12 @@ function AppRoutes() {
         <Route path="map" element={<Map />} />
         <Route path="community" element={<Community />} />
         <Route path="premium" element={<Premium />} />
+        <Route path="profile" element={<Profile />} />
+        <Route path="knots" element={<Knots />} />
+        <Route path="schonzeiten" element={<Schonzeiten />} />
       </Route>
+      {/* Fallback für alte Links */}
+      <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
 }

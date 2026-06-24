@@ -1,0 +1,162 @@
+[
+  {
+    "id": "at_bathymetry",
+    "name": "Österreich Bathymetrie",
+    "land": "Österreich",
+    "bounding_box": {
+      "minLat": 46.37,
+      "maxLat": 49.02,
+      "minLng": 9.53,
+      "maxLng": 17.16
+    },
+    "data_source": "GEBCO 2026 + Österreichische Gewässerdaten",
+    "resolution": "30m",
+    "year": 2026,
+    "coverage": "Alle Bundesländer",
+    "description": "Hochauflösende Bathymetriedaten für österreichische Gewässer einschließlich Donau, österreichische Seen und alpine Flüsse"
+  },
+  {
+    "id": "ch_bathymetry",
+    "name": "Schweiz Bathymetrie",
+    "land": "Schweiz",
+    "bounding_box": {
+      "minLat": 45.82,
+      "maxLat": 47.81,
+      "minLng": 5.96,
+      "maxLng": 10.49
+    },
+    "data_source": "GEBCO 2026 + Swiss Federal Statistical Office",
+    "resolution": "30m",
+    "year": 2026,
+    "coverage": "Alle Kantone",
+    "description": "Bathymetriedaten für Schweizer Seen und Flüsse mit hoher Präzision"
+  },
+  {
+    "id": "pl_bathymetry",
+    "name": "Polen Bathymetrie",
+    "land": "Polen",
+    "bounding_box": {
+      "minLat": 49.0,
+      "maxLat": 54.84,
+      "minLng": 14.12,
+      "maxLng": 24.15
+    },
+    "data_source": "GEBCO 2026 + Polish Water Authority",
+    "resolution": "50m",
+    "year": 2026,
+    "coverage": "Masuren-Seen und Flüsse",
+    "description": "Bathymetriedaten für die berühmten Masuren-Seen und die Weichsel"
+  },
+  {
+    "id": "it_bathymetry",
+    "name": "Italien Bathymetrie",
+    "land": "Italien",
+    "bounding_box": {
+      "minLat": 36.62,
+      "maxLat": 47.09,
+      "minLng": 6.63,
+      "maxLng": 18.52
+    },
+    "data_source": "GEBCO 2026 + Italian Ministry of Environment",
+    "resolution": "50m",
+    "year": 2026,
+    "coverage": "Nord- und Süditalien",
+    "description": "Bathymetriedaten für italienische Seen und den Po-Fluss"
+  },
+  {
+    "id": "fr_bathymetry",
+    "name": "Frankreich Bathymetrie",
+    "land": "Frankreich",
+    "bounding_box": {
+      "minLat": 42.33,
+      "maxLat": 51.09,
+      "minLng": -5.26,
+      "maxLng": 8.23
+    },
+    "data_source": "GEBCO 2026 + French Water Agency",
+    "resolution": "50m",
+    "year": 2026,
+    "coverage": "Alle Regionen",
+    "description": "Bathymetriedaten für französische Seen und Flüsse einschließlich Rhône und Dordogne"
+  },
+  {
+    "id": "gb_bathymetry",
+    "name": "Großbritannien Bathymetrie",
+    "land": "Großbritannien",
+    "bounding_box": {
+      "minLat": 50.03,
+      "maxLat": 58.64,
+      "minLng": -6.38,
+      "maxLng": 1.76
+    },
+    "data_source": "GEBCO 2026 + UK Environment Agency",
+    "resolution": "50m",
+    "year": 2026,
+    "coverage": "England, Wales, Schottland",
+    "description": "Bathymetriedaten für britische Flüsse und Seen (Spey, Dee, Severn)"
+  },
+  {
+    "id": "si_bathymetry",
+    "name": "Slowenien Bathymetrie",
+    "land": "Slowenien",
+    "bounding_box": {
+      "minLat": 45.42,
+      "maxLat": 46.88,
+      "minLng": 13.38,
+      "maxLng": 16.61
+    },
+    "data_source": "GEBCO 2026 + Slovenian Environmental Agency",
+    "resolution": "30m",
+    "year": 2026,
+    "coverage": "Alpine Flussabschnitte",
+    "description": "Hochauflösende Bathymetriedaten für alpine slowenische Flüsse wie die Soča"
+  },
+  {
+    "id": "hr_bathymetry",
+    "name": "Kroatien Bathymetrie",
+    "land": "Kroatien",
+    "bounding_box": {
+      "minLat": 42.39,
+      "maxLat": 46.56,
+      "minLng": 13.39,
+      "maxLng": 19.43
+    },
+    "data_source": "GEBCO 2026 + Croatian Waters Authority",
+    "resolution": "50m",
+    "year": 2026,
+    "coverage": "Dalmatien und Balkan-Flüsse",
+    "description": "Bathymetriedaten für kroatische Flüsse und die adriatische Küste"
+  },
+  {
+    "id": "es_bathymetry",
+    "name": "Spanien Bathymetrie",
+    "land": "Spanien",
+    "bounding_box": {
+      "minLat": 36.0,
+      "maxLat": 43.47,
+      "minLng": -9.30,
+      "maxLng": 4.33
+    },
+    "data_source": "GEBCO 2026 + Spanish Water Authority",
+    "resolution": "50m",
+    "year": 2026,
+    "coverage": "Flussreservoirs (embalses)",
+    "description": "Bathymetriedaten für spanische Stauseen und Flüsse"
+  },
+  {
+    "id": "cz_bathymetry",
+    "name": "Tschechien Bathymetrie",
+    "land": "Tschechien",
+    "bounding_box": {
+      "minLat": 48.55,
+      "maxLat": 50.85,
+      "minLng": 12.09,
+      "maxLng": 18.86
+    },
+    "data_source": "GEBCO 2026 + Czech Environmental Ministry",
+    "resolution": "40m",
+    "year": 2026,
+    "coverage": "Böhmische Seen und Flüsse",
+    "description": "Bathymetriedaten für böhmische Flussabschnitte"
+  }
+]

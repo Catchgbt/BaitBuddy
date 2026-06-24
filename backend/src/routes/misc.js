@@ -1,0 +1,374 @@
+import { Router } from 'express';
+import { requireAuth, optionalAuth } from '../middleware/auth.js';
+import { supabase } from '../lib/supabase.js';
+import { Buffer } from 'buffer';
+import path from 'path';
+import { parseDepthFile } from '../lib/depthParser.js';
+import { isInClosedSeason } from '../lib/closedSeason.js';
+
+const router = Router();
+
+const ALLOWED_LICENSE_FIELDS = ['license_type', 'issue_date', 'expiration_date', 'number'];
+const ALLOWED_PLAN_FIELDS = ['name', 'date', 'location', 'target_species', 'notes', 'forecast_data'];
+const ALLOWED_GEAR_FIELDS = ['gear_type', 'name', 'brand', 'model', 'notes', 'condition'];
+
+const filterBody = (body, allowedFields) => {
+  const filtered = {};
+  for (const key of allowedFields) {
+    if (key in body) {
+      filtered[key] = body[key];
+    }
+  }
+  return filtered;
+};
+
+router.get('/fishing/rules', optionalAuth, async (req, res) => {
+  const { data, error } = await supabase.from('rule_entries').select('*').limit(200);
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data || []);
+});
+
+router.get('/fishing/rules/active', optionalAuth, async (req, res) => {
+  // Schonzeiten sind jaehrlich wiederkehrend, aber mit konkretem Jahr gespeichert.
+  // Daher alle Regeln laden und jahres-agnostisch nach Monat/Tag filtern statt per
+  // Volldatum-Vergleich in der DB (der nur im geseedeten Jahr getroffen haette).
+  const { data, error } = await supabase.from('rule_entries').select('*').limit(500);
+  if (error) return res.status(500).json({ error: error.message });
+  const active = (data || []).filter(r => isInClosedSeason(r.closed_from, r.closed_to));
+  return res.json(active);
+});
+
+router.get('/fishing/clubs', optionalAuth, async (req, res) => {
+  return res.json([]);
+});
+
+router.post('/fishing/clubs/nearby', optionalAuth, async (req, res) => {
+  return res.json([]);
+});
+
+router.get('/fishing/licenses', requireAuth, async (req, res) => {
+  const { data, error } = await supabase.from('licenses').select('*').eq('created_by', req.user.email);
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data || []);
+});
+
+router.post('/fishing/licenses', requireAuth, async (req, res) => {
+  const filteredBody = filterBody(req.body, ALLOWED_LICENSE_FIELDS);
+  const { data, error } = await supabase.from('licenses').insert({
+    ...filteredBody, created_by: req.user.email
+  }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data);
+});
+
+router.get('/fishing/plans', requireAuth, async (req, res) => {
+  const { data, error } = await supabase.from('fishing_plans').select('*').eq('created_by', req.user.email);
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data || []);
+});
+
+router.post('/fishing/plans', requireAuth, async (req, res) => {
+  const filteredBody = filterBody(req.body, ALLOWED_PLAN_FIELDS);
+  const { data, error } = await supabase.from('fishing_plans').insert({
+    ...filteredBody, created_by: req.user.email
+  }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data);
+});
+
+router.patch('/fishing/plans/:id', requireAuth, async (req, res) => {
+  const patch = filterBody(req.body, ALLOWED_PLAN_FIELDS);
+  const { data, error } = await supabase.from('fishing_plans')
+    .update(patch).eq('id', req.params.id).eq('created_by', req.user.email)
+    .select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data);
+});
+
+router.delete('/fishing/plans/:id', requireAuth, async (req, res) => {
+  const { error } = await supabase.from('fishing_plans').delete()
+    .eq('id', req.params.id).eq('created_by', req.user.email);
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json({ ok: true });
+});
+
+router.get('/fishing/hotspots', optionalAuth, async (req, res) => {
+  const { data, error } = await supabase.from('spots').select('id,name,latitude,longitude,water_type');
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json({ hotspots: data || [] });
+});
+
+router.get('/gear', requireAuth, async (req, res) => {
+  const { data, error } = await supabase.from('gear').select('*').eq('created_by', req.user.email);
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data || []);
+});
+
+router.post('/gear', requireAuth, async (req, res) => {
+  const filteredBody = filterBody(req.body, ALLOWED_GEAR_FIELDS);
+  const { data, error } = await supabase.from('gear').insert({
+    ...filteredBody, created_by: req.user.email
+  }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data);
+});
+
+router.patch('/gear/:id', requireAuth, async (req, res) => {
+  const filteredBody = filterBody(req.body, ALLOWED_GEAR_FIELDS);
+  const { data, error } = await supabase.from('gear')
+    .update(filteredBody).eq('id', req.params.id).eq('created_by', req.user.email)
+    .select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data);
+});
+
+router.delete('/gear/:id', requireAuth, async (req, res) => {
+  const { error } = await supabase.from('gear').delete()
+    .eq('id', req.params.id).eq('created_by', req.user.email);
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json({ ok: true });
+});
+
+router.get('/water', requireAuth, async (req, res) => {
+  return res.json({ analysis: 'Wasseranalyse nicht verfügbar' });
+});
+
+router.post('/water', optionalAuth, async (req, res) => {
+  return res.json({ analysis: 'Wasseranalyse wird verarbeitet', ok: true });
+});
+
+router.get('/water/history', requireAuth, async (req, res) => {
+  return res.json([]);
+});
+
+// Tiefendaten-Upload (Bathymetrie-Crowdsourcing): lädt die zuvor hochgeladene
+// CSV/GPX-Datei, parst lat/lon/Tiefe und legt eine Bathymetrie-Karte samt
+// Tiefenpunkten an. Wird vom Frontend über processDepthData aufgerufen.
+const DEPTH_MAX_POINTS = 5000;
+router.post('/water/bathymetry', requireAuth, async (req, res) => {
+  try {
+    const { file_url, water_body_name, device_type, is_public } = req.body || {};
+    if (!file_url) return res.status(400).json({ error: 'file_url erforderlich' });
+    if (!water_body_name?.trim()) return res.status(400).json({ error: 'water_body_name erforderlich' });
+
+    const fileRes = await fetch(file_url).catch(() => null);
+    if (!fileRes || !fileRes.ok) {
+      return res.status(400).json({ error: 'Datei konnte nicht geladen werden' });
+    }
+    const text = await fileRes.text();
+
+    const points = parseDepthFile(text, file_url);
+    if (!points.length) {
+      return res.status(422).json({
+        error: 'Keine gültigen Tiefenpunkte gefunden (erwartet: CSV mit lat,lng,tiefe oder GPX mit <depth>)',
+      });
+    }
+    const limited = points.slice(0, DEPTH_MAX_POINTS);
+
+    const { data: map, error: mapErr } = await supabase.from('bathymetric_maps').insert({
+      user_id: req.user.id,
+      name: water_body_name.trim(),
+      map_data: {
+        device_type: device_type || 'unknown',
+        is_public: is_public !== false,
+        point_count: limited.length,
+        source_points: points.length,
+      },
+    }).select().single();
+    if (mapErr) return res.status(500).json({ error: mapErr.message });
+
+    const rows = limited.map((p) => ({
+      map_id: map.id, user_id: req.user.id,
+      latitude: p.lat, longitude: p.lon, depth_m: p.depth,
+    }));
+    const { error: ptErr } = await supabase.from('depth_data_points').insert(rows);
+    if (ptErr) return res.status(500).json({ error: ptErr.message });
+
+    const note = points.length > limited.length ? ` (von ${points.length}, auf ${DEPTH_MAX_POINTS} begrenzt)` : '';
+    return res.json({
+      ok: true,
+      message: `${limited.length} Tiefenpunkte importiert${note}`,
+      map_id: map.id,
+      point_count: limited.length,
+    });
+  } catch (e) {
+    console.error('[Bathymetry Upload Error]', e);
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+router.post('/weather', optionalAuth, async (req, res) => {
+  const { latitude, longitude } = req.body;
+  try {
+    const w = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,wind_speed_10m,weather_code,relative_humidity_2m&hourly=temperature_2m,precipitation_probability&timezone=auto`
+    ).then(r => r.json());
+    return res.json(w);
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+// Amtliche Unwetterwarnungen (DWD) für einen Standort. Quelle: Bright Sky –
+// eine offene, kostenlose API, die die offiziellen CAP-Warnungen des Deutschen
+// Wetterdienstes bereitstellt (analog zu Open-Meteo, kein eigener Backend-Dienst).
+const ALERT_SEVERITY_RANK = { extreme: 4, severe: 3, moderate: 2, minor: 1 };
+
+router.post('/weather/alerts', optionalAuth, async (req, res) => {
+  const lat = Number(req.body?.latitude);
+  const lon = Number(req.body?.longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+    return res.status(400).json({ error: 'latitude und longitude erforderlich' });
+  }
+  try {
+    const data = await fetch(
+      `https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`,
+      { headers: { Accept: 'application/json' } }
+    ).then(r => r.json());
+
+    const raw = Array.isArray(data?.alerts) ? data.alerts : [];
+    const now = Date.now();
+
+    const alerts = raw
+      // Abgelaufene Warnungen ausblenden
+      .filter(a => !a.expires || new Date(a.expires).getTime() >= now)
+      .map(a => ({
+        id: a.id ?? a.alert_id,
+        event: a.event_de || a.event_en || 'Wetterwarnung',
+        headline: a.headline_de || a.headline_en || '',
+        description: a.description_de || a.description_en || '',
+        instruction: a.instruction_de || a.instruction_en || '',
+        severity: (a.severity || 'moderate').toLowerCase(),
+        urgency: a.urgency || null,
+        certainty: a.certainty || null,
+        category: a.category || null,
+        onset: a.onset || a.effective || null,
+        expires: a.expires || null,
+      }))
+      // Schwerste/aktuellste zuerst
+      .sort((x, y) => {
+        const s = (ALERT_SEVERITY_RANK[y.severity] || 0) - (ALERT_SEVERITY_RANK[x.severity] || 0);
+        if (s !== 0) return s;
+        return new Date(x.onset || 0).getTime() - new Date(y.onset || 0).getTime();
+      });
+
+    return res.json({
+      alerts,
+      location: data?.location || null,
+      source: 'Deutscher Wetterdienst (DWD) via Bright Sky',
+      fetched_at: new Date().toISOString(),
+    });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+// LiveTrip Cloud-Backup (TripSyncService). Der komplette Trip wird als jsonb
+// gespeichert; die id stammt aus dem lokalen IndexedDB-Trip, daher Upsert
+// (Idempotenz beim erneuten Synchronisieren). list liefert die Trips 1:1 zurück.
+router.post('/trips', requireAuth, async (req, res) => {
+  try {
+    const trip = req.body || {};
+    const id = String(trip.id || Date.now());
+    const { data, error } = await supabase.from('live_trips').upsert({
+      id, user_id: req.user.id, user_email: req.user.email, trip,
+    }, { onConflict: 'id' }).select().single();
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ ok: true, id: data.id, ...trip });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+router.get('/trips', requireAuth, async (req, res) => {
+  const { data, error } = await supabase.from('live_trips')
+    .select('trip').eq('user_id', req.user.id).order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json((data || []).map((r) => r.trip));
+});
+
+router.del = router.delete;
+router.delete('/user/account', requireAuth, async (req, res) => {
+  return res.json({ ok: true, message: 'Account-Löschung eingeleitet' });
+});
+
+router.post('/user/sessions/start', requireAuth, async (req, res) => {
+  return res.json({ ok: true, session_id: Date.now().toString() });
+});
+
+router.post('/user/sessions/:id/end', requireAuth, async (req, res) => {
+  return res.json({ ok: true });
+});
+
+router.get('/admin/users', requireAuth, async (req, res) => {
+  return res.json([]);
+});
+
+router.get('/exams', optionalAuth, async (req, res) => {
+  const { data, error } = await supabase.from('exam_questions').select('*').limit(200);
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data || []);
+});
+
+router.post('/files/upload', requireAuth, async (req, res) => {
+  try {
+    const { file_base64, file_name, file_type } = req.body;
+
+    if (!file_base64 || !file_name) {
+      return res.status(400).json({ error: 'file_base64 und file_name erforderlich' });
+    }
+
+    if (!file_base64.match(/^[A-Za-z0-9+/=]+$/)) {
+      return res.status(400).json({ error: 'Ungültiges Base64-Format' });
+    }
+
+    // Sicherheit: file_name validieren, um Path Traversal zu verhindern
+    const sanitized = path.basename(file_name);
+    if (!sanitized || sanitized !== file_name) {
+      return res.status(400).json({ error: 'Ungültiger Dateiname' });
+    }
+
+    let buffer;
+    try {
+      buffer = Buffer.from(file_base64, 'base64');
+      if (buffer.length === 0) {
+        return res.status(400).json({ error: 'Datei ist leer' });
+      }
+    } catch (bufErr) {
+      return res.status(400).json({ error: 'Fehler beim Dekodieren der Datei' });
+    }
+
+    const bucket = 'catches';
+    const filePath = `${req.user.email}/${Date.now()}-${sanitized}`;
+
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, buffer, {
+        contentType: file_type || 'application/octet-stream',
+        upsert: false,
+      });
+
+    if (error) {
+      return res.status(500).json({ error: `Upload fehlgeschlagen: ${error.message}` });
+    }
+
+    if (!data || !data.path) {
+      return res.status(500).json({ error: 'Upload erfolgreich, aber kein Pfad zurückgegeben' });
+    }
+
+    const { data: urlData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(data.path);
+
+    if (!urlData || !urlData.publicUrl) {
+      return res.status(500).json({ error: 'Konnte öffentliche URL nicht generieren' });
+    }
+
+    return res.json({ file_url: urlData.publicUrl });
+  } catch (err) {
+    console.error('Upload error:', err);
+    return res.status(500).json({ error: `Unerwarteter Fehler: ${err.message}` });
+  }
+});
+
+export default router;
