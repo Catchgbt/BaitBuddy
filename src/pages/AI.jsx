@@ -3,6 +3,7 @@ import { useFeatureTracking } from "@/hooks/useFeatureTracking";
 
 const CameraAnalysisSection = lazy(() => import("@/components/ai/CameraAnalysisSection"));
 const BiteDetectorSection = lazy(() => import("@/components/ai/BiteDetectorSection"));
+const FishBehaviorAnalysisSection = lazy(() => import("@/components/ai/FishBehaviorAnalysisSection"));
 
 const SectionSkeleton = () => (
   <div className="w-full h-48 rounded-2xl bg-gray-800/50 animate-pulse flex items-center justify-center">
@@ -43,6 +44,12 @@ function AIInner() {
         <div>
           <Suspense fallback={<SectionSkeleton />}>
             <BiteDetectorSection />
+          </Suspense>
+        </div>
+
+        <div>
+          <Suspense fallback={<SectionSkeleton />}>
+            <FishBehaviorAnalysisSection />
           </Suspense>
         </div>
       </div>

@@ -280,6 +280,7 @@ const FUNCTION_MAP = {
   },
   aiEvaluateCatch:        (d) => api.post('/api/ai/evaluate-catch', d),
   generateCatchReport:    (d) => api.post('/api/ai/generate-catch-report', d),
+  fishBehaviorAnalysis:   (d) => api.post('/api/ai/fish-behavior-analysis', d),
   calculateTravelTime:    (d) => api.post('/api/fishing/clubs/nearby', d).catch(() => ({})),
   angelspotsGeojson:      ()  => api.get('/api/fishing/hotspots').catch(() => ({})),
   'angelspots-geojson':   ()  => api.get('/api/fishing/hotspots').catch(() => ({})),
@@ -510,12 +511,19 @@ export const spots = {
 };
 
 export const ai = {
-  chat:             (messages, userLocation) => api.post('/api/ai/chat', { messages, userLocation }),
-  analyzeCatch:     (file_url, image_base64) => api.post('/api/ai/analyze-catch', { file_url, image_base64 }),
-  fishingRecommend: (lat, lng)               => api.post('/api/ai/fishing-recommendation', { latitude: lat, longitude: lng }),
-  evaluateCatch:    (catch_data, context)    => api.post('/api/ai/evaluate-catch', { catch_data, context }),
-  generateReport:   (period)                 => api.post('/api/ai/generate-catch-report', { period }),
-  tts:              (text, voice)            => api.post('/api/ai/tts', { text, voice }),
+  chat:              (messages, userLocation) => api.post('/api/ai/chat', { messages, userLocation }),
+  analyzeCatch:      (file_url, image_base64) => api.post('/api/ai/analyze-catch', { file_url, image_base64 }),
+  fishingRecommend:  (lat, lng)               => api.post('/api/ai/fishing-recommendation', { latitude: lat, longitude: lng }),
+  evaluateCatch:     (catch_data, context)    => api.post('/api/ai/evaluate-catch', { catch_data, context }),
+  generateReport:    (period)                 => api.post('/api/ai/generate-catch-report', { period }),
+  tts:               (text, voice)            => api.post('/api/ai/tts', { text, voice }),
+  fishBehavior:      (species, waterData, airPressure, lat, lng) => api.post('/api/ai/fish-behavior-analysis', {
+    species,
+    water_data: waterData,
+    air_pressure: airPressure,
+    latitude: lat,
+    longitude: lng
+  }),
 };
 
 export const weather = {
