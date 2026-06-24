@@ -9,7 +9,12 @@ const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? '';
 const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY') ?? '';
 const STRIPE_WEBHOOK_SECRET = Deno.env.get('STRIPE_WEBHOOK_SECRET') ?? '';
 // ─── OpenAI Realtime (Echtzeit-Sprachgespräch) ────────────────────────────────
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') ?? '';
+// Toleranter Key-Lookup: findet den OpenAI-Key auch unter abweichenden Secret-Namen
+// (z. B. OPENAI_API_KEY, Openai_key, Open_ai_key, OPENAI_KEY …), damit ein Tippfehler
+// im Supabase-Secret-Namen das Voice-Feature nicht lahmlegt.
+const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')
+  ?? Object.entries(Deno.env.toObject()).find(([k, v]) => /open.?_?ai/i.test(k) && /key|token|secret/i.test(k) && v)?.[1]
+  ?? '';
 const REALTIME_MODEL = Deno.env.get('OPENAI_REALTIME_MODEL') ?? 'gpt-4o-realtime-preview-2024-12-17';
 const REALTIME_VOICE = Deno.env.get('OPENAI_REALTIME_VOICE') ?? 'verse';
 
