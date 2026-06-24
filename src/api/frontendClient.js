@@ -272,6 +272,8 @@ const FUNCTION_MAP = {
           species_name: r.species || '',
           length_cm: r.length_cm ?? null,
           weight_kg: r.weight_kg ?? null,
+          bait_used: r.bait_used ?? null,
+          confidence: r.confidence ?? null,
         },
         summary: r.species
           ? `Erkannt: ${r.species}${r.length_cm ? `, ca. ${Math.round(r.length_cm)} cm` : ''}`
