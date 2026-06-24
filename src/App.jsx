@@ -19,6 +19,7 @@ import SplashIntro from '@/components/intro/SplashIntro';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { migrateOfflineStorage } from '@/lib/StorageMigration';
 import ErrorBoundary from '@/lib/ErrorBoundary';
+import { initAutoSync } from '@/components/utils/offlineSync';
 const CatchStats = lazy(() => import('@/pages/CatchStats'));
 const AdminTracking = lazy(() => import('@/pages/AdminTracking'));
 const Help = lazy(() => import('@/pages/Help'));
@@ -125,11 +126,12 @@ const AnimatedRoutes = () => {
 
 
 function App() {
-  // Initialize storage migration on app startup
+  // Initialize storage migration and offline sync on app startup
   useEffect(() => {
     migrateOfflineStorage().catch(err => {
       console.error('[App] Storage migration failed:', err);
     });
+    initAutoSync();
   }, []);
 
   return (
