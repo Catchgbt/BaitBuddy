@@ -8,6 +8,7 @@ import { useHaptic } from "@/components/utils/HapticFeedback";
 import PremiumGuard from "@/components/premium/PremiumGuard";
 import { auth } from "@/api/auth";
 import { MobileSelect } from "@/components/ui/mobile-select";
+import { TackleManager } from "@/components/gear/TackleManager";
 
 // Leaflet CSS nachladen
 if (typeof document !== "undefined") {
@@ -363,13 +364,13 @@ function GearContent(){ // Renamed from App to GearContent
       const setupDescription = `
 Analysiere mein Angel-Setup auf Fehler und gib Optimierungstipps:
 
-🎣 AUSRÜSTUNG:
+AUSRÜSTUNG:
 - Rolle: ${reelBrand} ${reelModel}
 - Rute: ${rodBrand} ${rodModel}
 - Schnur: ${lineDiameter}mm
 - Haken: Größe ${hookSize}
 
-🌍 BEDINGUNGEN:
+BEDINGUNGEN:
 - Ort: ${locationName}
 - Gewässer: ${waterType}
 - Temperatur: ${temp}°C
@@ -406,7 +407,7 @@ Sei konkret und praxisorientiert!`;
           // Antwort an Chatbot senden (simuliert eine normale Chat-Nachricht)
           window.dispatchEvent(new CustomEvent('aiGearAnalysisResponse', {
             detail: {
-              question: "🔧 KI-Ausrüstungsanalyse",
+              question: "KI-Ausrüstungsanalyse",
               answer: aiReply,
               autoSpeak: true // Flag für automatische Sprachausgabe
             }
@@ -613,6 +614,11 @@ Sei konkret und praxisorientiert!`;
           <button onClick={resetAll} className="w-full p-2 text-xs text-red-400/70 bg-red-900/20 rounded-xl hover:bg-red-900/40 flex items-center justify-center gap-2 transition-colors border border-red-900/30">
             <RefreshCcw className="h-3 w-3"/> Zurücksetzen
           </button>
+        </div>
+
+        {/* --- Tackle Management --- */}
+        <div className="md:col-span-2 lg:col-span-3">
+          <TackleManager userId={user?.id} />
         </div>
       </div>
     </div>
