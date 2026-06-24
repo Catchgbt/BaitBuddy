@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { BUDDY_TEXT_CSS } from '@/components/layout/BuddyTextAvatar';
 import { getTipForPage } from '@/lib/buddyTips';
 import { getRandomBuddyJoke, getRandomFarewellMessage } from '@/lib/buddyJokes';
 import { useAuth } from '@/lib/AuthContext';
 import { ai } from '@/api/frontendClient';
+import { Catch } from '@/entities/Catch';
+import { Spot } from '@/entities/Spot';
+import { resolvePage } from '@/lib/voicePages';
+import { createPageUrl } from '@/utils';
 import { useElevenLabsVoice } from '@/hooks/useElevenLabsVoice';
 import { speakWithBrowserTTS } from '@/components/utils/browserTTS';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -35,8 +39,77 @@ function clampPos(x, y) {
   };
 }
 
+// Liest den zuletzt bekannten Standort des Nutzers (Wetter-Kontext fuer die KI).
+function getStoredLocation() {
+  try {
+    const stored = localStorage.getItem('userLocation');
+    if (!stored) return null;
+    const loc = JSON.parse(stored);
+    if (typeof loc?.latitude === 'number' && typeof loc?.longitude === 'number') {
+      return loc;
+    }
+  } catch {}
+  return null;
+}
+
+// Fuehrt die vom Backend gelieferte KI-Aktion clientseitig aus. Das Backend
+// erkennt den <<ACTION>>-Block im LLM-Output und liefert ihn als geparstes
+// Objekt; hier wird er real in der App umgesetzt (Navigation, Fang eintragen,
+// Spot speichern). Rueckgabe: kurzer Bestaetigungstext oder null.
+async function executeBuddyAction(action, { navigate, userLocation }) {
+  if (!action || !action.type) return null;
+  try {
+    if (action.type === 'navigate') {
+      const target = resolvePage(action.params?.page);
+      if (!target) return null;
+      navigate(createPageUrl(target));
+      return null;
+    }
+
+    if (action.type === 'log_catch') {
+      const p = action.params || {};
+      if (!p.species) return 'Sag mir kurz die Fischart, dann trage ich den Fang ein.';
+      await Catch.create({
+        species: p.species,
+        catch_time: new Date().toISOString(),
+        ...(p.length_cm != null && { length_cm: Number(p.length_cm) }),
+        ...(p.weight_kg != null && { weight_kg: Number(p.weight_kg) }),
+        ...(p.bait_used && { bait_used: p.bait_used }),
+        ...(p.notes && { notes: p.notes })
+      });
+      toast.success(`Fang eingetragen: ${p.species}`);
+      return null;
+    }
+
+    if (action.type === 'add_spot' || action.type === 'save_spot') {
+      const p = action.params || {};
+      if (!p.name) return 'Wie soll der Spot heissen?';
+      const lat = p.latitude != null ? Number(p.latitude) : userLocation?.latitude;
+      const lng = p.longitude != null ? Number(p.longitude) : userLocation?.longitude;
+      if (lat == null || lng == null) {
+        return 'Ich brauche deinen Standort fuer den Spot. Aktiviere die Ortung und versuche es erneut.';
+      }
+      await Spot.create({
+        name: p.name,
+        latitude: lat,
+        longitude: lng,
+        water_type: p.water_type || 'see',
+        notes: p.notes || ''
+      });
+      toast.success(`Spot gespeichert: ${p.name}`);
+      return null;
+    }
+  } catch (e) {
+    console.error('Buddy-Action fehlgeschlagen:', e);
+    toast.error('Aktion konnte nicht ausgefuehrt werden');
+    return 'Das hat leider nicht geklappt. Versuch es gleich nochmal.';
+  }
+  return null;
+}
+
 export default function AIBuddyWidget() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { speak, stop, isSpeaking } = useElevenLabsVoice();
 
@@ -81,6 +154,9 @@ export default function AIBuddyWidget() {
   const recognition = useRef(null);
   const widgetRef = useRef(null);
   const messagesEndRef = useRef(null);
+  // Spiegelt den aktuellen Nachrichtenverlauf, damit handleSendMessage ihn
+  // ohne stale Closure lesen kann (auch bei Voice-/Vorschlag-Aufrufen).
+  const messagesRef = useRef([]);
   const smallBubbleTimerRef = useRef(null);
   const userActivityTimerRef = useRef(null);
 
@@ -97,6 +173,7 @@ export default function AIBuddyWidget() {
   const tip = getTipForPage(currentPage);
 
   useEffect(() => {
+    messagesRef.current = messages;
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
@@ -279,25 +356,41 @@ export default function AIBuddyWidget() {
 
       const userMessage = text.trim();
       setInputValue('');
-      setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
+      // Vollstaendigen Verlauf aufbauen, damit der Buddy den Gespraechskontext
+      // behaelt (vorher wurde nur die einzelne letzte Nachricht gesendet, der
+      // Buddy "vergass" alles Vorherige).
+      const history = [...messagesRef.current, { role: 'user', content: userMessage }];
+      setMessages(history);
       setIsLoading(true);
       setChatError(null);
       setIsNodding(true);
 
       try {
-        const response = await ai.chat(
-          [{ role: 'user', content: userMessage }],
-          null
-        );
+        const response = await ai.chat(history, getStoredLocation());
 
-        const botMessage = response.message || response;
-        setMessages((prev) => [...prev, { role: 'assistant', content: botMessage }]);
-        setIsTalking(true);
+        const botMessage = response.reply || response.message || '';
+        if (botMessage) {
+          setMessages((prev) => [...prev, { role: 'assistant', content: botMessage }]);
+          setIsTalking(true);
+        }
 
-        try {
-          await speak(botMessage);
-        } catch {
-          await speakWithBrowserTTS(botMessage, { lang: 'de-DE', rate: 1.0 });
+        // Vom Backend erkannte Aktion real in der App ausfuehren
+        // (navigieren, Fang eintragen, Spot speichern).
+        const actionNote = await executeBuddyAction(response.action, {
+          navigate,
+          userLocation: getStoredLocation()
+        });
+        if (actionNote) {
+          setMessages((prev) => [...prev, { role: 'assistant', content: actionNote }]);
+        }
+
+        const speakText = actionNote ? `${botMessage} ${actionNote}`.trim() : botMessage;
+        if (speakText) {
+          try {
+            await speak(speakText);
+          } catch {
+            await speakWithBrowserTTS(speakText, { lang: 'de-DE', rate: 1.0 });
+          }
         }
       } catch (err) {
         console.error('Chat error:', err);
@@ -308,7 +401,7 @@ export default function AIBuddyWidget() {
         setIsNodding(false);
       }
     },
-    [inputValue, speak]
+    [inputValue, speak, navigate]
   );
 
   const handleVoiceInput = () => {
