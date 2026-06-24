@@ -364,4 +364,85 @@ router.post('/ai/tts', requireAuth, async (req, res) => {
   }
 });
 
+router.post('/ai/fish-behavior-analysis', requireAuth, async (req, res) => {
+  try {
+    const { species, water_data = {}, air_pressure, latitude = null, longitude = null } = req.body;
+
+    if (!species || !species.trim()) {
+      return res.status(400).json({ error: 'Fischart (species) erforderlich' });
+    }
+
+    let currentWeather = null;
+    if (latitude != null && longitude != null) {
+      try {
+        const w = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,wind_speed_10m,weather_code,surface_pressure,relative_humidity_2m&timezone=auto`
+        ).then(r => r.json());
+        if (w?.current) {
+          currentWeather = {
+            temperature: w.current.temperature_2m,
+            wind: w.current.wind_speed_10m,
+            pressure: w.current.surface_pressure || air_pressure,
+            humidity: w.current.relative_humidity_2m
+          };
+        }
+      } catch { /* Wetter optional */ }
+    }
+
+    const weatherData = currentWeather || { pressure: air_pressure };
+    const pressure = weatherData.pressure || 1013;
+
+    const waterDataSummary = Object.entries(water_data)
+      .filter(([_, v]) => v != null)
+      .map(([k, v]) => `${k}: ${v}`)
+      .join(', ') || 'Keine Gewässerdaten angegeben';
+
+    const prompt = `Du bist ein Experte für Fischverhalten und Limnologie. Erstelle eine detaillierte Verhaltensanalyse für einen Fisch.
+
+FISCHART: ${species}
+LUFTDRUCK: ${pressure} hPa
+GEWÄSSERDATEN: ${waterDataSummary}
+${currentWeather ? `AKTUELLES WETTER: ${currentWeather.temperature}°C, Wind: ${currentWeather.wind}m/s, Luftfeuchte: ${currentWeather.humidity}%` : ''}
+
+Antworte AUSSCHLIESSLICH mit einem gültigen JSON-Objekt in exakt diesem Format, ohne Markdown oder Erklärungen:
+{
+  "species_name": "Fischart auf Deutsch",
+  "activity_level": "Sehr aktiv" | "Aktiv" | "Moderat" | "Träge",
+  "pressure_impact": "positive" | "negative" | "neutral",
+  "behavior_summary": "2-3 Sätze über das aktuelle Verhalten und die Umweltbedingungen auf Deutsch",
+  "best_times": ["z.B. 5-8 Uhr", "18-21 Uhr"],
+  "feeding_zones": ["z.B. Krautzone 1-2m", "Uferbereich"],
+  "recommended_depth": "z.B. 2-4m",
+  "bait_recommendations": ["Köder 1", "Köder 2"],
+  "techniques": ["Technik 1", "Technik 2"],
+  "pressure_pressure_tips": ["Tipp bei aktuellem Luftdruck 1", "Tipp 2"],
+  "water_conditions_notes": "Besonderheiten der Gewässerbedingungen auf Deutsch"
+}`;
+
+    const raw = await invokeLLM({ prompt });
+
+    let analysis;
+    try {
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        analysis = JSON.parse(jsonMatch[0]);
+      } else {
+        analysis = null;
+      }
+    } catch (error) {
+      console.error('Fehler beim Parsen der Verhaltensanalyse:', error);
+      analysis = null;
+    }
+
+    if (!analysis || !analysis.behavior_summary) {
+      return res.status(502).json({ error: 'KI konnte keine gültige Verhaltensanalyse erstellen' });
+    }
+
+    return res.json({ ok: true, data: analysis });
+  } catch (e) {
+    console.error('[Fish Behavior Analysis Error]', e.message);
+    return res.status(500).json({ error: e.message });
+  }
+});
+
 export default router;
