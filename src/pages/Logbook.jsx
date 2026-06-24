@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { analytics } from "@/api/frontendClient";
+import { analytics, functions } from "@/api/frontendClient";
 import { entities } from "@/api/frontendClient";
 import { Catch } from "@/entities/Catch";
 import { Spot } from "@/entities/Spot";
@@ -385,11 +385,11 @@ export default function Logbook() {
                   type="file"
                   id="ai-analyze-upload"
                   accept="image/*"
+                  capture="environment"
                   className="hidden"
                   onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
-                    // P3.5: Pre-check file size (max 10MB)
                     if (file.size > 10 * 1024 * 1024) {
                       toast.error("Datei zu groß (max. 10 MB)");
                       return;
@@ -397,7 +397,6 @@ export default function Logbook() {
                     setIsAnalyzing(true);
                     try {
                       const result = await UploadFile({ file });
-                      // P1.4: Validate file_url exists before using it
                       if (!result?.file_url) {
                         toast.error("Datei-Upload fehlgeschlagen");
                         setIsAnalyzing(false);
@@ -405,27 +404,38 @@ export default function Logbook() {
                       }
                       const { file_url } = result;
                       setPhotoUrl(file_url);
+
+                      if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                          (pos) => {
+                            const nearest = findNearestSpot(pos.coords.latitude, pos.coords.longitude);
+                            if (nearest) {
+                              setSpotId(nearest.id);
+                              toast.info(`Spot zugewiesen: ${nearest.name}`);
+                            }
+                          },
+                          () => {},
+                          { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 }
+                        );
+                      }
+
                       toast.info("KI analysiert das Bild...");
-                      const extractionSchema = {
-                        type: "object",
-                        properties: {
-                          species: { type: "string" }, length_cm: { type: "number" },
-                          weight_kg: { type: "number" }, bait_used: { type: "string" },
-                          notes: { type: "string" }, catch_time: { type: "string", format: "date-time" }
-                        },
-                        required: ["species"]
-                      };
-                      const { output } = await ExtractDataFromUploadedFile({ file_url, json_schema: extractionSchema });
-                      if (output) {
-                        if (output.species) setSpecies(output.species);
-                        if (output.length_cm) setLengthCm(String(output.length_cm));
-                        if (output.weight_kg) setWeightKg(String(output.weight_kg));
-                        if (output.bait_used) setBaitUsed(output.bait_used);
-                        if (output.notes) setNotes(output.notes);
-                        if (output.catch_time) setCatchTime(toLocalDatetimeInputValue(output.catch_time));
-                        toast.success("Felder automatisch ausgefüllt!");
+                      const analysisResult = await functions.invoke('analyzeCatchPhoto', { file_url });
+                      const data = analysisResult?.data;
+                      if (data?.result_data) {
+                        const ai = data.result_data;
+                        if (ai.species_name) setSpecies(ai.species_name);
+                        if (ai.length_cm) setLengthCm(String(ai.length_cm));
+                        if (ai.weight_kg) setWeightKg(String(ai.weight_kg));
+                        if (ai.bait_used) setBaitUsed(ai.bait_used);
+                        const parts = [];
+                        if (ai.species_name) parts.push(ai.species_name);
+                        if (ai.length_cm) parts.push(`${ai.length_cm} cm`);
+                        if (ai.weight_kg) parts.push(`${ai.weight_kg} kg`);
+                        const confText = ai.confidence ? ` (${Math.round(ai.confidence * 100)}% sicher)` : '';
+                        toast.success(`KI erkannt: ${parts.join(', ')}${confText}`);
                       } else {
-                        toast.warning("KI konnte keine Daten erkennen");
+                        toast.warning("Foto hochgeladen, aber KI konnte keinen Fisch erkennen");
                       }
                     } catch (error) {
                       toast.error("KI-Analyse fehlgeschlagen");
@@ -438,11 +448,18 @@ export default function Logbook() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="text-sm border-gray-700 text-gray-300 hover:bg-gray-700 cursor-pointer"
+                  className="text-sm border-cyan-600 text-cyan-400 hover:bg-cyan-900/30 cursor-pointer"
                   disabled={isAnalyzing}
                   onClick={() => document.getElementById('ai-analyze-upload').click()}
                 >
-                  {isAnalyzing ? "KI analysiert..." : "KI Fang-Analyse und automatisch ausfüllen"}
+                  {isAnalyzing ? (
+                    <><Loader2 className="animate-spin h-4 w-4 mr-1" />KI analysiert...</>
+                  ) : (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                      Foto + KI-Erkennung
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
@@ -595,7 +612,7 @@ export default function Logbook() {
             )}
           </div>
           <DialogFooter className="flex flex-col gap-2">
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button variant="outline" onClick={() => { setShowShareDialog(false); setSavedCatchData(null); }} disabled={isSharing} className="flex-1 border-gray-700 text-gray-300 hover:bg-gray-700 min-h-[44px]">
                 Nein, danke
               </Button>

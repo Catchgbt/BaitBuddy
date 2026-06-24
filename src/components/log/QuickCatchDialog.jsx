@@ -579,7 +579,8 @@ export default function QuickCatchDialog() {
       ...prev,
       species: aiAnalysisData.species_name || prev.species,
       length_cm: aiAnalysisData.length_cm || prev.length_cm,
-      weight_kg: aiAnalysisData.weight_kg || prev.weight_kg
+      weight_kg: aiAnalysisData.weight_kg || prev.weight_kg,
+      bait_used: aiAnalysisData.bait_used || prev.bait_used
     }));
     
     toast.success("KI-Daten übernommen!");
@@ -592,6 +593,87 @@ export default function QuickCatchDialog() {
     playSound('click');
     setShowAiConfirmDialog(false);
     setAiAnalysisData(null);
+  };
+
+  const requestBrowserLocation = () => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        assignNearestSpot(pos.coords.latitude, pos.coords.longitude);
+      },
+      () => {},
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 }
+    );
+  };
+
+  const handleSmartPhotoCapture = async (file) => {
+    if (!file) return;
+    triggerHaptic('medium');
+    playSound('click');
+    setIsAnalyzing(true);
+
+    try {
+      let exif = {};
+      try { exif = await parseEXIF(file); } catch {}
+
+      if (exif?.dateTimeOriginal) {
+        const safeDateTime = String(exif.dateTimeOriginal).slice(0, 16);
+        setForm(prev => ({ ...prev, catch_time: safeDateTime }));
+      }
+
+      let hasGps = false;
+      if (exif?.gpsLat && exif?.gpsLon) {
+        assignNearestSpot(exif.gpsLat, exif.gpsLon);
+        hasGps = true;
+      }
+
+      let blob = file;
+      try { blob = await compressImage(file, 1600, 500); } catch {}
+
+      toast.info("Bild wird hochgeladen und analysiert...");
+      playSound('loading');
+      const fileName = String(file.name || "fang") + ".jpg";
+      const f = new File([blob], fileName, { type: "image/jpeg" });
+      const result = await UploadFile({ file: f });
+      const file_url = result?.file_url;
+      if (!file_url) throw new Error("Keine Datei-URL erhalten");
+
+      setForm(prev => ({ ...prev, photo_url: file_url }));
+
+      if (!hasGps) requestBrowserLocation();
+
+      const analysisResult = await functions.invoke('analyzeCatchPhoto', { file_url });
+      const data = analysisResult?.data;
+
+      if (data?.result_data) {
+        const ai = data.result_data;
+        setForm(prev => ({
+          ...prev,
+          species: ai.species_name || prev.species,
+          length_cm: ai.length_cm || prev.length_cm,
+          weight_kg: ai.weight_kg || prev.weight_kg,
+          bait_used: ai.bait_used || prev.bait_used,
+        }));
+        playSound('success');
+        triggerHaptic('medium');
+
+        const parts = [];
+        if (ai.species_name) parts.push(ai.species_name);
+        if (ai.length_cm) parts.push(`${ai.length_cm} cm`);
+        if (ai.weight_kg) parts.push(`${ai.weight_kg} kg`);
+        const confText = ai.confidence ? ` (${Math.round(ai.confidence * 100)}% sicher)` : '';
+        toast.success(`KI erkannt: ${parts.join(', ')}${confText}`);
+      } else {
+        toast.warning("Foto hochgeladen, aber KI konnte keinen Fisch erkennen. Bitte manuell ausfüllen.");
+        playSound('warning');
+      }
+    } catch (error) {
+      console.error("Smart-Capture-Fehler:", error);
+      playSound('error');
+      toast.error(error?.message || "Fehler bei der Bildanalyse");
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   if (!open && !showShareDialog && !showBiteDetectorPrompt) return null;
@@ -615,44 +697,69 @@ export default function QuickCatchDialog() {
         <div className="overflow-y-auto pr-1" style={{maxHeight: 'calc(85vh - 160px)'}}>
           <div className="grid sm:grid-cols-2 gap-3">
             <div className="sm:col-span-2 space-y-2">
-              <label className="text-sm text-gray-400">Foto hochladen</label>
-              <label className="flex items-center justify-center gap-2 w-full py-2 px-4 rounded-lg border border-gray-700 bg-gray-800/50 text-gray-300 cursor-pointer text-sm">
-                Bild auswählen
-                <input type="file" accept="image/*" onChange={(e)=>e.target.files[0] && upload(e.target.files[0])} className="hidden" />
+              <label className="text-sm text-gray-400">Fisch-Foto</label>
+              <label className={`flex items-center justify-center gap-2 w-full py-3 px-4 rounded-lg border-2 border-dashed text-sm font-medium cursor-pointer transition-colors ${isAnalyzing ? 'border-cyan-500 bg-cyan-900/20 text-cyan-300 animate-pulse' : form.photo_url ? 'border-emerald-600 bg-emerald-900/20 text-emerald-300' : 'border-cyan-600 bg-cyan-900/10 text-cyan-400 hover:bg-cyan-900/20'}`}>
+                {isAnalyzing ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                    Bild wird analysiert...
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    Foto aufnehmen / KI-Erkennung
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={(e) => e.target.files[0] && handleSmartPhotoCapture(e.target.files[0])}
+                  className="hidden"
+                  disabled={isAnalyzing}
+                />
               </label>
               {form.photo_url && (
-                <img src={form.photo_url} alt="Fang" className="h-36 rounded-xl object-cover w-full" />
+                <div className="relative">
+                  <img src={form.photo_url} alt="Fang" className="h-36 rounded-xl object-cover w-full" />
+                  <button
+                    type="button"
+                    onClick={() => setForm(prev => ({ ...prev, photo_url: "" }))}
+                    className="absolute top-2 right-2 bg-black/60 rounded-full p-1 text-white hover:bg-black/80"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
               )}
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full border-cyan-600 text-cyan-400 hover:bg-cyan-900/30"
-                onClick={async () => {
-                  if (!form.photo_url) { toast.warning("Bitte zuerst ein Foto hochladen"); return; }
-                  toast.info("KI analysiert das Bild...");
-                  setIsAnalyzing(true);
-                  try {
-                    const analysisResult = await functions.invoke('analyzeCatchPhoto', { file_url: form.photo_url });
-                    const data = analysisResult?.data;
-                    if (data?.result_data) {
-                      setAiAnalysisData(data.result_data);
-                      setShowAiConfirmDialog(true);
-                      playSound('notification');
-                      triggerHaptic('medium');
-                    } else {
-                      toast.warning("KI-Analyse konnte nicht durchgeführt werden");
+              {form.photo_url && !isAnalyzing && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full border-cyan-600 text-cyan-400 hover:bg-cyan-900/30 text-sm"
+                  onClick={async () => {
+                    setIsAnalyzing(true);
+                    try {
+                      const analysisResult = await functions.invoke('analyzeCatchPhoto', { file_url: form.photo_url });
+                      const data = analysisResult?.data;
+                      if (data?.result_data) {
+                        setAiAnalysisData(data.result_data);
+                        setShowAiConfirmDialog(true);
+                        playSound('notification');
+                        triggerHaptic('medium');
+                      } else {
+                        toast.warning("KI-Analyse konnte nicht durchgeführt werden");
+                      }
+                    } catch (error) {
+                      console.error("KI-Analyse-Fehler:", error);
+                      toast.warning("KI-Analyse fehlgeschlagen");
+                    } finally {
+                      setIsAnalyzing(false);
                     }
-                  } catch (error) {
-                    console.error("KI-Analyse-Fehler:", error);
-                    toast.warning("KI-Analyse fehlgeschlagen");
-                  } finally {
-                    setIsAnalyzing(false);
-                  }
-                }}
-                disabled={isAnalyzing}
-              >
-                {isAnalyzing ? "Wird analysiert..." : "KI-Analyse und automatisch ausfüllen"}
-              </Button>
+                  }}
+                >
+                  Erneut analysieren
+                </Button>
+              )}
               <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-300 select-none py-1">
                 <input
                   type="checkbox"
@@ -749,6 +856,12 @@ export default function QuickCatchDialog() {
                     <span className="text-white font-semibold">{aiAnalysisData.weight_kg} kg</span>
                   </div>
                 )}
+                {aiAnalysisData.bait_used && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Köder:</span>
+                    <span className="text-white font-semibold">{aiAnalysisData.bait_used}</span>
+                  </div>
+                )}
                 {aiAnalysisData.confidence && (
                   <div className="flex justify-between mt-3 pt-3 border-t border-gray-700">
                     <span className="text-gray-400 text-sm">Genauigkeit:</span>
@@ -818,14 +931,14 @@ export default function QuickCatchDialog() {
           <DialogHeader>
             <DialogTitle className="text-cyan-400">In Community teilen?</DialogTitle>
           </DialogHeader>
-          
-          <div className="py-4">
-            <p className="text-gray-300 mb-4">
+
+          <div className="py-2">
+            <p className="text-gray-300 mb-3 text-sm">
               Möchtest du diesen Fang mit der Community teilen?
             </p>
-            
+
             {savedCatchData?.photo_url && (
-              <div className="relative w-full h-48 rounded-lg overflow-hidden mb-4">
+              <div className="relative w-full h-40 sm:h-48 rounded-lg overflow-hidden mb-3">
                 <img
                   src={savedCatchData.photo_url}
                   alt={savedCatchData.species}
@@ -833,15 +946,15 @@ export default function QuickCatchDialog() {
                 />
               </div>
             )}
-            
+
             {savedCatchData && (
-              <div className="bg-gray-800/50 rounded-lg p-4 space-y-2">
+              <div className="bg-gray-800/50 rounded-lg p-3 space-y-1">
                 <p className="text-white font-semibold">{savedCatchData.species}</p>
                 {savedCatchData.length_cm && (
-                  <p className="text-gray-300 text-sm">Länge: {savedCatchData.length_cm}cm</p>
+                  <p className="text-gray-300 text-sm">Länge: {savedCatchData.length_cm} cm</p>
                 )}
                 {savedCatchData.weight_kg && (
-                  <p className="text-gray-300 text-sm">Gewicht: {savedCatchData.weight_kg}kg</p>
+                  <p className="text-gray-300 text-sm">Gewicht: {savedCatchData.weight_kg} kg</p>
                 )}
                 {savedCatchData.bait_used && (
                   <p className="text-gray-300 text-sm">Köder: {savedCatchData.bait_used}</p>
@@ -849,8 +962,8 @@ export default function QuickCatchDialog() {
               </div>
             )}
           </div>
-          
-          <DialogFooter className="flex gap-2">
+
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
             <Button
               variant="outline"
               onClick={() => {
@@ -868,14 +981,14 @@ export default function QuickCatchDialog() {
                 });
               }}
               disabled={isSharing}
-              className="border-gray-700 text-gray-300 hover:bg-gray-700"
+              className="flex-1 border-gray-700 text-gray-300 hover:bg-gray-700 min-h-[44px]"
             >
               Nein, danke
             </Button>
             <Button
               onClick={handleShareToCommunity}
               disabled={isSharing}
-              className="bg-cyan-600 hover:bg-cyan-700"
+              className="flex-1 bg-cyan-600 hover:bg-cyan-700 min-h-[44px]"
             >
               {isSharing ? "Wird geteilt..." : "Jetzt teilen"}
             </Button>
