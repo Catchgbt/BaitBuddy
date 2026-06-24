@@ -9,8 +9,10 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import { getPersonalizedGreeting } from "@/components/utils/greetings";
-import { Volume2 } from "lucide-react";
+import { Volume2, Phone } from "lucide-react";
 import { getRandomDemoResponse } from "@/components/utils/guestMode";
+import { useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 
 import PremiumGuard from "@/components/premium/PremiumGuard";
 
@@ -29,6 +31,7 @@ function AIAssistantInner() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const messagesEndRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadUser();
@@ -276,6 +279,16 @@ Verwende Emojis sparsam aber gezielt für bessere Lesbarkeit.`,
                   </Button>
                 )}
               </div>
+
+              <Button
+                onClick={() => navigate(createPageUrl('VoiceChat'))}
+                size="sm"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg"
+                title="Echtzeit-Sprachgespräch starten"
+              >
+                <Phone className="w-4 h-4" />
+                <span className="ml-2">Live reden</span>
+              </Button>
             </motion.div>
           </div>
         </div>
