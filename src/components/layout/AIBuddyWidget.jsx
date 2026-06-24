@@ -34,9 +34,15 @@ export default function AIBuddyWidget() {
   const [pos, setPos] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : { x: 16, y: 16 }; // bottom-right
+      return saved ? JSON.parse(saved) : {
+        x: typeof window !== 'undefined' ? window.innerWidth - 136 : 0,
+        y: typeof window !== 'undefined' ? window.innerHeight - 136 : 0
+      };
     } catch {
-      return { x: 16, y: 16 };
+      return {
+        x: typeof window !== 'undefined' ? window.innerWidth - 136 : 0,
+        y: typeof window !== 'undefined' ? window.innerHeight - 136 : 0
+      };
     }
   });
 
@@ -164,13 +170,45 @@ export default function AIBuddyWidget() {
     }
   }, [pos]);
 
-  // Handle drag - DISABLED (fixed position)
   const handleMouseDown = (e) => {
-    // Drag disabled - widget is fixed
-    return;
+    if (!widgetRef.current) return;
+
+    const rect = widgetRef.current.getBoundingClientRect();
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+    setIsDragging(true);
   };
 
-  // Drag disabled - no drag listener needed
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e) => {
+      const newX = e.clientX - dragOffset.x;
+      const newY = e.clientY - dragOffset.y;
+
+      const maxX = window.innerWidth - 120;
+      const maxY = window.innerHeight - 120;
+
+      setPos({
+        x: Math.max(0, Math.min(newX, maxX)),
+        y: Math.max(0, Math.min(newY, maxY))
+      });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragOffset]);
 
   // Handle send message
   const handleSendMessage = useCallback(
@@ -296,11 +334,26 @@ export default function AIBuddyWidget() {
     };
   }, []);
 
+  const isOnRightSide = pos.x + 120 > window.innerWidth / 2;
+  const isOnTopSide = pos.y < window.innerHeight / 2;
+
   const bubbleVariants = {
-    hidden: { opacity: 0, scale: 0.85, x: 20 },
+    hidden: { opacity: 0, scale: 0.85, x: isOnRightSide ? 20 : -20 },
     visible: { opacity: 1, scale: 1, x: 0 },
-    exit: { opacity: 0, scale: 0.85, x: 20 },
+    exit: { opacity: 0, scale: 0.85, x: isOnRightSide ? 20 : -20 },
   };
+
+  const smallBubblePositionClass = isOnRightSide
+    ? 'absolute -top-24 right-0'
+    : 'absolute -top-24 left-0';
+
+  const chatBubbleContainerClass = isOnRightSide
+    ? 'flex flex-col items-end gap-3 relative'
+    : 'flex flex-col items-start gap-3 relative';
+
+  const bubbleTailClass = isOnRightSide
+    ? 'absolute -bottom-2 right-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-blue-200'
+    : 'absolute -bottom-2 left-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-blue-200';
 
   return (
     <>
@@ -310,10 +363,15 @@ export default function AIBuddyWidget() {
       {/* Avatar Widget + Chat Bubble */}
       <div
         ref={widgetRef}
-        className="fixed z-50 select-none bottom-6 right-6"
+        className="fixed z-50 select-none cursor-grab active:cursor-grabbing"
+        style={{
+          transform: `translate(${pos.x}px, ${pos.y}px)`,
+          transition: isDragging ? 'none' : 'transform 0.2s ease-out'
+        }}
+        onMouseDown={handleMouseDown}
       >
         {/* Animated Bubble Container */}
-        <div className="flex flex-col items-end gap-3 relative">
+        <div className={chatBubbleContainerClass}>
           {/* Small Buddy Voice Bubble */}
           <AnimatePresence>
             {showSmallBubble && (
@@ -321,10 +379,10 @@ export default function AIBuddyWidget() {
                 initial={{ opacity: 0, scale: 0.8, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.8, y: 10 }}
-                className="absolute -top-24 right-0 bg-white border-2 border-blue-300 rounded-2xl px-4 py-3 shadow-lg max-w-xs"
+                className={`${smallBubblePositionClass} bg-white border-2 border-blue-300 rounded-2xl px-4 py-3 shadow-lg max-w-xs`}
               >
                 <p className="text-sm text-gray-800 leading-relaxed">{smallBubbleText}</p>
-                <div className="absolute -bottom-2 right-8 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-blue-300" />
+                <div className={isOnRightSide ? "absolute -bottom-2 right-8 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-blue-300" : "absolute -bottom-2 left-8 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-blue-300"} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -475,7 +533,7 @@ export default function AIBuddyWidget() {
                 </div>
 
                 {/* Bubble Tail */}
-                <div className="absolute -bottom-2 right-6 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-blue-200" />
+                <div className={bubbleTailClass} />
               </motion.div>
             )}
           </AnimatePresence>
