@@ -171,9 +171,15 @@ router.post('/analyze-photo', requireAuth, async (req, res) => {
 
     if (!imageBase64) return res.status(400).json({ error: 'image required' });
     const raw = await invokeLLM({
-      prompt: `Analysiere dieses Fisch-Foto. Antworte NUR mit einem JSON-Objekt in diesem Format, ohne Erklärungen:
-{"species":"Fischart auf Deutsch","length_cm":Zahl_oder_null,"weight_kg":Zahl_oder_null}
-Wenn du keinen Fisch erkennst, nutze null für alle Felder.`,
+      prompt: `Analysiere dieses Fisch-Foto so genau wie möglich. Antworte NUR mit einem JSON-Objekt in diesem Format, ohne Erklärungen:
+{"species":"Fischart auf Deutsch","length_cm":Zahl_oder_null,"weight_kg":Zahl_oder_null,"bait_used":"erkannter Köder oder null","confidence":0.0_bis_1.0}
+
+Regeln:
+- Schätze die Länge anhand von sichtbaren Referenzobjekten (Hände, Rute, Kescher, Maßband).
+- Berechne das Gewicht basierend auf Art und geschätzter Länge mit typischen Gewichtstabellen.
+- Wenn ein Köder im Maul oder auf dem Bild sichtbar ist, gib ihn an (z.B. "Gummifisch", "Wobbler", "Spinner", "Wurm", "Mais").
+- confidence: Wie sicher bist du bei der Arterkennung? (0.0 = unsicher, 1.0 = sehr sicher)
+- Wenn du keinen Fisch erkennst, nutze null für alle Felder und confidence 0.`,
       imageBase64
     });
     let parsed = {};
@@ -190,7 +196,9 @@ Wenn du keinen Fisch erkennst, nutze null für alle Felder.`,
       ok: true,
       species: typeof parsed.species === 'string' ? parsed.species : null,
       length_cm: typeof parsed.length_cm === 'number' ? parsed.length_cm : null,
-      weight_kg: typeof parsed.weight_kg === 'number' ? parsed.weight_kg : null
+      weight_kg: typeof parsed.weight_kg === 'number' ? parsed.weight_kg : null,
+      bait_used: typeof parsed.bait_used === 'string' ? parsed.bait_used : null,
+      confidence: typeof parsed.confidence === 'number' ? parsed.confidence : null
     });
   } catch (e) {
     return res.status(500).json({ error: e.message });
