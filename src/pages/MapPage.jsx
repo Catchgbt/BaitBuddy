@@ -18,7 +18,9 @@ import AdvancedCacheManager from "@/components/map/v2/AdvancedCacheManager";
 import MapNavigationHub from "@/components/map/MapNavigationHub";
 import MapModeManager from "@/components/map/MapModeManager";
 import { RadarLayer, useRainviewerRadar, RADAR_MODES } from "@/components/map/RadarOverlay";
-import { MapPin, CloudRain, Crosshair, Play, Pause, ChevronDown } from "lucide-react";
+import { MapPin, CloudRain, Crosshair, Play, Pause, ChevronDown, Sunrise, Ticket } from "lucide-react";
+import SunriseSunsetPanel from "@/components/map/SunriseSunsetPanel";
+import { PERMIT_LOCATIONS, CATEGORY_LABELS, GERMAN_STATES } from "@/data/permitLocations";
 
 // Leaflet CSS laden
 if (typeof document !== "undefined") {
@@ -57,6 +59,11 @@ const userIcon = createIcon(
 
 const greenIcon = createIcon(
   "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
+  "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png"
+);
+
+const orangeIcon = createIcon(
+  "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png",
   "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png"
 );
 
@@ -114,7 +121,9 @@ export default function MapPage() {
     return !localStorage.getItem('mapTourCompleted');
   });
   const [showPublicSpots, setShowPublicSpots] = useState(false);
-  // Ansicht: Spots-Karte oder Wetter-Radar-Overlay (direkt umschaltbar)
+  const [showPermitLocations, setShowPermitLocations] = useState(false);
+  const [permitStateFilter, setPermitStateFilter] = useState("all");
+  // Ansicht: Spots-Karte, Wetter-Radar oder Beiszeiten-Rechner
   const [mapView, setMapView] = useState("spots");
   const [showDetails, setShowDetails] = useState(false);
   const radar = useRainviewerRadar(mapView === "radar");
@@ -311,6 +320,16 @@ export default function MapPage() {
     [publicLocations]
   );
 
+  const filteredPermitLocations = useMemo(() => {
+    if (permitStateFilter === "all") return PERMIT_LOCATIONS;
+    return PERMIT_LOCATIONS.filter(l => l.state === permitStateFilter);
+  }, [permitStateFilter]);
+
+  const biteZeitCoords = useMemo(() => {
+    if (gpsLocation) return { lat: gpsLocation.lat, lon: gpsLocation.lon, label: 'GPS-Standort' };
+    return { lat: mapCenter[0], lon: mapCenter[1], label: 'Kartenmittelpunkt' };
+  }, [gpsLocation, mapCenter]);
+
   const handleFeatureSelect = useCallback((featureId) => {
     switch(featureId) {
       case 'relief-shading':
@@ -368,7 +387,7 @@ export default function MapPage() {
           </button>
         </div>
 
-        {/* Direkter Umschalter: Spots-Karte ⇄ Wetter-Radar */}
+        {/* Umschalter: Spots | Wetter-Radar | Beiszeiten */}
         <div className="flex p-1 rounded-xl bg-gray-900/70 border border-gray-800 gap-1">
           <button
             onClick={() => setMapView("spots")}
@@ -392,7 +411,19 @@ export default function MapPage() {
             }`}
           >
             <CloudRain className="w-4 h-4" />
-            Wetter-Radar
+            Radar
+          </button>
+          <button
+            onClick={() => setMapView("bitezeit")}
+            aria-pressed={mapView === "bitezeit"}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+              mapView === "bitezeit"
+                ? "bg-amber-600 text-white shadow-lg shadow-amber-900/40"
+                : "text-gray-400 hover:text-gray-200"
+            }`}
+          >
+            <Sunrise className="w-4 h-4" />
+            Beiszeiten
           </button>
         </div>
 
@@ -463,6 +494,42 @@ export default function MapPage() {
                     Öffentliche Spots verbergen
                   </button>
                 )}
+                <div className="border-t border-gray-700 pt-2 mt-2">
+                  <div className="flex justify-between text-sm items-center">
+                    <span className="text-gray-300">Angelkarten-Verkaufsstellen:</span>
+                    <span className="text-orange-400 font-semibold">
+                      {showPermitLocations ? filteredPermitLocations.length : "0"}
+                    </span>
+                  </div>
+                  {!showPermitLocations ? (
+                    <button
+                      onClick={() => setShowPermitLocations(true)}
+                      className="w-full mt-2 px-3 py-1 text-xs bg-orange-900/50 hover:bg-orange-800 text-orange-300 rounded border border-orange-700 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Ticket className="w-3 h-3" />
+                      Verkaufsstellen anzeigen ({PERMIT_LOCATIONS.length})
+                    </button>
+                  ) : (
+                    <>
+                      <select
+                        value={permitStateFilter}
+                        onChange={(e) => setPermitStateFilter(e.target.value)}
+                        className="w-full mt-2 px-2 py-1 text-xs bg-gray-800 border border-gray-700 text-gray-300 rounded"
+                      >
+                        <option value="all">Alle Bundesländer</option>
+                        {GERMAN_STATES.map(state => (
+                          <option key={state} value={state}>{state}</option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={() => setShowPermitLocations(false)}
+                        className="w-full mt-1 px-3 py-1 text-xs bg-red-900/50 hover:bg-red-800 text-red-300 rounded border border-red-700 transition-colors"
+                      >
+                        Verkaufsstellen verbergen
+                      </button>
+                    </>
+                  )}
+                </div>
                 {nearestSpot && travelInfo && (
                   <>
                     <div className="border-t border-gray-700 pt-2 mt-2">
@@ -598,6 +665,49 @@ export default function MapPage() {
                 </Marker>
               );
             })}
+
+            {showPermitLocations && filteredPermitLocations.map((loc) => (
+              <Marker
+                key={loc.id}
+                position={[loc.lat, loc.lng]}
+                icon={orangeIcon}
+              >
+                <Popup>
+                  <div style={{ minWidth: "220px", maxWidth: "280px" }}>
+                    <div style={{ fontWeight: "bold", fontSize: "14px", marginBottom: "4px" }}>
+                      {loc.name}
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#c2410c", fontWeight: "600", marginBottom: "2px" }}>
+                      {CATEGORY_LABELS[loc.category]}
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#6b7280", marginBottom: "4px" }}>
+                      {loc.state}
+                    </div>
+                    {loc.address && (
+                      <div style={{ fontSize: "11px", color: "#4b5563" }}>{loc.address}</div>
+                    )}
+                    {loc.phone && (
+                      <div style={{ fontSize: "11px", color: "#4b5563" }}>Tel: {loc.phone}</div>
+                    )}
+                    {loc.website && (
+                      <div style={{ fontSize: "11px", color: "#1d4ed8" }}>{loc.website}</div>
+                    )}
+                    {loc.sells && loc.sells.length > 0 && (
+                      <div style={{ marginTop: "6px", borderTop: "1px solid #e5e7eb", paddingTop: "4px" }}>
+                        <div style={{ fontSize: "10px", color: "#9ca3af", marginBottom: "2px" }}>
+                          ERHÄLTLICH:
+                        </div>
+                        {loc.sells.map((item, i) => (
+                          <div key={i} style={{ fontSize: "11px", color: "#166534" }}>
+                            {item}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
           </MapContainer>
 
           {/* Schwebender Standort-Button (mobilfreundlich, oben rechts) */}
@@ -669,6 +779,23 @@ export default function MapPage() {
           )}
         </div>
       </div>
+
+      {/* Beiszeiten-Panel — erscheint unterhalb der Karte wenn Tab aktiv */}
+      {mapView === "bitezeit" && (
+        <div className="rounded-2xl border border-amber-700/40 bg-gray-900/80 p-4 shadow-xl">
+          <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-800">
+            <Sunrise className="w-4 h-4 text-amber-400" />
+            <h2 className="text-sm font-bold text-amber-300 uppercase tracking-wider">
+              Sonnenzeiten & Beiszeiten
+            </h2>
+          </div>
+          <SunriseSunsetPanel
+            lat={biteZeitCoords.lat}
+            lon={biteZeitCoords.lon}
+            locationLabel={biteZeitCoords.label}
+          />
+        </div>
+      )}
 
       {showAddModal && (
         <AddSpotModal

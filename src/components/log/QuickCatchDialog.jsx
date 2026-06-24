@@ -425,6 +425,8 @@ export default function QuickCatchDialog() {
       points_earned: form.length_cm ? (1 + Math.floor(parseFloat(form.length_cm)/10)) : 1
     };
 
+    let willShowShareDialog = false;
+
     try {
       const savedCatch = await createCatchWithOfflineSupport(catchData);
       const wasOffline = !isOnline();
@@ -468,6 +470,7 @@ export default function QuickCatchDialog() {
             toast.success("Fang gespeichert und in der Community geteilt!");
           } else {
             setShowShareDialog(true);
+            willShowShareDialog = true;
           }
         } catch (creditError) {
           console.error("Credits konnten nicht gutgeschrieben werden:", creditError);
@@ -486,7 +489,24 @@ export default function QuickCatchDialog() {
         );
       }
 
-      handleClose();
+      if (willShowShareDialog) {
+        // Nur Hauptdialog schliessen, Share-Dialog und savedCatchData bleiben erhalten
+        setOpen(false);
+        setAiAnalysisData(null);
+        setShowAiConfirmDialog(false);
+        setForm({
+          species: "",
+          spot_id: "",
+          length_cm: "",
+          weight_kg: "",
+          bait_used: "",
+          notes: "",
+          catch_time: toLocalDatetimeInputValue(new Date()),
+          photo_url: ""
+        });
+      } else {
+        handleClose();
+      }
     } catch (e) {
       console.error("Fehler beim Speichern des Fangs:", e);
       triggerHaptic('light');
