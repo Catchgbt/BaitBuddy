@@ -166,7 +166,7 @@ function analyze(setup, env){
   };
 }
 
-function GearContent(){ // Renamed from App to GearContent
+function GearContent({ user }){ // Renamed from App to GearContent
   const [reelBrand, setReelBrand] = useState(loadLocal("reelBrand","Shimano"));
   const [reelModel, setReelModel] = useState(loadLocal("reelModel","Vanford 2500"));
   const [rodBrand, setRodBrand] = useState(loadLocal("rodBrand","Shimano"));
@@ -659,7 +659,7 @@ export default function Gear() {
       requiredPlan="basic"
       feature="Die Ausrüstungsanalyse ist ein Basic-Feature"
     >
-      <GearContent />
+      <GearContent user={user} />
     </PremiumGuard>
   );
 }
