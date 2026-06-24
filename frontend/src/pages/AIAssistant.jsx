@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { api } from '@/api/client';
 import { useNavigate } from 'react-router-dom';
-import { Send, Volume2 } from 'lucide-react';
+import { Send, Volume2, Phone } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AIAssistant() {
@@ -31,7 +31,7 @@ export default function AIAssistant() {
         );
       });
 
-      const { reply, action } = await api.post('/api/chat', {
+      const { reply, action } = await api.post('/ai/chat', {
         messages: [...messages, userMsg],
         userLocation: loc
       });
@@ -67,9 +67,18 @@ export default function AIAssistant() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
-      <div className="p-4 border-b border-gray-800">
-        <h1 className="text-lg font-bold text-white">🤖 KI Angel-Assistent</h1>
-        <p className="text-xs text-gray-500">Powered by Claude AI</p>
+      <div className="flex items-center justify-between p-4 border-b border-gray-800">
+        <div>
+          <h1 className="text-lg font-bold text-white">🤖 KI Angel-Assistent</h1>
+          <p className="text-xs text-gray-500">Powered by Claude AI</p>
+        </div>
+        <button
+          onClick={() => navigate('/voice')}
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold shadow-lg transition-colors"
+          title="Echtzeit-Sprachgespräch starten"
+        >
+          <Phone size={16} /> Live reden
+        </button>
       </div>
 
       <div className="flex-1 overflow-auto p-4 space-y-4">

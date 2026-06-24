@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import Layout from './Layout';
 import Home from './pages/Home';
 import AIAssistant from './pages/AIAssistant';
+import VoiceChat from './pages/VoiceChat';
 import Log from './pages/Log';
 import Map from './pages/Map';
 import Community from './pages/Community';
@@ -27,6 +28,7 @@ function AppRoutes() {
       <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Home />} />
         <Route path="chat" element={<AIAssistant />} />
+        <Route path="voice" element={<VoiceChat />} />
         <Route path="log" element={<Log />} />
         <Route path="map" element={<Map />} />
         <Route path="community" element={<Community />} />
