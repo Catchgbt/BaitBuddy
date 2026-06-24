@@ -359,3 +359,20 @@ create index if not exists idx_monthly_leaderboards_period on monthly_leaderboar
 create index if not exists idx_monthly_leaderboards_user on monthly_leaderboards(user_id, year, month);
 create index if not exists idx_event_invitations_invitee on event_invitations(invitee_id, status);
 create index if not exists idx_event_invitations_event on event_invitations(event_id);
+
+-- Social Media Sharing
+create table if not exists social_media_shares (
+  id uuid primary key default uuid_generate_v4(),
+  catch_id uuid not null references catches(id) on delete cascade,
+  platform text not null,
+  message text,
+  include_photo boolean default true,
+  photo_url text,
+  share_link text,
+  created_by text not null,
+  created_at timestamptz default now()
+);
+
+create index if not exists idx_social_media_shares_catch on social_media_shares(catch_id);
+create index if not exists idx_social_media_shares_user on social_media_shares(created_by);
+create index if not exists idx_social_media_shares_platform on social_media_shares(platform);
