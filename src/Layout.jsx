@@ -369,8 +369,8 @@ function LayoutContent({ children, currentPageName }) {
               <UpdateNotification />
               <OfflineIndicator />
               
-              {/* Unterwasser-Hintergrund (wie auf der Landingpage) */}
-              <WaterScene />
+              {/* Unterwasser-Hintergrund (nur auf der Landingpage) */}
+              {currentPageName === 'Home' && <WaterScene />}
 
               {/* Content Layer */}
               <div className="relative" style={{ zIndex: 1 }}>
