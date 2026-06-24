@@ -310,7 +310,7 @@ export default function AIBuddyWidget() {
       {/* Avatar Widget + Chat Bubble */}
       <div
         ref={widgetRef}
-        className="fixed z-50 select-none bottom-6 right-6"
+        className="fixed z-50 select-none top-6 right-6"
       >
         {/* Animated Bubble Container */}
         <div className="flex flex-col items-end gap-3 relative">
