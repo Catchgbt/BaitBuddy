@@ -69,7 +69,7 @@ router.post('/support/tickets', requireAuth, async (req, res) => {
         };
 
         const mailOptions = {
-          from: process.env.SMTP_USER || 'BaitBuddy <noreply@baitbuddy.local>',
+          from: `BaitBuddy Support <${process.env.SMTP_USER}>`,
           to: supportEmail,
           subject: `[${escapeHtml(category || 'TICKET')}] ${escapeHtml(subject)}`,
           html: `
@@ -87,20 +87,15 @@ router.post('/support/tickets', requireAuth, async (req, res) => {
           replyTo: user_email,
         };
 
-        emailTransporter.sendMail(mailOptions, (err, info) => {
-          if (err) {
-            console.error('Email-Versand fehlgeschlagen:', err);
-          } else {
-            console.log('Ticket-Email versendet:', info.response);
-          }
-        });
+        try {
+          const info = await emailTransporter.sendMail(mailOptions);
+          console.log('Ticket-Email versendet:', info.messageId);
+        } catch (emailErr) {
+          console.error('Email-Versand fehlgeschlagen:', emailErr.message);
+        }
       }
     } else {
-      console.log('⚠️ Email-Transporter nicht konfiguriert. Ticket-Benachrichtigung skippiert:', {
-        ticket_id: ticket?.id,
-        subject,
-        user_email,
-      });
+      console.warn('SMTP nicht konfiguriert — Ticket-Email wird nicht versendet. Benoetigte Env-Vars: SMTP_HOST, SMTP_USER, SMTP_PASSWORD, SUPPORT_EMAIL');
     }
 
     // Erfolgreiche Antwort an Client
