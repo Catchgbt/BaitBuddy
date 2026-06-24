@@ -70,7 +70,6 @@ export default function VoiceChat() {
         break;
       }
       case 'error':
-        // eslint-disable-next-line no-console
         console.error('Realtime error event', evt);
         break;
       default:
@@ -135,6 +134,9 @@ export default function VoiceChat() {
       });
       if (!resp.ok) throw new Error('OpenAI-Verbindung fehlgeschlagen (' + resp.status + ')');
       const answerSdp = await resp.text();
+      // Falls der Nutzer zwischenzeitlich aufgelegt/die Seite verlassen hat,
+      // ist die Verbindung schon zu — dann nicht mehr fortsetzen.
+      if (pcRef.current !== pc) return;
       await pc.setRemoteDescription({ type: 'answer', sdp: answerSdp });
     } catch (e) {
       cleanup();
