@@ -505,6 +505,10 @@ export default function AIBuddyWidget() {
         className: `absolute -top-2 ${isOnRight ? 'right-6' : 'left-6'} w-0 h-0 border-l-[6px] border-r-[6px] border-b-[6px] border-l-transparent border-r-transparent border-b-blue-200`,
       };
 
+  if (isHidden) {
+    return null;
+  }
+
   return (
     <>
       <style>{BUDDY_TEXT_CSS}</style>
