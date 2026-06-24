@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { cacheEntityData, cacheWeatherData, getCachedWeather, getOfflineData } from "@/components/utils/offlineDataCache";
 import OfflineCacheIndicator from "@/components/dashboard/OfflineCacheIndicator";
 import FishingRecommendationCard from "@/components/dashboard/FishingRecommendationCard";
+import AudioNotesWidget from "@/components/dashboard/AudioNotesWidget";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePredictivePrefetch } from "@/hooks/usePredictivePrefetch";
 import PageContainer from "@/components/layout/PageContainer";
@@ -579,6 +580,8 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
 
 
         <FishingRecommendationCard />
+
+        <AudioNotesWidget />
 
         <div className="space-y-3">
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Schnellzugriff</h3>

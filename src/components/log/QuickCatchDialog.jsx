@@ -18,6 +18,7 @@ import { auth } from "@/api/auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toLocalDatetimeInputValue } from "@/lib/utils";
 import { isInClosedSeason } from "@/lib/closedSeason";
+import { createCatchWithOfflineSupport, isOnline } from "@/components/utils/offlineSync";
 
 export default function QuickCatchDialog() {
   const { t } = useLanguage();
@@ -412,97 +413,85 @@ export default function QuickCatchDialog() {
     }
 
     setIsSaving(true);
+    const catchData = {
+      species: trimmedSpecies,
+      spot_id: form.spot_id || null,
+      length_cm: form.length_cm ? parseFloat(form.length_cm) : null,
+      weight_kg: form.weight_kg ? parseFloat(form.weight_kg) : null,
+      bait_used: String(form.bait_used || ""),
+      notes: String(form.notes || ""),
+      catch_time: new Date(form.catch_time).toISOString(),
+      photo_url: String(form.photo_url || ""),
+      points_earned: form.length_cm ? (1 + Math.floor(parseFloat(form.length_cm)/10)) : 1
+    };
+
     try {
-      const catchData = {
-        species: trimmedSpecies,
-        spot_id: form.spot_id || null,
-        length_cm: form.length_cm ? parseFloat(form.length_cm) : null,
-        weight_kg: form.weight_kg ? parseFloat(form.weight_kg) : null,
-        bait_used: String(form.bait_used || ""),
-        notes: String(form.notes || ""),
-        catch_time: new Date(form.catch_time).toISOString(),
-        photo_url: String(form.photo_url || ""),
-        points_earned: form.length_cm ? (1 + Math.floor(parseFloat(form.length_cm)/10)) : 1
-      };
+      const savedCatch = await createCatchWithOfflineSupport(catchData);
+      const wasOffline = !isOnline();
 
-      const savedCatch = await Catch.create(catchData);
+      if (!wasOffline) {
+        try {
+          const user = await auth.me();
+          const credits = calculateCatchCredits(trimmedSpecies, parseFloat(form.length_cm));
+          await auth.updateMe({
+            credits: (user.credits || 0) + credits,
+            total_earned: (user.total_earned || 0) + credits
+          });
 
-      try {
-        const user = await auth.me();
-        const credits = calculateCatchCredits(trimmedSpecies, parseFloat(form.length_cm));
-        await auth.updateMe({
-          credits: (user.credits || 0) + credits,
-          total_earned: (user.total_earned || 0) + credits
-        });
+          playSound('success');
 
-        playSound('success');
+          toast.success(
+            `${trimmedSpecies} erfolgreich gespeichert!`,
+            {
+              description: `${form.length_cm || 'unbekannt'} cm`,
+              duration: 4000
+            }
+          );
 
-        toast.success(
-          `${trimmedSpecies} erfolgreich gespeichert!`,
+          analytics.track({
+            eventName: "fishing_catch_logged",
+            properties: {
+              species: trimmedSpecies,
+              has_photo: !!form.photo_url,
+              has_spot: !!form.spot_id,
+              length_cm: form.length_cm ? parseFloat(form.length_cm) : null,
+              source: "quick_dialog"
+            }
+          });
+
+          window.dispatchEvent(new CustomEvent('catch-saved'));
+
+          setSavedCatchData(savedCatch);
+          if (form.shareInCommunity) {
+            const catchText = `Mein Fang: ${catchData.species}${catchData.length_cm ? ` (${catchData.length_cm}cm)` : ''}${catchData.weight_kg ? `, ${catchData.weight_kg}kg` : ''}${catchData.bait_used ? `\nKöder: ${catchData.bait_used}` : ''}${catchData.notes ? `\n\n${catchData.notes}` : ''}`;
+            await entities.Post.create({ text: catchText, photo_url: catchData.photo_url || null, likes: 0, reported: false });
+            toast.success("Fang gespeichert und in der Community geteilt!");
+          } else {
+            setShowShareDialog(true);
+          }
+        } catch (creditError) {
+          console.error("Credits konnten nicht gutgeschrieben werden:", creditError);
+          playSound('warning');
+          toast.warning("Fang gespeichert, aber Credits konnten nicht gutgeschrieben werden.");
+        }
+      } else {
+        triggerHaptic('light');
+        playSound('notification');
+        toast.info(
+          "Offline gespeichert",
           {
-            description: `${form.length_cm || 'unbekannt'} cm`,
-            duration: 4000
+            description: "Wird automatisch synchronisiert, wenn Internet verfügbar ist",
+            duration: 5000
           }
         );
-        
-        analytics.track({
-          eventName: "fishing_catch_logged",
-          properties: {
-            species: trimmedSpecies,
-            has_photo: !!form.photo_url,
-            has_spot: !!form.spot_id,
-            length_cm: form.length_cm ? parseFloat(form.length_cm) : null,
-            source: "quick_dialog"
-          }
-        });
-        
-        window.dispatchEvent(new CustomEvent('catch-saved'));
-        
-        setSavedCatchData(savedCatch);
-        setOpen(false);
-        if (form.shareInCommunity) {
-          // direkt teilen ohne Dialog
-          const catchText = `Mein Fang: ${catchData.species}${catchData.length_cm ? ` (${catchData.length_cm}cm)` : ''}${catchData.weight_kg ? `, ${catchData.weight_kg}kg` : ''}${catchData.bait_used ? `\nKöder: ${catchData.bait_used}` : ''}${catchData.notes ? `\n\n${catchData.notes}` : ''}`;
-          await entities.Post.create({ text: catchText, photo_url: catchData.photo_url || null, likes: 0, reported: false });
-          toast.success("Fang gespeichert und in der Community geteilt!");
-        } else {
-          setShowShareDialog(true);
-        }
-      } catch (creditError) {
-        console.error("Credits konnten nicht gutgeschrieben werden:", creditError);
-        playSound('warning');
-        toast.warning("Fang gespeichert, aber Credits konnten nicht gutgeschrieben werden.");
-        handleClose();
       }
-    } catch (e) {
-      console.error("Failed to save catch, queueing offline:", e);
-      triggerHaptic('light');
-      playSound('notification');
-      
-      const catchData = {
-        species: trimmedSpecies,
-        spot_id: form.spot_id || null,
-        length_cm: form.length_cm ? parseFloat(form.length_cm) : null,
-        weight_kg: form.weight_kg ? parseFloat(form.weight_kg) : null,
-        bait_used: String(form.bait_used || ""),
-        notes: String(form.notes || ""),
-        catch_time: new Date(form.catch_time).toISOString(),
-        photo_url: String(form.photo_url || ""),
-        points_earned: form.length_cm ? (1 + Math.floor(parseFloat(form.length_cm)/10)) : 1
-      };
-      
-      const q = JSON.parse(localStorage.getItem("fishmaster_catch_queue") || "[]");
-      q.push(catchData);
-      localStorage.setItem("fishmaster_catch_queue", JSON.stringify(q));
-      
-      toast.info(
-        "Offline gespeichert", 
-        {
-          description: "Wird automatisch synchronisiert, sobald Internet verfügbar ist",
-          duration: 5000
-        }
-      );
+
       handleClose();
+    } catch (e) {
+      console.error("Fehler beim Speichern des Fangs:", e);
+      triggerHaptic('light');
+      playSound('error');
+      toast.error("Fehler beim Speichern des Fangs");
     } finally {
       setIsSaving(false);
     }
