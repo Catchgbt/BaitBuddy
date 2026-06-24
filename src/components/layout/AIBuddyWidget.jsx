@@ -34,9 +34,15 @@ export default function AIBuddyWidget() {
   const [pos, setPos] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : { x: 16, y: 16 }; // bottom-right
+      return saved ? JSON.parse(saved) : {
+        x: typeof window !== 'undefined' ? window.innerWidth - 136 : 0,
+        y: typeof window !== 'undefined' ? window.innerHeight - 136 : 0
+      };
     } catch {
-      return { x: 16, y: 16 };
+      return {
+        x: typeof window !== 'undefined' ? window.innerWidth - 136 : 0,
+        y: typeof window !== 'undefined' ? window.innerHeight - 136 : 0
+      };
     }
   });
 
