@@ -18,7 +18,8 @@ import AdvancedCacheManager from "@/components/map/v2/AdvancedCacheManager";
 import MapNavigationHub from "@/components/map/MapNavigationHub";
 import MapModeManager from "@/components/map/MapModeManager";
 import { RadarLayer, useRainviewerRadar, RADAR_MODES } from "@/components/map/RadarOverlay";
-import { MapPin, CloudRain, Crosshair, Play, Pause, ChevronDown } from "lucide-react";
+import { MapPin, CloudRain, Crosshair, Play, Pause, ChevronDown, Sunrise } from "lucide-react";
+import SunriseSunsetPanel from "@/components/map/SunriseSunsetPanel";
 
 // Leaflet CSS laden
 if (typeof document !== "undefined") {
@@ -114,7 +115,7 @@ export default function MapPage() {
     return !localStorage.getItem('mapTourCompleted');
   });
   const [showPublicSpots, setShowPublicSpots] = useState(false);
-  // Ansicht: Spots-Karte oder Wetter-Radar-Overlay (direkt umschaltbar)
+  // Ansicht: Spots-Karte, Wetter-Radar oder Beiszeiten-Rechner
   const [mapView, setMapView] = useState("spots");
   const [showDetails, setShowDetails] = useState(false);
   const radar = useRainviewerRadar(mapView === "radar");
@@ -311,6 +312,11 @@ export default function MapPage() {
     [publicLocations]
   );
 
+  const biteZeitCoords = useMemo(() => {
+    if (gpsLocation) return { lat: gpsLocation.lat, lon: gpsLocation.lon, label: 'GPS-Standort' };
+    return { lat: mapCenter[0], lon: mapCenter[1], label: 'Kartenmittelpunkt' };
+  }, [gpsLocation, mapCenter]);
+
   const handleFeatureSelect = useCallback((featureId) => {
     switch(featureId) {
       case 'relief-shading':
@@ -368,7 +374,7 @@ export default function MapPage() {
           </button>
         </div>
 
-        {/* Direkter Umschalter: Spots-Karte ⇄ Wetter-Radar */}
+        {/* Umschalter: Spots | Wetter-Radar | Beiszeiten */}
         <div className="flex p-1 rounded-xl bg-gray-900/70 border border-gray-800 gap-1">
           <button
             onClick={() => setMapView("spots")}
@@ -392,7 +398,19 @@ export default function MapPage() {
             }`}
           >
             <CloudRain className="w-4 h-4" />
-            Wetter-Radar
+            Radar
+          </button>
+          <button
+            onClick={() => setMapView("bitezeit")}
+            aria-pressed={mapView === "bitezeit"}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+              mapView === "bitezeit"
+                ? "bg-amber-600 text-white shadow-lg shadow-amber-900/40"
+                : "text-gray-400 hover:text-gray-200"
+            }`}
+          >
+            <Sunrise className="w-4 h-4" />
+            Beiszeiten
           </button>
         </div>
 
@@ -669,6 +687,23 @@ export default function MapPage() {
           )}
         </div>
       </div>
+
+      {/* Beiszeiten-Panel — erscheint unterhalb der Karte wenn Tab aktiv */}
+      {mapView === "bitezeit" && (
+        <div className="rounded-2xl border border-amber-700/40 bg-gray-900/80 p-4 shadow-xl">
+          <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-800">
+            <Sunrise className="w-4 h-4 text-amber-400" />
+            <h2 className="text-sm font-bold text-amber-300 uppercase tracking-wider">
+              Sonnenzeiten & Beiszeiten
+            </h2>
+          </div>
+          <SunriseSunsetPanel
+            lat={biteZeitCoords.lat}
+            lon={biteZeitCoords.lon}
+            locationLabel={biteZeitCoords.label}
+          />
+        </div>
+      )}
 
       {showAddModal && (
         <AddSpotModal
