@@ -23,6 +23,7 @@ import { AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
 import { toLocalDatetimeInputValue } from "@/lib/utils";
+import SocialMediaShareDialog from "@/components/log/SocialMediaShareDialog";
 
 export default function Logbook() {
   useFeatureTracking("catch_log");
@@ -64,6 +65,9 @@ export default function Logbook() {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [savedCatchData, setSavedCatchData] = useState(null);
   const [isSharing, setIsSharing] = useState(false);
+
+  // ---- Social media share ----
+  const [showSocialMediaDialog, setShowSocialMediaDialog] = useState(false);
 
   // ---- Pending photos ----
   const [pendingPhotos, setPendingPhotos] = useState([]);
@@ -590,16 +594,27 @@ export default function Logbook() {
               </div>
             )}
           </div>
-          <DialogFooter className="flex gap-2">
-            <Button variant="outline" onClick={() => { setShowShareDialog(false); setSavedCatchData(null); }} disabled={isSharing} className="border-gray-700 text-gray-300 hover:bg-gray-700 min-h-[44px]">
-              Nein, danke
-            </Button>
-            <Button onClick={handleShareToCommunity} disabled={isSharing} className="bg-cyan-600 hover:bg-cyan-700 min-h-[44px]">
-              {isSharing ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Wird geteilt...</> : <><Share2 className="w-4 h-4 mr-2" />Jetzt teilen</>}
+          <DialogFooter className="flex flex-col gap-2">
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => { setShowShareDialog(false); setSavedCatchData(null); }} disabled={isSharing} className="flex-1 border-gray-700 text-gray-300 hover:bg-gray-700 min-h-[44px]">
+                Nein, danke
+              </Button>
+              <Button onClick={handleShareToCommunity} disabled={isSharing} className="flex-1 bg-cyan-600 hover:bg-cyan-700 min-h-[44px]">
+                {isSharing ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Wird geteilt...</> : <><Share2 className="w-4 h-4 mr-2" />Community</>}
+              </Button>
+            </div>
+            <Button onClick={() => setShowSocialMediaDialog(true)} disabled={isSharing} variant="outline" className="w-full border-gray-700 text-gray-300 hover:bg-gray-700 min-h-[44px]">
+              Auf Social Media teilen
             </Button>
           </DialogFooter>
           </DialogContent>
           </Dialog>
+
+      <SocialMediaShareDialog
+        open={showSocialMediaDialog}
+        onOpenChange={setShowSocialMediaDialog}
+        catchData={savedCatchData}
+      />
           </div>
           </SwipeToRefresh>
           );

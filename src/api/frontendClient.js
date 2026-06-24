@@ -144,6 +144,7 @@ const ENTITY_MAP = {
   BathymetricMap: '/api/bathymetric-maps',
   DepthDataPoint: '/api/depth-data-points',
   License:        '/api/licenses',
+  SocialMediaShare: '/api/social-media/shares',
 };
 
 function makeEntity(entityName) {
