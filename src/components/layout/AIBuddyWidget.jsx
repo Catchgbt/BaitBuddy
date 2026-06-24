@@ -197,7 +197,9 @@ export default function AIBuddyWidget() {
 
         if (transcript.trim()) {
           setInputValue(transcript);
-          handleSendMessage(transcript);
+          setTimeout(() => {
+            handleSendMessage(transcript);
+          }, 0);
         }
       };
 
@@ -255,111 +257,106 @@ export default function AIBuddyWidget() {
   }, []);
 
   // Drag handlers — only on the avatar drag handle, not on chat/inputs
-  const handleDragStart = useCallback((clientX, clientY) => {
+  const handleAvatarMouseDown = useCallback((e) => {
+    e.preventDefault();
     dragStateRef.current = {
       active: true,
-      startX: clientX,
-      startY: clientY,
-      offsetX: clientX - pos.x,
-      offsetY: clientY - pos.y,
+      startX: e.clientX,
+      startY: e.clientY,
+      offsetX: e.clientX - pos.x,
+      offsetY: e.clientY - pos.y,
       moved: false
     };
-  }, [pos]);
 
-  const handleDragMove = useCallback((clientX, clientY) => {
-    const ds = dragStateRef.current;
-    if (!ds.active) return;
+    const onMove = (ev) => {
+      const ds = dragStateRef.current;
+      if (!ds.active) return;
 
-    const dx = Math.abs(clientX - ds.startX);
-    const dy = Math.abs(clientY - ds.startY);
-    if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) {
-      ds.moved = true;
-    }
+      const dx = Math.abs(ev.clientX - ds.startX);
+      const dy = Math.abs(ev.clientY - ds.startY);
+      if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) {
+        ds.moved = true;
+      }
 
-    if (ds.moved) {
-      const newPos = clampPos(clientX - ds.offsetX, clientY - ds.offsetY);
-      setPos(newPos);
-    }
-  }, []);
-
-  const handleDragEnd = useCallback(() => {
-    const wasDrag = dragStateRef.current.moved;
-    dragStateRef.current = { active: false, startX: 0, startY: 0, offsetX: 0, offsetY: 0, moved: false };
-    return wasDrag;
-  }, []);
-
-  // Mouse drag
-  useEffect(() => {
-    const onMouseMove = (e) => handleDragMove(e.clientX, e.clientY);
-    const onMouseUp = () => handleDragEnd();
-
-    if (dragStateRef.current.active) {
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
+      if (ds.moved) {
+        const newPos = clampPos(ev.clientX - ds.offsetX, ev.clientY - ds.offsetY);
+        setPos(newPos);
+      }
     };
-  });
 
-  const handleAvatarMouseDown = (e) => {
-    e.preventDefault();
-    handleDragStart(e.clientX, e.clientY);
-
-    const onMove = (ev) => handleDragMove(ev.clientX, ev.clientY);
     const onUp = () => {
-      const wasDrag = handleDragEnd();
+      const wasDrag = dragStateRef.current.moved;
+      dragStateRef.current = { active: false, startX: 0, startY: 0, offsetX: 0, offsetY: 0, moved: false };
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
       if (!wasDrag) {
         handleAvatarClick();
       }
     };
+
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
-  };
+  }, [pos, handleAvatarClick]);
 
-  // Touch drag (mobile)
-  const handleAvatarTouchStart = (e) => {
+  const handleAvatarTouchStart = useCallback((e) => {
     const touch = e.touches[0];
-    handleDragStart(touch.clientX, touch.clientY);
-  };
+    dragStateRef.current = {
+      active: true,
+      startX: touch.clientX,
+      startY: touch.clientY,
+      offsetX: touch.clientX - pos.x,
+      offsetY: touch.clientY - pos.y,
+      moved: false
+    };
+  }, [pos]);
 
-  const handleAvatarTouchMove = (e) => {
+  const handleAvatarTouchMove = useCallback((e) => {
     const touch = e.touches[0];
-    handleDragMove(touch.clientX, touch.clientY);
-    if (dragStateRef.current.moved) {
+    const ds = dragStateRef.current;
+    if (!ds.active) return;
+
+    const dx = Math.abs(touch.clientX - ds.startX);
+    const dy = Math.abs(touch.clientY - ds.startY);
+    if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) {
+      ds.moved = true;
+    }
+
+    if (ds.moved) {
+      const newPos = clampPos(touch.clientX - ds.offsetX, touch.clientY - ds.offsetY);
+      setPos(newPos);
       e.preventDefault();
     }
-  };
+  }, []);
 
-  const handleAvatarTouchEnd = () => {
-    const wasDrag = handleDragEnd();
+  const handleAvatarTouchEnd = useCallback(() => {
+    const wasDrag = dragStateRef.current.moved;
+    dragStateRef.current = { active: false, startX: 0, startY: 0, offsetX: 0, offsetY: 0, moved: false };
     if (!wasDrag) {
       handleAvatarClick();
     }
-  };
+  }, [handleAvatarClick]);
 
-  const handleAvatarClick = () => {
-    if (isHidden) {
-      handleShowBubble();
+  const handleAvatarClick = useCallback(() => {
+    const wasHidden = localStorage.getItem(HIDDEN_KEY) === 'true';
+    if (wasHidden) {
+      setIsHidden(false);
+      localStorage.removeItem(HIDDEN_KEY);
+      setIsOpen(true);
     } else {
-      setIsOpen(!isOpen);
+      setIsOpen((prev) => !prev);
     }
-  };
+  }, []);
 
   const handleSendMessage = useCallback(
-    async (text = inputValue) => {
-      if (!text.trim()) return;
+    async (userMessage) => {
+      const text = userMessage?.trim() || inputValue.trim();
+      if (!text) return;
 
-      const userMessage = text.trim();
       setInputValue('');
       // Vollstaendigen Verlauf aufbauen, damit der Buddy den Gespraechskontext
       // behaelt (vorher wurde nur die einzelne letzte Nachricht gesendet, der
       // Buddy "vergass" alles Vorherige).
-      const history = [...messagesRef.current, { role: 'user', content: userMessage }];
+      const history = [...messagesRef.current, { role: 'user', content: text }];
       setMessages(history);
       setIsLoading(true);
       setChatError(null);
@@ -404,7 +401,7 @@ export default function AIBuddyWidget() {
     [inputValue, speak, navigate]
   );
 
-  const handleVoiceInput = () => {
+  const handleVoiceInput = useCallback(() => {
     if (!recognition.current) {
       toast.error('Spracherkennung wird nicht unterstützt');
       return;
@@ -417,32 +414,34 @@ export default function AIBuddyWidget() {
         recognition.current.start();
       } catch {}
     }
-  };
+  }, [isListening]);
 
-  const handleCloseBubble = () => {
+  const handleCloseBubble = useCallback(() => {
     setIsOpen(false);
     stop();
     setIsHidden(true);
     try {
       localStorage.setItem(HIDDEN_KEY, 'true');
     } catch {}
-  };
+  }, [stop]);
 
-  const handleShowBubble = () => {
+  const handleShowBubble = useCallback(() => {
     setIsHidden(false);
     try {
       localStorage.removeItem(HIDDEN_KEY);
     } catch {}
     setIsOpen(true);
-  };
+  }, []);
 
-  const handleToggleBuddyVoice = () => {
-    const newState = !buddyVoiceEnabled;
-    setBuddyVoiceEnabled(newState);
-    try {
-      localStorage.setItem(BUDDY_VOICE_ENABLED_KEY, newState ? 'true' : 'false');
-    } catch {}
-  };
+  const handleToggleBuddyVoice = useCallback(() => {
+    setBuddyVoiceEnabled((prev) => {
+      const newState = !prev;
+      try {
+        localStorage.setItem(BUDDY_VOICE_ENABLED_KEY, newState ? 'true' : 'false');
+      } catch {}
+      return newState;
+    });
+  }, []);
 
   const showSmallBubbleWithText = useCallback((text) => {
     setSmallBubbleText(text);
