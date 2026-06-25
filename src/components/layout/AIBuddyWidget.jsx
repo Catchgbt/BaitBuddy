@@ -6,189 +6,103 @@ import { getTipForPage } from '@/lib/buddyTips';
 import { getRandomBuddyJoke, getRandomFarewellMessage } from '@/lib/buddyJokes';
 import { useAuth } from '@/lib/AuthContext';
 import { ai } from '@/api/frontendClient';
-import { Catch } from '@/entities/Catch';
-import { Spot } from '@/entities/Spot';
-import { resolvePage } from '@/lib/voicePages';
-import { createPageUrl } from '@/utils';
-import { useElevenLabsVoice } from '@/hooks/useElevenLabsVoice';
+import { speakWithFallback } from '@/components/utils/elevenLabsTTS';
 import { speakWithBrowserTTS } from '@/components/utils/browserTTS';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Mic, Send, X } from 'lucide-react';
 
-const STORAGE_KEY = 'buddy-widget-pos';
-const VISITED_PAGES_KEY = 'buddy-visited-pages';
-const HIDDEN_KEY = 'buddy-widget-hidden';
-const BUDDY_VOICE_ENABLED_KEY = 'buddy-voice-enabled';
-const SMALL_BUBBLE_TIMEOUT = 15000;
-const AVATAR_SIZE = 96;
-const DRAG_THRESHOLD = 5;
-const VOICE_RECOGNITION_TIMEOUT = 30000;
-const MAX_VISITED_PAGES_ENTRIES = 100;
-const ACTION_RETRY_ATTEMPTS = 2;
-const ACTION_RETRY_DELAY = 1000;
+import { useChatMessages } from '@/hooks/useChatMessages';
+import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
+import { useBuddyStorage } from '@/hooks/useBuddyStorage';
+import { executeBuddyAction } from '@/utils/buddyActions';
+import {
+  BUDDY_STORAGE_KEYS,
+  BUDDY_TIMEOUTS,
+  BUDDY_AVATAR_SIZE,
+  BUDDY_DRAG_DEBOUNCE,
+} from '@/lib/buddyStorageKeys';
 
-function getDefaultPos() {
-  if (typeof window === 'undefined') return { x: 300, y: 500 };
-  return {
-    x: window.innerWidth - AVATAR_SIZE - 24,
-    y: window.innerHeight - AVATAR_SIZE - 100
-  };
-}
+const AVATAR_SIZE = BUDDY_AVATAR_SIZE;
+const DRAG_THRESHOLD = BUDDY_TIMEOUTS.DRAG_THRESHOLD;
 
 function clampPos(x, y) {
   if (typeof window === 'undefined') return { x, y };
   return {
     x: Math.max(0, Math.min(x, window.innerWidth - AVATAR_SIZE)),
-    y: Math.max(0, Math.min(y, window.innerHeight - AVATAR_SIZE))
+    y: Math.max(0, Math.min(y, window.innerHeight - AVATAR_SIZE)),
   };
 }
 
-function getStoredLocation() {
-  try {
-    const stored = localStorage.getItem('userLocation');
-    if (!stored) return null;
-    const loc = JSON.parse(stored);
-    if (typeof loc?.latitude === 'number' && typeof loc?.longitude === 'number') {
-      return loc;
-    }
-  } catch {}
-  return null;
-}
-
-function cleanupStorageForVisitedPages() {
-  try {
-    const visitedPages = JSON.parse(localStorage.getItem(VISITED_PAGES_KEY) || '[]');
-    if (visitedPages.length > MAX_VISITED_PAGES_ENTRIES) {
-      const trimmed = visitedPages.slice(-MAX_VISITED_PAGES_ENTRIES);
-      localStorage.setItem(VISITED_PAGES_KEY, JSON.stringify(trimmed));
-    }
-  } catch (e) {
-    localStorage.removeItem(VISITED_PAGES_KEY);
-  }
-}
-
-async function executeWithRetry(fn, maxAttempts = ACTION_RETRY_ATTEMPTS) {
-  let lastError;
-  for (let i = 0; i < maxAttempts; i++) {
-    try {
-      return await fn();
-    } catch (error) {
-      lastError = error;
-      if (i < maxAttempts - 1) {
-        await new Promise(resolve => setTimeout(resolve, ACTION_RETRY_DELAY));
-      }
-    }
-  }
-  throw lastError;
-}
-
-async function executeBuddyAction(action, { navigate, userLocation }) {
-  if (!action || !action.type) return null;
-  try {
-    if (action.type === 'navigate') {
-      const target = resolvePage(action.params?.page);
-      if (!target) return null;
-      navigate(createPageUrl(target));
-      return null;
-    }
-
-    if (action.type === 'log_catch') {
-      const p = action.params || {};
-      if (!p.species) return 'Sag mir kurz die Fischart, dann trage ich den Fang ein.';
-      await executeWithRetry(async () => {
-        await Catch.create({
-          species: p.species,
-          catch_time: new Date().toISOString(),
-          ...(p.length_cm != null && { length_cm: Number(p.length_cm) }),
-          ...(p.weight_kg != null && { weight_kg: Number(p.weight_kg) }),
-          ...(p.bait_used && { bait_used: p.bait_used }),
-          ...(p.notes && { notes: p.notes })
-        });
-      });
-      toast.success(`Fang eingetragen: ${p.species}`);
-      return null;
-    }
-
-    if (action.type === 'add_spot' || action.type === 'save_spot') {
-      const p = action.params || {};
-      if (!p.name) return 'Wie soll der Spot heissen?';
-      const lat = p.latitude != null ? Number(p.latitude) : userLocation?.latitude;
-      const lng = p.longitude != null ? Number(p.longitude) : userLocation?.longitude;
-      if (lat == null || lng == null) {
-        return 'Ich brauche deinen Standort fuer den Spot. Aktiviere die Ortung und versuche es erneut.';
-      }
-      await executeWithRetry(async () => {
-        await Spot.create({
-          name: p.name,
-          latitude: lat,
-          longitude: lng,
-          water_type: p.water_type || 'see',
-          notes: p.notes || ''
-        });
-      });
-      toast.success(`Spot gespeichert: ${p.name}`);
-      return null;
-    }
-  } catch (e) {
-    console.error('Buddy-Action failed after retries:', e?.message);
-    toast.error('Aktion fehlgeschlagen. Bitte versuche es erneut.');
-    return 'Das hat leider nicht geklappt. Versuch es gleich nochmal.';
-  }
-  return null;
+function getDefaultPos() {
+  if (typeof window === 'undefined') return { x: 300, y: 500 };
+  return {
+    x: window.innerWidth - AVATAR_SIZE - 24,
+    y: window.innerHeight - AVATAR_SIZE - 100,
+  };
 }
 
 export default function AIBuddyWidget() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { speak, stop, isSpeaking } = useElevenLabsVoice();
 
-  const [pos, setPos] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
-          return clampPos(parsed.x, parsed.y);
+  // Use new hooks for centralized state
+  const {
+    messages,
+    setMessages,
+    messagesRef,
+    messagesEndRef,
+  } = useChatMessages();
+
+  const {
+    isListening,
+    transcript,
+    start: startListening,
+    stop: stopListening,
+  } = useSpeechRecognition({
+    onResult: (text) => {
+      if (text?.trim()) {
+        setInputValue(text);
+        setIsHidden(false);
+        setIsOpen(true);
+        if (handleSendMessageRef.current) {
+          handleSendMessageRef.current(text);
         }
       }
-    } catch {}
-    return getDefaultPos();
+    },
   });
 
+  const {
+    widgetPos: pos,
+    setWidgetPos: setPos,
+    isWidgetHidden,
+    hideWidget,
+    showWidget,
+    isVoiceEnabled: buddyVoiceEnabled,
+    toggleVoice: toggleBuddyVoice,
+    addVisitedPage,
+    cleanupVisitedPages,
+    getLocation: getStoredLocation,
+  } = useBuddyStorage();
+
+  // Local UI states
   const [isOpen, setIsOpen] = useState(false);
-  const [isHidden, setIsHidden] = useState(() => {
-    try {
-      return localStorage.getItem(HIDDEN_KEY) === 'true';
-    } catch {
-      return false;
-    }
-  });
   const [isTalking, setIsTalking] = useState(false);
   const [isNodding, setIsNodding] = useState(false);
-  const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isListening, setIsListening] = useState(false);
   const [chatError, setChatError] = useState(null);
-  const [buddyVoiceEnabled, setBuddyVoiceEnabled] = useState(() => {
-    try {
-      return localStorage.getItem(BUDDY_VOICE_ENABLED_KEY) !== 'false';
-    } catch {
-      return true;
-    }
-  });
   const [smallBubbleText, setSmallBubbleText] = useState('');
   const [showSmallBubble, setShowSmallBubble] = useState(false);
 
-  const recognition = useRef(null);
+  // Refs
   const widgetRef = useRef(null);
-  const messagesEndRef = useRef(null);
-  // Spiegelt den aktuellen Nachrichtenverlauf, damit handleSendMessage ihn
-  // ohne stale Closure lesen kann (auch bei Voice-/Vorschlag-Aufrufen).
-  const messagesRef = useRef([]);
+  const handleSendMessageRef = useRef(null);
+  const handleAvatarClickRef = useRef(null);
   const smallBubbleTimerRef = useRef(null);
   const userActivityTimerRef = useRef(null);
+  const isLoadingRef = useRef(false);
+  const positionDebounceRef = useRef(null);
 
   const dragStateRef = useRef({
     active: false,
@@ -196,100 +110,46 @@ export default function AIBuddyWidget() {
     startY: 0,
     offsetX: 0,
     offsetY: 0,
-    moved: false
+    moved: false,
   });
-  const isLoadingRef = useRef(false);
 
   const currentPage = location.pathname.replace(/^\//, '').split('/')[0] || 'Dashboard';
   const tip = getTipForPage(currentPage);
 
+  // Persisted state to localStorage
+  const isHidden = isWidgetHidden;
+  const setIsHidden = (value) => {
+    if (value) hideWidget();
+    else showWidget();
+  };
+
+  // Sync messages & auto-scroll
   useEffect(() => {
-    messagesRef.current = messages;
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
 
+  // Page tracking for auto-open & jokes
   useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      recognition.current = new SpeechRecognition();
-      recognition.current.lang = 'de-DE';
-      recognition.current.continuous = false;
-      recognition.current.interimResults = false;
-
-      let timeoutId = null;
-
-      recognition.current.onstart = () => {
-        setIsListening(true);
-        timeoutId = setTimeout(() => {
-          if (recognition.current && recognition.current.state !== 'ended') {
-            recognition.current.abort();
-          }
-        }, VOICE_RECOGNITION_TIMEOUT);
-      };
-
-      recognition.current.onend = () => {
-        if (timeoutId) clearTimeout(timeoutId);
-        setIsListening(false);
-      };
-
-      recognition.current.onresult = (event) => {
-        const transcript = Array.from(event.results)
-          .map((result) => result[0].transcript)
-          .join('');
-
-        if (transcript.trim()) {
-          setInputValue(transcript);
-          setIsHidden(false);
-          localStorage.removeItem(HIDDEN_KEY);
-          setIsOpen(true);
-          if (handleSendMessageRef.current) {
-            handleSendMessageRef.current(transcript);
-          }
-        }
-      };
-
-      recognition.current.onerror = (event) => {
-        if (timeoutId) clearTimeout(timeoutId);
-        setIsListening(false);
-        setInputValue('');
-
-        if (event.error !== 'aborted' && event.error !== 'no-speech') {
-          console.warn(`Voice recognition error: ${event.error}`);
-          toast.error(`Sprachfehler: ${event.error}`);
-        }
-      };
-    }
-
-    return () => {
-      if (recognition.current) {
-        try {
-          recognition.current.abort();
-        } catch {}
-        recognition.current.onstart = null;
-        recognition.current.onend = null;
-        recognition.current.onresult = null;
-        recognition.current.onerror = null;
-        recognition.current = null;
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    cleanupStorageForVisitedPages();
+    cleanupVisitedPages();
 
     try {
-      const hidden = localStorage.getItem(HIDDEN_KEY) === 'true';
-      if (hidden) return;
+      if (isHidden) return;
 
-      const visitedPages = JSON.parse(localStorage.getItem(VISITED_PAGES_KEY) || '[]');
-      const hasVisited = visitedPages.includes(currentPage);
+      const visited = [];
+      try {
+        const stored = localStorage.getItem(BUDDY_STORAGE_KEYS.VISITED_PAGES);
+        if (stored) {
+          visited.push(...JSON.parse(stored));
+        }
+      } catch {}
+
+      const hasVisited = visited.includes(currentPage);
 
       if (!hasVisited && !isOpen) {
         setIsOpen(true);
-        visitedPages.push(currentPage);
-        localStorage.setItem(VISITED_PAGES_KEY, JSON.stringify(visitedPages));
+        addVisitedPage(currentPage);
 
         const timer = setTimeout(() => setIsOpen(false), 5000);
         let jokeTimer = null;
@@ -307,87 +167,116 @@ export default function AIBuddyWidget() {
         };
       }
     } catch {}
-  }, [currentPage, isOpen, buddyVoiceEnabled, showSmallBubbleWithText]);
+  }, [currentPage, isOpen, isHidden, buddyVoiceEnabled, addVisitedPage, cleanupVisitedPages]);
 
+  // Debounced position persistence
   useEffect(() => {
-    const timer = setTimeout(() => {
+    if (positionDebounceRef.current) {
+      clearTimeout(positionDebounceRef.current);
+    }
+
+    positionDebounceRef.current = setTimeout(() => {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(pos));
+        const posKey = BUDDY_STORAGE_KEYS.WIDGET_POSITION;
+        if (pos) {
+          localStorage.setItem(posKey, JSON.stringify(pos));
+        }
       } catch {}
-    }, 300);
-    return () => clearTimeout(timer);
+    }, BUDDY_DRAG_DEBOUNCE);
+
+    return () => {
+      if (positionDebounceRef.current) {
+        clearTimeout(positionDebounceRef.current);
+      }
+    };
   }, [pos]);
 
-  // Reclamp on window resize
+  // Window resize clamping
   useEffect(() => {
     const handleResize = () => {
-      setPos(prev => clampPos(prev.x, prev.y));
+      setPos((prev) => clampPos(prev?.x || 0, prev?.y || 0));
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [setPos]);
 
-  // Store handleAvatarClick ref to avoid stale closures in drag handlers
-  const handleAvatarClickRef = useRef(null);
+  // Drag handlers
+  const handleAvatarClickRef_current = useCallback(() => {
+    if (isHidden) {
+      showWidget();
+      setIsOpen(true);
+    } else {
+      setIsOpen((prev) => !prev);
+    }
+  }, [isHidden, showWidget]);
+
   useEffect(() => {
-    handleAvatarClickRef.current = handleAvatarClick;
-  }, [handleAvatarClick]);
+    handleAvatarClickRef.current = handleAvatarClickRef_current;
+  }, [handleAvatarClickRef_current]);
 
-  // Drag handlers — only on the avatar drag handle, not on chat/inputs
-  const handleAvatarMouseDown = useCallback((e) => {
-    e.preventDefault();
-    if (dragStateRef.current.active) return;
-    dragStateRef.current = {
-      active: true,
-      startX: e.clientX,
-      startY: e.clientY,
-      offsetX: e.clientX - pos.x,
-      offsetY: e.clientY - pos.y,
-      moved: false
-    };
+  const handleAvatarMouseDown = useCallback(
+    (e) => {
+      e.preventDefault();
+      if (dragStateRef.current.active) return;
 
-    const onMove = (ev) => {
-      const ds = dragStateRef.current;
-      if (!ds.active) return;
+      const currentPos = pos || getDefaultPos();
+      dragStateRef.current = {
+        active: true,
+        startX: e.clientX,
+        startY: e.clientY,
+        offsetX: e.clientX - currentPos.x,
+        offsetY: e.clientY - currentPos.y,
+        moved: false,
+      };
 
-      const dx = Math.abs(ev.clientX - ds.startX);
-      const dy = Math.abs(ev.clientY - ds.startY);
-      if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) {
-        ds.moved = true;
-      }
+      const onMove = (ev) => {
+        const ds = dragStateRef.current;
+        if (!ds.active) return;
 
-      if (ds.moved) {
-        const newPos = clampPos(ev.clientX - ds.offsetX, ev.clientY - ds.offsetY);
-        setPos(newPos);
-      }
-    };
+        const dx = Math.abs(ev.clientX - ds.startX);
+        const dy = Math.abs(ev.clientY - ds.startY);
+        if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) {
+          ds.moved = true;
+        }
 
-    const onUp = () => {
-      const wasDrag = dragStateRef.current.moved;
-      dragStateRef.current.active = false;
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-      if (!wasDrag && handleAvatarClickRef.current) {
-        handleAvatarClickRef.current();
-      }
-    };
+        if (ds.moved) {
+          const newPos = clampPos(ev.clientX - ds.offsetX, ev.clientY - ds.offsetY);
+          setPos(newPos);
+        }
+      };
 
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-  }, [pos]);
+      const onUp = () => {
+        const wasDrag = dragStateRef.current.moved;
+        dragStateRef.current.active = false;
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        if (!wasDrag && handleAvatarClickRef.current) {
+          handleAvatarClickRef.current();
+        }
+      };
 
-  const handleAvatarTouchStart = useCallback((e) => {
-    if (dragStateRef.current.active) return;
-    const touch = e.touches[0];
-    dragStateRef.current = {
-      active: true,
-      startX: touch.clientX,
-      startY: touch.clientY,
-      offsetX: touch.clientX - pos.x,
-      offsetY: touch.clientY - pos.y,
-      moved: false
-    };
-  }, [pos]);
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    },
+    [pos, setPos]
+  );
+
+  const handleAvatarTouchStart = useCallback(
+    (e) => {
+      if (dragStateRef.current.active) return;
+      const touch = e.touches[0];
+      const currentPos = pos || getDefaultPos();
+      dragStateRef.current = {
+        active: true,
+        startX: touch.clientX,
+        startY: touch.clientY,
+        offsetX: touch.clientX - currentPos.x,
+        offsetY: touch.clientY - currentPos.y,
+        moved: false,
+      };
+    },
+    [pos]
+  );
 
   const handleAvatarTouchMove = useCallback((e) => {
     const touch = e.touches[0];
@@ -405,7 +294,7 @@ export default function AIBuddyWidget() {
       setPos(newPos);
       e.preventDefault();
     }
-  }, []);
+  }, [setPos]);
 
   const handleAvatarTouchEnd = useCallback(() => {
     const wasDrag = dragStateRef.current.moved;
@@ -415,20 +304,7 @@ export default function AIBuddyWidget() {
     }
   }, []);
 
-  const handleAvatarClick = useCallback(() => {
-    const wasHidden = localStorage.getItem(HIDDEN_KEY) === 'true';
-    if (wasHidden) {
-      setIsHidden(false);
-      localStorage.removeItem(HIDDEN_KEY);
-      setIsOpen(true);
-    } else {
-      setIsOpen((prev) => !prev);
-    }
-  }, []);
-
-  // Store handleSendMessage ref to avoid stale closures in voice recognition
-  const handleSendMessageRef = useRef(null);
-
+  // Chat message handler
   const handleSendMessage = useCallback(
     async (userMessage) => {
       const text = userMessage?.trim();
@@ -451,10 +327,12 @@ export default function AIBuddyWidget() {
           setIsTalking(true);
         }
 
-        const actionNote = await executeBuddyAction(response.action, {
+        const actionResult = await executeBuddyAction(response.action, {
           navigate,
-          userLocation: getStoredLocation()
+          userLocation: getStoredLocation(),
         });
+
+        const actionNote = actionResult?.message;
         if (actionNote) {
           setMessages((prev) => [...prev, { role: 'assistant', content: actionNote }]);
         }
@@ -462,7 +340,11 @@ export default function AIBuddyWidget() {
         const speakText = actionNote ? `${botMessage} ${actionNote}`.trim() : botMessage;
         if (speakText) {
           try {
-            await speak(speakText);
+            await speakWithFallback(speakText, {
+              voiceEnabled: true,
+              lang: 'de-DE',
+              rate: 1.0,
+            });
           } catch {
             await speakWithBrowserTTS(speakText, { lang: 'de-DE', rate: 1.0 });
           }
@@ -477,55 +359,34 @@ export default function AIBuddyWidget() {
         setIsNodding(false);
       }
     },
-    [speak, navigate]
+    [navigate, getStoredLocation, messagesRef, setMessages]
   );
 
   useEffect(() => {
     handleSendMessageRef.current = handleSendMessage;
   }, [handleSendMessage]);
 
+  // Voice input handler
   const handleVoiceInput = useCallback(() => {
-    if (!recognition.current) {
-      toast.error('Spracherkennung wird nicht unterstützt');
-      return;
-    }
-
     if (isListening) {
-      recognition.current.stop();
+      stopListening();
     } else {
-      try {
-        recognition.current.start();
-      } catch {}
+      startListening();
     }
-  }, [isListening]);
+  }, [isListening, startListening, stopListening]);
 
+  // Bubble controls
   const handleCloseBubble = useCallback(() => {
     setIsOpen(false);
-    stop();
-    setIsHidden(true);
-    try {
-      localStorage.setItem(HIDDEN_KEY, 'true');
-    } catch {}
-  }, [stop]);
+    hideWidget();
+  }, [hideWidget]);
 
   const handleShowBubble = useCallback(() => {
-    setIsHidden(false);
-    try {
-      localStorage.removeItem(HIDDEN_KEY);
-    } catch {}
+    showWidget();
     setIsOpen(true);
-  }, []);
+  }, [showWidget]);
 
-  const handleToggleBuddyVoice = useCallback(() => {
-    setBuddyVoiceEnabled((prev) => {
-      const newState = !prev;
-      try {
-        localStorage.setItem(BUDDY_VOICE_ENABLED_KEY, newState ? 'true' : 'false');
-      } catch {}
-      return newState;
-    });
-  }, []);
-
+  // Small bubble with auto-close & farewell
   const showSmallBubbleWithText = useCallback((text) => {
     setSmallBubbleText(text);
     setShowSmallBubble(true);
@@ -540,9 +401,10 @@ export default function AIBuddyWidget() {
       smallBubbleTimerRef.current = setTimeout(() => {
         setShowSmallBubble(false);
       }, 2000);
-    }, SMALL_BUBBLE_TIMEOUT);
+    }, BUDDY_TIMEOUTS.SMALL_BUBBLE);
   }, []);
 
+  // Cleanup timers
   useEffect(() => {
     return () => {
       if (smallBubbleTimerRef.current) clearTimeout(smallBubbleTimerRef.current);
@@ -550,9 +412,10 @@ export default function AIBuddyWidget() {
     };
   }, []);
 
-  // Dynamische Positionierung: Bubble öffnet sich je nach Widget-Position
-  const isOnRight = pos.x + AVATAR_SIZE / 2 > (typeof window !== 'undefined' ? window.innerWidth / 2 : 200);
-  const isOnBottom = pos.y + AVATAR_SIZE / 2 > (typeof window !== 'undefined' ? window.innerHeight / 2 : 400);
+  // Dynamic positioning
+  const currentPos = pos || getDefaultPos();
+  const isOnRight = currentPos.x + AVATAR_SIZE / 2 > (typeof window !== 'undefined' ? window.innerWidth / 2 : 200);
+  const isOnBottom = currentPos.y + AVATAR_SIZE / 2 > (typeof window !== 'undefined' ? window.innerHeight / 2 : 400);
 
   const bubbleStyle = {
     position: 'absolute',
@@ -560,11 +423,7 @@ export default function AIBuddyWidget() {
     ...(isOnRight ? { right: 0 } : { left: 0 }),
   };
 
-  const smallBubbleStyle = {
-    position: 'absolute',
-    ...(isOnBottom ? { bottom: AVATAR_SIZE + 12 } : { top: AVATAR_SIZE + 12 }),
-    ...(isOnRight ? { right: 0 } : { left: 0 }),
-  };
+  const smallBubbleStyle = bubbleStyle;
 
   const bubbleVariants = {
     hidden: {
@@ -596,13 +455,13 @@ export default function AIBuddyWidget() {
         ref={widgetRef}
         className="fixed z-50"
         style={{
-          left: pos.x,
-          top: pos.y,
+          left: currentPos.x,
+          top: currentPos.y,
           width: AVATAR_SIZE,
           height: AVATAR_SIZE,
         }}
       >
-        {/* Small Buddy Voice Bubble — nur wenn nicht versteckt */}
+        {/* Small Buddy Bubble */}
         <AnimatePresence>
           {!isHidden && showSmallBubble && (
             <motion.div
@@ -618,7 +477,7 @@ export default function AIBuddyWidget() {
           )}
         </AnimatePresence>
 
-        {/* Chat Bubble — nur wenn nicht versteckt */}
+        {/* Chat Bubble */}
         <AnimatePresence>
           {!isHidden && isOpen && (
             <motion.div
@@ -682,10 +541,7 @@ export default function AIBuddyWidget() {
                   </div>
                 ) : (
                   messages.map((msg, idx) => (
-                    <div
-                      key={`${msg.role}-${idx}`}
-                      className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                    >
+                    <div key={`${msg.role}-${idx}`} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                       <div
                         className={`max-w-xs px-4 py-2 rounded-lg text-sm break-words ${
                           msg.role === 'user'
@@ -774,17 +630,15 @@ export default function AIBuddyWidget() {
           onTouchEnd={handleAvatarTouchEnd}
           whileHover={{ scale: 1.08 }}
           animate={{
-            scale: (isSpeaking || isTalking || isListening) ? [1, 1.06, 1, 1.04, 1] : 1,
-            y: (isSpeaking || isTalking || isListening)
-              ? [0, -6, 0, -3, 0]
-              : [0, -4, 0],
+            scale: (isListening) ? [1, 1.06, 1, 1.04, 1] : 1,
+            y: (isListening) ? [0, -6, 0, -3, 0] : [0, -4, 0],
           }}
           transition={{
-            scale: (isSpeaking || isTalking || isListening)
+            scale: (isListening)
               ? { duration: 0.7, repeat: Infinity, ease: 'easeInOut' }
               : { type: 'spring', stiffness: 300, damping: 12 },
             y: {
-              duration: (isSpeaking || isTalking || isListening) ? 0.7 : 3,
+              duration: (isListening) ? 0.7 : 3,
               repeat: Infinity,
               ease: 'easeInOut',
             },
@@ -792,9 +646,7 @@ export default function AIBuddyWidget() {
         >
           <div
             className={`relative w-24 h-24 rounded-full overflow-hidden bg-transparent transition-all ${
-              isSpeaking
-                ? 'drop-shadow-[0_0_8px_rgba(74,222,128,0.7)]'
-                : isListening
+              isListening
                 ? 'drop-shadow-[0_0_8px_rgba(248,113,113,0.7)]'
                 : 'drop-shadow-lg'
             }`}
@@ -809,9 +661,6 @@ export default function AIBuddyWidget() {
             />
           </div>
 
-          {isSpeaking && (
-            <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full ring-2 ring-white animate-pulse" />
-          )}
           {isListening && (
             <div className="absolute bottom-0 left-0 w-4 h-4 bg-red-500 rounded-full ring-2 ring-white animate-pulse" />
           )}
