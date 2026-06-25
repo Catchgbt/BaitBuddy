@@ -5,10 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Bot, Sparkles, Volume2, StopCircle, Loader2 } from "lucide-react";
 import { catchgbtChat } from "@/functions/catchgbtChat";
-import { backendTextToSpeech } from "@/functions/backendTextToSpeech";
+import { speakWithFallback, cancelElevenLabs } from "@/components/utils/elevenLabsTTS";
 import { toast } from "sonner";
-import { playAudioBlob, cancelElevenLabs } from "@/components/utils/elevenLabsTTS";
-import { speakWithBrowserTTS } from "@/components/utils/browserTTS";
 import BuddyOutput from "@/components/chatbot/BuddyOutput";
 
 function getContextualPath(pathname) {
@@ -51,39 +49,33 @@ function TextAIMode() {
         context: chatContext,
         userName: user?.full_name || 'User'
       });
-      
-      // catchgbtChat liefert das geparste /ai/chat-JSON direkt ({ reply, message }),
-      // nicht das base44-{ data }-Nesting — daher reply/message statt data.reply.
+
       const aiReply = res?.reply || res?.message || "Entschuldigung, es gab ein Problem.";
       setHistory(prev => [...prev, { role: 'assistant', content: aiReply }]);
 
-      if (useSpeech) {
+      if (useSpeech && aiReply) {
         setIsSpeaking(true);
         try {
-          const ttsResponse = await backendTextToSpeech({ text: aiReply });
-          if (ttsResponse?.audioBase64) {
-            const bytes = Uint8Array.from(atob(ttsResponse.audioBase64), c => c.charCodeAt(0));
-            await playAudioBlob(bytes, () => setIsSpeaking(false));
-          } else {
-            await playTextWithBrowserTTS(aiReply);
-            setIsSpeaking(false);
-          }
-        } catch {
-          await playTextWithBrowserTTS(aiReply);
+          await speakWithFallback(aiReply, {
+            voiceEnabled: true,
+            lang: 'de-DE',
+            rate: 1.0,
+          });
+        } catch (e) {
+          console.error('TTS error:', e);
+        } finally {
           setIsSpeaking(false);
         }
       }
     } catch (error) {
       console.error("Fehler bei der KI-Anfrage:", error);
-      
-      const errorMessage = "Antwort vom KI-Buddy fehlgeschlagen. Bitte versuche es spaeter erneut.";
-      toast.error(errorMessage);
+      toast.error("Antwort vom KI-Buddy fehlgeschlagen. Bitte versuche es spaeter erneut.");
       setHistory(prev => [...prev, { role: 'assistant', content: "Entschuldigung, ich habe gerade technische Probleme." }]);
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   const handleStopSpeech = () => {
     cancelElevenLabs();
     if (typeof window !== 'undefined' && window.speechSynthesis) {

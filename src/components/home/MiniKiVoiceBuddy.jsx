@@ -1,14 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { catchgbtChat } from "@/functions/catchgbtChat";
-import { entities } from "@/api/frontendClient";
-import { Catch } from "@/entities/Catch";
-import { Spot } from "@/entities/Spot";
-import { auth } from "@/api/auth";
 import { useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import { toast } from "sonner";
-import { speakWithElevenLabs, cancelElevenLabs } from "@/components/utils/elevenLabsTTS";
+import { speakWithFallback, cancelElevenLabs } from "@/components/utils/elevenLabsTTS";
+import { executeBuddyAction } from "@/utils/buddyActions";
 import { resolvePage } from "@/lib/voicePages";
+import { createPageUrl } from "@/utils";
 
 function parseAction(text) {
   if (!text) return { clean: text, action: null };
@@ -18,102 +14,6 @@ function parseAction(text) {
   try { action = JSON.parse(m[1].trim()); } catch {}
   const clean = text.replace(m[0], "").trim();
   return { clean, action };
-}
-
-async function executeAction(action, navigate) {
-  if (!action || !action.type) return null;
-  try {
-    if (action.type === "log_catch") {
-      const p = action.params || {};
-      if (!p.species) return "Bitte sage mir welche Fischart - dann trage ich es ein.";
-      const data = {
-        species: p.species,
-        catch_time: new Date().toISOString(),
-        ...(p.length_cm != null && { length_cm: Number(p.length_cm) }),
-        ...(p.weight_kg != null && { weight_kg: Number(p.weight_kg) }),
-        ...(p.bait_used && { bait_used: p.bait_used }),
-        ...(p.notes && { notes: p.notes }),
-        ...(p.is_released != null && { is_released: !!p.is_released })
-      };
-      await Catch.create(data);
-      toast.success(`Fang eingetragen: ${p.species}`);
-      return `Fang ${p.species} wurde im Fangbuch eingetragen.`;
-    }
-    if (action.type === "post_community") {
-      const p = action.params || {};
-      if (!p.text) return "Was soll ich posten?";
-      const me = await auth.me().catch(() => null);
-      await entities.Post.create({
-        text: p.text,
-        author_name: me?.nickname || me?.full_name || "Angler"
-      });
-      toast.success("Community-Post erstellt");
-      return "Dein Beitrag wurde in der Community gepostet.";
-    }
-    if (action.type === "navigate") {
-      const p = action.params || {};
-      const target = resolvePage(p.page);
-      if (!target) return "Diese Seite kenne ich nicht.";
-      navigate(createPageUrl(target));
-      return `Oeffne ${target}.`;
-    }
-    if (action.type === "save_spot" || action.type === "add_spot") {
-      const p = action.params || {};
-      if (!p.name || p.latitude == null || p.longitude == null) {
-        return "Ich brauche Name und Koordinaten fuer den Spot.";
-      }
-      await Spot.create({
-        name: p.name,
-        latitude: Number(p.latitude),
-        longitude: Number(p.longitude),
-        water_type: p.water_type || "see",
-        notes: p.notes || "",
-        is_favorite: !!p.is_favorite
-      });
-      toast.success(`Spot gespeichert: ${p.name}`);
-      return `Spot ${p.name} gespeichert.`;
-    }
-    if (action.type === "create_trip") {
-      const p = action.params || {};
-      if (!p.title || !p.target_fish) return "Ich brauche Titel und Zielfisch fuer den Trip.";
-      await entities.FishingPlan.create({
-        title: p.title,
-        target_fish: p.target_fish,
-        spot_info: p.spot_info || "",
-        weather_summary: p.weather_summary || "",
-        gear_summary: p.gear_summary || "",
-        steps: Array.isArray(p.steps) ? p.steps : [],
-        is_active: !!p.is_active
-      });
-      toast.success(`Trip angelegt: ${p.title}`);
-      return `Trip ${p.title} wurde im Tripplaner angelegt.`;
-    }
-    if (action.type === "support_ticket") {
-      const p = action.params || {};
-      if (!p.subject || !p.message) return "Ich brauche Betreff und Beschreibung.";
-      const me = await auth.me().catch(() => null);
-      await entities.SupportTicket.create({
-        subject: p.subject,
-        message: p.message,
-        category: p.category || "frage",
-        user_email: me?.email,
-        user_name: me?.full_name
-      });
-      toast.success("Support-Ticket erstellt");
-      return "Dein Support-Ticket wurde erstellt.";
-    }
-    if (action.type === "open_url") {
-      const p = action.params || {};
-      if (!p.url) return null;
-      window.open(p.url, "_blank");
-      return `Oeffne ${p.url}.`;
-    }
-  } catch (e) {
-    console.error("Action error:", e);
-    toast.error("Aktion fehlgeschlagen");
-    return "Die Aktion konnte nicht ausgefuehrt werden.";
-  }
-  return null;
 }
 
 export default function MiniKiVoiceBuddy() {
@@ -156,21 +56,6 @@ export default function MiniKiVoiceBuddy() {
     };
   }, []);
 
-  // Stimmen vorab laden (Browser-Quirk: getVoices() ist initial leer)
-  useEffect(() => {
-    if (!synthRef.current) return;
-    const loadVoices = () => {
-      const vs = synthRef.current.getVoices();
-      if (vs && vs.length > 0) voicesLoadedRef.current = true;
-    };
-    loadVoices();
-    if (synthRef.current.onvoiceschanged !== undefined) {
-      synthRef.current.onvoiceschanged = loadVoices;
-    }
-    return () => {
-      if (synthRef.current) synthRef.current.cancel();
-    };
-  }, []);
 
   function startWave() {
     waveRef.current = setInterval(() => {
@@ -186,65 +71,6 @@ export default function MiniKiVoiceBuddy() {
     setWaveBars([4, 4, 4, 4, 4]);
   }
 
-  function getFemaleVoice() {
-    if (!synthRef.current) return null;
-    const vs = synthRef.current.getVoices();
-    return vs.find(v => /Helena|Marlene|Katja|Anna/i.test(v.name))
-      || vs.find(v => v.lang === "de-DE" || v.lang === "de-AT")
-      || vs[0];
-  }
-
-  // Browser-TTS nur als Fallback, wenn ElevenLabs nicht verfügbar ist.
-  function speakBrowser(text) {
-    if (!synthRef.current || !text) { setStatus(""); stopWave(); return; }
-    try {
-      synthRef.current.cancel();
-      if (speakTimerRef.current) clearTimeout(speakTimerRef.current);
-      speakTimerRef.current = setTimeout(() => {
-        if (!synthRef.current) return;
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = "de-DE";
-        u.pitch = 1.1;
-        u.rate = 1.0;
-        u.volume = 1.0;
-        const v = getFemaleVoice();
-        if (v) u.voice = v;
-        u.onend = () => { setStatus(""); stopWave(); };
-        u.onerror = (e) => {
-          console.warn("TTS error:", e.error);
-          setStatus("");
-          stopWave();
-        };
-        try {
-          synthRef.current.speak(u);
-        } catch (err) {
-          console.warn("speak failed:", err);
-          setStatus("");
-          stopWave();
-        }
-      }, 80);
-    } catch (err) {
-      console.warn("speak outer error:", err);
-      setStatus("");
-      stopWave();
-    }
-  }
-
-  // Primär: ElevenLabs. Bei Fehler (z. B. fehlender API-Key) → Browser-TTS.
-  async function speak(text) {
-    if (!text) return;
-    setStatus("speaking");
-    startWave();
-    try {
-      await speakWithElevenLabs(text, {
-        onEnd: () => { setStatus(""); stopWave(); },
-        onError: () => { setStatus(""); stopWave(); },
-      });
-    } catch (err) {
-      console.warn("[MiniKiVoiceBuddy] ElevenLabs fehlgeschlagen, Browser-TTS:", err?.message);
-      speakBrowser(text);
-    }
-  }
 
   function stopSpeaking() {
     cancelElevenLabs();
@@ -274,7 +100,13 @@ export default function MiniKiVoiceBuddy() {
     const direct = tryDirectCommand(q);
     if (direct) {
       setMessages(m => [...m, { role: "assistant", text: direct }]);
-      if (tonAn) await speak(direct);
+      if (tonAn) {
+        setStatus("speaking");
+        startWave();
+        await speakWithFallback(direct, { voiceEnabled: true, lang: 'de-DE', rate: 1.0 });
+        setStatus("");
+        stopWave();
+      }
       askingRef.current = false;
       return;
     }
@@ -296,13 +128,20 @@ export default function MiniKiVoiceBuddy() {
       let finalText = clean || "Erledigt.";
 
       if (action) {
-        const actionMsg = await executeAction(action, navigate);
-        if (actionMsg) finalText = (finalText ? finalText + " " : "") + actionMsg;
+        const actionResult = await executeBuddyAction(action, { navigate });
+        if (actionResult.message) finalText = (finalText ? finalText + " " : "") + actionResult.message;
       }
 
       setMessages(m => [...m, { role: "assistant", text: finalText }]);
-      if (tonAn) await speak(finalText);
-      else setStatus("");
+      if (tonAn) {
+        setStatus("speaking");
+        startWave();
+        await speakWithFallback(finalText, { voiceEnabled: true, lang: 'de-DE', rate: 1.0 });
+        setStatus("");
+        stopWave();
+      } else {
+        setStatus("");
+      }
     } catch {
       setStatus("");
       setMessages(m => [...m, { role: "system", text: "Verbindungsfehler - bitte erneut versuchen." }]);
