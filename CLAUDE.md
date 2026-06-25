@@ -14,41 +14,13 @@
 
 **Nur Vercel (Hosting/Deploy/Serverless) und Supabase (DB/Auth/Storage) verwenden.** Keine anderen externen Dienste/Backends einführen (kein base44, kein Render, keine sonstigen MCP-Services für Produktionslogik).
 
-## Projektziel: Unabhängigkeit von base44 — ✅ ERREICHT
+## App-Distribution: PlayStore & Apple Store
 
-**BaitBuddy ist vollständig unabhängig von base44.** Das `base44`-Objekt/-Shim wurde komplett entfernt (Domänen 1–7, PRs #27–#33).
+**Die App muss später auf PlayStore und Apple Store deployed werden.** Code wird darauf optimiert — native APIs, Permissions, Device-Features und Platform-spezifische Anforderungen beachten.
 
-Native API-Clients (alle aus `src/api/`):
-- `auth` (`@/api/auth`) — Login/Logout/Registrierung, aktueller Benutzer
-- `entities` (`@/api/frontendClient`) — Entity-CRUD (`entities.Catch.list()` …); pro-Entity-Module unter `@/entities/*` (z. B. `@/entities/Catch`)
-- `functions` (`@/api/frontendClient`) — `functions.invoke(name, data)` via `FUNCTION_MAP`
-- `integrations` (`@/api/frontendClient` bzw. `@/integrations/Core`) — InvokeLLM, UploadFile, …
-- `analytics`, `appLogs` (`@/api/frontendClient`) — No-op-Clients
-- spezialisierte Module: `catches`, `spots`, `ai`, `community`, `premium`, `fishing`, `events`, `gear`, `water`, `user`
+## Previews automatisch mergen
 
-**Regel:** Niemals wieder `base44.*` einführen — immer die nativen Clients nutzen. Das `base44/`-Verzeichnis (config.jsonc, entities/, functions/) ist nur Altmetadaten und wird vom Code nicht verwendet.
-
-## WICHTIG: Es gibt NUR EINE App
-
-**Immer mit `src/` (Root) arbeiten. Niemals `frontend/` anfassen.**
-
-| Verzeichnis | Status |
-|-------------|--------|
-| `src/` | ✅ Die echte App — hier werden alle Änderungen gemacht |
-| `frontend/` | ❌ Alte Claude-Baustelle — wird NICHT deployed, NICHT anfassen |
-
-### Vercel baut aus Root
-
-```json
-// vercel.json — so muss es bleiben:
-{
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "installCommand": "npm install --legacy-peer-deps && cd backend && npm install"
-}
-```
-
-Niemals `buildCommand` auf `frontend/` oder ein anderes Unterverzeichnis ändern.
+**Preview-Branches werden automatisch zu `main` gemergt**, wenn alle Checks grün sind.
 
 ### Build-Befehle
 
