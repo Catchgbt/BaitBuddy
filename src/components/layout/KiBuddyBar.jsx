@@ -122,9 +122,9 @@ export default function KiBuddyBar({ onToggleChatbot, chatbotOpen, onOpenVoice }
               <div className={`w-12 h-12 rounded-2xl bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center transform transition-all hover:rotate-12 shadow-lg ${
                 chatbotOpen ? 'animate-pulse scale-110 ring-2 ring-purple-400' : 'animate-pulse'
               }`}>
-                <img 
-                  src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68bb3d3b9f83dc1f55ef532b/dcd615030_Screenshot_20250919_164159_Gallery.jpg" 
-                  alt="KI Buddy" 
+                <img
+                  src="/assets/buddy/marina-avatar.png"
+                  alt="KI Buddy"
                   className="w-10 h-10 rounded-xl object-cover"
                 />
                 
