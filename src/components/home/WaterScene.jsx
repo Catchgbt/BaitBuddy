@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo } from 'react';
+import React, { useState, useEffect, memo, useId } from 'react';
 
 // Unterwasser-Szene (app-weiter Hintergrund): Tiefenverlauf wie in einem See,
 // Lichtstrahlen von der Oberfläche mit gelegentlichen hellen Einstrahlungen,
@@ -45,16 +45,12 @@ const MOTES = Array.from({ length: 18 }, (_, i) => ({
 
 const randBetween = (a, b) => a + Math.random() * (b - a);
 
-// Eindeutige, stabile Filter-IDs pro Caustic-Layer (mehrere WaterScene-Instanzen
-// dürfen sich nicht denselben SVG-Filter teilen).
-let causticIdSeq = 0;
-
 // Caustic-Lichtnetz: feTurbulence erzeugt ein organisches Rauschen, feColorMatrix
 // färbt es wasserblau und hebt nur die hellen Spitzen in den Alpha-Kanal (tanzende
 // Lichtflecken). Inline-SVG (nicht als Data-URI-Bild!) wird zuverlässig gerendert;
 // das Muster wird einmal berechnet und nur per CSS-Transform bewegt — daher günstig.
 function CausticLayer({ baseFrequency, numOctaves = 2, alpha, seed, blur, opacity, dur, delay = '0s', reverse = false }) {
-  const [fid] = useState(() => `bbcaust${causticIdSeq++}`);
+  const fid = useId();
   return (
     <svg
       className="bb-caustic-net"

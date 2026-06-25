@@ -13,11 +13,14 @@ export default function OfflineIndicator() {
   const refreshPending = () => setPendingCount(getPendingQueueCount());
 
   useEffect(() => {
+    let hideTimer = null;
+
     const handleOnline = () => {
       setIsOnline(true);
       setShowIndicator(true);
       refreshPending();
-      setTimeout(() => setShowIndicator(false), 3000);
+      if (hideTimer) clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => setShowIndicator(false), 3000);
     };
 
     const handleOffline = () => {
@@ -40,6 +43,7 @@ export default function OfflineIndicator() {
     refreshPending();
 
     return () => {
+      if (hideTimer) clearTimeout(hideTimer);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('catch-saved', refreshPending);

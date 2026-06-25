@@ -7,6 +7,8 @@ export default function KiBuddyStatus() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
+    let clearTextTimer = null;
+
     (async () => {
       try {
         const u = await User.me();
@@ -34,7 +36,8 @@ export default function KiBuddyStatus() {
           }
         }
 
-        setTimeout(() => setText(""), 15000);
+        if (clearTextTimer) clearTimeout(clearTextTimer);
+        clearTextTimer = setTimeout(() => setText(""), 15000);
       }
     };
 
@@ -43,6 +46,7 @@ export default function KiBuddyStatus() {
     }
 
     return () => {
+      if (clearTextTimer) clearTimeout(clearTextTimer);
       if (typeof window !== 'undefined') {
         window.removeEventListener('kiResponse', handleKiResponse);
       }
