@@ -216,9 +216,14 @@ export default function AIBuddyWidget() {
         try {
           recognition.current.abort();
         } catch {}
+        recognition.current.onstart = null;
+        recognition.current.onend = null;
+        recognition.current.onresult = null;
+        recognition.current.onerror = null;
+        recognition.current = null;
       }
     };
-  }, []);
+  }, [handleSendMessage]);
 
   useEffect(() => {
     try {
@@ -249,7 +254,7 @@ export default function AIBuddyWidget() {
         };
       }
     } catch {}
-  }, [currentPage, isOpen, buddyVoiceEnabled]);
+  }, [currentPage, isOpen, buddyVoiceEnabled, showSmallBubbleWithText];
 
   useEffect(() => {
     try {
@@ -269,6 +274,7 @@ export default function AIBuddyWidget() {
   // Drag handlers — only on the avatar drag handle, not on chat/inputs
   const handleAvatarMouseDown = useCallback((e) => {
     e.preventDefault();
+    if (dragStateRef.current.active) return;
     dragStateRef.current = {
       active: true,
       startX: e.clientX,
@@ -296,7 +302,7 @@ export default function AIBuddyWidget() {
 
     const onUp = () => {
       const wasDrag = dragStateRef.current.moved;
-      dragStateRef.current = { active: false, startX: 0, startY: 0, offsetX: 0, offsetY: 0, moved: false };
+      dragStateRef.current.active = false;
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
       if (!wasDrag) {
@@ -309,6 +315,7 @@ export default function AIBuddyWidget() {
   }, [pos, handleAvatarClick]);
 
   const handleAvatarTouchStart = useCallback((e) => {
+    if (dragStateRef.current.active) return;
     const touch = e.touches[0];
     dragStateRef.current = {
       active: true,
@@ -363,13 +370,10 @@ export default function AIBuddyWidget() {
       if (!text || isLoadingRef.current) return;
 
       isLoadingRef.current = true;
-      // Vollstaendigen Verlauf aufbauen, damit der Buddy den Gespraechskontext
-      // behaelt (vorher wurde nur die einzelne letzte Nachricht gesendet, der
-      // Buddy "vergass" alles Vorherige).
+      setIsLoading(true);
       const history = [...messagesRef.current, { role: 'user', content: text }];
       setMessages(history);
       setInputValue('');
-      setIsLoading(true);
       setChatError(null);
       setIsNodding(true);
 
@@ -382,8 +386,6 @@ export default function AIBuddyWidget() {
           setIsTalking(true);
         }
 
-        // Vom Backend erkannte Aktion real in der App ausfuehren
-        // (navigieren, Fang eintragen, Spot speichern).
         const actionNote = await executeBuddyAction(response.action, {
           navigate,
           userLocation: getStoredLocation()
