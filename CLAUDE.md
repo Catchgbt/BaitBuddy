@@ -18,6 +18,53 @@
 
 **Die App muss später auf PlayStore und Apple Store deployed werden.** Code wird darauf optimiert — native APIs, Permissions, Device-Features und Platform-spezifische Anforderungen beachten.
 
+## Tech Stack: React Native
+
+**Frontend**: React Native (Expo oder Bare Workflow je nach Anforderung)  
+**Backend**: Express (Node.js) auf Vercel Serverless  
+**Datenbank & Auth**: Supabase (Realtime, Offline Sync via `@supabase/supabase-js`)  
+**Package Manager**: npm mit legacy peer deps  
+**CI/CD**: GitHub Actions + Fastlane für App Store Deployment
+
+## Device-Features
+
+Folgende Funktionen müssen implementiert werden:
+- **Kamera** — Fotos von Fängen, Ködern, Spots
+- **GPS/Location** — Spot-Tracking, Kartenfunktion, Geotagging
+- **Offline-Sync** — Daten lokal speichern, asynchron zu Supabase synchen
+- **Push Notifications** — Wetter-Warnungen, Events, Community-Updates
+
+**Regel**: Permissions müssen präzise gecheckt werden. Nie blind Berechtigungen anfordern.
+
+## Performance-Anforderungen
+
+- **Bundle-Größe**: < 100 MB (Download über mobiles Netz)
+- **App-Start**: < 3 Sekunden vom Tap bis UI bereit
+- **Low-End Support**: Funktioniert auf Geräten mit ≤2GB RAM
+- **Offline-First**: Core-Funktionen funktionieren ohne Internet
+
+**Regel**: Immer auf echten Devices testen, nicht nur Simulator/Emulator.
+
+## Build & Release
+
+**Fastlane + GitHub Actions**:
+1. PR gemergt zu `main`
+2. GitHub Actions baut APK/IPA via Fastlane
+3. Automatischer Upload zu Google Play & Apple App Store (über Beta-Track zuerst)
+4. Release-Notes auto-generiert aus Commits
+
+**Kein manueller Upload** — alles automatisiert über CI/CD.
+
+## App Store Richtlinien
+
+**Apple App Store & Google Play haben strenge Regeln**:
+- Privacy Policy muss inline erreichbar sein
+- Datenhandling muss dokumentiert werden (besonders Location, Kamera)
+- Keine versteckten Berechtigungen
+- Testflights/Beta-Versionen vor öffentlichem Release
+
+**Regel**: Bei neuen Features immer prüfen, ob App Store Review verlangt wird.
+
 ## Previews automatisch mergen
 
 **Preview-Branches werden automatisch zu `main` gemergt**, wenn alle Checks grün sind.
