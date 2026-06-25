@@ -7,96 +7,8 @@ import { Bot, Sparkles, Volume2, StopCircle, Loader2 } from "lucide-react";
 import { catchgbtChat } from "@/functions/catchgbtChat";
 import { backendTextToSpeech } from "@/functions/backendTextToSpeech";
 import { toast } from "sonner";
+import { cleanTextForSpeech, stopCurrentAudio, playAudioBlob, playTextWithBrowserTTS } from "@/utils/ttsUtils";
 import BuddyOutput from "@/components/chatbot/BuddyOutput";
-
-// Audio-Wiedergabe-Funktion
-let currentAudio = null;
-const playAudio = (audioData, onEnded) => {
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio = null;
-  }
-  const blob = new Blob([audioData], { type: 'audio/mpeg' });
-  const url = URL.createObjectURL(blob);
-  const audio = new Audio(url);
-  currentAudio = audio;
-  audio.play().catch(e => console.error("Audio playback error:", e));
-  audio.onended = () => {
-    currentAudio = null;
-    if (onEnded) onEnded();
-  };
-};
-
-// Browser TTS Fallback (verbesserte Fehlerbehandlung)
-const playTextWithBrowserTTS = (text, speechRate = 1.0) => {
-  return new Promise((resolve) => {
-    try {
-      if (typeof window === "undefined" || !window.speechSynthesis) {
-        console.warn("Browser TTS nicht unterstützt.");
-        return resolve();
-      }
-
-      // Stoppe alle laufenden Sprachausgaben
-      window.speechSynthesis.cancel();
-
-      const speak = () => {
-        window.speechSynthesis.cancel();
-
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'de-DE';
-        utterance.rate = Math.min(2.0, Math.max(0.1, speechRate));
-        utterance.pitch = 1;
-        utterance.volume = 0.8;
-
-        const voices = window.speechSynthesis.getVoices();
-        const germanVoice = voices.find(voice => voice.lang.startsWith('de'));
-        if (germanVoice) {
-          utterance.voice = germanVoice;
-        }
-
-        utterance.onend = () => resolve();
-
-        utterance.onerror = (event) => {
-          // "interrupted" ist kein echter Fehler
-          if (event.error === 'interrupted' || event.error === 'canceled') {
-            console.log("Browser TTS wurde unterbrochen (normal)");
-          } else {
-            console.error(`Browser TTS Fehler: ${event.error}`);
-          }
-          resolve();
-        };
-
-        setTimeout(() => {
-          window.speechSynthesis.speak(utterance);
-        }, 100);
-      };
-
-      if (window.speechSynthesis.getVoices().length === 0) {
-        let voiceLoaded = false;
-        window.speechSynthesis.onvoiceschanged = () => {
-          if (voiceLoaded) return;
-          voiceLoaded = true;
-          window.speechSynthesis.onvoiceschanged = null;
-          speak();
-        };
-        
-        setTimeout(() => {
-          if (!voiceLoaded) {
-            console.log("Browser TTS: Timeout - spreche ohne Voice-Event");
-            window.speechSynthesis.onvoiceschanged = null;
-            speak();
-          }
-        }, 500);
-      } else {
-        speak();
-      }
-
-    } catch (error) {
-      console.error("Browser TTS Setup-Fehler:", error);
-      resolve();
-    }
-  });
-};
 
 function getContextualPath(pathname) {
   const pathMap = {
@@ -146,15 +58,11 @@ function TextAIMode() {
 
       if (useSpeech) {
         setIsSpeaking(true);
-        // TTS ist optional: ein Fehler hier (z. B. fehlender ElevenLabs-Key)
-        // darf die bereits angezeigte KI-Antwort nicht überschreiben.
         try {
           const ttsResponse = await backendTextToSpeech({ text: aiReply });
           if (ttsResponse?.audioBase64) {
-            // backendTextToSpeech liefert base64-Audio; playAudio erwartet
-            // Binärdaten für den Blob.
             const bytes = Uint8Array.from(atob(ttsResponse.audioBase64), c => c.charCodeAt(0));
-            await playAudio(bytes, () => setIsSpeaking(false));
+            await playAudioBlob(bytes, () => setIsSpeaking(false));
           } else {
             await playTextWithBrowserTTS(aiReply);
             setIsSpeaking(false);
@@ -176,13 +84,7 @@ function TextAIMode() {
   };
   
   const handleStopSpeech = () => {
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio = null;
-    }
-    if (window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-    }
+    stopCurrentAudio();
     setIsSpeaking(false);
   };
 

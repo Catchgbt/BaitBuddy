@@ -3,77 +3,7 @@ import { Volume2, VolumeX, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/api/auth";
 import { speakWithElevenLabs, cancelElevenLabs } from "@/components/utils/elevenLabsTTS";
-
-const cleanTextForSpeech = (text) => {
-  if (!text || typeof text !== 'string') return '';
-  
-  let cleaned = text.replace(/[\u{1F600}-\u{1F64F}]/gu, '');
-  cleaned = cleaned.replace(/[\u{1F300}-\u{1F5FF}]/gu, '');
-  cleaned = cleaned.replace(/[\u{1F680}-\u{1F6FF}]/gu, '');
-  cleaned = cleaned.replace(/[\u{1F700}-\u{1F77F}]/gu, '');
-  cleaned = cleaned.replace(/[\u{1F780}-\u{1F7FF}]/gu, '');
-  cleaned = cleaned.replace(/[\u{1F800}-\u{1F8FF}]/gu, '');
-  cleaned = cleaned.replace(/[\u{1F900}-\u{1F9FF}]/gu, '');
-  cleaned = cleaned.replace(/[\u{1FA00}-\u{1FA6F}]/gu, '');
-  cleaned = cleaned.replace(/[\u{1FA70}-\u{1FAFF}]/gu, '');
-  cleaned = cleaned.replace(/[\u{2600}-\u{26FF}]/gu, '');
-  cleaned = cleaned.replace(/[\u{2700}-\u{27BF}]/gu, '');
-  cleaned = cleaned.replace(/[\*#_~`]/g, '');
-  cleaned = cleaned.replace(/\s+/g, ' ');
-  
-  return cleaned.trim();
-};
-
-const playTextWithBrowserTTS = (text, speechRate = 1.0) => {
-  return new Promise((resolve) => {
-    try {
-      if (typeof window === "undefined" || !window.speechSynthesis) {
-        console.log("Browser TTS not available");
-        return resolve();
-      }
-
-      window.speechSynthesis.cancel();
-
-      const speak = () => {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'de-DE';
-        utterance.rate = Math.min(2.0, Math.max(0.1, speechRate));
-        utterance.pitch = 1.0;
-        utterance.volume = 0.8;
-
-        const voices = window.speechSynthesis.getVoices();
-        const germanVoice = voices.find(voice => voice.lang.startsWith('de'));
-        if (germanVoice) {
-          utterance.voice = germanVoice;
-        }
-
-        utterance.onend = () => {
-          console.log("Browser TTS finished");
-          resolve();
-        };
-        utterance.onerror = (e) => {
-          console.error("Browser TTS error:", e);
-          resolve();
-        };
-
-        console.log("Starting Browser TTS:", text.substring(0, 50));
-        window.speechSynthesis.speak(utterance);
-      };
-
-      if (window.speechSynthesis.getVoices().length === 0) {
-        window.speechSynthesis.onvoiceschanged = () => {
-          speak();
-        };
-        setTimeout(speak, 500);
-      } else {
-        speak();
-      }
-    } catch (error) {
-      console.error("Browser TTS error:", error);
-      resolve();
-    }
-  });
-};
+import { cleanTextForSpeech, stopCurrentAudio, playTextWithBrowserTTS } from "@/utils/ttsUtils";
 
 export default function BuddyOutput({ text, autoPlay = true }) {
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -145,9 +75,7 @@ export default function BuddyOutput({ text, autoPlay = true }) {
     setIsMuted(!isMuted);
     if (isSpeaking) {
       cancelElevenLabs();
-      if (typeof window !== "undefined" && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-      }
+      stopCurrentAudio();
       setIsSpeaking(false);
     }
   };

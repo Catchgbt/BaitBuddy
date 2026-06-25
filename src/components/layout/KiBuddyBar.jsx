@@ -134,11 +134,9 @@ export default function KiBuddyBar({ onToggleChatbot, chatbotOpen, onOpenVoice }
                   } border-2 border-gray-900`}></div>
                 </div>
 
-                <div className={`absolute -top-1.5 -left-1.5 text-yellow-400 text-sm ${
+                <div className={`absolute -top-1.5 -left-1.5 w-3 h-3 rounded-full bg-yellow-400 ${
                   chatbotOpen ? 'animate-spin' : 'animate-bounce'
-                }`}>
-                  ✨
-                </div>
+                }`}></div>
               </div>
               
             </div>
