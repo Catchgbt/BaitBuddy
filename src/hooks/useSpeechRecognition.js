@@ -32,7 +32,9 @@ export function useSpeechRecognition(options = {}) {
 
       timeoutIdRef.current = setTimeout(() => {
         if (recognition.current && recognition.current.state !== 'ended') {
-          recognition.current.abort();
+          try {
+            recognition.current.abort();
+          } catch {}
         }
       }, timeout);
     };
@@ -50,12 +52,18 @@ export function useSpeechRecognition(options = {}) {
     };
 
     recognition.current.onend = () => {
-      if (timeoutIdRef.current) clearTimeout(timeoutIdRef.current);
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+        timeoutIdRef.current = null;
+      }
       setIsListening(false);
     };
 
     recognition.current.onerror = (event) => {
-      if (timeoutIdRef.current) clearTimeout(timeoutIdRef.current);
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+        timeoutIdRef.current = null;
+      }
       setIsListening(false);
 
       if (event.error !== 'aborted' && event.error !== 'no-speech') {
@@ -71,18 +79,22 @@ export function useSpeechRecognition(options = {}) {
     };
 
     return () => {
+      // Cleanup: Alle Event Handler BEFORE abort
       if (recognition.current) {
-        try {
-          recognition.current.abort();
-        } catch {}
         recognition.current.onstart = null;
         recognition.current.onresult = null;
         recognition.current.onend = null;
         recognition.current.onerror = null;
+
+        try {
+          recognition.current.abort();
+        } catch {}
+
         recognition.current = null;
       }
       if (timeoutIdRef.current) {
         clearTimeout(timeoutIdRef.current);
+        timeoutIdRef.current = null;
       }
     };
   }, [language, timeout, onResult, onError]);

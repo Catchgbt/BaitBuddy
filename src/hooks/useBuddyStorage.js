@@ -107,7 +107,13 @@ export function useBuddyStorage() {
         localStorage.setItem(STORAGE_KEYS.VISITED_PAGES, JSON.stringify(trimmed));
       }
     } catch (e) {
-      localStorage.removeItem(STORAGE_KEYS.VISITED_PAGES);
+      // Nur bei kritischem Fehler löschen (z.B. localStorage voll)
+      // Nicht bei JSON-Parse-Fehlern
+      if (e instanceof Error && e.message.includes('QuotaExceededError')) {
+        try {
+          localStorage.removeItem(STORAGE_KEYS.VISITED_PAGES);
+        } catch {}
+      }
     }
   }, [getVisitedPages]);
 

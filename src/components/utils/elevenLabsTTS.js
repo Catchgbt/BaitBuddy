@@ -7,6 +7,7 @@ import { functions } from "@/api/frontendClient";
 
 let currentAudio = null;
 let currentUrl = null;
+let playbackPromise = Promise.resolve();
 
 /**
  * Bricht eine laufende ElevenLabs-Wiedergabe ab.
@@ -26,7 +27,7 @@ export function cancelElevenLabs() {
 }
 
 /**
- * Holt ElevenLabs-Audio fürs übergebene Text und spielt es ab.
+ * Holt ElevenLabs-Audio fürs übergebene Text und spielt es ab (mit Queueing).
  * Wirft einen Fehler, wenn kein Audio geliefert wird (z. B. API-Key fehlt → 501),
  * damit der Aufrufer auf Browser-TTS zurückfallen kann.
  *
@@ -39,53 +40,84 @@ export async function speakWithElevenLabs(text, callbacks = {}) {
     throw new Error("Kein Text für TTS");
   }
 
-  cancelElevenLabs();
+  // Queue-basiertes Playback: Warte auf vorige Audio-Fertigstellung
+  return (playbackPromise = playbackPromise.then(async () => {
+    cancelElevenLabs();
 
-  const response = await functions.invoke("textToSpeech", { text });
+    const response = await functions.invoke("textToSpeech", { text });
 
-  // frontendClient liefert das geparste JSON direkt (kein axios-Wrapper).
-  // Unterstütze zur Sicherheit auch ein response.data-Nesting.
-  const payload = response?.audioBase64 ? response : response?.data;
-  const audioBase64 = payload?.audioBase64;
+    // frontendClient liefert das geparste JSON direkt (kein axios-Wrapper).
+    // Unterstütze zur Sicherheit auch ein response.data-Nesting.
+    const payload = response?.audioBase64 ? response : response?.data;
+    const audioBase64 = payload?.audioBase64;
 
-  if (!audioBase64) {
-    throw new Error("ElevenLabs lieferte kein Audio");
-  }
-
-  // Base64 → Blob
-  const binary = atob(audioBase64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  const blob = new Blob([bytes], { type: payload.contentType || "audio/mpeg" });
-
-  const url = URL.createObjectURL(blob);
-  currentUrl = url;
-
-  const audio = new Audio(url);
-  currentAudio = audio;
-
-  audio.onended = () => {
-    if (currentUrl === url) {
-      URL.revokeObjectURL(url);
-      currentUrl = null;
+    if (!audioBase64) {
+      throw new Error("ElevenLabs lieferte kein Audio");
     }
-    if (currentAudio === audio) currentAudio = null;
-    callbacks.onEnd?.();
-  };
 
-  audio.onerror = (e) => {
-    if (currentUrl === url) {
-      URL.revokeObjectURL(url);
-      currentUrl = null;
+    // Base64 → Blob
+    const binary = atob(audioBase64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
     }
-    if (currentAudio === audio) currentAudio = null;
-    callbacks.onError?.(e);
-  };
+    const blob = new Blob([bytes], { type: payload.contentType || "audio/mpeg" });
 
-  await audio.play();
-  return audio;
+    const url = URL.createObjectURL(blob);
+    const previousUrl = currentUrl;
+    const previousAudio = currentAudio;
+    currentUrl = url;
+
+    const audio = new Audio(url);
+    currentAudio = audio;
+
+    // Cleanup vorherige Ressourcen
+    if (previousAudio && previousAudio !== audio) {
+      try {
+        previousAudio.pause();
+        previousAudio.src = "";
+      } catch {}
+    }
+    if (previousUrl) {
+      URL.revokeObjectURL(previousUrl);
+    }
+
+    return new Promise((resolve, reject) => {
+      audio.onended = () => {
+        if (currentUrl === url) {
+          URL.revokeObjectURL(url);
+          currentUrl = null;
+        }
+        if (currentAudio === audio) currentAudio = null;
+        callbacks.onEnd?.();
+        resolve(audio);
+      };
+
+      audio.onerror = (e) => {
+        if (currentUrl === url) {
+          URL.revokeObjectURL(url);
+          currentUrl = null;
+        }
+        if (currentAudio === audio) currentAudio = null;
+        callbacks.onError?.(e);
+        reject(e);
+      };
+
+      audio.play().catch((e) => {
+        if (currentUrl === url) {
+          URL.revokeObjectURL(url);
+          currentUrl = null;
+        }
+        if (currentAudio === audio) currentAudio = null;
+        callbacks.onError?.(e);
+        reject(e);
+      });
+    });
+  }).catch((err) => {
+    // Fehler in Queue: LoggenAber nicht crashen
+    console.error('ElevenLabs playback error:', err);
+    throw err;
+  }));
 }
 
 /**

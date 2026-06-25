@@ -582,9 +582,12 @@ export default function AIBuddyWidget() {
                   <input
                     type="text"
                     value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
+                    onChange={(e) => {
+                      setInputValue(e.target.value);
+                      setChatError(null);
+                    }}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && inputValue.trim()) {
+                      if (e.key === 'Enter' && inputValue.trim() && !isLoading) {
                         handleSendMessage(inputValue);
                       }
                     }}
@@ -593,9 +596,10 @@ export default function AIBuddyWidget() {
                     disabled={isLoading}
                   />
                   <button
-                    onClick={() => inputValue.trim() && handleSendMessage(inputValue)}
+                    onClick={() => inputValue.trim() && !isLoading && handleSendMessage(inputValue)}
                     disabled={isLoading || !inputValue.trim()}
                     className="p-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-lg transition-colors flex-shrink-0"
+                    title={isLoading ? 'Warte auf Antwort...' : 'Nachricht senden'}
                   >
                     <Send size={16} />
                   </button>
@@ -630,8 +634,8 @@ export default function AIBuddyWidget() {
           onTouchEnd={handleAvatarTouchEnd}
           whileHover={{ scale: 1.08 }}
           animate={{
-            scale: (isListening) ? [1, 1.06, 1, 1.04, 1] : 1,
-            y: (isListening) ? [0, -6, 0, -3, 0] : [0, -4, 0],
+            scale: (isListening) ? [1, 1.06, 1] : 1,
+            y: (isListening) ? [0, -6, 0] : [0, -4, 0],
           }}
           transition={{
             scale: (isListening)
