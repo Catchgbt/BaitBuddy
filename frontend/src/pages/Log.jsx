@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { api } from '@/api/client';
+import { submitWithQueue, deleteWithQueue } from '@/api/syncManager';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Plus, X, Trash2, Camera, Loader2 } from 'lucide-react';
@@ -18,20 +19,27 @@ export default function Log() {
   const { data } = useQuery({ queryKey: ['catches'], queryFn: () => api.get('/api/catches') });
 
   const add = useMutation({
-    mutationFn: (body) => api.post('/api/catches', body),
-    onSuccess: () => {
+    mutationFn: (body) => submitWithQueue('catches', body),
+    onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ['catches'] });
       setShowForm(false);
       setPhotoPreview(null);
       setForm({ species: '', length_cm: '', weight_kg: '', bait_used: '', notes: '', is_released: false });
-      toast.success('Fang eingetragen!');
+      if (result?.queued) {
+        toast.success('Offline gespeichert – wird beim naechsten Sync hochgeladen');
+      } else {
+        toast.success('Fang eingetragen!');
+      }
     },
     onError: e => toast.error(e.message),
   });
 
   const del = useMutation({
-    mutationFn: (id) => api.delete(`/api/catches/${id}`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['catches'] }); toast.success('Gelöscht'); },
+    mutationFn: (id) => deleteWithQueue('catches', id),
+    onSuccess: (result) => {
+      qc.invalidateQueries({ queryKey: ['catches'] });
+      toast.success(result?.queued ? 'Offline gemerkt – Loeschung beim Sync' : 'Geloescht');
+    },
     onError: e => toast.error(e.message),
   });
 

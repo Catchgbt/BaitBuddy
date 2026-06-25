@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaf
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { api } from '@/api/client';
+import { submitWithQueue, deleteWithQueue } from '@/api/syncManager';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -60,21 +61,28 @@ export default function Map() {
   };
 
   const add = useMutation({
-    mutationFn: (body) => api.post('/api/spots', body),
-    onSuccess: () => {
+    mutationFn: (body) => submitWithQueue('spots', body),
+    onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ['spots'] });
       setShowForm(false);
       setPendingPos(null);
       setAddMode(false);
       setNewSpot({ name: '', water_type: 'see', notes: '' });
-      toast.success('Spot gespeichert!');
+      if (result?.queued) {
+        toast.success('Spot offline gespeichert – Sync folgt');
+      } else {
+        toast.success('Spot gespeichert!');
+      }
     },
     onError: e => toast.error(e.message),
   });
 
   const del = useMutation({
-    mutationFn: (id) => api.delete(`/api/spots/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['spots'] }),
+    mutationFn: (id) => deleteWithQueue('spots', id),
+    onSuccess: (result) => {
+      qc.invalidateQueries({ queryKey: ['spots'] });
+      if (result?.queued) toast.info('Loeschung gemerkt – wird beim Sync uebertragen');
+    },
     onError: e => toast.error(e.message),
   });
 
