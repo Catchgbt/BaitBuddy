@@ -75,16 +75,26 @@ export const speakWithBrowserTTS = async (text, options = {}) => {
   const voices = voicesCache || await loadVoices();
   const voice = pickVoice(voices, lang);
 
-  // In Chunks zerlegen (Browser-Limit ~200-300 Zeichen)
   const chunks = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
+  const timeoutIds = [];
 
   return new Promise((resolve) => {
     let idx = 0;
     let started = false;
+    let completed = false;
+
+    const cleanup = () => {
+      completed = true;
+      timeoutIds.forEach(id => clearTimeout(id));
+    };
 
     const speakNext = () => {
-      if (idx >= chunks.length) {
-        onEnd?.();
+      if (completed || idx >= chunks.length) {
+        if (!completed) {
+          completed = true;
+          onEnd?.();
+        }
+        cleanup();
         return resolve();
       }
       const u = new SpeechSynthesisUtterance(chunks[idx].trim());
@@ -102,15 +112,20 @@ export const speakWithBrowserTTS = async (text, options = {}) => {
       };
       u.onend = () => {
         idx++;
-        setTimeout(speakNext, 100);
+        if (!completed) {
+          const timerId = setTimeout(speakNext, 100);
+          timeoutIds.push(timerId);
+        }
       };
       u.onerror = (e) => {
-        // canceled durch Nutzer ist kein Fehler
         if (e.error !== 'canceled' && e.error !== 'interrupted') {
           onError?.(e);
         }
         idx++;
-        setTimeout(speakNext, 100);
+        if (!completed) {
+          const timerId = setTimeout(speakNext, 100);
+          timeoutIds.push(timerId);
+        }
       };
 
       window.speechSynthesis.speak(u);

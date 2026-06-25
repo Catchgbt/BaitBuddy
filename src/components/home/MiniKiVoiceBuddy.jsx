@@ -132,6 +132,7 @@ export default function MiniKiVoiceBuddy() {
   const synthRef = useRef(typeof window !== "undefined" ? window.speechSynthesis : null);
   const voicesLoadedRef = useRef(false);
   const speakTimerRef = useRef(null);
+  const askingRef = useRef(false);
 
   useEffect(() => {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
@@ -140,7 +141,18 @@ export default function MiniKiVoiceBuddy() {
   useEffect(() => {
     return () => {
       if (speakTimerRef.current) clearTimeout(speakTimerRef.current);
-      if (waveRef.current) clearInterval(waveRef.current);
+      if (waveRef.current) {
+        clearInterval(waveRef.current);
+        waveRef.current = null;
+      }
+      if (synthRef.current) synthRef.current.cancel();
+      if (recRef.current) {
+        try {
+          recRef.current.abort();
+        } catch {}
+        recRef.current = null;
+      }
+      cancelElevenLabs();
     };
   }, []);
 
@@ -167,7 +179,10 @@ export default function MiniKiVoiceBuddy() {
   }
 
   function stopWave() {
-    clearInterval(waveRef.current);
+    if (waveRef.current) {
+      clearInterval(waveRef.current);
+      waveRef.current = null;
+    }
     setWaveBars([4, 4, 4, 4, 4]);
   }
 
@@ -253,11 +268,14 @@ export default function MiniKiVoiceBuddy() {
   }
 
   async function ask(q) {
-    // Direktbefehl-Erkennung (sofortige Reaktion ohne LLM)
+    if (askingRef.current) return;
+    askingRef.current = true;
+
     const direct = tryDirectCommand(q);
     if (direct) {
       setMessages(m => [...m, { role: "assistant", text: direct }]);
-      if (tonAn) speak(direct);
+      if (tonAn) await speak(direct);
+      askingRef.current = false;
       return;
     }
 
@@ -283,11 +301,13 @@ export default function MiniKiVoiceBuddy() {
       }
 
       setMessages(m => [...m, { role: "assistant", text: finalText }]);
-      if (tonAn) speak(finalText);
+      if (tonAn) await speak(finalText);
       else setStatus("");
     } catch {
       setStatus("");
       setMessages(m => [...m, { role: "system", text: "Verbindungsfehler - bitte erneut versuchen." }]);
+    } finally {
+      askingRef.current = false;
     }
   }
 
@@ -314,17 +334,29 @@ export default function MiniKiVoiceBuddy() {
       setMessages(m => [...m, { role: "user", text: q }]);
       ask(q);
     };
-    rec.onerror = () => stopMic();
+    rec.onerror = () => {
+      stopMic();
+      setStatus("");
+    };
     rec.onend = () => { if (recRef.current) stopMic(); };
-    rec.start();
-    recRef.current = rec;
-    setRecording(true);
-    setStatus("listening");
+    try {
+      rec.start();
+      recRef.current = rec;
+      setRecording(true);
+      setStatus("listening");
+    } catch (err) {
+      console.error("Failed to start speech recognition:", err);
+      setMessages(m => [...m, { role: "system", text: "Spracherkennung konnte nicht gestartet werden." }]);
+    }
   }
 
   function stopMic() {
-    try { recRef.current?.stop(); } catch {}
-    recRef.current = null;
+    if (recRef.current) {
+      try {
+        recRef.current.stop();
+      } catch {}
+      recRef.current = null;
+    }
     setRecording(false);
     if (status === "listening") setStatus("");
   }
