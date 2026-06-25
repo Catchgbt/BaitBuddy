@@ -593,13 +593,10 @@ export default function AIBuddyWidget() {
                     {tip?.suggestions && tip.suggestions.length > 0 && (
                       <div className="w-full space-y-2">
                         <p className="text-xs font-semibold text-gray-500 px-2">Fragen:</p>
-                        {tip.suggestions.map((suggestion, idx) => (
+                        {tip.suggestions.map((suggestion) => (
                           <button
-                            key={idx}
-                            onClick={() => {
-                              setInputValue(suggestion);
-                              setTimeout(() => handleSendMessage(suggestion), 50);
-                            }}
+                            key={suggestion}
+                            onClick={() => handleSendMessage(suggestion)}
                             disabled={isLoading}
                             className="w-full text-left px-3 py-2 bg-blue-100 hover:bg-blue-200 disabled:bg-gray-200 text-blue-900 text-xs rounded-lg transition-colors truncate"
                           >
@@ -612,7 +609,7 @@ export default function AIBuddyWidget() {
                 ) : (
                   messages.map((msg, idx) => (
                     <div
-                      key={idx}
+                      key={`${msg.role}-${idx}`}
                       className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
                       <div
@@ -657,14 +654,16 @@ export default function AIBuddyWidget() {
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleSendMessage();
+                      if (e.key === 'Enter' && inputValue.trim()) {
+                        handleSendMessage(inputValue);
+                      }
                     }}
                     placeholder="Schreib eine Frage..."
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white text-gray-900 placeholder-gray-400"
                     disabled={isLoading}
                   />
                   <button
-                    onClick={() => handleSendMessage()}
+                    onClick={() => inputValue.trim() && handleSendMessage(inputValue)}
                     disabled={isLoading || !inputValue.trim()}
                     className="p-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-lg transition-colors flex-shrink-0"
                   >
