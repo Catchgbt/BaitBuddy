@@ -225,8 +225,6 @@ export default function AIBuddyWidget() {
         timeoutId = setTimeout(() => {
           if (recognition.current && recognition.current.state !== 'ended') {
             recognition.current.abort();
-            setIsListening(false);
-            toast.error('Spracherkennung hat das Zeitlimit überschritten');
           }
         }, VOICE_RECOGNITION_TIMEOUT);
       };
@@ -246,7 +244,9 @@ export default function AIBuddyWidget() {
           setIsHidden(false);
           localStorage.removeItem(HIDDEN_KEY);
           setIsOpen(true);
-          handleSendMessage(transcript);
+          if (handleSendMessageRef.current) {
+            handleSendMessageRef.current(transcript);
+          }
         }
       };
 
@@ -274,7 +274,7 @@ export default function AIBuddyWidget() {
         recognition.current = null;
       }
     };
-  }, [handleSendMessage]);
+  }, []);
 
   useEffect(() => {
     cleanupStorageForVisitedPages();
@@ -310,9 +310,12 @@ export default function AIBuddyWidget() {
   }, [currentPage, isOpen, buddyVoiceEnabled, showSmallBubbleWithText]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(pos));
-    } catch {}
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(pos));
+      } catch {}
+    }, 300);
+    return () => clearTimeout(timer);
   }, [pos]);
 
   // Reclamp on window resize
@@ -323,6 +326,12 @@ export default function AIBuddyWidget() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Store handleAvatarClick ref to avoid stale closures in drag handlers
+  const handleAvatarClickRef = useRef(null);
+  useEffect(() => {
+    handleAvatarClickRef.current = handleAvatarClick;
+  }, [handleAvatarClick]);
 
   // Drag handlers — only on the avatar drag handle, not on chat/inputs
   const handleAvatarMouseDown = useCallback((e) => {
@@ -358,14 +367,14 @@ export default function AIBuddyWidget() {
       dragStateRef.current.active = false;
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
-      if (!wasDrag) {
-        handleAvatarClick();
+      if (!wasDrag && handleAvatarClickRef.current) {
+        handleAvatarClickRef.current();
       }
     };
 
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
-  }, [pos, handleAvatarClick]);
+  }, [pos]);
 
   const handleAvatarTouchStart = useCallback((e) => {
     if (dragStateRef.current.active) return;
@@ -401,10 +410,10 @@ export default function AIBuddyWidget() {
   const handleAvatarTouchEnd = useCallback(() => {
     const wasDrag = dragStateRef.current.moved;
     dragStateRef.current = { active: false, startX: 0, startY: 0, offsetX: 0, offsetY: 0, moved: false };
-    if (!wasDrag) {
-      handleAvatarClick();
+    if (!wasDrag && handleAvatarClickRef.current) {
+      handleAvatarClickRef.current();
     }
-  }, [handleAvatarClick]);
+  }, []);
 
   const handleAvatarClick = useCallback(() => {
     const wasHidden = localStorage.getItem(HIDDEN_KEY) === 'true';
@@ -416,6 +425,9 @@ export default function AIBuddyWidget() {
       setIsOpen((prev) => !prev);
     }
   }, []);
+
+  // Store handleSendMessage ref to avoid stale closures in voice recognition
+  const handleSendMessageRef = useRef(null);
 
   const handleSendMessage = useCallback(
     async (userMessage) => {
@@ -467,6 +479,10 @@ export default function AIBuddyWidget() {
     },
     [speak, navigate]
   );
+
+  useEffect(() => {
+    handleSendMessageRef.current = handleSendMessage;
+  }, [handleSendMessage]);
 
   const handleVoiceInput = useCallback(() => {
     if (!recognition.current) {
