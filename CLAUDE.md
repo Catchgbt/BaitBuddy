@@ -18,13 +18,18 @@
 
 **Die App muss später auf PlayStore und Apple Store deployed werden.** Code wird darauf optimiert — native APIs, Permissions, Device-Features und Platform-spezifische Anforderungen beachten.
 
-## Tech Stack: React Native
+## Tech Stack: React Native (Android PlayStore MVP)
 
-**Frontend**: React Native (Expo oder Bare Workflow je nach Anforderung)  
+**Frontend**: React Native + Expo Prebuild (Android)  
+**UI-Framework**: Gluestack UI (React Native kompatibel)  
+**Navigation**: React Navigation v6 (Stack + BottomTabs)  
+**Maps**: react-native-maps (native Android performance)  
 **Backend**: Express (Node.js) auf Vercel Serverless  
 **Datenbank & Auth**: Supabase (Realtime, Offline Sync via `@supabase/supabase-js`)  
+**Storage**: Expo SecureStore (Token), SQLite + AsyncStorage (Offline-Daten)  
 **Package Manager**: npm mit legacy peer deps  
-**CI/CD**: GitHub Actions + Fastlane für App Store Deployment
+**Build**: EAS Build (Expo) für Android AAB  
+**CI/CD**: GitHub Actions + Fastlane für automatischen PlayStore Upload
 
 ## Device-Features
 
@@ -44,15 +49,20 @@ Folgende Funktionen müssen implementiert werden:
 
 **Regel**: Immer auf echten Devices testen, nicht nur Simulator/Emulator.
 
-## Build & Release
+## Build & Release (PlayStore MVP)
 
-**Fastlane + GitHub Actions**:
+**Phase 1: Android PlayStore**
 1. PR gemergt zu `main`
-2. GitHub Actions baut APK/IPA via Fastlane
-3. Automatischer Upload zu Google Play & Apple App Store (über Beta-Track zuerst)
-4. Release-Notes auto-generiert aus Commits
+2. GitHub Actions triggert `eas build --platform android` (Expo)
+3. Baut Android AAB (App Bundle) für PlayStore
+4. Fastlane uploaded automatisch zu Google Play Beta-Track
+5. Release-Notes auto-generiert aus Commits
 
-**Kein manueller Upload** — alles automatisiert über CI/CD.
+**Phase 2: iOS (später)**
+- TestFlight via `eas build --platform ios`
+- Apple App Store via Fastlane
+
+**Kein manueller Upload** — alles automatisiert via EAS + Fastlane.
 
 ## App Store Richtlinien
 
