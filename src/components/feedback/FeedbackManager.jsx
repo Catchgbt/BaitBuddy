@@ -7,19 +7,22 @@ export default function FeedbackManager() {
   const [currentFeedback, setCurrentFeedback] = useState(null);
 
   useEffect(() => {
+    let feedbackTimer = null;
+
     // Event-Listener für Feature-Nutzung
     const handleFeatureUsed = async (event) => {
       const { feature } = event.detail;
-      
+
       try {
         const user = await User.me();
-        
+
         // Prüfe ob dieses Feature bereits bewertet wurde
         const hasRated = user.feature_ratings?.[feature]?.rating;
-        
+
         if (!hasRated) {
           // Zeige Feedback-Dialog nach kurzer Verzögerung
-          setTimeout(() => {
+          if (feedbackTimer) clearTimeout(feedbackTimer);
+          feedbackTimer = setTimeout(() => {
             setCurrentFeedback(feature);
           }, 2000); // 2 Sekunden Verzögerung für bessere UX
         }
@@ -29,8 +32,9 @@ export default function FeedbackManager() {
     };
 
     window.addEventListener("feature-used", handleFeatureUsed);
-    
+
     return () => {
+      if (feedbackTimer) clearTimeout(feedbackTimer);
       window.removeEventListener("feature-used", handleFeatureUsed);
     };
   }, []);
