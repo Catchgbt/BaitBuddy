@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mic, Camera, Waves, ChevronRight, ChevronLeft, Zap, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { speakWithElevenLabs } from '@/components/utils/elevenLabsTTS';
+import { speakWithBrowserTTS } from '@/components/utils/browserTTS';
 import { functions } from '@/api/frontendClient';
 
 const VoiceOverlay = ({ isOpen, onClose, currentPageName }) => {
@@ -95,10 +96,11 @@ const VoiceOverlay = ({ isOpen, onClose, currentPageName }) => {
         });
       } catch (ttsError) {
         console.warn('[VoiceOverlay] ElevenLabs fehlgeschlagen, Browser-TTS:', ttsError?.message);
-        const utterance = new SpeechSynthesisUtterance(aiResponse);
-        utterance.lang = 'de-DE';
-        utterance.onend = afterSpeech;
-        window.speechSynthesis.speak(utterance);
+        await speakWithBrowserTTS(aiResponse, {
+          lang: 'de-DE',
+          onEnd: afterSpeech,
+          onError: afterSpeech,
+        });
       }
     } catch (error) {
       console.error('Chat error:', error);

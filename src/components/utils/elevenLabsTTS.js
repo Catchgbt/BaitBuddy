@@ -87,3 +87,50 @@ export async function speakWithElevenLabs(text, callbacks = {}) {
   await audio.play();
   return audio;
 }
+
+/**
+ * Spielt rohe Audio-Daten (als Uint8Array) ab.
+ * Wird für Backend-generierte MP3-Daten verwendet.
+ */
+export async function playAudioBlob(audioData, onEnded) {
+  return new Promise((resolve) => {
+    cancelElevenLabs();
+    try {
+      const blob = new Blob([audioData], { type: 'audio/mpeg' });
+      if (blob.size === 0) {
+        resolve();
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      currentAudio = audio;
+      currentUrl = url;
+
+      audio.onended = () => {
+        URL.revokeObjectURL(url);
+        currentAudio = null;
+        currentUrl = null;
+        if (onEnded) onEnded();
+        resolve();
+      };
+
+      audio.onerror = () => {
+        URL.revokeObjectURL(url);
+        currentAudio = null;
+        currentUrl = null;
+        resolve();
+      };
+
+      audio.play().catch(e => {
+        console.warn('Audio playback blocked:', e);
+        URL.revokeObjectURL(url);
+        currentAudio = null;
+        currentUrl = null;
+        resolve();
+      });
+    } catch (error) {
+      console.error('Audio playback error:', error);
+      resolve();
+    }
+  });
+}
