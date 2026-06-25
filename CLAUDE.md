@@ -38,7 +38,6 @@ Folgende Funktionen müssen implementiert werden:
 
 ## Performance-Anforderungen
 
-- **Bundle-Größe**: < 100 MB (Download über mobiles Netz)
 - **App-Start**: < 3 Sekunden vom Tap bis UI bereit
 - **Low-End Support**: Funktioniert auf Geräten mit ≤2GB RAM
 - **Offline-First**: Core-Funktionen funktionieren ohne Internet
