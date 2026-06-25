@@ -254,7 +254,7 @@ export default function AIBuddyWidget() {
         };
       }
     } catch {}
-  }, [currentPage, isOpen, buddyVoiceEnabled, showSmallBubbleWithText];
+  }, [currentPage, isOpen, buddyVoiceEnabled, showSmallBubbleWithText]);
 
   useEffect(() => {
     try {
