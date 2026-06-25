@@ -14,77 +14,56 @@
 
 **Nur Vercel (Hosting/Deploy/Serverless) und Supabase (DB/Auth/Storage) verwenden.** Keine anderen externen Dienste/Backends einführen (kein base44, kein Render, keine sonstigen MCP-Services für Produktionslogik).
 
-## Projektziel: Unabhängigkeit von base44 — ✅ ERREICHT
+## App-Distribution: PlayStore & Apple Store
 
-**BaitBuddy ist vollständig unabhängig von base44.** Das `base44`-Objekt/-Shim wurde komplett entfernt (Domänen 1–7, PRs #27–#33).
+**Die App muss später auf PlayStore und Apple Store deployed werden.** Code wird darauf optimiert — native APIs, Permissions, Device-Features und Platform-spezifische Anforderungen beachten.
 
-Native API-Clients (alle aus `src/api/`):
-- `auth` (`@/api/auth`) — Login/Logout/Registrierung, aktueller Benutzer
-- `entities` (`@/api/frontendClient`) — Entity-CRUD (`entities.Catch.list()` …); pro-Entity-Module unter `@/entities/*` (z. B. `@/entities/Catch`)
-- `functions` (`@/api/frontendClient`) — `functions.invoke(name, data)` via `FUNCTION_MAP`
-- `integrations` (`@/api/frontendClient` bzw. `@/integrations/Core`) — InvokeLLM, UploadFile, …
-- `analytics`, `appLogs` (`@/api/frontendClient`) — No-op-Clients
-- spezialisierte Module: `catches`, `spots`, `ai`, `community`, `premium`, `fishing`, `events`, `gear`, `water`, `user`
+## Tech Stack: React Native
 
-**Regel:** Niemals wieder `base44.*` einführen — immer die nativen Clients nutzen. Das `base44/`-Verzeichnis (config.jsonc, entities/, functions/) ist nur Altmetadaten und wird vom Code nicht verwendet.
+**Frontend**: React Native (Expo oder Bare Workflow je nach Anforderung)  
+**Backend**: Express (Node.js) auf Vercel Serverless  
+**Datenbank & Auth**: Supabase (Realtime, Offline Sync via `@supabase/supabase-js`)  
+**Package Manager**: npm mit legacy peer deps  
+**CI/CD**: GitHub Actions + Fastlane für App Store Deployment
 
-## WICHTIG: Es gibt NUR EINE App
+## Device-Features
 
-**Immer mit `src/` (Root) arbeiten. Niemals `frontend/` anfassen.**
+Folgende Funktionen müssen implementiert werden:
+- **Kamera** — Fotos von Fängen, Ködern, Spots
+- **GPS/Location** — Spot-Tracking, Kartenfunktion, Geotagging
+- **Offline-Sync** — Daten lokal speichern, asynchron zu Supabase synchen
+- **Push Notifications** — Wetter-Warnungen, Events, Community-Updates
 
-| Verzeichnis | Status |
-|-------------|--------|
-| `src/` | ✅ Die echte App — hier werden alle Änderungen gemacht |
-| `frontend/` | ❌ Alte Claude-Baustelle — wird NICHT deployed, NICHT anfassen |
+**Regel**: Permissions müssen präzise gecheckt werden. Nie blind Berechtigungen anfordern.
 
-### Vercel baut aus Root
+## Performance-Anforderungen
 
-```json
-// vercel.json — so muss es bleiben:
-{
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "installCommand": "npm install --legacy-peer-deps && cd backend && npm install"
-}
-```
+- **App-Start**: < 3 Sekunden vom Tap bis UI bereit
+- **Low-End Support**: Funktioniert auf Geräten mit ≤2GB RAM
+- **Offline-First**: Core-Funktionen funktionieren ohne Internet
 
-Niemals `buildCommand` auf `frontend/` oder ein anderes Unterverzeichnis ändern.
+**Regel**: Immer auf echten Devices testen, nicht nur Simulator/Emulator.
 
-### Build-Befehle
+## Build & Release
 
-```bash
-npm run dev        # Dev-Server starten
-npm run build      # Production-Build (Output: dist/)
-```
+**Fastlane + GitHub Actions**:
+1. PR gemergt zu `main`
+2. GitHub Actions baut APK/IPA via Fastlane
+3. Automatischer Upload zu Google Play & Apple App Store (über Beta-Track zuerst)
+4. Release-Notes auto-generiert aus Commits
 
-## Projektstruktur
+**Kein manueller Upload** — alles automatisiert über CI/CD.
 
-```
-BaitBuddy/
-├── src/           # ← Die App (React + Vite)
-│   ├── pages/     # Alle Seiten (Home.jsx, Dashboard.jsx, ...)
-│   ├── components/
-│   ├── api/       # frontendClient.js — ersetzt @base44/sdk
-│   └── lib/       # AuthContext, etc.
-├── backend/       # Express-Backend (Supabase, AI, Auth)
-├── api/           # Vercel Serverless Entry (api/[...path].mjs)
-├── dist/          # Build-Output (automatisch generiert)
-├── vercel.json    # Deployment-Config — nicht ändern ohne Rücksprache
-└── frontend/      # ❌ NICHT VERWENDEN
-```
+## App Store Richtlinien
 
-## Tech Stack
+**Apple App Store & Google Play haben strenge Regeln**:
+- Privacy Policy muss inline erreichbar sein
+- Datenhandling muss dokumentiert werden (besonders Location, Kamera)
+- Keine versteckten Berechtigungen
+- Testflights/Beta-Versionen vor öffentlichem Release
 
-- **Frontend**: React 18 + Vite + Tailwind CSS + Framer Motion
-- **Backend**: Express (Node.js) auf Vercel Serverless
-- **Auth**: JWT via `/api/auth/login` und `/api/auth/register`
-- **Routing**: React Router DOM (alle Seiten in `src/pages/`)
-- **API-Client**: `src/api/frontendClient.js` (kein @base44/sdk)
+**Regel**: Bei neuen Features immer prüfen, ob App Store Review verlangt wird.
 
-## Live-URL
+## Previews automatisch mergen
 
-**https://bait-buddy.vercel.app** — wird bei jedem Merge zu `main` aktualisiert
-
-## Merge-Reports
-
-Nach Fixes und Merges werden **keine Merge-Reports eingecheckt** — alles ist live nach dem Merge zu `main`.
+**Preview-Branches werden automatisch zu `main` gemergt**, wenn alle Checks grün sind.
