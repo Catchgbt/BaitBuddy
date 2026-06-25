@@ -197,9 +197,10 @@ export default function AIBuddyWidget() {
 
         if (transcript.trim()) {
           setInputValue(transcript);
-          setTimeout(() => {
-            handleSendMessage(transcript);
-          }, 0);
+          setIsHidden(false);
+          localStorage.removeItem(HIDDEN_KEY);
+          setIsOpen(true);
+          handleSendMessage(transcript);
         }
       };
 
@@ -208,6 +209,14 @@ export default function AIBuddyWidget() {
         setInputValue('');
       };
     }
+
+    return () => {
+      if (recognition.current) {
+        try {
+          recognition.current.abort();
+        } catch {}
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -224,19 +233,19 @@ export default function AIBuddyWidget() {
         localStorage.setItem(VISITED_PAGES_KEY, JSON.stringify(visitedPages));
 
         const timer = setTimeout(() => setIsOpen(false), 5000);
+        let jokeTimer = null;
 
         if (buddyVoiceEnabled) {
-          const jokeTimer = setTimeout(() => {
+          jokeTimer = setTimeout(() => {
             const joke = getRandomBuddyJoke();
             showSmallBubbleWithText(joke);
           }, 6000);
-          return () => {
-            clearTimeout(timer);
-            clearTimeout(jokeTimer);
-          };
         }
 
-        return () => clearTimeout(timer);
+        return () => {
+          clearTimeout(timer);
+          if (jokeTimer) clearTimeout(jokeTimer);
+        };
       }
     } catch {}
   }, [currentPage, isOpen, buddyVoiceEnabled]);
@@ -349,15 +358,15 @@ export default function AIBuddyWidget() {
 
   const handleSendMessage = useCallback(
     async (userMessage) => {
-      const text = userMessage?.trim() || inputValue.trim();
+      const text = userMessage?.trim();
       if (!text) return;
 
-      setInputValue('');
       // Vollstaendigen Verlauf aufbauen, damit der Buddy den Gespraechskontext
       // behaelt (vorher wurde nur die einzelne letzte Nachricht gesendet, der
       // Buddy "vergass" alles Vorherige).
       const history = [...messagesRef.current, { role: 'user', content: text }];
       setMessages(history);
+      setInputValue('');
       setIsLoading(true);
       setChatError(null);
       setIsNodding(true);
@@ -398,7 +407,7 @@ export default function AIBuddyWidget() {
         setIsNodding(false);
       }
     },
-    [inputValue, speak, navigate]
+    [speak, navigate]
   );
 
   const handleVoiceInput = useCallback(() => {
