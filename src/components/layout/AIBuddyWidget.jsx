@@ -168,6 +168,7 @@ export default function AIBuddyWidget() {
     offsetY: 0,
     moved: false
   });
+  const isLoadingRef = useRef(false);
 
   const currentPage = location.pathname.replace(/^\//, '').split('/')[0] || 'Dashboard';
   const tip = getTipForPage(currentPage);
@@ -197,6 +198,9 @@ export default function AIBuddyWidget() {
 
         if (transcript.trim()) {
           setInputValue(transcript);
+          setIsHidden(false);
+          localStorage.removeItem(HIDDEN_KEY);
+          setIsOpen(true);
           handleSendMessage(transcript);
         }
       };
@@ -206,6 +210,14 @@ export default function AIBuddyWidget() {
         setInputValue('');
       };
     }
+
+    return () => {
+      if (recognition.current) {
+        try {
+          recognition.current.abort();
+        } catch {}
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -222,19 +234,19 @@ export default function AIBuddyWidget() {
         localStorage.setItem(VISITED_PAGES_KEY, JSON.stringify(visitedPages));
 
         const timer = setTimeout(() => setIsOpen(false), 5000);
+        let jokeTimer = null;
 
         if (buddyVoiceEnabled) {
-          const jokeTimer = setTimeout(() => {
+          jokeTimer = setTimeout(() => {
             const joke = getRandomBuddyJoke();
             showSmallBubbleWithText(joke);
           }, 6000);
-          return () => {
-            clearTimeout(timer);
-            clearTimeout(jokeTimer);
-          };
         }
 
-        return () => clearTimeout(timer);
+        return () => {
+          clearTimeout(timer);
+          if (jokeTimer) clearTimeout(jokeTimer);
+        };
       }
     } catch {}
   }, [currentPage, isOpen, buddyVoiceEnabled]);
@@ -255,112 +267,108 @@ export default function AIBuddyWidget() {
   }, []);
 
   // Drag handlers — only on the avatar drag handle, not on chat/inputs
-  const handleDragStart = useCallback((clientX, clientY) => {
+  const handleAvatarMouseDown = useCallback((e) => {
+    e.preventDefault();
     dragStateRef.current = {
       active: true,
-      startX: clientX,
-      startY: clientY,
-      offsetX: clientX - pos.x,
-      offsetY: clientY - pos.y,
+      startX: e.clientX,
+      startY: e.clientY,
+      offsetX: e.clientX - pos.x,
+      offsetY: e.clientY - pos.y,
       moved: false
     };
-  }, [pos]);
 
-  const handleDragMove = useCallback((clientX, clientY) => {
-    const ds = dragStateRef.current;
-    if (!ds.active) return;
+    const onMove = (ev) => {
+      const ds = dragStateRef.current;
+      if (!ds.active) return;
 
-    const dx = Math.abs(clientX - ds.startX);
-    const dy = Math.abs(clientY - ds.startY);
-    if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) {
-      ds.moved = true;
-    }
+      const dx = Math.abs(ev.clientX - ds.startX);
+      const dy = Math.abs(ev.clientY - ds.startY);
+      if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) {
+        ds.moved = true;
+      }
 
-    if (ds.moved) {
-      const newPos = clampPos(clientX - ds.offsetX, clientY - ds.offsetY);
-      setPos(newPos);
-    }
-  }, []);
-
-  const handleDragEnd = useCallback(() => {
-    const wasDrag = dragStateRef.current.moved;
-    dragStateRef.current = { active: false, startX: 0, startY: 0, offsetX: 0, offsetY: 0, moved: false };
-    return wasDrag;
-  }, []);
-
-  // Mouse drag
-  useEffect(() => {
-    const onMouseMove = (e) => handleDragMove(e.clientX, e.clientY);
-    const onMouseUp = () => handleDragEnd();
-
-    if (dragStateRef.current.active) {
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
+      if (ds.moved) {
+        const newPos = clampPos(ev.clientX - ds.offsetX, ev.clientY - ds.offsetY);
+        setPos(newPos);
+      }
     };
-  });
 
-  const handleAvatarMouseDown = (e) => {
-    e.preventDefault();
-    handleDragStart(e.clientX, e.clientY);
-
-    const onMove = (ev) => handleDragMove(ev.clientX, ev.clientY);
     const onUp = () => {
-      const wasDrag = handleDragEnd();
+      const wasDrag = dragStateRef.current.moved;
+      dragStateRef.current = { active: false, startX: 0, startY: 0, offsetX: 0, offsetY: 0, moved: false };
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
       if (!wasDrag) {
         handleAvatarClick();
       }
     };
+
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
-  };
+  }, [pos, handleAvatarClick]);
 
-  // Touch drag (mobile)
-  const handleAvatarTouchStart = (e) => {
+  const handleAvatarTouchStart = useCallback((e) => {
     const touch = e.touches[0];
-    handleDragStart(touch.clientX, touch.clientY);
-  };
+    dragStateRef.current = {
+      active: true,
+      startX: touch.clientX,
+      startY: touch.clientY,
+      offsetX: touch.clientX - pos.x,
+      offsetY: touch.clientY - pos.y,
+      moved: false
+    };
+  }, [pos]);
 
-  const handleAvatarTouchMove = (e) => {
+  const handleAvatarTouchMove = useCallback((e) => {
     const touch = e.touches[0];
-    handleDragMove(touch.clientX, touch.clientY);
-    if (dragStateRef.current.moved) {
+    const ds = dragStateRef.current;
+    if (!ds.active) return;
+
+    const dx = Math.abs(touch.clientX - ds.startX);
+    const dy = Math.abs(touch.clientY - ds.startY);
+    if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) {
+      ds.moved = true;
+    }
+
+    if (ds.moved) {
+      const newPos = clampPos(touch.clientX - ds.offsetX, touch.clientY - ds.offsetY);
+      setPos(newPos);
       e.preventDefault();
     }
-  };
+  }, []);
 
-  const handleAvatarTouchEnd = () => {
-    const wasDrag = handleDragEnd();
+  const handleAvatarTouchEnd = useCallback(() => {
+    const wasDrag = dragStateRef.current.moved;
+    dragStateRef.current = { active: false, startX: 0, startY: 0, offsetX: 0, offsetY: 0, moved: false };
     if (!wasDrag) {
       handleAvatarClick();
     }
-  };
+  }, [handleAvatarClick]);
 
-  const handleAvatarClick = () => {
-    if (isHidden) {
-      handleShowBubble();
+  const handleAvatarClick = useCallback(() => {
+    const wasHidden = localStorage.getItem(HIDDEN_KEY) === 'true';
+    if (wasHidden) {
+      setIsHidden(false);
+      localStorage.removeItem(HIDDEN_KEY);
+      setIsOpen(true);
     } else {
-      setIsOpen(!isOpen);
+      setIsOpen((prev) => !prev);
     }
-  };
+  }, []);
 
   const handleSendMessage = useCallback(
-    async (text = inputValue) => {
-      if (!text.trim()) return;
+    async (userMessage) => {
+      const text = userMessage?.trim();
+      if (!text || isLoadingRef.current) return;
 
-      const userMessage = text.trim();
-      setInputValue('');
+      isLoadingRef.current = true;
       // Vollstaendigen Verlauf aufbauen, damit der Buddy den Gespraechskontext
       // behaelt (vorher wurde nur die einzelne letzte Nachricht gesendet, der
       // Buddy "vergass" alles Vorherige).
-      const history = [...messagesRef.current, { role: 'user', content: userMessage }];
+      const history = [...messagesRef.current, { role: 'user', content: text }];
       setMessages(history);
+      setInputValue('');
       setIsLoading(true);
       setChatError(null);
       setIsNodding(true);
@@ -396,15 +404,16 @@ export default function AIBuddyWidget() {
         console.error('Chat error:', err);
         setChatError('Fehler beim Laden der Antwort');
       } finally {
+        isLoadingRef.current = false;
         setIsLoading(false);
         setIsTalking(false);
         setIsNodding(false);
       }
     },
-    [inputValue, speak, navigate]
+    [speak, navigate]
   );
 
-  const handleVoiceInput = () => {
+  const handleVoiceInput = useCallback(() => {
     if (!recognition.current) {
       toast.error('Spracherkennung wird nicht unterstützt');
       return;
@@ -417,32 +426,34 @@ export default function AIBuddyWidget() {
         recognition.current.start();
       } catch {}
     }
-  };
+  }, [isListening]);
 
-  const handleCloseBubble = () => {
+  const handleCloseBubble = useCallback(() => {
     setIsOpen(false);
     stop();
     setIsHidden(true);
     try {
       localStorage.setItem(HIDDEN_KEY, 'true');
     } catch {}
-  };
+  }, [stop]);
 
-  const handleShowBubble = () => {
+  const handleShowBubble = useCallback(() => {
     setIsHidden(false);
     try {
       localStorage.removeItem(HIDDEN_KEY);
     } catch {}
     setIsOpen(true);
-  };
+  }, []);
 
-  const handleToggleBuddyVoice = () => {
-    const newState = !buddyVoiceEnabled;
-    setBuddyVoiceEnabled(newState);
-    try {
-      localStorage.setItem(BUDDY_VOICE_ENABLED_KEY, newState ? 'true' : 'false');
-    } catch {}
-  };
+  const handleToggleBuddyVoice = useCallback(() => {
+    setBuddyVoiceEnabled((prev) => {
+      const newState = !prev;
+      try {
+        localStorage.setItem(BUDDY_VOICE_ENABLED_KEY, newState ? 'true' : 'false');
+      } catch {}
+      return newState;
+    });
+  }, []);
 
   const showSmallBubbleWithText = useCallback((text) => {
     setSmallBubbleText(text);
@@ -480,7 +491,7 @@ export default function AIBuddyWidget() {
 
   const smallBubbleStyle = {
     position: 'absolute',
-    bottom: AVATAR_SIZE + 12,
+    ...(isOnBottom ? { bottom: AVATAR_SIZE + 12 } : { top: AVATAR_SIZE + 12 }),
     ...(isOnRight ? { right: 0 } : { left: 0 }),
   };
 
@@ -520,9 +531,9 @@ export default function AIBuddyWidget() {
           height: AVATAR_SIZE,
         }}
       >
-        {/* Small Buddy Voice Bubble */}
+        {/* Small Buddy Voice Bubble — nur wenn nicht versteckt */}
         <AnimatePresence>
-          {showSmallBubble && (
+          {!isHidden && showSmallBubble && (
             <motion.div
               initial={{ opacity: 0, scale: 0.8, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -536,9 +547,9 @@ export default function AIBuddyWidget() {
           )}
         </AnimatePresence>
 
-        {/* Chat Bubble */}
+        {/* Chat Bubble — nur wenn nicht versteckt */}
         <AnimatePresence>
-          {isOpen && (
+          {!isHidden && isOpen && (
             <motion.div
               variants={bubbleVariants}
               initial="hidden"
@@ -585,13 +596,10 @@ export default function AIBuddyWidget() {
                     {tip?.suggestions && tip.suggestions.length > 0 && (
                       <div className="w-full space-y-2">
                         <p className="text-xs font-semibold text-gray-500 px-2">Fragen:</p>
-                        {tip.suggestions.map((suggestion, idx) => (
+                        {tip.suggestions.map((suggestion) => (
                           <button
-                            key={idx}
-                            onClick={() => {
-                              setInputValue(suggestion);
-                              setTimeout(() => handleSendMessage(suggestion), 50);
-                            }}
+                            key={suggestion}
+                            onClick={() => handleSendMessage(suggestion)}
                             disabled={isLoading}
                             className="w-full text-left px-3 py-2 bg-blue-100 hover:bg-blue-200 disabled:bg-gray-200 text-blue-900 text-xs rounded-lg transition-colors truncate"
                           >
@@ -604,7 +612,7 @@ export default function AIBuddyWidget() {
                 ) : (
                   messages.map((msg, idx) => (
                     <div
-                      key={idx}
+                      key={`${msg.role}-${idx}`}
                       className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
                       <div
@@ -649,14 +657,16 @@ export default function AIBuddyWidget() {
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleSendMessage();
+                      if (e.key === 'Enter' && inputValue.trim()) {
+                        handleSendMessage(inputValue);
+                      }
                     }}
                     placeholder="Schreib eine Frage..."
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white text-gray-900 placeholder-gray-400"
                     disabled={isLoading}
                   />
                   <button
-                    onClick={() => handleSendMessage()}
+                    onClick={() => inputValue.trim() && handleSendMessage(inputValue)}
                     disabled={isLoading || !inputValue.trim()}
                     className="p-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-lg transition-colors flex-shrink-0"
                   >
