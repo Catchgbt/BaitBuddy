@@ -9,6 +9,7 @@ import AIAssistant from './pages/AIAssistant';
 import VoiceChat from './pages/VoiceChat';
 import Log from './pages/Log';
 import Map from './pages/Map';
+import Cloud from './pages/Cloud';
 import Community from './pages/Community';
 import Premium from './pages/Premium';
 import Profile from './pages/Profile';
@@ -36,6 +37,7 @@ function AppRoutes() {
         <Route path="voice" element={<VoiceChat />} />
         <Route path="log" element={<Log />} />
         <Route path="map" element={<Map />} />
+        <Route path="cloud" element={<Cloud />} />
         <Route path="community" element={<Community />} />
         <Route path="premium" element={<Premium />} />
         <Route path="profile" element={<Profile />} />

@@ -15,6 +15,7 @@ import mapsRoutes from './routes/maps.js';
 import supportRoutes from './routes/support.js';
 import userEntitiesRoutes from './routes/userEntities.js';
 import socialMediaRoutes from './routes/socialMedia.js';
+import syncRoutes from './routes/sync.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -46,6 +47,7 @@ app.use('/api', mapsRoutes);
 app.use('/api', supportRoutes);
 app.use('/api', userEntitiesRoutes);
 app.use('/api', socialMediaRoutes);
+app.use('/api', syncRoutes);
 
 app.use((req, res) => res.status(404).json({ error: `Not found: ${req.method} ${req.path}` }));
 app.use((err, req, res, next) => {

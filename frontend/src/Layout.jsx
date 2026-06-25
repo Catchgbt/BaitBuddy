@@ -1,11 +1,12 @@
 import { Outlet, NavLink } from 'react-router-dom';
-import { Home, MessageCircle, BookOpen, Map, Users, Star, UserCircle } from 'lucide-react';
+import { Home, MessageCircle, BookOpen, Map, Cloud, Users, Star, UserCircle } from 'lucide-react';
 
 const tabs = [
   { to: '/app', label: 'Home', icon: Home },
   { to: '/app/chat', label: 'KI-Chat', icon: MessageCircle },
   { to: '/app/log', label: 'Fangbuch', icon: BookOpen },
   { to: '/app/map', label: 'Karte', icon: Map },
+  { to: '/app/cloud', label: 'Cloud', icon: Cloud },
   { to: '/app/community', label: 'Community', icon: Users },
   { to: '/app/premium', label: 'Premium', icon: Star },
   { to: '/app/profile', label: 'Profil', icon: UserCircle },
