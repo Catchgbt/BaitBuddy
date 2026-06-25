@@ -162,6 +162,56 @@ export function isOnline() {
   return typeof navigator === 'undefined' ? true : navigator.onLine;
 }
 
+const ENTITY_API = {
+  catches: '/api/catches',
+  spots: '/api/spots',
+};
+
+function isNetworkError(err) {
+  if (!err) return false;
+  if (err.name === 'TypeError') return true;
+  const m = (err.message || '').toLowerCase();
+  return m.includes('failed to fetch') || m.includes('network') || m.includes('load failed');
+}
+
+export async function submitWithQueue(entity, payload) {
+  const path = ENTITY_API[entity];
+  if (!path) throw new Error(`Unbekannte Entitaet: ${entity}`);
+  if (!isOnline()) {
+    await queueChange({ entity, op: 'insert', payload });
+    return { queued: true, record: null };
+  }
+  try {
+    const record = await api.post(path, payload);
+    return { queued: false, record };
+  } catch (e) {
+    if (isNetworkError(e)) {
+      await queueChange({ entity, op: 'insert', payload });
+      return { queued: true, record: null };
+    }
+    throw e;
+  }
+}
+
+export async function deleteWithQueue(entity, id) {
+  const path = ENTITY_API[entity];
+  if (!path) throw new Error(`Unbekannte Entitaet: ${entity}`);
+  if (!isOnline()) {
+    await queueChange({ entity, op: 'delete', payload: {}, id });
+    return { queued: true };
+  }
+  try {
+    await api.delete(`${path}/${id}`);
+    return { queued: false };
+  } catch (e) {
+    if (isNetworkError(e)) {
+      await queueChange({ entity, op: 'delete', payload: {}, id });
+      return { queued: true };
+    }
+    throw e;
+  }
+}
+
 async function loadServerPending() {
   try {
     return await api.get('/api/sync/pending');
