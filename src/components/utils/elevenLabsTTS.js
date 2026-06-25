@@ -134,3 +134,40 @@ export async function playAudioBlob(audioData, onEnded) {
     }
   });
 }
+
+/**
+ * Zentrale Fallback-Strategie: Versucht ElevenLabs, fällt zu Browser-TTS zurück.
+ * Respektiert voiceEnabled-Setting.
+ */
+export async function speakWithFallback(text, options = {}) {
+  const { voiceEnabled = true, lang = 'de-DE', rate = 1.0, pitch = 1.0 } = options;
+
+  if (!text || typeof text !== 'string' || !text.trim()) {
+    return Promise.resolve();
+  }
+
+  if (!voiceEnabled) {
+    return Promise.resolve();
+  }
+
+  try {
+    const audio = await speakWithElevenLabs(text, {
+      onEnd: () => {},
+      onError: () => {
+        throw new Error('ElevenLabs fallback');
+      },
+    });
+    return new Promise((resolve) => {
+      audio.onended = resolve;
+      audio.onerror = resolve;
+    });
+  } catch {
+    const { speakWithBrowserTTS } = await import('./browserTTS');
+    return speakWithBrowserTTS(text, {
+      lang,
+      rate,
+      pitch,
+      volume: 1.0,
+    });
+  }
+}
