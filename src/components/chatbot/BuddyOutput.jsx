@@ -3,7 +3,7 @@ import { Volume2, VolumeX, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/api/auth";
 import { speakWithElevenLabs, cancelElevenLabs } from "@/components/utils/elevenLabsTTS";
-import { cleanTextForSpeech, stopCurrentAudio, playTextWithBrowserTTS } from "@/utils/ttsUtils";
+import { speakWithBrowserTTS } from "@/components/utils/browserTTS";
 
 export default function BuddyOutput({ text, autoPlay = true }) {
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -14,46 +14,31 @@ export default function BuddyOutput({ text, autoPlay = true }) {
 
     try {
       setIsSpeaking(true);
-      console.log("BuddyOutput: Starting speech for text:", text.substring(0, 50));
-
-      const cleanText = cleanTextForSpeech(text);
-      console.log("BuddyOutput: Cleaned text:", cleanText.substring(0, 50));
-      
-      if (!cleanText) {
-        console.log("BuddyOutput: No text to speak after cleaning");
-        setIsSpeaking(false);
-        return;
-      }
 
       let user = null;
       try {
         user = await auth.me();
       } catch (e) {
-        console.log("BuddyOutput: User not authenticated, using defaults");
+        console.log("BuddyOutput: User not authenticated");
       }
 
       if (user?.settings?.audio_enabled === false) {
-        console.log("BuddyOutput: Audio disabled in settings");
         setIsSpeaking(false);
         return;
       }
 
       const speechRate = user?.settings?.speech_speed || 1.0;
 
-      console.log("BuddyOutput: Attempting ElevenLabs TTS");
-
-      // Primär: ElevenLabs. Bei Fehler (z. B. fehlender API-Key) → Browser-TTS.
       try {
         await new Promise((resolve, reject) => {
-          speakWithElevenLabs(cleanText, {
+          speakWithElevenLabs(text, {
             onEnd: resolve,
             onError: reject,
           }).catch(reject);
         });
-        console.log("BuddyOutput: ElevenLabs audio finished");
       } catch (backendError) {
         console.warn("BuddyOutput: ElevenLabs failed, using browser fallback:", backendError?.message);
-        await playTextWithBrowserTTS(cleanText, speechRate);
+        await speakWithBrowserTTS(text, { lang: 'de-DE', rate: speechRate });
       }
     } catch (error) {
       console.error("BuddyOutput: Speech error:", error);
@@ -75,7 +60,9 @@ export default function BuddyOutput({ text, autoPlay = true }) {
     setIsMuted(!isMuted);
     if (isSpeaking) {
       cancelElevenLabs();
-      stopCurrentAudio();
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
       setIsSpeaking(false);
     }
   };

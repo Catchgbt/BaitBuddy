@@ -7,7 +7,8 @@ import { Bot, Sparkles, Volume2, StopCircle, Loader2 } from "lucide-react";
 import { catchgbtChat } from "@/functions/catchgbtChat";
 import { backendTextToSpeech } from "@/functions/backendTextToSpeech";
 import { toast } from "sonner";
-import { cleanTextForSpeech, stopCurrentAudio, playAudioBlob, playTextWithBrowserTTS } from "@/utils/ttsUtils";
+import { playAudioBlob, cancelElevenLabs } from "@/components/utils/elevenLabsTTS";
+import { speakWithBrowserTTS } from "@/components/utils/browserTTS";
 import BuddyOutput from "@/components/chatbot/BuddyOutput";
 
 function getContextualPath(pathname) {
@@ -84,7 +85,10 @@ function TextAIMode() {
   };
   
   const handleStopSpeech = () => {
-    stopCurrentAudio();
+    cancelElevenLabs();
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
     setIsSpeaking(false);
   };
 

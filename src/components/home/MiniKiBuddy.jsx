@@ -1,14 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
 import { catchgbtChat } from "@/functions/catchgbtChat";
 import { textToSpeech } from "@/functions/textToSpeech";
-import { stopCurrentAudio, playAudioBlob } from "@/utils/ttsUtils";
+import { playAudioBlob, cancelElevenLabs } from "@/components/utils/elevenLabsTTS";
 
 const SYSTEM_PROMPT = `Du bist BaitBuddy, ein erfahrener Angel-Assistent. Du hilfst Anglern mit Tipps zu Fischarten, Koeder, Spots, Wetter, Ausruestung und Technik. Antworte auf Deutsch, freundlich und direkt. Halte Antworten kurz und praxisnah.`;
 
 async function speakText(text) {
   if (!text) return;
 
-  stopCurrentAudio();
+  cancelElevenLabs();
 
   try {
     const res = await textToSpeech({ text: text.slice(0, 1000) });
