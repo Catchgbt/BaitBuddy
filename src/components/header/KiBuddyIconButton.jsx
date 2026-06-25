@@ -45,12 +45,10 @@ export default function KiBuddyIconButton({ chatbotOpen, onToggleChatbot }) {
           } border border-gray-950`}></div>
         </div>
 
-        {/* Sparkle animation */}
-        <div className={`absolute -top-1 -left-1 text-yellow-400 text-xs ${
+        {/* Sparkle indicator */}
+        <div className={`absolute -top-1 -left-1 w-2 h-2 rounded-full bg-yellow-400 ${
           chatbotOpen ? 'animate-spin' : 'animate-bounce'
-        }`}>
-          ✨
-        </div>
+        }`}></div>
       </div>
     </motion.button>
   );

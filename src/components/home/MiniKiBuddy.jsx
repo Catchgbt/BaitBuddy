@@ -1,59 +1,20 @@
 import React, { useState, useRef, useEffect } from "react";
 import { catchgbtChat } from "@/functions/catchgbtChat";
 import { textToSpeech } from "@/functions/textToSpeech";
+import { stopCurrentAudio, playAudioBlob } from "@/utils/ttsUtils";
 
 const SYSTEM_PROMPT = `Du bist BaitBuddy, ein erfahrener Angel-Assistent. Du hilfst Anglern mit Tipps zu Fischarten, Koeder, Spots, Wetter, Ausruestung und Technik. Antworte auf Deutsch, freundlich und direkt. Halte Antworten kurz und praxisnah.`;
-
-// Globale Referenz auf aktuelle Audio-Wiedergabe, damit alte Wiedergaben gestoppt werden koennen
-let currentAudioRef = null;
-
-function stopCurrentAudio() {
-  if (currentAudioRef) {
-    try {
-      currentAudioRef.pause();
-      currentAudioRef.src = '';
-    } catch {}
-    currentAudioRef = null;
-  }
-}
 
 async function speakText(text) {
   if (!text) return;
 
-  // Vorherige Wiedergabe stoppen
   stopCurrentAudio();
 
   try {
-    // textToSpeech liefert das geparste /ai/tts-JSON ({ audioBase64, contentType }),
-    // kein axios-Response mit .data. base64 wird hier in einen Audio-Blob dekodiert.
     const res = await textToSpeech({ text: text.slice(0, 1000) });
-
-    if (!res?.audioBase64) throw new Error('Leere Audio-Antwort');
+    if (!res?.audioBase64) throw new Error('Empty audio response');
     const bytes = Uint8Array.from(atob(res.audioBase64), c => c.charCodeAt(0));
-    const blob = new Blob([bytes], { type: res.contentType || 'audio/mpeg' });
-    if (blob.size === 0) throw new Error('Leere Audio-Antwort');
-
-    const audioUrl = URL.createObjectURL(blob);
-    const audio = new Audio(audioUrl);
-    audio.volume = 1.0;
-    audio.preload = 'auto';
-
-    // Aufraeumen, sobald Wiedergabe endet oder fehlschlaegt
-    const cleanup = () => {
-      URL.revokeObjectURL(audioUrl);
-      if (currentAudioRef === audio) currentAudioRef = null;
-    };
-    audio.onended = cleanup;
-    audio.onerror = cleanup;
-
-    currentAudioRef = audio;
-
-    try {
-      await audio.play();
-    } catch (playErr) {
-      console.warn('Audio play blocked (autoplay policy):', playErr);
-      cleanup();
-    }
+    await playAudioBlob(bytes);
   } catch (error) {
     console.error('TTS error:', error);
   }
