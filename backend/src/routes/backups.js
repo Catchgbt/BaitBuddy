@@ -1,0 +1,125 @@
+import { Router } from 'express';
+import { requireAuth } from '../middleware/auth.js';
+import { supabase } from '../lib/supabase.js';
+
+const router = Router();
+
+const RESTORABLE = ['catches', 'spots', 'water_scenes'];
+
+async function buildSnapshot(email) {
+  const [catches, spots, waterScenes, bathymetryMaps] = await Promise.all([
+    supabase.from('catches').select('*').eq('created_by', email),
+    supabase.from('spots').select('*').eq('created_by', email),
+    supabase.from('water_scenes').select('*').eq('created_by', email),
+    supabase.from('bathymetric_maps').select('*').eq('user_email', email),
+  ]);
+  const errors = [catches, spots, waterScenes, bathymetryMaps].map(r => r.error).filter(Boolean);
+  if (errors.length) throw new Error(errors[0].message);
+  return {
+    catches: catches.data || [],
+    spots: spots.data || [],
+    water_scenes: waterScenes.data || [],
+    bathymetric_maps: bathymetryMaps.data || [],
+  };
+}
+
+router.get('/backups', requireAuth, async (req, res) => {
+  const { data, error } = await supabase
+    .from('user_backups')
+    .select('id, kind, size_bytes, catches_count, spots_count, water_scenes_count, bathymetric_maps_count, note, created_at')
+    .eq('created_by', req.user.email)
+    .order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data || []);
+});
+
+router.get('/backups/:id', requireAuth, async (req, res) => {
+  const { data, error } = await supabase
+    .from('user_backups')
+    .select('*')
+    .eq('id', req.params.id)
+    .eq('created_by', req.user.email)
+    .single();
+  if (error) return res.status(404).json({ error: 'Backup nicht gefunden' });
+  return res.json(data);
+});
+
+router.post('/backups', requireAuth, async (req, res) => {
+  const { kind = 'manual', note = null } = req.body || {};
+  if (!['manual', 'auto'].includes(kind)) return res.status(400).json({ error: `Unbekannte kind: ${kind}` });
+  try {
+    const snapshot = await buildSnapshot(req.user.email);
+    const payload = { version: 1, snapshot_at: new Date().toISOString(), data: snapshot };
+    const size_bytes = Buffer.byteLength(JSON.stringify(payload), 'utf8');
+    const row = {
+      created_by: req.user.email,
+      kind,
+      payload,
+      size_bytes,
+      catches_count: snapshot.catches.length,
+      spots_count: snapshot.spots.length,
+      water_scenes_count: snapshot.water_scenes.length,
+      bathymetric_maps_count: snapshot.bathymetric_maps.length,
+      note,
+    };
+    const { data, error } = await supabase
+      .from('user_backups')
+      .insert(row)
+      .select('id, kind, size_bytes, catches_count, spots_count, water_scenes_count, bathymetric_maps_count, note, created_at')
+      .single();
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json(data);
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+router.post('/backups/:id/restore', requireAuth, async (req, res) => {
+  const { tables = RESTORABLE, mode = 'merge' } = req.body || {};
+  if (!Array.isArray(tables) || tables.some(t => !RESTORABLE.includes(t))) {
+    return res.status(400).json({ error: 'Nur erlaubt: ' + RESTORABLE.join(', ') });
+  }
+  if (!['merge', 'replace'].includes(mode)) return res.status(400).json({ error: `Unbekannter mode: ${mode}` });
+
+  const { data: backup, error: getErr } = await supabase
+    .from('user_backups')
+    .select('payload')
+    .eq('id', req.params.id)
+    .eq('created_by', req.user.email)
+    .single();
+  if (getErr) return res.status(404).json({ error: 'Backup nicht gefunden' });
+
+  const snapshot = backup?.payload?.data || {};
+  const results = {};
+  for (const table of tables) {
+    const rows = Array.isArray(snapshot[table]) ? snapshot[table] : [];
+    const sanitized = rows.map(r => {
+      const copy = { ...r };
+      delete copy.id;
+      delete copy.created_at;
+      copy.created_by = req.user.email;
+      return copy;
+    });
+    if (mode === 'replace') {
+      const { error: delErr } = await supabase.from(table).delete().eq('created_by', req.user.email);
+      if (delErr) { results[table] = { ok: false, error: delErr.message }; continue; }
+    }
+    if (sanitized.length === 0) { results[table] = { ok: true, inserted: 0 }; continue; }
+    const { error: insErr, count } = await supabase.from(table).insert(sanitized, { count: 'exact' });
+    if (insErr) { results[table] = { ok: false, error: insErr.message }; continue; }
+    results[table] = { ok: true, inserted: count ?? sanitized.length };
+  }
+  return res.json({ restoredAt: new Date().toISOString(), mode, tables, results });
+});
+
+router.delete('/backups/:id', requireAuth, async (req, res) => {
+  const { error } = await supabase
+    .from('user_backups')
+    .delete()
+    .eq('id', req.params.id)
+    .eq('created_by', req.user.email);
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json({ ok: true });
+});
+
+export default router;

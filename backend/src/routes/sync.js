@@ -6,10 +6,12 @@ const router = Router();
 
 const CATCH_FIELDS = ['species', 'length_cm', 'weight_kg', 'bait_used', 'notes', 'photo_url', 'is_released', 'spot_id', 'catch_time'];
 const SPOT_FIELDS = ['name', 'latitude', 'longitude', 'water_type', 'notes', 'photo_url', 'is_favorite', 'depth_meters'];
+const WATER_SCENE_FIELDS = ['spot_id', 'latitude', 'longitude', 'quality', 'sample_count', 'temperature_profile', 'size_bytes', 'source', 'captured_at'];
 
 const ENTITIES = {
   catches: { table: 'catches', fields: CATCH_FIELDS },
   spots: { table: 'spots', fields: SPOT_FIELDS },
+  water_scenes: { table: 'water_scenes', fields: WATER_SCENE_FIELDS, priority: 'low' },
 };
 
 const OPS = new Set(['insert', 'update', 'delete']);

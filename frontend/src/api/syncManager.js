@@ -165,6 +165,13 @@ export function isOnline() {
 const ENTITY_API = {
   catches: '/api/catches',
   spots: '/api/spots',
+  water_scenes: '/api/water-data',
+};
+
+export const ENTITY_PRIORITY = {
+  catches: 1,
+  spots: 1,
+  water_scenes: 2,
 };
 
 function isNetworkError(err) {
@@ -289,7 +296,13 @@ export async function syncNow() {
   if (!isOnline()) return { skipped: true, reason: 'offline' };
   syncInFlight = true;
   notify();
-  const pending = await listPending();
+  const pendingRaw = await listPending();
+  const pending = [...pendingRaw].sort((a, b) => {
+    const pa = ENTITY_PRIORITY[a.entity] ?? 9;
+    const pb = ENTITY_PRIORITY[b.entity] ?? 9;
+    if (pa !== pb) return pa - pb;
+    return new Date(a.createdAt) - new Date(b.createdAt);
+  });
   let synced = 0;
   let failed = 0;
   const errors = [];
