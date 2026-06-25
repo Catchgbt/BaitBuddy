@@ -1,4 +1,6 @@
 import { toast } from 'sonner';
+import { auth } from '@/api/auth';
+import { entities } from '@/api/frontendClient';
 import { Catch } from '@/entities/Catch';
 import { Spot } from '@/entities/Spot';
 import { resolvePage } from '@/lib/voicePages';
@@ -29,7 +31,7 @@ export async function executeBuddyAction(action, context, options = {}) {
 
   const { navigate } = context;
   const userLocation = context.userLocation || null;
-  const { retryAttempts = ACTION_RETRY_ATTEMPTS, retryDelay = ACTION_RETRY_DELAY } = options;
+  const { retryAttempts = ACTION_RETRY_ATTEMPTS } = options;
 
   try {
     if (action.type === 'navigate') {
@@ -46,7 +48,7 @@ export async function executeBuddyAction(action, context, options = {}) {
       if (!p.species) {
         return {
           success: false,
-          message: 'Sag mir kurz die Fischart, dann trage ich den Fang ein.',
+          message: 'Bitte sage mir welche Fischart - dann trage ich es ein.',
         };
       }
 
@@ -58,11 +60,12 @@ export async function executeBuddyAction(action, context, options = {}) {
           ...(p.weight_kg != null && { weight_kg: Number(p.weight_kg) }),
           ...(p.bait_used && { bait_used: p.bait_used }),
           ...(p.notes && { notes: p.notes }),
+          ...(p.is_released != null && { is_released: !!p.is_released }),
         });
       }, retryAttempts);
 
       toast.success(`Fang eingetragen: ${p.species}`);
-      return { success: true, message: null };
+      return { success: true, message: `Fang ${p.species} wurde im Fangbuch eingetragen.` };
     }
 
     if (action.type === 'add_spot' || action.type === 'save_spot') {
@@ -70,7 +73,7 @@ export async function executeBuddyAction(action, context, options = {}) {
       if (!p.name) {
         return {
           success: false,
-          message: 'Wie soll der Spot heissen?',
+          message: 'Ich brauche Name und Koordinaten fuer den Spot.',
         };
       }
 
@@ -80,8 +83,7 @@ export async function executeBuddyAction(action, context, options = {}) {
       if (lat == null || lng == null) {
         return {
           success: false,
-          message:
-            'Ich brauche deinen Standort fuer den Spot. Aktiviere die Ortung und versuche es erneut.',
+          message: 'Ich brauche Name und Koordinaten fuer den Spot.',
         };
       }
 
@@ -92,20 +94,77 @@ export async function executeBuddyAction(action, context, options = {}) {
           longitude: lng,
           water_type: p.water_type || 'see',
           notes: p.notes || '',
+          ...(p.is_favorite != null && { is_favorite: !!p.is_favorite }),
         });
       }, retryAttempts);
 
       toast.success(`Spot gespeichert: ${p.name}`);
+      return { success: true, message: `Spot ${p.name} gespeichert.` };
+    }
+
+    if (action.type === 'post_community') {
+      const p = action.params || {};
+      if (!p.text) {
+        return { success: false, message: 'Was soll ich posten?' };
+      }
+      const me = await auth.me().catch(() => null);
+      await entities.Post.create({
+        text: p.text,
+        author_name: me?.nickname || me?.full_name || 'Angler',
+      });
+      toast.success('Community-Post erstellt');
+      return { success: true, message: 'Dein Beitrag wurde in der Community gepostet.' };
+    }
+
+    if (action.type === 'create_trip') {
+      const p = action.params || {};
+      if (!p.title || !p.target_fish) {
+        return { success: false, message: 'Ich brauche Titel und Zielfisch fuer den Trip.' };
+      }
+      await entities.FishingPlan.create({
+        title: p.title,
+        target_fish: p.target_fish,
+        spot_info: p.spot_info || '',
+        weather_summary: p.weather_summary || '',
+        gear_summary: p.gear_summary || '',
+        steps: Array.isArray(p.steps) ? p.steps : [],
+        is_active: !!p.is_active,
+      });
+      toast.success(`Trip angelegt: ${p.title}`);
+      return { success: true, message: `Trip ${p.title} wurde im Tripplaner angelegt.` };
+    }
+
+    if (action.type === 'support_ticket') {
+      const p = action.params || {};
+      if (!p.subject || !p.message) {
+        return { success: false, message: 'Ich brauche Betreff und Beschreibung.' };
+      }
+      const me = await auth.me().catch(() => null);
+      await entities.SupportTicket.create({
+        subject: p.subject,
+        message: p.message,
+        category: p.category || 'frage',
+        user_email: me?.email,
+        user_name: me?.full_name,
+      });
+      toast.success('Support-Ticket erstellt');
+      return { success: true, message: 'Dein Support-Ticket wurde erstellt.' };
+    }
+
+    if (action.type === 'open_url') {
+      const p = action.params || {};
+      if (!p.url) return { success: false, message: null };
+      window.open(p.url, '_blank');
       return { success: true, message: null };
     }
 
     return { success: false, message: null };
   } catch (error) {
     console.error('Buddy action failed:', error?.message);
-    toast.error('Aktion fehlgeschlagen. Bitte versuche es erneut.');
+    toast.error('Aktion fehlgeschlagen');
     return {
       success: false,
-      message: 'Das hat leider nicht geklappt. Versuch es gleich nochmal.',
+      message: 'Die Aktion konnte nicht ausgefuehrt werden.',
     };
   }
 }

@@ -3,11 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, MicOff, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { functions } from '@/api/frontendClient';
-import { Catch } from '@/entities/Catch';
 import { useNavigate } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
 import { useLocation } from '@/components/location/LocationManager';
-import { resolvePage } from '@/lib/voicePages';
+import { speakWithFallback, cancelElevenLabs } from '@/components/utils/elevenLabsTTS';
+import { executeBuddyAction } from '@/utils/buddyActions';
 
 const WAKE_WORD_VARIANTS = ['hey buddy', 'hei buddy', 'hey budy', 'hey baddy', 'heybuddy', 'hey body', 'hallo buddy'];
 const LANGUAGE = 'de-DE';
@@ -20,114 +19,6 @@ function parseActionFromReply(text) {
   try { action = JSON.parse(m[1].trim()); } catch {}
   const clean = text.replace(m[0], "").trim();
   return { clean, action };
-}
-
-async function executeVoiceAction(action, navigate) {
-  if (!action || !action.type) return null;
-  try {
-    if (action.type === 'log_catch') {
-      const p = action.params || {};
-      if (!p.species) return 'Bitte sage mir welche Fischart.';
-      await Catch.create({
-        species: p.species,
-        catch_time: new Date().toISOString(),
-        ...(p.length_cm != null && { length_cm: Number(p.length_cm) }),
-        ...(p.weight_kg != null && { weight_kg: Number(p.weight_kg) }),
-        ...(p.bait_used && { bait_used: p.bait_used }),
-        ...(p.notes && { notes: p.notes })
-      });
-      toast.success(`Fang eingetragen: ${p.species}`);
-      return `Fang ${p.species} wurde im Fangbuch eingetragen.`;
-    }
-    if (action.type === 'navigate') {
-      const p = action.params || {};
-      const target = resolvePage(p.page);
-      if (!target) return 'Diese Seite kenne ich nicht.';
-      navigate(createPageUrl(target));
-      return `Oeffne ${target}.`;
-    }
-  } catch (e) {
-    console.error('Voice action error:', e);
-    return 'Die Aktion konnte nicht ausgefuehrt werden.';
-  }
-  return null;
-}
-
-// Browser-Stimmen vorab cachen (getVoices() ist beim ersten Aufruf häufig leer)
-let cachedVoices = [];
-function loadVoices() {
-  if (typeof window === 'undefined' || !window.speechSynthesis) return;
-  const v = window.speechSynthesis.getVoices();
-  if (v && v.length) cachedVoices = v;
-}
-if (typeof window !== 'undefined' && window.speechSynthesis) {
-  loadVoices();
-  if (window.speechSynthesis.onvoiceschanged !== undefined) {
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-  }
-}
-
-function speakBrowser(text) {
-  if (!('speechSynthesis' in window) || !text) return Promise.resolve();
-  return new Promise((resolve) => {
-    try {
-      window.speechSynthesis.cancel();
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = LANGUAGE;
-      const voices = cachedVoices.length ? cachedVoices : window.speechSynthesis.getVoices();
-      const germanVoice = voices.find(v => v.lang && v.lang.startsWith('de'));
-      if (germanVoice) utter.voice = germanVoice;
-      utter.rate = 0.95;
-      let done = false;
-      // Chrome-Workaround: Sprachausgabe stoppt nach ~15s; pause/resume hält sie am Laufen.
-      const keepAlive = setInterval(() => {
-        if (!window.speechSynthesis.speaking) { clearInterval(keepAlive); return; }
-        window.speechSynthesis.pause();
-        window.speechSynthesis.resume();
-      }, 8000);
-      const finish = () => {
-        if (!done) { done = true; clearInterval(keepAlive); resolve(); }
-      };
-      // Sicherheits-Timeout proportional zur Textlänge (~12 Zeichen/s).
-      const safetyMs = Math.min(180000, Math.max(15000, text.length * 120));
-      const timeout = setTimeout(finish, safetyMs);
-      utter.onend = () => { clearTimeout(timeout); finish(); };
-      utter.onerror = () => { clearTimeout(timeout); finish(); };
-      window.speechSynthesis.speak(utter);
-    } catch {
-      resolve();
-    }
-  });
-}
-
-async function speakElevenLabs(text) {
-  const token = localStorage.getItem('bb_token');
-  const res = await fetch('/api/ai/tts', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {})
-    },
-    body: JSON.stringify({ text })
-  });
-  if (!res.ok) throw new Error('ElevenLabs TTS failed');
-  const data = await res.json();
-  const audioSrc = `data:${data.contentType};base64,${data.audioBase64}`;
-  return new Promise((resolve) => {
-    const audio = new Audio(audioSrc);
-    audio.onended = resolve;
-    audio.onerror = resolve;
-    audio.play().catch(resolve);
-  });
-}
-
-async function speak(text) {
-  if (!text || !text.trim()) return;
-  try {
-    await speakElevenLabs(text);
-  } catch {
-    await speakBrowser(text);
-  }
 }
 
 // Animierter Equalizer - zeigt klar ob Voice aktiv ist oder nicht
@@ -197,15 +88,14 @@ export default function VoiceControlWidget() {
       const { clean, action } = parseActionFromReply(raw);
       let finalText = clean || 'Erledigt.';
       if (action) {
-        const actionMsg = await executeVoiceAction(action, navigate);
-        if (actionMsg) finalText = (finalText ? finalText + ' ' : '') + actionMsg;
+        const actionResult = await executeBuddyAction(action, { navigate });
+        if (actionResult.message) finalText = (finalText ? finalText + ' ' : '') + actionResult.message;
       }
       setLastAnswer(finalText);
       setVoiceState('speaking');
-      // Echo-Schutz aktiv: onend startet die Erkennung jetzt NICHT automatisch neu
       isSpeakingRef.current = true;
       try { recognitionRef.current?.stop(); } catch {}
-      await speak(finalText);
+      await speakWithFallback(finalText, { voiceEnabled: true, lang: LANGUAGE, rate: 1.0 });
       isSpeakingRef.current = false;
       if (isRunningRef.current) {
         try { recognitionRef.current?.start(); } catch {}
@@ -227,6 +117,7 @@ export default function VoiceControlWidget() {
     awaitingCommandRef.current = false;
     isSpeakingRef.current = false;
     try { recognitionRef.current?.stop(); } catch {}
+    cancelElevenLabs();
     if (window.speechSynthesis) window.speechSynthesis.cancel();
     setVoiceState('off');
     setTranscript('');
