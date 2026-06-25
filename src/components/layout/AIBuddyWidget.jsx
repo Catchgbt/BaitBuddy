@@ -168,6 +168,7 @@ export default function AIBuddyWidget() {
     offsetY: 0,
     moved: false
   });
+  const isLoadingRef = useRef(false);
 
   const currentPage = location.pathname.replace(/^\//, '').split('/')[0] || 'Dashboard';
   const tip = getTipForPage(currentPage);
@@ -359,8 +360,9 @@ export default function AIBuddyWidget() {
   const handleSendMessage = useCallback(
     async (userMessage) => {
       const text = userMessage?.trim();
-      if (!text) return;
+      if (!text || isLoadingRef.current) return;
 
+      isLoadingRef.current = true;
       // Vollstaendigen Verlauf aufbauen, damit der Buddy den Gespraechskontext
       // behaelt (vorher wurde nur die einzelne letzte Nachricht gesendet, der
       // Buddy "vergass" alles Vorherige).
@@ -402,6 +404,7 @@ export default function AIBuddyWidget() {
         console.error('Chat error:', err);
         setChatError('Fehler beim Laden der Antwort');
       } finally {
+        isLoadingRef.current = false;
         setIsLoading(false);
         setIsTalking(false);
         setIsNodding(false);
