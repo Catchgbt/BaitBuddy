@@ -131,10 +131,18 @@ export default function MiniKiVoiceBuddy() {
   const waveRef = useRef(null);
   const synthRef = useRef(typeof window !== "undefined" ? window.speechSynthesis : null);
   const voicesLoadedRef = useRef(false);
+  const speakTimerRef = useRef(null);
 
   useEffect(() => {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
   }, [messages]);
+
+  useEffect(() => {
+    return () => {
+      if (speakTimerRef.current) clearTimeout(speakTimerRef.current);
+      if (waveRef.current) clearInterval(waveRef.current);
+    };
+  }, []);
 
   // Stimmen vorab laden (Browser-Quirk: getVoices() ist initial leer)
   useEffect(() => {
@@ -176,7 +184,8 @@ export default function MiniKiVoiceBuddy() {
     if (!synthRef.current || !text) { setStatus(""); stopWave(); return; }
     try {
       synthRef.current.cancel();
-      setTimeout(() => {
+      if (speakTimerRef.current) clearTimeout(speakTimerRef.current);
+      speakTimerRef.current = setTimeout(() => {
         if (!synthRef.current) return;
         const u = new SpeechSynthesisUtterance(text);
         u.lang = "de-DE";
