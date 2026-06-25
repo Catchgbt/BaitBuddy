@@ -22,6 +22,10 @@ const BUDDY_VOICE_ENABLED_KEY = 'buddy-voice-enabled';
 const SMALL_BUBBLE_TIMEOUT = 15000;
 const AVATAR_SIZE = 96;
 const DRAG_THRESHOLD = 5;
+const VOICE_RECOGNITION_TIMEOUT = 30000;
+const MAX_VISITED_PAGES_ENTRIES = 100;
+const ACTION_RETRY_ATTEMPTS = 2;
+const ACTION_RETRY_DELAY = 1000;
 
 function getDefaultPos() {
   if (typeof window === 'undefined') return { x: 300, y: 500 };
@@ -39,7 +43,6 @@ function clampPos(x, y) {
   };
 }
 
-// Liest den zuletzt bekannten Standort des Nutzers (Wetter-Kontext fuer die KI).
 function getStoredLocation() {
   try {
     const stored = localStorage.getItem('userLocation');
@@ -52,10 +55,33 @@ function getStoredLocation() {
   return null;
 }
 
-// Fuehrt die vom Backend gelieferte KI-Aktion clientseitig aus. Das Backend
-// erkennt den <<ACTION>>-Block im LLM-Output und liefert ihn als geparstes
-// Objekt; hier wird er real in der App umgesetzt (Navigation, Fang eintragen,
-// Spot speichern). Rueckgabe: kurzer Bestaetigungstext oder null.
+function cleanupStorageForVisitedPages() {
+  try {
+    const visitedPages = JSON.parse(localStorage.getItem(VISITED_PAGES_KEY) || '[]');
+    if (visitedPages.length > MAX_VISITED_PAGES_ENTRIES) {
+      const trimmed = visitedPages.slice(-MAX_VISITED_PAGES_ENTRIES);
+      localStorage.setItem(VISITED_PAGES_KEY, JSON.stringify(trimmed));
+    }
+  } catch (e) {
+    localStorage.removeItem(VISITED_PAGES_KEY);
+  }
+}
+
+async function executeWithRetry(fn, maxAttempts = ACTION_RETRY_ATTEMPTS) {
+  let lastError;
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      if (i < maxAttempts - 1) {
+        await new Promise(resolve => setTimeout(resolve, ACTION_RETRY_DELAY));
+      }
+    }
+  }
+  throw lastError;
+}
+
 async function executeBuddyAction(action, { navigate, userLocation }) {
   if (!action || !action.type) return null;
   try {
@@ -69,13 +95,15 @@ async function executeBuddyAction(action, { navigate, userLocation }) {
     if (action.type === 'log_catch') {
       const p = action.params || {};
       if (!p.species) return 'Sag mir kurz die Fischart, dann trage ich den Fang ein.';
-      await Catch.create({
-        species: p.species,
-        catch_time: new Date().toISOString(),
-        ...(p.length_cm != null && { length_cm: Number(p.length_cm) }),
-        ...(p.weight_kg != null && { weight_kg: Number(p.weight_kg) }),
-        ...(p.bait_used && { bait_used: p.bait_used }),
-        ...(p.notes && { notes: p.notes })
+      await executeWithRetry(async () => {
+        await Catch.create({
+          species: p.species,
+          catch_time: new Date().toISOString(),
+          ...(p.length_cm != null && { length_cm: Number(p.length_cm) }),
+          ...(p.weight_kg != null && { weight_kg: Number(p.weight_kg) }),
+          ...(p.bait_used && { bait_used: p.bait_used }),
+          ...(p.notes && { notes: p.notes })
+        });
       });
       toast.success(`Fang eingetragen: ${p.species}`);
       return null;
@@ -89,19 +117,21 @@ async function executeBuddyAction(action, { navigate, userLocation }) {
       if (lat == null || lng == null) {
         return 'Ich brauche deinen Standort fuer den Spot. Aktiviere die Ortung und versuche es erneut.';
       }
-      await Spot.create({
-        name: p.name,
-        latitude: lat,
-        longitude: lng,
-        water_type: p.water_type || 'see',
-        notes: p.notes || ''
+      await executeWithRetry(async () => {
+        await Spot.create({
+          name: p.name,
+          latitude: lat,
+          longitude: lng,
+          water_type: p.water_type || 'see',
+          notes: p.notes || ''
+        });
       });
       toast.success(`Spot gespeichert: ${p.name}`);
       return null;
     }
   } catch (e) {
-    console.error('Buddy-Action fehlgeschlagen:', e);
-    toast.error('Aktion konnte nicht ausgefuehrt werden');
+    console.error('Buddy-Action failed after retries:', e?.message);
+    toast.error('Aktion fehlgeschlagen. Bitte versuche es erneut.');
     return 'Das hat leider nicht geklappt. Versuch es gleich nochmal.';
   }
   return null;
@@ -188,8 +218,23 @@ export default function AIBuddyWidget() {
       recognition.current.continuous = false;
       recognition.current.interimResults = false;
 
-      recognition.current.onstart = () => setIsListening(true);
-      recognition.current.onend = () => setIsListening(false);
+      let timeoutId = null;
+
+      recognition.current.onstart = () => {
+        setIsListening(true);
+        timeoutId = setTimeout(() => {
+          if (recognition.current && recognition.current.state !== 'ended') {
+            recognition.current.abort();
+            setIsListening(false);
+            toast.error('Spracherkennung hat das Zeitlimit überschritten');
+          }
+        }, VOICE_RECOGNITION_TIMEOUT);
+      };
+
+      recognition.current.onend = () => {
+        if (timeoutId) clearTimeout(timeoutId);
+        setIsListening(false);
+      };
 
       recognition.current.onresult = (event) => {
         const transcript = Array.from(event.results)
@@ -205,9 +250,15 @@ export default function AIBuddyWidget() {
         }
       };
 
-      recognition.current.onerror = () => {
+      recognition.current.onerror = (event) => {
+        if (timeoutId) clearTimeout(timeoutId);
         setIsListening(false);
         setInputValue('');
+
+        if (event.error !== 'aborted' && event.error !== 'no-speech') {
+          console.warn(`Voice recognition error: ${event.error}`);
+          toast.error(`Sprachfehler: ${event.error}`);
+        }
       };
     }
 
@@ -226,6 +277,8 @@ export default function AIBuddyWidget() {
   }, [handleSendMessage]);
 
   useEffect(() => {
+    cleanupStorageForVisitedPages();
+
     try {
       const hidden = localStorage.getItem(HIDDEN_KEY) === 'true';
       if (hidden) return;

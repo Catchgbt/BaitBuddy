@@ -32,20 +32,37 @@ function parseActionFromReply(text) {
   return { clean, action };
 }
 
+async function executeWithRetry(fn, maxAttempts = ACTION_RETRY_ATTEMPTS) {
+  let lastError;
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      if (i < maxAttempts - 1) {
+        await new Promise(resolve => setTimeout(resolve, ACTION_RETRY_DELAY));
+      }
+    }
+  }
+  throw lastError;
+}
+
 async function executeVoiceAction(action, navigate, location = null) {
   if (!action || !action.type) return null;
   try {
     if (action.type === "log_catch") {
       const p = action.params || {};
       if (!p.species) return "Bitte sage mir welche Fischart.";
-      await Catch.create({
-        species: p.species,
-        catch_time: new Date().toISOString(),
-        ...(p.length_cm != null && { length_cm: Number(p.length_cm) }),
-        ...(p.weight_kg != null && { weight_kg: Number(p.weight_kg) }),
-        ...(p.bait_used && { bait_used: p.bait_used }),
-        ...(p.notes && { notes: p.notes }),
-        ...(p.is_released != null && { is_released: !!p.is_released })
+      await executeWithRetry(async () => {
+        await Catch.create({
+          species: p.species,
+          catch_time: new Date().toISOString(),
+          ...(p.length_cm != null && { length_cm: Number(p.length_cm) }),
+          ...(p.weight_kg != null && { weight_kg: Number(p.weight_kg) }),
+          ...(p.bait_used && { bait_used: p.bait_used }),
+          ...(p.notes && { notes: p.notes }),
+          ...(p.is_released != null && { is_released: !!p.is_released })
+        });
       });
       toast.success(`Fang eingetragen: ${p.species}`);
       return `Fang ${p.species} wurde im Fangbuch eingetragen.`;
@@ -71,32 +88,35 @@ async function executeVoiceAction(action, navigate, location = null) {
     if (action.type === "add_spot" || action.type === "save_spot") {
       const p = action.params || {};
       if (!p.name) return "Wie soll der Spot heissen?";
-      // Koordinaten aus der Aktion oder als Fallback die aktuelle GPS-Position
       const lat = p.latitude != null ? Number(p.latitude) : location?.lat;
       const lon = p.longitude != null ? Number(p.longitude) : location?.lon;
       if (lat == null || lon == null) {
         return "Ich kenne deine Position nicht. Aktiviere GPS, dann speichere ich den Spot.";
       }
-      await Spot.create({
-        name: p.name,
-        latitude: lat,
-        longitude: lon,
-        water_type: p.water_type || "see",
-        notes: p.notes || "",
-        ...(p.is_favorite != null && { is_favorite: !!p.is_favorite })
+      await executeWithRetry(async () => {
+        await Spot.create({
+          name: p.name,
+          latitude: lat,
+          longitude: lon,
+          water_type: p.water_type || "see",
+          notes: p.notes || "",
+          ...(p.is_favorite != null && { is_favorite: !!p.is_favorite })
+        });
       });
       toast.success(`Spot gespeichert: ${p.name}`);
       return `Spot ${p.name} wurde gespeichert.`;
     }
   } catch (e) {
-    console.error("Voice action error:", e);
-    toast.error("Aktion fehlgeschlagen");
+    console.error("Voice action error:", e?.message);
+    toast.error("Aktion fehlgeschlagen. Bitte versuche es erneut.");
     return "Die Aktion konnte nicht ausgefuehrt werden.";
   }
   return null;
 }
 
-// Config
+const VOICE_RECOGNITION_TIMEOUT = 30000;
+const ACTION_RETRY_ATTEMPTS = 2;
+const ACTION_RETRY_DELAY = 1000;
 const WAKE_WORD = 'hey buddy';
 const WAKE_WORD_VARIANTS = ['hey buddy', 'hei buddy', 'hey budy', 'hey baddy', 'heybuddy', 'hey body', 'hallo buddy'];
 const LANGUAGE = 'de-DE';
@@ -749,7 +769,27 @@ function VoiceBuddy() {
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
+    let voiceTimeoutId = null;
+
+    const resetVoiceTimeout = () => {
+      if (voiceTimeoutId) clearTimeout(voiceTimeoutId);
+      if (isListeningRef.current && !isSpeakingRef.current) {
+        voiceTimeoutId = setTimeout(() => {
+          console.warn('Voice recognition timeout, restarting...');
+          try { recognition.stop(); } catch {}
+          setTimeout(() => {
+            try { recognition.start(); } catch {}
+          }, 500);
+        }, VOICE_RECOGNITION_TIMEOUT);
+      }
+    };
+
+    recognition.onstart = () => {
+      resetVoiceTimeout();
+    };
+
     recognition.onresult = async (event) => {
+      resetVoiceTimeout();
       // Während der Assistent spricht, eingehende Erkennung ignorieren (Echo-Schutz)
       if (isSpeakingRef.current) return;
 
@@ -879,6 +919,7 @@ function VoiceBuddy() {
     recognitionRef.current = recognition;
 
     return () => {
+      if (voiceTimeoutId) clearTimeout(voiceTimeoutId);
       try {
         recognition.stop();
       } catch (e) {}
