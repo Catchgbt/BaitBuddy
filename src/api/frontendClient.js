@@ -209,20 +209,18 @@ function makeEntity(entityName) {
 
     bulkCreate: async (items = []) => {
       if (!base) return items.map((d) => ({ id: generateOfflineId(), ...d }));
-      try {
-        const result = await api.post(`${base}/bulk`, items);
-        return Array.isArray(result) ? result : [];
-      } catch { return []; }
+      const result = await api.post(`${base}/bulk`, items);
+      return Array.isArray(result) ? result : [];
     },
 
     update: async (id, data) => {
       if (!base) return { id, ...data };
-      try { return await api.patch(`${base}/${id}`, data); } catch { return { id, ...data }; }
+      return await api.patch(`${base}/${id}`, data);
     },
 
     delete: async (id) => {
       if (!base) return { ok: true };
-      try { return await api.del(`${base}/${id}`); } catch { return { ok: true }; }
+      return await api.del(`${base}/${id}`);
     },
 
     // Realtime-Subscriptions gibt es backend-seitig (noch) nicht. Sicherer
@@ -414,6 +412,35 @@ const fileToBase64 = (file) => {
   });
 };
 
+// Sucht ab dem ersten "{" das dazu passende schliessende "}" (Klammertiefe,
+// unter Beachtung von Strings/Escapes) statt der bisherigen Greedy-Regex
+// /\{[\s\S]*\}/, die bei Prosa NACH dem JSON-Block (z.B. "...} Lass es mich
+// wissen!") das komplette Antwortende mit in den JSON.parse-Versuch zog und
+// so an harmlosem Anhangstext scheiterte.
+function extractBalancedJson(text) {
+  const start = text.indexOf('{');
+  if (start === -1) return null;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === '\\') escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') inString = true;
+    else if (ch === '{') depth++;
+    else if (ch === '}') {
+      depth--;
+      if (depth === 0) return text.slice(start, i + 1);
+    }
+  }
+  return null;
+}
+
 export const integrations = {
   Core: {
     // base44-Kompatibilität: InvokeLLM liefert den Antwort-TEXT zurück — bzw. bei
@@ -434,10 +461,21 @@ export const integrations = {
       if (!response_json_schema) return text;
       // Strukturierte Antwort erwartet: JSON aus dem Text extrahieren. Bei
       // Fehlschlag ein leeres Objekt liefern — Aufrufer greifen mit ?./&& zu.
-      try {
-        const match = typeof text === 'string' ? text.match(/\{[\s\S]*\}/) : null;
-        if (match) return JSON.parse(match[0]);
-      } catch { /* Fallthrough zu {} */ }
+      if (typeof text !== 'string') return {};
+      const trimmed = text.trim();
+      // 1) Ganze Antwort ist bereits JSON (Modell hat sich an den Hinweis gehalten)
+      try { return JSON.parse(trimmed); } catch { /* weiter zu 2) */ }
+      // 2) Markdown-Codefence entfernen (```json ... ``` oder ``` ... ```)
+      const fenceMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+      if (fenceMatch) {
+        try { return JSON.parse(fenceMatch[1].trim()); } catch { /* weiter zu 3) */ }
+      }
+      // 3) JSON-Block per Klammertiefe extrahieren (toleriert Prosa davor/danach)
+      const balanced = extractBalancedJson(trimmed);
+      if (balanced) {
+        try { return JSON.parse(balanced); } catch { /* Fallthrough zu {} */ }
+      }
+      console.warn('InvokeLLM: konnte kein JSON aus der Antwort extrahieren', trimmed.slice(0, 200));
       return {};
     },
     SendEmail:  () => Promise.resolve({ ok: true }),

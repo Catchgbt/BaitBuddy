@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { api, entities, auth } from './frontendClient';
+import { api, entities, auth, integrations } from './frontendClient';
 
 function jsonResponse(body, { ok = true, status = ok ? 200 : 400 } = {}) {
   return {
@@ -116,6 +116,71 @@ describe('entities (frontendClient)', () => {
 
     const result = await entities.Catch.get('123');
     expect(result).toBeNull();
+  });
+
+  it('update() wirft bei einem Serverfehler statt ein Fake-Objekt zurueckzugeben', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      jsonResponse({ error: 'Nicht autorisiert' }, { ok: false, status: 403 })
+    ));
+
+    await expect(entities.Catch.update('123', { species: 'Zander' })).rejects.toThrow('Nicht autorisiert');
+  });
+
+  it('delete() wirft bei einem Serverfehler statt {ok:true} vorzutaeuschen', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      jsonResponse({ error: 'Nicht gefunden' }, { ok: false, status: 404 })
+    ));
+
+    await expect(entities.Catch.delete('123')).rejects.toThrow('Nicht gefunden');
+  });
+
+  it('bulkCreate() wirft bei einem Serverfehler statt [] zurueckzugeben', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      jsonResponse({ error: 'Ungueltige Daten' }, { ok: false, status: 400 })
+    ));
+
+    await expect(entities.Catch.bulkCreate([{ species: 'Aal' }])).rejects.toThrow('Ungueltige Daten');
+  });
+});
+
+describe('integrations.Core.InvokeLLM (strukturierte Antworten)', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.restoreAllMocks();
+  });
+
+  const schema = { type: 'object', properties: { summary: { type: 'string' } } };
+
+  it('parst eine Antwort, die direkt reines JSON ist', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      jsonResponse({ reply: '{"summary": "gut"}' })
+    ));
+    const result = await integrations.Core.InvokeLLM({ prompt: 'x', response_json_schema: schema });
+    expect(result).toEqual({ summary: 'gut' });
+  });
+
+  it('parst JSON aus einem Markdown-Codefence', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      jsonResponse({ reply: 'Hier ist das Ergebnis:\n```json\n{"summary": "prima"}\n```\nDanke!' })
+    ));
+    const result = await integrations.Core.InvokeLLM({ prompt: 'x', response_json_schema: schema });
+    expect(result).toEqual({ summary: 'prima' });
+  });
+
+  it('parst JSON mit Prosa davor UND danach (Greedy-Regex haette hier versagt)', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      jsonResponse({ reply: 'Klar, hier: {"summary": "ok"} Lass es mich wissen, falls du mehr brauchst!' })
+    ));
+    const result = await integrations.Core.InvokeLLM({ prompt: 'x', response_json_schema: schema });
+    expect(result).toEqual({ summary: 'ok' });
+  });
+
+  it('liefert ein leeres Objekt, wenn kein JSON gefunden werden kann', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      jsonResponse({ reply: 'Tut mir leid, das kann ich nicht beantworten.' })
+    ));
+    const result = await integrations.Core.InvokeLLM({ prompt: 'x', response_json_schema: schema });
+    expect(result).toEqual({});
   });
 });
 

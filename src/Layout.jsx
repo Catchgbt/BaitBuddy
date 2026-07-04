@@ -138,13 +138,19 @@ function LayoutContent({ children, currentPageName }) {
       started_at: new Date().toISOString(),
       status: 'active',
       last_heartbeat: new Date().toISOString()
-    }).then(s => { sessionDbId = s.id; });
+    }).then(s => { sessionDbId = s.id; }).catch(error => {
+      console.error('Error creating usage session:', error);
+    });
 
     const heartbeat = setInterval(async () => {
       if (!sessionDbId) return;
-      await entities.UsageSession.update(sessionDbId, {
-        last_heartbeat: new Date().toISOString()
-      });
+      try {
+        await entities.UsageSession.update(sessionDbId, {
+          last_heartbeat: new Date().toISOString()
+        });
+      } catch (error) {
+        console.error('Error updating heartbeat:', error);
+      }
     }, 30000);
 
     const stopSession = async () => {
