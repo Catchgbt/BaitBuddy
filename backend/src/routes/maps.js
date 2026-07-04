@@ -3,12 +3,25 @@ import fs from 'fs/promises';
 import path from 'path';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
+import { requireAuth, requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const DATA_DIR = path.join(__dirname, '..', '..', 'data', 'maps');
 const SCRIPT_PATH = path.join(__dirname, '..', '..', 'scripts', 'map_downloader.py');
+
+// Deckt sich mit den IDs aus /maps/available und /maps/list — Whitelist gegen
+// beliebige sourceId-Werte, die sonst 1:1 als argv an ein Python-Skript bzw.
+// in einen Datei-Praefix-Loesch-Scan wandern wuerden.
+const KNOWN_SOURCE_IDS = new Set([
+  'gebco_europe_tile',
+  'eu_dem_25m',
+  'copernicus_dem_30',
+  'osm_germany_pbf',
+  'opentopomap',
+  'wms_nrw_dtk',
+]);
 
 // ============================================================
 // Utilities
@@ -62,7 +75,7 @@ function runPythonScript(args) {
  * GET /api/maps/status
  * Returns status of all available map datasets
  */
-router.get('/maps/status', async (req, res) => {
+router.get('/maps/status', requireAuth, requireAdmin, async (req, res) => {
   try {
     await ensureDataDir();
 
@@ -114,7 +127,7 @@ router.get('/maps/status', async (req, res) => {
  * GET /api/maps/available
  * List all available map sources
  */
-router.get('/maps/available', (req, res) => {
+router.get('/maps/available', requireAuth, requireAdmin, (req, res) => {
   res.json({
     success: true,
     available: [
@@ -180,14 +193,18 @@ router.get('/maps/available', (req, res) => {
  * POST /api/maps/download
  * Trigger download of a specific map source
  */
-router.post('/maps/download', async (req, res) => {
+router.post('/maps/download', requireAuth, requireAdmin, async (req, res) => {
   try {
+    if (process.env.VERCEL) {
+      return res.status(501).json({ success: false, error: 'Kartendownload ist auf Vercel nicht verfuegbar (Dateisystem ist read-only)' });
+    }
+
     const { sourceId } = req.body;
 
-    if (!sourceId) {
+    if (!sourceId || !KNOWN_SOURCE_IDS.has(sourceId)) {
       return res
         .status(400)
-        .json({ success: false, error: 'sourceId required' });
+        .json({ success: false, error: 'Unbekannte oder fehlende sourceId' });
     }
 
     // Run download in background (don't wait)
@@ -215,8 +232,12 @@ router.post('/maps/download', async (req, res) => {
  * POST /api/maps/download-auto
  * Trigger automatic downloads (priority 1 sources)
  */
-router.post('/maps/download-auto', async (req, res) => {
+router.post('/maps/download-auto', requireAuth, requireAdmin, async (req, res) => {
   try {
+    if (process.env.VERCEL) {
+      return res.status(501).json({ success: false, error: 'Kartendownload ist auf Vercel nicht verfuegbar (Dateisystem ist read-only)' });
+    }
+
     // Run auto-download in background
     runPythonScript(['auto'])
       .then(() => {
@@ -241,9 +262,16 @@ router.post('/maps/download-auto', async (req, res) => {
  * DELETE /api/maps/:sourceId
  * Delete a downloaded map dataset
  */
-router.delete('/maps/:sourceId', async (req, res) => {
+router.delete('/maps/:sourceId', requireAuth, requireAdmin, async (req, res) => {
   try {
+    if (process.env.VERCEL) {
+      return res.status(501).json({ success: false, error: 'Kartenverwaltung ist auf Vercel nicht verfuegbar (Dateisystem ist read-only)' });
+    }
+
     const { sourceId } = req.params;
+    if (!KNOWN_SOURCE_IDS.has(sourceId)) {
+      return res.status(400).json({ success: false, error: 'Unbekannte sourceId' });
+    }
     await ensureDataDir();
 
     // Find and delete related files
@@ -277,7 +305,7 @@ router.delete('/maps/:sourceId', async (req, res) => {
  * GET /api/maps/list
  * List all available sources with metadata
  */
-router.get('/maps/list', (req, res) => {
+router.get('/maps/list', requireAuth, requireAdmin, (req, res) => {
   res.json({
     success: true,
     message: 'Available map data sources (prioritized)',

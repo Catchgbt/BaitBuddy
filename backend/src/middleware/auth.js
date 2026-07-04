@@ -19,3 +19,17 @@ export async function optionalAuth(req, res, next) {
   }
   next();
 }
+
+// Muss NACH requireAuth in der Middleware-Kette stehen (braucht req.user).
+// Admin-Status ist eine Allowlist per E-Mail statt eines DB-Flags — es gibt
+// aktuell keine Rollen-Spalte, die vom Backend gepflegt wird.
+export function requireAdmin(req, res, next) {
+  const adminEmails = (process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  if (!req.user?.email || !adminEmails.includes(req.user.email.toLowerCase())) {
+    return res.status(403).json({ error: 'Admin-Berechtigung erforderlich' });
+  }
+  next();
+}

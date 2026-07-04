@@ -4,6 +4,15 @@ import { supabase } from '../lib/supabase.js';
 
 const router = Router();
 
+// Ohne server-seitige Kaufverifikation (Google-Play-Service-Account bzw.
+// Stripe-Secret) darf /premium/activate niemanden freischalten — sonst reicht
+// ein beliebiger nicht-leerer purchase_token/transaction_id, um sich selbst
+// Elite zu geben. Beide Secrets sind aktuell nirgends konfiguriert (auch nicht
+// in backend/.env.example), die App ist laut CLAUDE.md noch nicht im
+// Play/App Store live.
+const GOOGLE_PLAY_VERIFICATION_CONFIGURED = !!process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON;
+const STRIPE_PAYMENT_VERIFICATION_CONFIGURED = !!process.env.STRIPE_SECRET_KEY;
+
 // Ermittelt den effektiven Plan aus den User-Metadaten. Ist ein Ablaufdatum
 // gesetzt und überschritten (z.B. nach dem 24h-Trial für neue Nutzer), gilt der
 // Nutzer wieder als 'free' — wichtig, weil das Frontend-Gating nur die Plan-ID
@@ -88,6 +97,15 @@ router.post('/premium/activate', requireAuth, async (req, res) => {
   if (!purchase_token && !transaction_id) {
     return res.status(400).json({
       error: 'purchase_token (Google Play) oder transaction_id erforderlich — keine Zahlung verifiziert'
+    });
+  }
+
+  const verificationConfigured = purchase_token
+    ? GOOGLE_PLAY_VERIFICATION_CONFIGURED
+    : STRIPE_PAYMENT_VERIFICATION_CONFIGURED;
+  if (!verificationConfigured) {
+    return res.status(501).json({
+      error: 'Kaufverifikation ist serverseitig noch nicht konfiguriert — Premium kann derzeit nicht aktiviert werden'
     });
   }
 

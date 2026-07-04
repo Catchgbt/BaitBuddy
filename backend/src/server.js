@@ -61,7 +61,10 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Interner Fehler' });
 });
 
-if (!process.env.VERCEL) {
+// NODE_ENV=test (siehe backend/test/setup.js) haelt den Server auch dann vom
+// echten Port-Binding ab, wenn ein Test absichtlich process.env.VERCEL
+// entfernt, um den Nicht-Vercel-Codepfad einzelner Routen zu pruefen.
+if (!process.env.VERCEL && process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {});
 }
 
