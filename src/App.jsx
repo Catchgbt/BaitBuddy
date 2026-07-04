@@ -64,9 +64,14 @@ const AnimatedRoutes = () => {
   const mainPageKey = mainPage ?? Object.keys(Pages)[0];
   const MainPage = mainPageKey ? Pages[mainPageKey] : null;
 
+  // Erstes Pfadsegment statt kompletter Rest-Pfad: bei den zusätzlichen
+  // verschachtelten Routen (/events/create, /events/:id, /leaderboards/monthly)
+  // lieferte .slice(1) z.B. "events/create" — das matcht keinen PAGES-Key und
+  // machte Sidebar-Hervorhebung, Gast-Zugriffsprüfung und die
+  // Scroll-Position-Logik in Layout.jsx für diese Routen wirkungslos.
   const currentPageName = location.pathname === '/'
     ? mainPageKey
-    : location.pathname.slice(1);
+    : location.pathname.split('/')[1];
 
   const routeContent = (
     <Suspense fallback={<LazyPageFallback />}>
