@@ -15,10 +15,15 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            backend/package-lock.json
 
       - name: Install deps
         run: npm ci --legacy-peer-deps
+
+      - name: Install backend deps
+        run: cd backend && npm ci --legacy-peer-deps
 
       - name: Lint
         run: npm run lint
