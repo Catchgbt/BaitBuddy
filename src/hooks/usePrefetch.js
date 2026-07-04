@@ -4,7 +4,6 @@ import {
   prefetchRoute,
   prefetchNavigationGraph,
   prefetchCriticalChunks,
-  NAVIGATION_GRAPH,
 } from '@/lib/chunkPrefetch';
 
 /**

@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { events } from '@/api/frontendClient';
 
 /**

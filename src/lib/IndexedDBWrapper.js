@@ -28,8 +28,8 @@ export class IndexedDBManager {
         reject(req.error);
       };
 
-      req.onupgradeneeded = (event) => {
-        const db = event.target.result;
+      req.onupgradeneeded = () => {
+        const db = req.result;
 
         for (const [storeName, config] of Object.entries(STORES)) {
           if (!db.objectStoreNames.contains(storeName)) {
