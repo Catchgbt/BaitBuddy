@@ -1,0 +1,36 @@
+import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react';
+import { resolve } from 'path';
+
+// Separate von vite.config.js: Terser/Chunk-Konfiguration wird von Vitest nicht
+// benötigt und würde den Testlauf nur verlangsamen.
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@': resolve('./src'),
+    },
+  },
+  test: {
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'frontend',
+          environment: 'jsdom',
+          include: ['src/**/*.test.{js,jsx,ts,tsx}'],
+          setupFiles: ['src/test/setup.js'],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'backend',
+          environment: 'node',
+          include: ['backend/**/*.test.js'],
+          setupFiles: ['backend/test/setup.js'],
+        },
+      },
+    ],
+  },
+});
