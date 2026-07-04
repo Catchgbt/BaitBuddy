@@ -15,13 +15,15 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./tsconfig.typecheck.json",
     "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
     "android:sync": "cd android && ./gradlew sync && cd .."
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.0",
     "@hello-pangea/dnd": "^17.0.0",
     "@hookform/resolvers": "^4.1.2",
-    "@playwright/test": "^1.61.0",
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-alert-dialog": "^1.1.6",
     "@radix-ui/react-aspect-ratio": "^1.1.2",
@@ -73,7 +75,6 @@
     "lucide-react": "^0.475.0",
     "moment": "^2.30.1",
     "next-themes": "^0.4.4",
-    "playwright": "^1.61.0",
     "react": "^18.2.0",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.2.0",
@@ -97,6 +98,11 @@
     "@capacitor/cli": "^8.4.0",
     "@capacitor/core": "6.2.1",
     "@eslint/js": "^9.19.0",
+    "@playwright/test": "^1.61.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^22.13.5",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
@@ -109,10 +115,13 @@
     "eslint-plugin-react-refresh": "^0.4.18",
     "eslint-plugin-unused-imports": "^4.3.0",
     "globals": "^15.14.0",
+    "jsdom": "^29.1.1",
     "postcss": "^8.5.3",
+    "supertest": "^7.2.2",
     "tailwindcss": "^3.4.17",
     "terser": "^5.48.0",
     "typescript": "^5.8.2",
-    "vite": "^6.1.0"
+    "vite": "^6.1.0",
+    "vitest": "^3.2.6"
   }
 }

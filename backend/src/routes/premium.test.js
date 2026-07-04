@@ -1,0 +1,79 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import request from 'supertest';
+import { createSupabaseMock } from '../../test/mockSupabase.js';
+
+const TEST_USER = { id: 'user-1', email: 'angler@baitbuddy.test', user_metadata: {} };
+
+const { supabaseMock } = vi.hoisted(() => ({ supabaseMock: { current: null } }));
+vi.mock('../lib/supabase.js', () => ({
+  get supabase() { return supabaseMock.current; },
+}));
+
+let app;
+
+beforeEach(async () => {
+  vi.resetModules();
+  delete process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON;
+  delete process.env.STRIPE_SECRET_KEY;
+  supabaseMock.current = createSupabaseMock({ authUser: TEST_USER });
+  ({ default: app } = await import('../server.js'));
+});
+
+describe('POST /api/premium/activate', () => {
+  it('lehnt Aktivierung ohne purchase_token/transaction_id ab (400)', async () => {
+    const res = await request(app)
+      .post('/api/premium/activate')
+      .set('Authorization', 'Bearer test-token')
+      .send({ plan_id: 'elite' });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('lehnt Google-Play-Aktivierung ohne konfigurierte Play-Verifikation ab (501)', async () => {
+    const res = await request(app)
+      .post('/api/premium/activate')
+      .set('Authorization', 'Bearer test-token')
+      .send({ plan_id: 'elite', purchase_token: 'irgendein-token' });
+
+    expect(res.status).toBe(501);
+  });
+
+  it('lehnt Stripe/Sonstige-Aktivierung ohne konfigurierte Verifikation ab (501)', async () => {
+    const res = await request(app)
+      .post('/api/premium/activate')
+      .set('Authorization', 'Bearer test-token')
+      .send({ plan_id: 'elite', transaction_id: 'irgendeine-id' });
+
+    expect(res.status).toBe(501);
+  });
+
+  it('aktiviert den Plan, wenn Play-Verifikation konfiguriert ist', async () => {
+    process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON = '{"type":"service_account"}';
+    vi.resetModules();
+    ({ default: app } = await import('../server.js'));
+
+    supabaseMock.current.auth.admin = {
+      updateUserById: vi.fn(async () => ({ data: {}, error: null })),
+    };
+
+    const res = await request(app)
+      .post('/api/premium/activate')
+      .set('Authorization', 'Bearer test-token')
+      .send({ plan_id: 'elite', purchase_token: 'echter-play-token' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.plan_id).toBe('elite');
+    expect(supabaseMock.current.auth.admin.updateUserById).toHaveBeenCalled();
+  });
+});
+
+describe('GET /api/premium/status', () => {
+  it('liefert free ohne user_metadata', async () => {
+    const res = await request(app)
+      .get('/api/premium/status')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(res.status).toBe(200);
+    expect(res.body.plan.id).toBe('free');
+  });
+});

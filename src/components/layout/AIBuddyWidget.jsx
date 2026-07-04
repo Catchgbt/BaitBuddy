@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { toast } from 'sonner';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { BUDDY_TEXT_CSS } from '@/components/layout/BuddyTextAvatar';
 import { getTipForPage } from '@/lib/buddyTips';

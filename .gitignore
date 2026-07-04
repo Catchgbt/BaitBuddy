@@ -17,6 +17,11 @@ dist-ssr
 .vite
 *.local
 
+# Test-Reports
+playwright-report/
+test-results/
+coverage/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

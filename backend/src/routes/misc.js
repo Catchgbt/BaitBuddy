@@ -5,12 +5,18 @@ import { Buffer } from 'buffer';
 import path from 'path';
 import { parseDepthFile } from '../lib/depthParser.js';
 import { isInClosedSeason } from '../lib/closedSeason.js';
+import { isAllowedFetchUrl } from '../lib/urlSafety.js';
 
 const router = Router();
 
-const ALLOWED_LICENSE_FIELDS = ['license_type', 'issue_date', 'expiration_date', 'number'];
-const ALLOWED_PLAN_FIELDS = ['name', 'date', 'location', 'target_species', 'notes', 'forecast_data'];
-const ALLOWED_GEAR_FIELDS = ['gear_type', 'name', 'brand', 'model', 'notes', 'condition'];
+// Spalten von fishing_plans (siehe supabase/schema.sql + Live-Schema-Audit).
+// War zuvor auf ['name','date','location','target_species','notes',
+// 'forecast_data'] gesetzt — keine dieser Spalten existiert in der Tabelle,
+// wodurch filterBody() bei jedem POST/PATCH ein praktisch leeres Objekt
+// erzeugte und z.B. der KI-Buddy-Trip-Erstellung (buddyActions.js) sowie das
+// Aktivieren/Deaktivieren eines Trips (TripPlanner.jsx) stillschweigend
+// keine Daten speicherten.
+const ALLOWED_PLAN_FIELDS = ['title', 'target_fish', 'spot_info', 'steps', 'planned_date', 'is_active', 'details'];
 
 const filterBody = (body, allowedFields) => {
   const filtered = {};
@@ -46,20 +52,12 @@ router.post('/fishing/clubs/nearby', optionalAuth, async (req, res) => {
   return res.json([]);
 });
 
-router.get('/fishing/licenses', requireAuth, async (req, res) => {
-  const { data, error } = await supabase.from('licenses').select('*').eq('created_by', req.user.email);
-  if (error) return res.status(500).json({ error: error.message });
-  return res.json(data || []);
-});
-
-router.post('/fishing/licenses', requireAuth, async (req, res) => {
-  const filteredBody = filterBody(req.body, ALLOWED_LICENSE_FIELDS);
-  const { data, error } = await supabase.from('licenses').insert({
-    ...filteredBody, created_by: req.user.email
-  }).select().single();
-  if (error) return res.status(500).json({ error: error.message });
-  return res.json(data);
-});
+// /api/fishing/licenses (GET/POST) wurden entfernt: sie nutzten die Spalten
+// created_by/license_type/issue_date/expiration_date, die in der `licenses`-
+// Tabelle nicht existieren (echtes Schema: user_id/user_email/type/
+// valid_from/valid_until/number/issuer) — jeder Aufruf endete in einem
+// 500er. Ungenutzt vom Frontend (LicensesSection.jsx nutzt entities.License
+// -> /api/licenses in userEntities.js, das die richtigen Spalten kennt).
 
 router.get('/fishing/plans', requireAuth, async (req, res) => {
   const { data, error } = await supabase.from('fishing_plans').select('*').eq('created_by', req.user.email);
@@ -98,36 +96,12 @@ router.get('/fishing/hotspots', optionalAuth, async (req, res) => {
   return res.json({ hotspots: data || [] });
 });
 
-router.get('/gear', requireAuth, async (req, res) => {
-  const { data, error } = await supabase.from('gear').select('*').eq('created_by', req.user.email);
-  if (error) return res.status(500).json({ error: error.message });
-  return res.json(data || []);
-});
-
-router.post('/gear', requireAuth, async (req, res) => {
-  const filteredBody = filterBody(req.body, ALLOWED_GEAR_FIELDS);
-  const { data, error } = await supabase.from('gear').insert({
-    ...filteredBody, created_by: req.user.email
-  }).select().single();
-  if (error) return res.status(500).json({ error: error.message });
-  return res.json(data);
-});
-
-router.patch('/gear/:id', requireAuth, async (req, res) => {
-  const filteredBody = filterBody(req.body, ALLOWED_GEAR_FIELDS);
-  const { data, error } = await supabase.from('gear')
-    .update(filteredBody).eq('id', req.params.id).eq('created_by', req.user.email)
-    .select().single();
-  if (error) return res.status(500).json({ error: error.message });
-  return res.json(data);
-});
-
-router.delete('/gear/:id', requireAuth, async (req, res) => {
-  const { error } = await supabase.from('gear').delete()
-    .eq('id', req.params.id).eq('created_by', req.user.email);
-  if (error) return res.status(500).json({ error: error.message });
-  return res.json({ ok: true });
-});
+// /api/gear (GET/POST/PATCH/DELETE) wurden entfernt: sie referenzierten eine
+// `gear`-Tabelle, die in der Datenbank ueberhaupt nicht existiert (jeder
+// Aufruf endete in "relation gear does not exist", 500er). Ungenutzt vom
+// Frontend — das echte Gear-Feature (TackleManager.jsx) nutzt
+// entities.GearItem/-Category/-Rule -> /api/gear/items etc. in gear.js,
+// deren Tabellen (gear_items/gear_categories/gear_rules) real existieren.
 
 router.get('/water', requireAuth, async (req, res) => {
   return res.json({ analysis: 'Wasseranalyse nicht verfügbar' });
@@ -150,6 +124,9 @@ router.post('/water/bathymetry', requireAuth, async (req, res) => {
     const { file_url, water_body_name, device_type, is_public } = req.body || {};
     if (!file_url) return res.status(400).json({ error: 'file_url erforderlich' });
     if (!water_body_name?.trim()) return res.status(400).json({ error: 'water_body_name erforderlich' });
+    if (!isAllowedFetchUrl(file_url)) {
+      return res.status(400).json({ error: 'file_url muss aus dem eigenen Supabase-Storage stammen' });
+    }
 
     const fileRes = await fetch(file_url).catch(() => null);
     if (!fileRes || !fileRes.ok) {
@@ -167,6 +144,7 @@ router.post('/water/bathymetry', requireAuth, async (req, res) => {
 
     const { data: map, error: mapErr } = await supabase.from('bathymetric_maps').insert({
       user_id: req.user.id,
+      user_email: req.user.email,
       name: water_body_name.trim(),
       map_data: {
         device_type: device_type || 'unknown',
@@ -178,7 +156,7 @@ router.post('/water/bathymetry', requireAuth, async (req, res) => {
     if (mapErr) return res.status(500).json({ error: mapErr.message });
 
     const rows = limited.map((p) => ({
-      map_id: map.id, user_id: req.user.id,
+      map_id: map.id, user_id: req.user.id, user_email: req.user.email,
       latitude: p.lat, longitude: p.lon, depth_m: p.depth,
     }));
     const { error: ptErr } = await supabase.from('depth_data_points').insert(rows);

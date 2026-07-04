@@ -89,6 +89,35 @@ router.post('/backups/:id/restore', requireAuth, async (req, res) => {
     .single();
   if (getErr) return res.status(404).json({ error: 'Backup nicht gefunden' });
 
+  // Sicherheitsnetz: mode=replace loescht Tabellen VOR dem Insert der
+  // Snapshot-Daten. Schlaegt der Insert danach fehl, waeren die geloeschten
+  // Zeilen sonst unwiederbringlich weg. Deshalb wird der aktuelle Stand vorher
+  // als automatisches Backup gesichert — schlaegt das fehl, wird der ganze
+  // Restore abgebrochen, statt destruktiv fortzufahren.
+  if (mode === 'replace') {
+    try {
+      const safetySnapshot = await buildSnapshot(req.user.email);
+      const payload = { version: 1, snapshot_at: new Date().toISOString(), data: safetySnapshot };
+      const size_bytes = Buffer.byteLength(JSON.stringify(payload), 'utf8');
+      const { error: safetyErr } = await supabase.from('user_backups').insert({
+        created_by: req.user.email,
+        kind: 'auto',
+        payload,
+        size_bytes,
+        catches_count: safetySnapshot.catches.length,
+        spots_count: safetySnapshot.spots.length,
+        water_scenes_count: safetySnapshot.water_scenes.length,
+        bathymetric_maps_count: safetySnapshot.bathymetric_maps.length,
+        note: `Automatisches Sicherheits-Backup vor Restore von Backup ${req.params.id}`,
+      });
+      if (safetyErr) throw new Error(safetyErr.message);
+    } catch (e) {
+      return res.status(500).json({
+        error: 'Sicherheits-Backup vor dem Restore fehlgeschlagen — Restore abgebrochen: ' + e.message
+      });
+    }
+  }
+
   const snapshot = backup?.payload?.data || {};
   const results = {};
   for (const table of tables) {

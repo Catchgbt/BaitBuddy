@@ -10,6 +10,12 @@ const router = Router();
 
 const META_COLS = new Set(['id', 'created_by', 'created_at', 'updated_date']);
 const RESERVED_QUERY = new Set(['order', 'limit', 'offset']);
+// data ist ein schemaloses jsonb-Feld — anders als bei userEntities.js gibt es
+// hier keine feste Spalten-Allowlist. Stattdessen wird das Key-/Order-Format
+// erzwungen, bevor es unverändert in `data->>${key}` interpoliert wird (sonst
+// koennte ein Query-Key beliebige PostgREST-Filterausdruecke einschleusen).
+const SAFE_KEY = /^[a-zA-Z0-9_]+$/;
+const MAX_LIMIT = 500;
 
 // DB-Zeile -> flaches Objekt fürs Frontend.
 function flatten(row) {
@@ -36,6 +42,7 @@ function parseOrder(order) {
   if (field === 'updated_date' || field === 'created_at') {
     return { column: field, ascending };
   }
+  if (!SAFE_KEY.test(field)) return null;
   return { column: `data->>${field}`, ascending };
 }
 
@@ -46,6 +53,7 @@ function registerCrud(table, segment) {
 
     for (const [key, value] of Object.entries(req.query)) {
       if (RESERVED_QUERY.has(key)) continue;
+      if (!SAFE_KEY.test(key)) return res.status(400).json({ error: `Ungueltiger Filter-Key: ${key}` });
       query = query.eq(`data->>${key}`, String(value));
     }
 
@@ -53,7 +61,10 @@ function registerCrud(table, segment) {
     if (order) query = query.order(order.column, { ascending: order.ascending });
     else query = query.order('updated_date', { ascending: false });
 
-    if (req.query.limit) query = query.limit(Number(req.query.limit));
+    if (req.query.limit) {
+      const lim = Number(req.query.limit);
+      if (Number.isFinite(lim) && lim > 0) query = query.limit(Math.min(lim, MAX_LIMIT));
+    }
 
     const { data, error } = await query;
     if (error) return res.status(500).json({ error: error.message });

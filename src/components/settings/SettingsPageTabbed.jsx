@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, Palette, Zap, Volume2, Shield, FileText } from 'lucide-react';
 import GeneralSettings from './GeneralSettings';
@@ -128,24 +129,20 @@ export default function SettingsPageTabbed() {
               Rechtliches
             </h2>
             <div className="space-y-2">
-              <a
-                href="https://vecxtgwxqzrogthqqdys.supabase.co/functions/v1/legal/datenschutz"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                to="/Datenschutz"
                 className="flex items-center gap-3 p-3 rounded-xl bg-gray-800/40 hover:bg-gray-700/50 transition-colors text-gray-200 hover:text-cyan-400 group"
               >
                 <Shield className="w-4 h-4 text-cyan-500 shrink-0 group-hover:scale-110 transition-transform" />
                 <span className="text-sm font-medium">Datenschutzerklärung</span>
-              </a>
-              <a
-                href="https://vecxtgwxqzrogthqqdys.supabase.co/functions/v1/legal/agb"
-                target="_blank"
-                rel="noopener noreferrer"
+              </Link>
+              <Link
+                to="/AGB"
                 className="flex items-center gap-3 p-3 rounded-xl bg-gray-800/40 hover:bg-gray-700/50 transition-colors text-gray-200 hover:text-cyan-400 group"
               >
                 <FileText className="w-4 h-4 text-cyan-500 shrink-0 group-hover:scale-110 transition-transform" />
                 <span className="text-sm font-medium">Nutzungsbedingungen (AGB)</span>
-              </a>
+              </Link>
             </div>
           </div>
         </div>

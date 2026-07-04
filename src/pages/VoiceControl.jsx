@@ -1250,10 +1250,15 @@ function VoiceBuddy() {
               {conversationHistory.length > 0 && (
                 <button
                   onClick={async () => {
-                    const all = await entities.ChatMessage.filter({ context: 'voice_control' });
-                    for (const m of all) await entities.ChatMessage.delete(m.id);
-                    setConversationHistory([]);
-                    toast.success('Verlauf gelöscht');
+                    try {
+                      const all = await entities.ChatMessage.filter({ context: 'voice_control' });
+                      for (const m of all) await entities.ChatMessage.delete(m.id);
+                      setConversationHistory([]);
+                      toast.success('Verlauf gelöscht');
+                    } catch (error) {
+                      console.error('Fehler beim Löschen des Verlaufs:', error);
+                      toast.error('Verlauf konnte nicht gelöscht werden');
+                    }
                   }}
                   className="mt-6 text-xs text-red-400 hover:text-red-300 font-semibold transition-colors"
                 >

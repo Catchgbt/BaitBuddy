@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Settings as SettingsIcon, Volume2, VolumeX, Shield, FileText } from "lucide-react";
 import VoiceSettings from "./VoiceSettings";
@@ -101,24 +102,20 @@ export default function SettingsSection() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <a
-            href="https://vecxtgwxqzrogthqqdys.supabase.co/functions/v1/legal/datenschutz"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            to="/Datenschutz"
             className="flex items-center gap-3 p-3 rounded-xl bg-gray-800/40 hover:bg-gray-700/50 transition-colors text-gray-200 hover:text-cyan-400"
           >
             <Shield className="w-4 h-4 text-cyan-500 shrink-0" />
             <span className="text-sm font-medium">Datenschutzerklarung</span>
-          </a>
-          <a
-            href="https://vecxtgwxqzrogthqqdys.supabase.co/functions/v1/legal/agb"
-            target="_blank"
-            rel="noopener noreferrer"
+          </Link>
+          <Link
+            to="/AGB"
             className="flex items-center gap-3 p-3 rounded-xl bg-gray-800/40 hover:bg-gray-700/50 transition-colors text-gray-200 hover:text-cyan-400"
           >
             <FileText className="w-4 h-4 text-cyan-500 shrink-0" />
             <span className="text-sm font-medium">Nutzungsbedingungen (AGB)</span>
-          </a>
+          </Link>
         </CardContent>
       </Card>
     </div>

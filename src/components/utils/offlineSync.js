@@ -4,7 +4,7 @@
  */
 
 import { isOnline as checkIsOnline, onOnlineStatusChange } from './offlineDataCache';
-import { entities } from '@/api/frontendClient';
+import { entities, api } from '@/api/frontendClient';
 
 // Re-export for convenience
 export const isOnline = checkIsOnline;
@@ -15,11 +15,18 @@ const QUEUE_KEYS = {
   pendingSync: 'bb_pending_sync',
 };
 
+// Deckelt die Offline-Queue, damit sie bei dauerhaft fehlschlagendem Sync
+// (z.B. abgelaufenes Token) nicht unbegrenzt in localStorage waechst.
+const MAX_QUEUE_SIZE = 200;
+
 // ─── Catch Queue Management ───────────────────────────────────────────────────
 
 export function addToOfflineCatchQueue(catchData) {
   try {
     const queue = getOfflineCatchQueue();
+    if (queue.length >= MAX_QUEUE_SIZE) {
+      throw new Error(`Offline-Queue ist voll (max. ${MAX_QUEUE_SIZE} Fänge) — bitte zuerst synchronisieren`);
+    }
     const withMeta = {
       ...catchData,
       __id: `offline_${Date.now()}_${Math.random().toString(36).slice(2)}`,
@@ -65,6 +72,13 @@ export function removeFromOfflineCatchQueue(offlineId) {
 export async function syncOfflineCatches() {
   if (!checkIsOnline()) {
     console.log('Offline — Sync verpasst');
+    return { synced: 0, failed: 0, errors: [] };
+  }
+  if (!api.getToken()) {
+    // Kein Token (noch nicht eingeloggt / abgelaufen) — ein Sync-Versuch wuerde
+    // nur mit 401s fehlschlagen. initAutoSync() lief bisher direkt beim
+    // App-Start, unabhaengig davon, ob der Auth-Check schon abgeschlossen war.
+    console.log('Kein Auth-Token — Sync verschoben');
     return { synced: 0, failed: 0, errors: [] };
   }
 
@@ -153,6 +167,7 @@ export function removeFromOfflineNotesQueue(noteId) {
 // ─── Auto-Sync bei Online-Status-Änderung ─────────────────────────────────────
 
 let syncUnsubscribe = null;
+let planUpdatedListener = null;
 
 export function initAutoSync() {
   if (syncUnsubscribe) return;
@@ -165,6 +180,16 @@ export function initAutoSync() {
     }
   });
 
+  // initAutoSync() läuft beim App-Start, bevor der Auth-Check abgeschlossen
+  // ist — zu diesem Zeitpunkt ist meist noch kein Token vorhanden (siehe
+  // Token-Guard in syncOfflineCatches). Nach einem Login/Register feuert
+  // frontendClient.js ein 'plan-updated'-Event — das ist der zuverlässige
+  // Zeitpunkt, um die Queue nachzuholen.
+  if (typeof window !== 'undefined') {
+    planUpdatedListener = () => { syncOfflineCatches(); };
+    window.addEventListener('plan-updated', planUpdatedListener);
+  }
+
   if (checkIsOnline()) {
     syncOfflineCatches();
   }
@@ -174,6 +199,10 @@ export function stopAutoSync() {
   if (syncUnsubscribe) {
     syncUnsubscribe();
     syncUnsubscribe = null;
+  }
+  if (planUpdatedListener && typeof window !== 'undefined') {
+    window.removeEventListener('plan-updated', planUpdatedListener);
+    planUpdatedListener = null;
   }
 }
 
