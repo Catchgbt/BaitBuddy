@@ -1,5 +1,13 @@
 import { defineConfig } from '@playwright/test';
 import { config as loadEnv } from 'dotenv';
+import fs from 'fs';
+
+// Feste sandbox-lokale Chromium-Installation (siehe Entwicklungsumgebung).
+// In CI (GitHub Actions) installiert `npx playwright install chromium` den
+// Browser an Playwrights eigenem Standardort — dort existiert dieser Pfad
+// nicht, daher nur setzen, wenn er tatsaechlich vorhanden ist.
+const SANDBOX_CHROMIUM_PATH = process.env.PLAYWRIGHT_CHROMIUM_PATH || '/opt/pw-browsers/chromium';
+const executablePath = fs.existsSync(SANDBOX_CHROMIUM_PATH) ? SANDBOX_CHROMIUM_PATH : undefined;
 
 // VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY werden von supabaseClient.js beim
 // Modul-Import zwingend gebraucht (throws sonst). `npm run dev` laedt per
@@ -25,9 +33,7 @@ export default defineConfig({
       name: 'chromium',
       use: {
         browserName: 'chromium',
-        launchOptions: {
-          executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || '/opt/pw-browsers/chromium',
-        },
+        launchOptions: executablePath ? { executablePath } : {},
       },
     },
   ],
