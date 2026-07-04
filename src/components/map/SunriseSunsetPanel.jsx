@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { calculateSunTimes, formatLocalTime, getBiteTimes } from '@/utils/sunCalc';
-import { Sun, Sunrise, Sunset, Moon, Clock, MapPin } from 'lucide-react';
+import { Sun, Sunrise, Sunset, Clock, MapPin } from 'lucide-react';
 
 const TWILIGHT_ROWS = [
   {

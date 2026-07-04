@@ -15,7 +15,7 @@ import SwipeToRefresh from "@/components/utils/SwipeToRefresh";
 import { toast } from "sonner";
 import { Upload, X, Loader2, Share2, BarChart2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { UploadFile, ExtractDataFromUploadedFile } from "@/integrations/Core";
+import { UploadFile } from "@/integrations/Core";
 import CatchHistory from "@/components/log/CatchHistory";
 import PendingPhotoCard from '@/components/log/PendingPhotoCard';
 import LazyImage from '@/components/images/LazyImage';
