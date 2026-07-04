@@ -11,6 +11,11 @@ import HydrographicAnalysis from "./HydrographicAnalysis";
 import SatelliteOverlayLayer from "./SatelliteOverlayLayer";
 import AdvancedCacheManager from "./AdvancedCacheManager";
 import "leaflet.markercluster";
+// Vorher aus dem unpkg-CDN geladen (index.html) — bricht offline/im
+// App-Store-Kontext. Lokal aus dem bereits installierten Paket (1.5.3, neuer
+// als die gepinnte CDN-Version 1.5.1).
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 
 // Fix default marker icons
 delete L.Icon.Default.prototype._getIconUrl;
