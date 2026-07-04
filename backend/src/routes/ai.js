@@ -3,6 +3,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
 import { invokeLLM } from '../lib/llm.js';
 import { isInClosedSeason } from '../lib/closedSeason.js';
+import { isAllowedFetchUrl } from '../lib/urlSafety.js';
 
 const router = Router();
 
@@ -20,7 +21,6 @@ router.get('/health', (req, res) => {
   res.json({
     ok: true,
     api_key_set: !!key,
-    api_key_preview: key ? key.slice(0, 10) + '...' : 'nicht gesetzt',
     provider: 'Groq (Llama)',
     node_env: process.env.NODE_ENV,
     timestamp: new Date().toISOString()
@@ -30,11 +30,12 @@ router.get('/health', (req, res) => {
 router.get('/ai/test', async (req, res) => {
   try {
     if (!getGroqKey()) {
-      // Diagnose: nur die NAMEN relevanter Env-Variablen zeigen (keine Werte)
-      const envNames = Object.keys(process.env)
-        .filter(k => /open|api|key|gemini|anthropic|gro/i.test(k))
-        .sort();
-      return res.json({ ok: false, error: 'GROQ_API_KEY ist nicht gesetzt', step: 'key_check', env_names: envNames });
+      // Nur serverseitig loggen, welche Env-Variablen-NAMEN in Frage kaemen —
+      // im Response landen weder Namen noch Werte (Aufzaehlung provisionierter
+      // Secrets ist selbst Info-Disclosure).
+      console.warn('[AI] /ai/test: GROQ_API_KEY nicht gesetzt. Relevante Env-Variablen:',
+        Object.keys(process.env).filter(k => /open|api|key|gemini|anthropic|gro/i.test(k)).sort());
+      return res.json({ ok: false, error: 'GROQ_API_KEY ist nicht gesetzt', step: 'key_check' });
     }
     const reply = await invokeLLM({ prompt: 'Sage nur: Hallo, ich funktioniere!' });
     return res.json({ ok: true, reply, provider: 'Groq (Llama)' });
@@ -163,6 +164,9 @@ router.post('/analyze-photo', requireAuth, async (req, res) => {
 
     // Wenn image eine URL ist (Supabase), fetch die Daten
     if (imageBase64?.startsWith('http')) {
+      if (!isAllowedFetchUrl(imageBase64)) {
+        return res.status(400).json({ error: 'Bild-URL muss aus dem eigenen Supabase-Storage stammen' });
+      }
       const imgRes = await fetch(imageBase64);
       if (!imgRes.ok) return res.status(400).json({ error: 'Bild konnte nicht heruntergeladen werden' });
       const buffer = await imgRes.arrayBuffer();
@@ -467,10 +471,10 @@ function getOpenAIKey() {
 router.post('/ai/realtime-session', requireAuth, async (req, res) => {
   const apiKey = getOpenAIKey();
   if (!apiKey) {
-    const envNames = Object.keys(process.env).filter(k => /open|realtime|voice/i.test(k)).sort();
+    console.warn('[AI] /ai/realtime-session: kein OpenAI-Key gefunden. Relevante Env-Variablen:',
+      Object.keys(process.env).filter(k => /open|realtime|voice/i.test(k)).sort());
     return res.status(503).json({
       error: 'Voice nicht konfiguriert. Bitte OPENAI_API_KEY als Vercel-Umgebungsvariable setzen.',
-      env_names: envNames
     });
   }
 
