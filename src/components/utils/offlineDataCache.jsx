@@ -4,6 +4,8 @@
  * Wird von den jeweiligen Seiten/Komponenten aufgerufen.
  */
 
+import { isOnline as checkIsOnline, isOnlineSync, onOnlineStatusChange as onStatusChange } from '@/utils/networkStatus';
+
 const KEYS = {
   catches: 'catchgbt_offline_catches',
   spots: 'catchgbt_offline_spots',
@@ -104,22 +106,12 @@ export async function fetchCatchesWithFallback(fetchFn) {
 // ── Online-Status Utilities ───────────────────────────────────────────────────
 
 export function isOnline() {
-  return typeof navigator !== 'undefined' ? navigator.onLine : true;
+  return checkIsOnline();
 }
 
 export function onOnlineStatusChange(callback) {
   if (typeof window === 'undefined') return () => {};
-
-  const onlineHandler = () => callback(true);
-  const offlineHandler = () => callback(false);
-
-  window.addEventListener('online', onlineHandler);
-  window.addEventListener('offline', offlineHandler);
-
-  return () => {
-    window.removeEventListener('online', onlineHandler);
-    window.removeEventListener('offline', offlineHandler);
-  };
+  return onStatusChange(callback);
 }
 
 // ── Generische Cache-Funktionen (für Dashboard-Kompatibilität) ────────────────

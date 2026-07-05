@@ -7,7 +7,7 @@ const { mockEntities, mockApi, onlineState } = vi.hoisted(() => ({
 }));
 
 vi.mock('@/api/frontendClient', () => ({ entities: mockEntities, api: mockApi }));
-vi.mock('./offlineDataCache', () => ({
+vi.mock('@/utils/networkStatus', () => ({
   isOnline: () => onlineState.current,
   onOnlineStatusChange: vi.fn(() => () => {}),
 }));

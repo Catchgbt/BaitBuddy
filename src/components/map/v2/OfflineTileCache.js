@@ -3,18 +3,29 @@
  * Lädt Tiles im Hintergrund und speichert sie lokal
  */
 
+import { isOnline, onOnlineStatusChange } from '@/utils/networkStatus';
+
 class OfflineTileCache {
   constructor(dbName = 'baitbuddy_tiles') {
     this.dbName = dbName;
     this.db = null;
     this.cache = new Map(); // In-Memory Cache
     this.pendingRequests = new Map();
-    this.isOnline = navigator.onLine;
+    this.isOnline = isOnline();
+    this.unsubscribe = null;
 
-    window.addEventListener('online', () => this.handleOnline());
-    window.addEventListener('offline', () => this.handleOffline());
-
+    this.setupNetworkListener();
     this.init();
+  }
+
+  setupNetworkListener() {
+    this.unsubscribe = onOnlineStatusChange((online) => {
+      if (online) {
+        this.handleOnline();
+      } else {
+        this.handleOffline();
+      }
+    });
   }
 
   async init() {

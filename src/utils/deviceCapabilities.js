@@ -1,8 +1,10 @@
 /**
  * Device Capabilities Detection
- * 
+ *
  * Detects mobile device capabilities and optimizes experience accordingly.
  */
+
+import { isOnline as getIsOnline } from './networkStatus';
 
 export const DeviceCapabilities = {
   // Touch detection
@@ -57,7 +59,7 @@ export const DeviceCapabilities = {
     return nav.connection.effectiveType; // 4g, 3g, 2g, slow-2g
   },
 
-  isOnline: () => navigator.onLine,
+  isOnline: () => getIsOnline(),
 
   // Memory detection
   getMemoryStatus: () => {

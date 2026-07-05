@@ -2,30 +2,23 @@ import React, { useState, useEffect } from "react";
 import { createPageUrl } from "@/utils";
 import { User } from "@/entities/User";
 import { Mic } from "lucide-react";
-// Removed: Coins, WifiOff, Wifi imports as they are no longer used
 import { useHaptic } from "@/components/utils/HapticFeedback";
 import { motion, AnimatePresence } from "framer-motion";
+import { isOnline, onOnlineStatusChange } from "@/utils/networkStatus";
 
 export default function KiBuddyBar({ onToggleChatbot, chatbotOpen, onOpenVoice }) {
   const [user, setUser] = useState(null);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnlineStatus, setIsOnlineStatus] = useState(isOnline());
   const { triggerHaptic } = useHaptic();
-  
+
   const [currentMainAction, setCurrentMainAction] = useState(0);
-  
+
   const ACTION_SWITCH_DURATION = 5000;
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
+    return onOnlineStatusChange((online) => {
+      setIsOnlineStatus(online);
+    });
   }, []);
 
   useEffect(() => {
@@ -37,9 +30,9 @@ export default function KiBuddyBar({ onToggleChatbot, chatbotOpen, onOpenVoice }
         console.debug('KiBuddyBar: Benutzer nicht verfügbar (nicht eingeloggt):', userError);
       }
     };
-    
+
     loadData();
-  }, [isOnline]);
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -162,7 +155,7 @@ export default function KiBuddyBar({ onToggleChatbot, chatbotOpen, onOpenVoice }
                   <span className="text-base font-mono font-semibold text-amber-400">∞</span>
                 ) : (
                   <span className="text-xs text-gray-400">
-                    {isOnline ? 'Online' : 'Offline'}
+                    {isOnlineStatus ? 'Online' : 'Offline'}
                   </span>
                 )}
               </div>

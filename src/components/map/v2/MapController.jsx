@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { onOnlineStatusChange } from "@/utils/networkStatus";
 import { Spot } from "@/entities/Spot";
 import { FishingClub } from "@/entities/FishingClub";
 import { angelparks } from "@/data/angelparks";
@@ -49,7 +50,7 @@ function MapController() {
   });
   const [waterBodies, setWaterBodies] = useState([]);
   const [reviews, setReviews] = useState([]);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnlineStatus, setIsOnlineStatus] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [tiefenkarten, setTiefenkarten] = useState([]);
   const [forellenseen, setForellenseen] = useState([]);
@@ -104,11 +105,9 @@ function MapController() {
   useEffect(() => {
     initializeMap();
 
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    const unsubscribe = onOnlineStatusChange((online) => {
+      setIsOnlineStatus(online);
+    });
 
     // Lade Tiefenkarten aus statischer JSON
     if (tiefenkartenData && Array.isArray(tiefenkartenData)) {
@@ -177,8 +176,7 @@ function MapController() {
     loadEuropeanBathymetry();
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      unsubscribe();
     };
   }, []);
 
@@ -635,7 +633,7 @@ function MapController() {
            onAngelParkEuClick={(park) => handleLocationClick(park, 'angelpark_eu')}
            onWaterBodiesLoad={setWaterBodies}
            onReviewsLoad={setReviews}
-           isOnline={isOnline}
+           isOnline={isOnlineStatus}
          />
 
         {/* Marker Detail Card (new UI) */}
