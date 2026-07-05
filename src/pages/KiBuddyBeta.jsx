@@ -4,6 +4,7 @@ import { useFeatureTracking } from "@/hooks/useFeatureTracking";
 import { useElevenLabsVoice } from "@/hooks/useElevenLabsVoice";
 import { useEventActivityTracking } from "@/hooks/useEventActivityTracking";
 import { events } from "@/api/frontendClient";
+import { findOfflineBuddyAnswer, getOfflineBuddyFallback } from "@/lib/offlineBuddyQuestions";
 
 import PremiumGuard from "@/components/premium/PremiumGuard";
 import SabrinaAvatar from "@/components/ai/SabrinaAvatar";
@@ -142,10 +143,25 @@ function KiBuddyBetaInner() {
         speakWithElevenLabs(ans);
       } else {
         setStatus("");
-        // Ohne Sprachausgabe gibt es kein onEnd — Gespräch hier fortsetzen.
         maybeContinueConversation();
       }
-    } catch {
+    } catch (error) {
+      // Bei Verbindungsfehlern: Versuche offline Antwort zu finden
+      const offlineAnswer = findOfflineBuddyAnswer(q);
+
+      if (offlineAnswer) {
+        // Offline-Antwort gefunden
+        retryRef.current = 0;
+        setMessages(m => [...m, { role: "assistant", text: offlineAnswer }]);
+        if (tonAn) {
+          speakWithElevenLabs(offlineAnswer);
+        } else {
+          setStatus("");
+          maybeContinueConversation();
+        }
+        return;
+      }
+
       // Auto-Retry (bis zu 2x) bei Verbindungsfehlern
       if (retryRef.current < 2) {
         retryRef.current += 1;
@@ -153,9 +169,12 @@ function KiBuddyBetaInner() {
         await new Promise(r => setTimeout(r, 800));
         return ask(q, true);
       }
+
+      // Kein Offline-Answer und Retries erschöpft: Fallback-Nachricht
       retryRef.current = 0;
       setStatus("");
-      setMessages(m => [...m, { role: "system", text: "Verbindungsfehler – bitte erneut versuchen." }]);
+      const fallbackMessage = getOfflineBuddyFallback();
+      setMessages(m => [...m, { role: "system", text: "Offline-Modus: Keine Internetverbindung. Verwende vorgefertigte Antworten." }, { role: "assistant", text: fallbackMessage }]);
       maybeContinueConversation();
     }
   }
