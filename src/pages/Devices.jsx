@@ -215,7 +215,10 @@ export default function DevicesPage() {
               Verbinde und steuere deine Angelgeräte
             </p>
           </div>
-          <Button className="bg-cyan-600 hover:bg-cyan-700">
+          <Button
+            className="bg-cyan-600 hover:bg-cyan-700"
+            onClick={() => handleDeviceClick(devices.find(d => d.id === 'device_hub'))}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Gerät hinzufügen
           </Button>
