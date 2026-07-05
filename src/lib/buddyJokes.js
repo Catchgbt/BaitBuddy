@@ -12,7 +12,7 @@ export const BUDDY_JOKES = [
   'Warum sind Fische in Schulen? Weil sie unterrichtet werden wollen!',
   'Ein Angler, ein Jäger und ein Golfer fangen im Himmel an. Welcher kommt zuerst raus? Der Angler – er hat weniger zu lügen!',
 
-  // Fragen an den Nutzer
+  // Persönliche Zwischenfragen
   'Wie war dein letzter Angelausflug? Erzähl mir von deinen Fängen!',
   'Was ist dein Lieblingsfisch zum Angeln?',
   'Hast du einen neuen Spot entdeckt?',
@@ -21,6 +21,20 @@ export const BUDDY_JOKES = [
   'Brauchst du Tipps für bessere Fänge?',
   'Welche Angelmethode magst du lieber – Fliegenfischen oder Grundfischen?',
 
+  // Lebendige Zwischenfragen
+  'Was hat dich denn zuletzt ganz besonders begeistert beim Angeln?',
+  'Hast du schon mal einen Traum-Fang landen können?',
+  'Wie siehts aus – gehts du eher aufs Volumen oder auf Big Game?',
+  'Was ist dein absolutes Lieblings-Gewässer?',
+  'Hast du aktuell einen bestimmten Fisch im Visier?',
+  'Welche Jahreszeit ist für dich die beste Angelsaison?',
+  'Fischst du eher morgens, abends oder nachts am liebsten?',
+  'Gibt es einen Spot, an dem du immer erfolgreich warst?',
+  'Was war dein größter Fang bis jetzt?',
+  'Hast du mal was Unerwartetes beim Angeln erlebt?',
+  'Angelst du lieber allein oder mit Freunden?',
+  'Was ist deine größte Angel-Herausforderung im Moment?',
+
   // Motivierende Sprüche
   'Der beste Fang wartet auf dich – gib nicht auf!',
   'Jede schnelle Linie ist ein Versprechen auf Abenteuer!',
@@ -28,6 +42,8 @@ export const BUDDY_JOKES = [
   'Die besten Erinnerungen entstehen am Wasser!',
   'Mit jedem Wurf kommt Glück näher!',
   'Angeln lehrt uns: Geduld ist eine Tugend!',
+  'Der nächste Monster-Fang könnte heute kommen – halts Auge offen!',
+  'Jeder erfahrene Angler war mal ein Anfänger – du machst das super!',
 ];
 
 /**
