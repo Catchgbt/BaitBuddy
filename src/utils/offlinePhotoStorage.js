@@ -29,7 +29,7 @@ async function initDB() {
     };
 
     request.onupgradeneeded = (event) => {
-      const database = /** @type {IDBDatabase} */ (event.target).result;
+      const database = /** @type {IDBOpenDBRequest} */ (event.target).result;
       if (!database.objectStoreNames.contains(STORE_NAME)) {
         const store = database.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
         store.createIndex('catchId', 'catchId', { unique: false });
