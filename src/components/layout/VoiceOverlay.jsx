@@ -15,6 +15,7 @@ const VoiceOverlay = ({ isOpen, onClose, currentPageName }) => {
   const [orbState, setOrbState] = useState('idle'); // idle, listening, thinking, speaking
   const [messageCount, setMessageCount] = useState(0);
   const [rateLimitTime, setRateLimitTime] = useState(0);
+  const [hasInitialGreeting, setHasInitialGreeting] = useState(false);
   
   // Bite detection
   const [biteMode, setBiteMode] = useState(null); // 'string' or 'tip'
@@ -41,6 +42,39 @@ const VoiceOverlay = ({ isOpen, onClose, currentPageName }) => {
       return () => clearTimeout(timer);
     }
   }, [rateLimitTime]);
+
+  // Initiale Begrüßung, wenn Voice-Tab geöffnet wird
+  useEffect(() => {
+    if (isOpen && activeTab === 'voice' && !hasInitialGreeting && chatHistory.length === 0) {
+      setHasInitialGreeting(true);
+      const greetings = [
+        'Wie war\'s denn zuletzt beim Angeln?',
+        'Hast du heute schon was geplant?',
+        'Welcher Fisch ist gerade dein Traum-Fang?',
+        'Wie siehts aus – gehts du eher aufs Volumen oder Big Game?',
+      ];
+      const greeting = greetings[Math.floor(Math.random() * greetings.length)];
+      setChatHistory([{ role: 'assistant', content: greeting }]);
+      setOrbState('speaking');
+
+      const afterSpeech = () => {
+        setOrbState('idle');
+      };
+
+      setTimeout(() => {
+        speakWithElevenLabs(greeting, {
+          onEnd: afterSpeech,
+          onError: afterSpeech,
+        }).catch(() => {
+          speakWithBrowserTTS(greeting, {
+            lang: 'de-DE',
+            onEnd: afterSpeech,
+            onError: afterSpeech,
+          });
+        });
+      }, 500);
+    }
+  }, [isOpen, activeTab, hasInitialGreeting, chatHistory.length]);
   
   const checkRateLimit = () => {
     if (messageCount >= 8) {
@@ -594,6 +628,13 @@ const VoiceOverlay = ({ isOpen, onClose, currentPageName }) => {
     { id: 'knot', label: 'Knoten', icon: null, component: KnotTab }
   ];
   
+  // Reset greeting flag wenn Overlay geschlossen wird
+  useEffect(() => {
+    if (!isOpen) {
+      setHasInitialGreeting(false);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
   
   const CurrentTab = tabs.find(t => t.id === activeTab)?.component || VoiceTab;

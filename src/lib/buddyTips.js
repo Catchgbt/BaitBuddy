@@ -63,9 +63,9 @@ export const BUDDY_TIPS = {
     suggestions: ['Top Angler dieser Woche', 'Fänge vergleichen', 'Tipps teilen'],
   },
   Events: {
-    title: 'Events',
-    message: 'Finde Angelwettbewerbe und Events in deiner Nähe – und tritt dem Buddy-Netzwerk bei!',
-    suggestions: ['Events in meiner Nähe', 'Event anmelden', 'Leaderboard'],
+    title: 'Events & Wettbewerbe',
+    message: 'Hier treffen sich andere Angler! Schau mal, ob es bald einen spannenden Wettbewerb oder Community-Event in deiner Nähe gibt – könnte genau der richtige Moment sein, um deine Fänge zu zeigen!',
+    suggestions: ['Events in meiner Nähe', 'Event anmelden', 'Leaderboard', 'Beste Angler ansehen'],
   },
   Premium: {
     title: 'Premium Features',
