@@ -4,7 +4,7 @@
  * Wird von den jeweiligen Seiten/Komponenten aufgerufen.
  */
 
-import { isOnline as checkIsOnline, isOnlineSync, onOnlineStatusChange as onStatusChange } from '@/utils/networkStatus';
+import { isOnline as checkIsOnline, onOnlineStatusChange as onStatusChange } from '@/utils/networkStatus';
 
 const KEYS = {
   catches: 'catchgbt_offline_catches',

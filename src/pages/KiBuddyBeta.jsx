@@ -6,6 +6,7 @@ import { useEventActivityTracking } from "@/hooks/useEventActivityTracking";
 import { events } from "@/api/frontendClient";
 
 import PremiumGuard from "@/components/premium/PremiumGuard";
+import SabrinaAvatar from "@/components/ai/SabrinaAvatar";
 
 export default function KiBuddyBeta() {
   return (
@@ -27,11 +28,15 @@ function KiBuddyBetaInner() {
   const [interimTranscript, setInterimTranscript] = useState("");
   const [confidence, setConfidence] = useState(null);
   const [activeEventId, setActiveEventId] = useState(null);
+  const [conversationActive, setConversationActive] = useState(false);
   const chatRef = useRef();
   const recRef = useRef(null);
   const waveRef = useRef(null);
   const timeoutRef = useRef(null);
   const retryRef = useRef(0);
+  // Läuft ein fortlaufendes Gespräch? Als Ref, damit die TTS-Callbacks (die in
+  // einer alten Closure hängen) immer den aktuellen Wert sehen.
+  const conversationActiveRef = useRef(false);
   const { speak, stop: stopVoice, isSpeaking } = useElevenLabsVoice();
 
   useEffect(() => {
@@ -70,15 +75,18 @@ function KiBuddyBetaInner() {
       onEnd: () => {
         setStatus("");
         stopWave();
+        maybeContinueConversation();
       },
       onError: () => {
         setStatus("");
         stopWave();
+        maybeContinueConversation();
       },
     });
     if (!success) {
       setStatus("");
       stopWave();
+      maybeContinueConversation();
     }
   }
 
@@ -86,6 +94,29 @@ function KiBuddyBetaInner() {
     stopVoice();
     stopWave();
     setStatus("");
+  }
+
+  // Nach jeder Antwort im laufenden Gespräch das Mikrofon automatisch wieder
+  // öffnen — so entsteht ein flüssiges Hin und Her, ohne erneut zu tippen.
+  function maybeContinueConversation() {
+    if (conversationActiveRef.current && !recRef.current) {
+      startListening();
+    }
+  }
+
+  function startConversation() {
+    setConversationActive(true);
+    conversationActiveRef.current = true;
+    setMessages(m => [...m, { role: "system", text: "Gespräch gestartet. Stell mir deine Frage." }]);
+    startListening();
+  }
+
+  function endConversation() {
+    setConversationActive(false);
+    conversationActiveRef.current = false;
+    stopMic();
+    stopSpeaking();
+    setMessages(m => [...m, { role: "system", text: "Gespräch beendet." }]);
   }
 
   async function ask(q, isRetry = false) {
@@ -107,8 +138,13 @@ function KiBuddyBetaInner() {
       if (activeEventId) {
         trackAIChat(activeEventId);
       }
-      if (tonAn) speakWithElevenLabs(ans);
-      else setStatus("");
+      if (tonAn) {
+        speakWithElevenLabs(ans);
+      } else {
+        setStatus("");
+        // Ohne Sprachausgabe gibt es kein onEnd — Gespräch hier fortsetzen.
+        maybeContinueConversation();
+      }
     } catch {
       // Auto-Retry (bis zu 2x) bei Verbindungsfehlern
       if (retryRef.current < 2) {
@@ -120,6 +156,7 @@ function KiBuddyBetaInner() {
       retryRef.current = 0;
       setStatus("");
       setMessages(m => [...m, { role: "system", text: "Verbindungsfehler – bitte erneut versuchen." }]);
+      maybeContinueConversation();
     }
   }
 
@@ -141,6 +178,11 @@ function KiBuddyBetaInner() {
 
   function toggleMic() {
     if (recording) { stopMic(); return; }
+    startListening();
+  }
+
+  function startListening() {
+    if (recRef.current) return;
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) {
       setMessages(m => [...m, { role: "system", text: "Spracherkennung nicht unterstuetzt." }]);
@@ -195,8 +237,13 @@ function KiBuddyBetaInner() {
     clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
       if (recRef.current) {
-        setMessages(m => [...m, { role: "system", text: "Keine Sprache erkannt (Timeout). Bitte erneut versuchen." }]);
         stopMic();
+        // Im laufenden Gespräch weiter zuhören statt abzubrechen.
+        if (conversationActiveRef.current) {
+          startListening();
+        } else {
+          setMessages(m => [...m, { role: "system", text: "Keine Sprache erkannt (Timeout). Bitte erneut versuchen." }]);
+        }
       }
     }, 8000);
   }
@@ -210,7 +257,12 @@ function KiBuddyBetaInner() {
     if (status === "listening") setStatus("");
   }
 
-  useEffect(() => () => clearTimeout(timeoutRef.current), []);
+  useEffect(() => () => {
+    clearTimeout(timeoutRef.current);
+    conversationActiveRef.current = false;
+    try { recRef.current?.stop(); } catch {}
+    recRef.current = null;
+  }, []);
 
   const avatarGlow = isSpeaking
     ? "0 0 0 3px rgba(34,211,200,0.45)"
@@ -246,12 +298,32 @@ function KiBuddyBetaInner() {
             </button>
           </div>
 
+          {/* Gesprächssteuerung: starten / beenden */}
+          <div style={{ padding: "12px 16px 8px", background: "#08111f" }}>
+            {!conversationActive ? (
+              <button
+                onClick={startConversation}
+                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "linear-gradient(135deg,#7c3aed,#4f46e5)", border: "none", borderRadius: 12, padding: "12px 16px", color: "#ffffff", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+              >
+                Gespräch starten
+              </button>
+            ) : (
+              <button
+                onClick={endConversation}
+                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "#3a0d14", border: "1px solid #ef4444", borderRadius: 12, padding: "12px 16px", color: "#fca5a5", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+              >
+                Gespräch beenden
+              </button>
+            )}
+          </div>
+
           {/* Voice control row */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", background: "#08111f" }}>
-            <span style={{ fontSize: 12, color: "#8899aa", maxWidth: 180, lineHeight: 1.4 }}>Mikrofon aktivieren und Frage stellen</span>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 16px 10px", background: "#08111f" }}>
+            <span style={{ fontSize: 12, color: "#8899aa", maxWidth: 180, lineHeight: 1.4 }}>Einzelne Frage per Mikrofon stellen</span>
             <button
               onClick={toggleMic}
-              style={{ display: "flex", alignItems: "center", gap: 7, background: recording ? "#22d3c8" : "#0d2a28", border: "1px solid #22d3c8", borderRadius: 10, padding: "8px 14px", color: recording ? "#060d1a" : "#22d3c8", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
+              disabled={conversationActive}
+              style={{ display: "flex", alignItems: "center", gap: 7, background: recording ? "#22d3c8" : "#0d2a28", border: "1px solid #22d3c8", borderRadius: 10, padding: "8px 14px", color: recording ? "#060d1a" : "#22d3c8", fontSize: 13, fontWeight: 500, cursor: conversationActive ? "not-allowed" : "pointer", fontFamily: "inherit", opacity: conversationActive ? 0.45 : 1 }}
             >
               <span>{recording ? "Aktiv" : "Mikrofon"}</span>
             </button>
@@ -267,9 +339,7 @@ function KiBuddyBetaInner() {
 
           {/* Avatar row */}
           <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", background: "#0a1624", borderTop: "1px solid #111e2e", borderBottom: "1px solid #111e2e" }}>
-            <div style={{ width: 52, height: 52, borderRadius: 14, background: "linear-gradient(135deg,#7c3aed,#4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0, boxShadow: avatarGlow, transition: "box-shadow 0.3s" }}>
-              M
-            </div>
+            <SabrinaAvatar speaking={isSpeaking} size={52} style={{ borderRadius: 14, overflow: "hidden", flexShrink: 0, boxShadow: avatarGlow, transition: "box-shadow 0.3s" }} />
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 15, fontWeight: 600, color: "#e0f0ff" }}>Sabrina</div>
               <div style={{ fontSize: 12, color: "#556677", marginTop: 2 }}>Deine KI-Angelexpertin</div>
