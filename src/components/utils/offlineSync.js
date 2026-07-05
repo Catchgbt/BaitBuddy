@@ -9,7 +9,6 @@ import {
   getUnsyncdOfflinePhotos,
   markPhotoAsSynced,
   markPhotoSyncError,
-  deleteOfflinePhoto,
 } from '@/utils/offlinePhotoStorage';
 
 // Re-export for convenience
