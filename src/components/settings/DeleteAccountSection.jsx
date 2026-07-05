@@ -46,8 +46,9 @@ export default function DeleteAccountSection() {
   };
 
   const handleConfirmDelete = () => {
-    if (!confirmText.trim()) {
-      setError('Bitte geben Sie die Bestätigung ein, um fortzufahren.');
+    const requiredText = 'MEINKONTO_LÖSCHEN';
+    if (confirmText.trim() !== requiredText) {
+      setError(`Bitte geben Sie genau "${requiredText}" ein.`);
       return;
     }
     deleteAccountMutation.mutate();
@@ -110,7 +111,7 @@ export default function DeleteAccountSection() {
 
       {/* Step 1: Warning modal */}
       <Dialog open={step === 'step1'} onOpenChange={(open) => !open && handleCancel()}>
-        <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-sm">
+        <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-sm w-[90vw] max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-red-400">Konto wirklich löschen?</DialogTitle>
             <DialogDescription className="text-gray-400">
@@ -153,7 +154,7 @@ export default function DeleteAccountSection() {
 
       {/* Step 2: Final confirmation with text input */}
       <Dialog open={step === 'step2'} onOpenChange={(open) => !open && handleCancel()}>
-        <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-sm">
+        <DialogContent className="bg-gray-900 border-gray-800 text-white max-w-sm w-[90vw] max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-red-400">Bestätigung erforderlich</DialogTitle>
             <DialogDescription className="text-gray-400">
@@ -199,7 +200,7 @@ export default function DeleteAccountSection() {
             </Button>
             <Button
               onClick={handleConfirmDelete}
-              disabled={deleteAccountMutation.isPending || !confirmText.trim()}
+              disabled={deleteAccountMutation.isPending || confirmText.trim() !== 'MEINKONTO_LÖSCHEN'}
               className="bg-red-700 hover:bg-red-600 text-white min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {deleteAccountMutation.isPending ? (
