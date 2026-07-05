@@ -40,7 +40,7 @@ export default function UsedGearMarket() {
   );
 }
 
-function UsedGearMarketInner() {
+export function UsedGearMarketInner() {
   useFeatureTracking("gear_market");
   const [user, setUser] = useState(null);
   const [items, setItems] = useState([]);
@@ -99,7 +99,7 @@ function UsedGearMarketInner() {
 
     try {
       const priceCents = Math.round(parseFloat(price) * 100);
-      
+
       const imageUrls = [];
       if (images.length > 0) {
         const { UploadFile } = await import('@/integrations/Core');
@@ -150,13 +150,13 @@ function UsedGearMarketInner() {
 
   const filteredItems = useMemo(() => {
     return items.filter(item => {
-      const matchesSearch = !searchQuery || 
+      const matchesSearch = !searchQuery ||
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.description?.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       const matchesCategory = categoryFilter === "Alle" || item.category === categoryFilter;
       const matchesCondition = conditionFilter === "Alle" || item.condition === conditionFilter;
-      
+
       return matchesSearch && matchesCategory && matchesCondition;
     });
   }, [items, searchQuery, categoryFilter, conditionFilter]);
@@ -288,8 +288,8 @@ function UsedGearMarketInner() {
                 />
                 <div className="text-xs text-gray-500">Maximal 6 Bilder</div>
 
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="bg-cyan-600 hover:bg-cyan-700"
                   disabled={uploading}
                 >
@@ -373,7 +373,7 @@ function UsedGearMarketInner() {
 
                   <CardContent className="p-4 space-y-2">
                     <h3 className="font-semibold text-white text-lg">{item.title}</h3>
-                    
+
                     <div className="flex items-center gap-2 text-xs">
                       <span className="px-2 py-1 rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
                         {item.category}
