@@ -87,6 +87,13 @@ export default function AIBuddyWidget() {
   // Local UI states
   const [isOpen, setIsOpen] = useState(false);
   const [isTalking, setIsTalking] = useState(false);
+
+  // Persisted state to localStorage
+  const isHidden = isWidgetHidden;
+  const setIsHidden = (value) => {
+    if (value) hideWidget();
+    else showWidget();
+  };
   const [isNodding, setIsNodding] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -115,12 +122,6 @@ export default function AIBuddyWidget() {
   const currentPage = location.pathname.replace(/^\//, '').split('/')[0] || 'Dashboard';
   const tip = getTipForPage(currentPage);
 
-  // Persisted state to localStorage
-  const isHidden = isWidgetHidden;
-  const setIsHidden = (value) => {
-    if (value) hideWidget();
-    else showWidget();
-  };
 
   // Sync messages & auto-scroll
   useEffect(() => {
