@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth, optionalAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
+import { sendDbError } from '../lib/errorResponse.js';
 import {
   calculateSubmissionPoints,
   calculateEventFinalRankings,
@@ -24,7 +25,7 @@ router.get('/events/templates', optionalAuth, async (req, res) => {
       .eq('is_active', true)
       .order('name');
 
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) return sendDbError(res, error);
     return res.json(data || []);
   } catch (error) {
     console.error('Error fetching templates:', error);
@@ -60,7 +61,7 @@ router.get('/events', optionalAuth, async (req, res) => {
       .eq('is_active', true)
       .order('created_at', { ascending: false });
 
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) return sendDbError(res, error);
     return res.json(data || []);
   } catch (error) {
     console.error('Error fetching events:', error);
@@ -112,7 +113,7 @@ router.post('/events', requireAuth, async (req, res) => {
       .select()
       .single();
 
-    if (eventError || !event) return res.status(500).json({ error: eventError?.message || 'Event creation failed' });
+    if (eventError || !event) return sendDbError(res, eventError || new Error('Event creation failed'));
 
     // 2. Creator als Teilnehmer hinzufügen
     await supabase
@@ -175,7 +176,7 @@ router.patch('/events/:id', requireAuth, async (req, res) => {
       .select()
       .single();
 
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) return sendDbError(res, error);
     return res.json(data);
   } catch (error) {
     console.error('Error updating event:', error);
@@ -224,7 +225,7 @@ router.post('/events/:id/join', requireAuth, async (req, res) => {
     if (error?.code === '23505') {
       return res.json({ ok: true, already_joined: true });
     }
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) return sendDbError(res, error);
 
     return res.json({ ok: true });
   } catch (error) {
@@ -281,7 +282,7 @@ router.post('/events/:id/submit', requireAuth, async (req, res) => {
       .select()
       .single();
 
-    if (submissionError) return res.status(500).json({ error: submissionError.message });
+    if (submissionError) return sendDbError(res, submissionError);
 
     // 3. Aktualisiere event_participants totale Punkte
     const { data: participant } = await supabase
@@ -317,7 +318,7 @@ router.get('/events/:id/participants', optionalAuth, async (req, res) => {
       .eq('event_id', req.params.id)
       .order('total_points', { ascending: false });
 
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) return sendDbError(res, error);
     return res.json(data || []);
   } catch (error) {
     console.error('Error fetching participants:', error);
@@ -334,7 +335,7 @@ router.get('/events/:id/leaderboard', optionalAuth, async (req, res) => {
       .order('total_points', { ascending: false })
       .limit(100);
 
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) return sendDbError(res, error);
     return res.json(data || []);
   } catch (error) {
     console.error('Error fetching leaderboard:', error);
@@ -386,7 +387,7 @@ router.get('/events/invitations/me', requireAuth, async (req, res) => {
       .eq('status', 'pending')
       .order('sent_at', { ascending: false });
 
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) return sendDbError(res, error);
     return res.json(data || []);
   } catch (error) {
     console.error('Error fetching invitations:', error);
@@ -406,7 +407,7 @@ router.post('/events/invitations/:id/accept', requireAuth, async (req, res) => {
       .eq('id', req.params.id)
       .eq('invitee_id', req.user.email);
 
-    if (inviteError) return res.status(500).json({ error: inviteError.message });
+    if (inviteError) return sendDbError(res, inviteError);
 
     // 2. Hole Event-ID
     const { data: invitation } = await supabase
@@ -440,7 +441,7 @@ router.post('/events/invitations/:id/decline', requireAuth, async (req, res) => 
       .eq('id', req.params.id)
       .eq('invitee_id', req.user.email);
 
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) return sendDbError(res, error);
     return res.json({ ok: true });
   } catch (error) {
     console.error('Error declining invitation:', error);
@@ -470,7 +471,7 @@ router.get('/leaderboards/monthly', optionalAuth, async (req, res) => {
       .order('rank', { ascending: true })
       .limit(100);
 
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) return sendDbError(res, error);
     return res.json(data || []);
   } catch (error) {
     console.error('Error fetching monthly leaderboard:', error);
@@ -486,7 +487,7 @@ router.get('/rewards/my-activations', requireAuth, async (req, res) => {
       .eq('user_id', req.user.email)
       .eq('status', 'active');
 
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) return sendDbError(res, error);
     return res.json(data || []);
   } catch (error) {
     console.error('Error fetching reward activations:', error);
@@ -634,7 +635,7 @@ router.get('/admin/events/auto-archive', async (req, res) => {
       .lt('end_date', now.toISOString());
 
     if (fetchError) {
-      return res.status(500).json({ error: fetchError.message });
+      return sendDbError(res, fetchError);
     }
 
     let archived = 0;
@@ -732,7 +733,7 @@ router.post('/community/competitions/start', requireAuth, async (req, res) => {
       .single();
 
     if (eventError) {
-      return res.status(500).json({ error: eventError.message });
+      return sendDbError(res, eventError);
     }
 
     // Erstelle Punkte-Config

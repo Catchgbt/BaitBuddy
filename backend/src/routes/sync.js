@@ -57,7 +57,7 @@ async function applyItem(req, item) {
         row.catch_time = item.createdAt || new Date().toISOString();
       }
       const { data, error } = await supabase.from(entity.table).insert(row).select().single();
-      if (error) return { ok: false, clientId: item.clientId, error: error.message };
+      if (error) { console.error('[Sync insert]', error.message); return { ok: false, clientId: item.clientId, error: 'Speichern fehlgeschlagen' }; }
       return { ok: true, clientId: item.clientId, entity: item.entity, op: item.op, record: data };
     }
     if (item.op === 'update') {
@@ -68,7 +68,7 @@ async function applyItem(req, item) {
         .eq('id', item.targetId)
         .eq('created_by', email)
         .select().single();
-      if (error) return { ok: false, clientId: item.clientId, error: error.message };
+      if (error) { console.error('[Sync update]', error.message); return { ok: false, clientId: item.clientId, error: 'Aktualisieren fehlgeschlagen' }; }
       return { ok: true, clientId: item.clientId, entity: item.entity, op: item.op, record: data };
     }
     if (item.op === 'delete') {
@@ -77,11 +77,12 @@ async function applyItem(req, item) {
         .delete()
         .eq('id', item.targetId)
         .eq('created_by', email);
-      if (error) return { ok: false, clientId: item.clientId, error: error.message };
+      if (error) { console.error('[Sync delete]', error.message); return { ok: false, clientId: item.clientId, error: 'Löschen fehlgeschlagen' }; }
       return { ok: true, clientId: item.clientId, entity: item.entity, op: item.op };
     }
   } catch (e) {
-    return { ok: false, clientId: item.clientId, error: e.message };
+    console.error('[Sync exception]', e.message);
+    return { ok: false, clientId: item.clientId, error: 'Interner Fehler' };
   }
   return { ok: false, clientId: item.clientId, error: 'Unbekannter Pfad' };
 }

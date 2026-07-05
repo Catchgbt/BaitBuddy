@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
+import { sendDbError } from '../lib/errorResponse.js';
 
 const router = Router();
 
@@ -29,7 +30,7 @@ router.get('/backups', requireAuth, async (req, res) => {
     .select('id, kind, size_bytes, catches_count, spots_count, water_scenes_count, bathymetric_maps_count, note, created_at')
     .eq('created_by', req.user.email)
     .order('created_at', { ascending: false });
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data || []);
 });
 
@@ -67,10 +68,10 @@ router.post('/backups', requireAuth, async (req, res) => {
       .insert(row)
       .select('id, kind, size_bytes, catches_count, spots_count, water_scenes_count, bathymetric_maps_count, note, created_at')
       .single();
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) return sendDbError(res, error);
     return res.json(data);
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    return sendDbError(res, e);
   }
 });
 
@@ -112,8 +113,9 @@ router.post('/backups/:id/restore', requireAuth, async (req, res) => {
       });
       if (safetyErr) throw new Error(safetyErr.message);
     } catch (e) {
+      console.error('[Backup Safety-Snapshot Error]', e.message);
       return res.status(500).json({
-        error: 'Sicherheits-Backup vor dem Restore fehlgeschlagen — Restore abgebrochen: ' + e.message
+        error: 'Sicherheits-Backup vor dem Restore fehlgeschlagen — Restore abgebrochen'
       });
     }
   }
@@ -131,11 +133,19 @@ router.post('/backups/:id/restore', requireAuth, async (req, res) => {
     });
     if (mode === 'replace') {
       const { error: delErr } = await supabase.from(table).delete().eq('created_by', req.user.email);
-      if (delErr) { results[table] = { ok: false, error: delErr.message }; continue; }
+      if (delErr) {
+        console.error(`[Backup Restore] delete ${table} failed:`, delErr.message);
+        results[table] = { ok: false, error: 'Löschen fehlgeschlagen' };
+        continue;
+      }
     }
     if (sanitized.length === 0) { results[table] = { ok: true, inserted: 0 }; continue; }
     const { error: insErr, count } = await supabase.from(table).insert(sanitized, { count: 'exact' });
-    if (insErr) { results[table] = { ok: false, error: insErr.message }; continue; }
+    if (insErr) {
+      console.error(`[Backup Restore] insert ${table} failed:`, insErr.message);
+      results[table] = { ok: false, error: 'Wiederherstellen fehlgeschlagen' };
+      continue;
+    }
     results[table] = { ok: true, inserted: count ?? sanitized.length };
   }
   return res.json({ restoredAt: new Date().toISOString(), mode, tables, results });
@@ -147,7 +157,7 @@ router.delete('/backups/:id', requireAuth, async (req, res) => {
     .delete()
     .eq('id', req.params.id)
     .eq('created_by', req.user.email);
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json({ ok: true });
 });
 

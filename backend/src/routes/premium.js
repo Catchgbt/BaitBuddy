@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
 import { verifyGooglePlayPurchase, verifyStripePayment } from '../lib/purchaseVerification.js';
+import { sendDbError } from '../lib/errorResponse.js';
 
 const router = Router();
 
@@ -178,7 +179,7 @@ router.post('/premium/activate', requireAuth, async (req, res) => {
   const { error } = await supabase.auth.admin.updateUserById(req.user.id, {
     user_metadata: merged,
   });
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
 
   return res.json({
     ok: true,

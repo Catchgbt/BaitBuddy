@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
+import { sendDbError } from '../lib/errorResponse.js';
 
 const router = Router();
 
@@ -59,7 +60,7 @@ router.post('/social-media/shares', requireAuth, async (req, res) => {
     .single();
 
   if (error) {
-    return res.status(500).json({ error: error.message });
+    return sendDbError(res, error);
   }
 
   return res.json(data);
@@ -77,7 +78,7 @@ router.get('/social-media/shares', requireAuth, async (req, res) => {
     .range(offset, offset + limit - 1);
 
   if (error) {
-    return res.status(500).json({ error: error.message });
+    return sendDbError(res, error);
   }
 
   return res.json(data || []);
@@ -106,7 +107,7 @@ router.delete('/social-media/shares/:id', requireAuth, async (req, res) => {
     .eq('created_by', req.user.email);
 
   if (error) {
-    return res.status(500).json({ error: error.message });
+    return sendDbError(res, error);
   }
 
   return res.json({ ok: true });

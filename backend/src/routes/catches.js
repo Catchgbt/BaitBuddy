@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
+import { sendDbError } from '../lib/errorResponse.js';
 
 const router = Router();
 
@@ -29,15 +30,11 @@ router.get('/catches', requireAuth, async (req, res) => {
       .order('catch_time', { ascending: false })
       .range(offset, offset + limit - 1);
 
-    if (error) {
-      console.error('[Catches Error]', error);
-      return res.status(500).json({ error: error.message, details: 'Datenbankfehler beim Laden der Fänge' });
-    }
+    if (error) return sendDbError(res, error);
 
     return res.json(data || []);
   } catch (e) {
-    console.error('[Catches Exception]', e);
-    return res.status(500).json({ error: e.message });
+    return sendDbError(res, e);
   }
 });
 
@@ -45,7 +42,7 @@ router.get('/catches/stats/summary', requireAuth, async (req, res) => {
   const { data, error } = await supabase
     .from('catches').select('species, length_cm, weight_kg, catch_time')
     .eq('created_by', req.user.email);
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json({
     total: data.length,
     species: [...new Set(data.map(c => c.species).filter(Boolean))],
@@ -69,7 +66,7 @@ router.post('/catches', requireAuth, async (req, res) => {
     spot_id, photo_url,
     is_released: is_released || false
   }).select().single();
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data);
 });
 
@@ -80,7 +77,7 @@ const updateCatch = async (req, res) => {
     .eq('id', req.params.id)
     .eq('created_by', req.user.email)
     .select().single();
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data);
 };
 
@@ -92,7 +89,7 @@ router.delete('/catches/:id', requireAuth, async (req, res) => {
     .delete()
     .eq('id', req.params.id)
     .eq('created_by', req.user.email);
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json({ ok: true });
 });
 

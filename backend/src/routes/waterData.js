@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
+import { sendDbError } from '../lib/errorResponse.js';
 
 const router = Router();
 
@@ -71,7 +72,7 @@ router.get('/water-data', requireAuth, async (req, res) => {
     .eq('created_by', req.user.email)
     .order('captured_at', { ascending: false })
     .limit(100);
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data || []);
 });
 
@@ -99,7 +100,7 @@ router.post('/water-data', requireAuth, async (req, res) => {
       source,
     })
     .select().single();
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data);
 });
 
@@ -134,10 +135,11 @@ router.post('/water-data/fetch', requireAuth, async (req, res) => {
         source: marine ? 'open-meteo-marine+forecast' : 'open-meteo-forecast',
       })
       .select().single();
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) return sendDbError(res, error);
     return res.json(data);
   } catch (e) {
-    return res.status(502).json({ error: e.message });
+    console.error('[WaterData fetch]', e.message);
+    return res.status(502).json({ error: 'Wetterdaten konnten nicht abgerufen werden' });
   }
 });
 
@@ -147,7 +149,7 @@ router.delete('/water-data/:id', requireAuth, async (req, res) => {
     .delete()
     .eq('id', req.params.id)
     .eq('created_by', req.user.email);
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json({ ok: true });
 });
 

@@ -7,6 +7,7 @@ import { parseDepthFile } from '../lib/depthParser.js';
 import { isInClosedSeason } from '../lib/closedSeason.js';
 import { isAllowedFetchUrl } from '../lib/urlSafety.js';
 import { deleteUserAccount } from '../lib/accountDeletion.js';
+import { sendDbError } from '../lib/errorResponse.js';
 
 const router = Router();
 
@@ -31,7 +32,7 @@ const filterBody = (body, allowedFields) => {
 
 router.get('/fishing/rules', optionalAuth, async (req, res) => {
   const { data, error } = await supabase.from('rule_entries').select('*').limit(200);
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data || []);
 });
 
@@ -40,7 +41,7 @@ router.get('/fishing/rules/active', optionalAuth, async (req, res) => {
   // Daher alle Regeln laden und jahres-agnostisch nach Monat/Tag filtern statt per
   // Volldatum-Vergleich in der DB (der nur im geseedeten Jahr getroffen haette).
   const { data, error } = await supabase.from('rule_entries').select('*').limit(500);
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   const active = (data || []).filter(r => isInClosedSeason(r.closed_from, r.closed_to));
   return res.json(active);
 });
@@ -62,7 +63,7 @@ router.post('/fishing/clubs/nearby', optionalAuth, async (req, res) => {
 
 router.get('/fishing/plans', requireAuth, async (req, res) => {
   const { data, error } = await supabase.from('fishing_plans').select('*').eq('created_by', req.user.email);
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data || []);
 });
 
@@ -71,7 +72,7 @@ router.post('/fishing/plans', requireAuth, async (req, res) => {
   const { data, error } = await supabase.from('fishing_plans').insert({
     ...filteredBody, created_by: req.user.email
   }).select().single();
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data);
 });
 
@@ -80,20 +81,20 @@ router.patch('/fishing/plans/:id', requireAuth, async (req, res) => {
   const { data, error } = await supabase.from('fishing_plans')
     .update(patch).eq('id', req.params.id).eq('created_by', req.user.email)
     .select().single();
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data);
 });
 
 router.delete('/fishing/plans/:id', requireAuth, async (req, res) => {
   const { error } = await supabase.from('fishing_plans').delete()
     .eq('id', req.params.id).eq('created_by', req.user.email);
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json({ ok: true });
 });
 
 router.get('/fishing/hotspots', optionalAuth, async (req, res) => {
   const { data, error } = await supabase.from('spots').select('id,name,latitude,longitude,water_type');
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json({ hotspots: data || [] });
 });
 
@@ -154,14 +155,14 @@ router.post('/water/bathymetry', requireAuth, async (req, res) => {
         source_points: points.length,
       },
     }).select().single();
-    if (mapErr) return res.status(500).json({ error: mapErr.message });
+    if (mapErr) return sendDbError(res, mapErr);
 
     const rows = limited.map((p) => ({
       map_id: map.id, user_id: req.user.id, user_email: req.user.email,
       latitude: p.lat, longitude: p.lon, depth_m: p.depth,
     }));
     const { error: ptErr } = await supabase.from('depth_data_points').insert(rows);
-    if (ptErr) return res.status(500).json({ error: ptErr.message });
+    if (ptErr) return sendDbError(res, ptErr);
 
     const note = points.length > limited.length ? ` (von ${points.length}, auf ${DEPTH_MAX_POINTS} begrenzt)` : '';
     return res.json({
@@ -172,7 +173,7 @@ router.post('/water/bathymetry', requireAuth, async (req, res) => {
     });
   } catch (e) {
     console.error('[Bathymetry Upload Error]', e);
-    return res.status(500).json({ error: e.message });
+    return sendDbError(res, e);
   }
 });
 
@@ -184,7 +185,7 @@ router.post('/weather', optionalAuth, async (req, res) => {
     ).then(r => r.json());
     return res.json(w);
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    return sendDbError(res, e);
   }
 });
 
@@ -238,7 +239,7 @@ router.post('/weather/alerts', optionalAuth, async (req, res) => {
       fetched_at: new Date().toISOString(),
     });
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    return sendDbError(res, e);
   }
 });
 
@@ -252,17 +253,17 @@ router.post('/trips', requireAuth, async (req, res) => {
     const { data, error } = await supabase.from('live_trips').upsert({
       id, user_id: req.user.id, user_email: req.user.email, trip,
     }, { onConflict: 'id' }).select().single();
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) return sendDbError(res, error);
     return res.json({ ok: true, id: data.id, ...trip });
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    return sendDbError(res, e);
   }
 });
 
 router.get('/trips', requireAuth, async (req, res) => {
   const { data, error } = await supabase.from('live_trips')
     .select('trip').eq('user_id', req.user.id).order('created_at', { ascending: false });
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json((data || []).map((r) => r.trip));
 });
 
@@ -282,7 +283,7 @@ router.delete('/user/account', requireAuth, async (req, res) => {
     return res.json({ success: true, message: 'Account und alle zugehoerigen Daten wurden geloescht', warnings: result.errors });
   } catch (e) {
     console.error('[Account Deletion Error]', e);
-    return res.status(500).json({ success: false, message: e.message });
+    return res.status(500).json({ success: false, message: 'Account konnte nicht geloescht werden' });
   }
 });
 
@@ -300,7 +301,7 @@ router.get('/admin/users', requireAuth, async (req, res) => {
 
 router.get('/exams', optionalAuth, async (req, res) => {
   const { data, error } = await supabase.from('exam_questions').select('*').limit(200);
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data || []);
 });
 
@@ -343,7 +344,8 @@ router.post('/files/upload', requireAuth, async (req, res) => {
       });
 
     if (error) {
-      return res.status(500).json({ error: `Upload fehlgeschlagen: ${error.message}` });
+      console.error('[File Upload Error]', error.message);
+      return res.status(500).json({ error: 'Upload fehlgeschlagen' });
     }
 
     if (!data || !data.path) {
@@ -361,7 +363,7 @@ router.post('/files/upload', requireAuth, async (req, res) => {
     return res.json({ file_url: urlData.publicUrl });
   } catch (err) {
     console.error('Upload error:', err);
-    return res.status(500).json({ error: `Unerwarteter Fehler: ${err.message}` });
+    return res.status(500).json({ error: 'Unerwarteter Fehler beim Upload' });
   }
 });
 
