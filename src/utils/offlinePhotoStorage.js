@@ -29,7 +29,7 @@ async function initDB() {
     };
 
     request.onupgradeneeded = (event) => {
-      const database = event.target.result;
+      const database = /** @type {IDBDatabase} */ (event.target).result;
       if (!database.objectStoreNames.contains(STORE_NAME)) {
         const store = database.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
         store.createIndex('catchId', 'catchId', { unique: false });
@@ -57,7 +57,7 @@ export async function saveOfflinePhoto(file, catchId = null) {
           const photoData = {
             fileName: file.name,
             mimeType: file.type,
-            fileData: e.target.result,
+            fileData: /** @type {FileReader} */ (e.target).result,
             catchId,
             synced: false,
             createdAt: new Date().toISOString(),
