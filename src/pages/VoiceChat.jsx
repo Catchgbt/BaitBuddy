@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, PhoneOff, Phone, X, Loader2 } from 'lucide-react';
 import { functions } from '@/api/frontendClient';
+import { speakWithFallback, cancelElevenLabs } from '@/components/utils/elevenLabsTTS';
+import SabrinaAvatar from '@/components/ai/SabrinaAvatar';
 import { createPageUrl } from '@/utils';
 import { toast } from 'sonner';
 
@@ -11,6 +13,7 @@ const PHASE = {
   IDLE: 'idle',
   CONNECTING: 'connecting',
   LISTENING: 'listening',
+  THINKING: 'thinking',
   SPEAKING: 'speaking',
   ERROR: 'error',
 };
@@ -31,6 +34,14 @@ export default function VoiceChat() {
   const phaseRef = useRef(phase);
   useEffect(() => { phaseRef.current = phase; }, [phase]);
 
+  // Fallback-Modus (turn-basiert): greift, wenn die OpenAI-Realtime-Verbindung
+  // nicht zustande kommt. Nutzt die bewährte Pipeline STT -> catchgbtChat -> TTS.
+  const [fallbackMode, setFallbackMode] = useState(false);
+  const fallbackActiveRef = useRef(false);
+  const recognitionRef = useRef(null);
+  const transcriptRef = useRef([]);
+  useEffect(() => { transcriptRef.current = transcript; }, [transcript]);
+
   useEffect(() => { transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [transcript]);
 
   const cleanup = useCallback(() => {
@@ -42,7 +53,14 @@ export default function VoiceChat() {
     pcRef.current = null; dcRef.current = null; micStreamRef.current = null;
   }, []);
 
-  useEffect(() => () => cleanup(), [cleanup]);
+  useEffect(() => () => {
+    cleanup();
+    fallbackActiveRef.current = false;
+    try { recognitionRef.current?.stop(); } catch { /* noop */ }
+    recognitionRef.current = null;
+    cancelElevenLabs();
+    try { window.speechSynthesis?.cancel(); } catch { /* noop */ }
+  }, [cleanup]);
 
   const handleEvent = useCallback((evt) => {
     switch (evt.type) {
@@ -76,6 +94,99 @@ export default function VoiceChat() {
         break;
     }
   }, []);
+
+  // ── Fallback-Pipeline (turn-basiert) ───────────────────────────────────────
+  // Als Funktions-Deklarationen (hoisted), damit sie sich gegenseitig aufrufen
+  // können. Sie arbeiten ausschließlich über Refs/Setter und haben daher keine
+  // veralteten Closures.
+  function stopFallbackRecognition() {
+    try { recognitionRef.current?.stop(); } catch { /* noop */ }
+    recognitionRef.current = null;
+  }
+
+  function speakFallbackAndListen(text) {
+    setPhase(PHASE.SPEAKING);
+    speakWithFallback(text, { voiceEnabled: true, lang: 'de-DE', rate: 1.0 })
+      .catch(() => { /* Audio nicht kritisch */ })
+      .finally(() => { if (fallbackActiveRef.current) startFallbackRecognition(); });
+  }
+
+  async function askFallback(q) {
+    setPhase(PHASE.THINKING);
+    const history = transcriptRef.current.map(t => ({
+      role: t.role === 'user' ? 'user' : 'assistant',
+      content: t.text,
+    }));
+    let answer = '';
+    try {
+      const res = await functions.invoke('catchgbtChat', {
+        messages: [...history, { role: 'user', content: q }],
+        context: 'voice_chat',
+      });
+      answer = res?.reply || res?.message || res?.data?.reply
+        || 'Entschuldige, ich habe gerade keine Antwort parat.';
+    } catch {
+      answer = 'Es gab ein Verbindungsproblem. Bitte versuche es gleich noch einmal.';
+    }
+    if (!fallbackActiveRef.current) return;
+    setTranscript(prev => [...prev, { role: 'assistant', text: answer }]);
+    speakFallbackAndListen(answer);
+  }
+
+  function startFallbackRecognition() {
+    if (!fallbackActiveRef.current || recognitionRef.current) return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      setErrorMsg('Spracherkennung wird von diesem Browser nicht unterstützt.');
+      setPhase(PHASE.ERROR);
+      fallbackActiveRef.current = false;
+      return;
+    }
+    const rec = new SR();
+    rec.lang = 'de-DE';
+    rec.interimResults = false;
+    rec.continuous = false;
+    rec.maxAlternatives = 1;
+    rec.onresult = (e) => {
+      const q = (e.results?.[e.results.length - 1]?.[0]?.transcript || '').trim();
+      stopFallbackRecognition();
+      if (!q) { if (fallbackActiveRef.current) startFallbackRecognition(); return; }
+      setTranscript(prev => [...prev, { role: 'user', text: q }]);
+      askFallback(q);
+    };
+    rec.onerror = (ev) => {
+      stopFallbackRecognition();
+      if (ev?.error === 'not-allowed' || ev?.error === 'service-not-allowed') {
+        setErrorMsg('Mikrofon-Zugriff wurde verweigert. Bitte erlauben und erneut versuchen.');
+        setPhase(PHASE.ERROR);
+        fallbackActiveRef.current = false;
+        setFallbackMode(false);
+      } else if (fallbackActiveRef.current) {
+        // no-speech u. Ä.: einfach weiter zuhören
+        startFallbackRecognition();
+      }
+    };
+    try {
+      rec.start();
+      recognitionRef.current = rec;
+      setPhase(PHASE.LISTENING);
+    } catch {
+      recognitionRef.current = null;
+    }
+  }
+
+  function startFallbackConversation() {
+    fallbackActiveRef.current = true;
+    setFallbackMode(true);
+    setErrorMsg('');
+    if (transcriptRef.current.length) {
+      startFallbackRecognition();
+    } else {
+      const greeting = 'Hi, ich bin Sabrina, deine Angel-Expertin. Was möchtest du wissen?';
+      setTranscript([{ role: 'assistant', text: greeting }]);
+      speakFallbackAndListen(greeting);
+    }
+  }
 
   const start = useCallback(async () => {
     setErrorMsg('');
@@ -140,17 +251,29 @@ export default function VoiceChat() {
       await pc.setRemoteDescription({ type: 'answer', sdp: answerSdp });
     } catch (e) {
       cleanup();
-      const msg = e?.message?.includes('Permission') || e?.name === 'NotAllowedError'
-        ? 'Mikrofon-Zugriff wurde verweigert. Bitte erlauben und erneut versuchen.'
-        : (e?.message || 'Start fehlgeschlagen');
-      setErrorMsg(msg);
-      setPhase(PHASE.ERROR);
-      toast.error(msg);
+      // Mikrofon-Verweigerung würde auch den Fallback treffen -> direkt melden.
+      if (e?.name === 'NotAllowedError' || /Permission/i.test(e?.message || '')) {
+        const msg = 'Mikrofon-Zugriff wurde verweigert. Bitte erlauben und erneut versuchen.';
+        setErrorMsg(msg);
+        setPhase(PHASE.ERROR);
+        toast.error(msg);
+        return;
+      }
+      // Realtime nicht verfügbar (kein Key, Netzfehler, 4xx/5xx) -> nahtlos auf
+      // die bewährte Pipeline STT -> catchgbtChat -> TTS wechseln, damit das
+      // Gespräch trotzdem funktioniert.
+      console.warn('[VoiceChat] Realtime nicht verfügbar, wechsle auf Fallback:', e?.message);
+      startFallbackConversation();
     }
   }, [cleanup, handleEvent]);
 
   const hangUp = useCallback(() => {
+    fallbackActiveRef.current = false;
+    stopFallbackRecognition();
+    cancelElevenLabs();
+    try { window.speechSynthesis?.cancel(); } catch { /* noop */ }
     cleanup();
+    setFallbackMode(false);
     setPhase(PHASE.IDLE);
   }, [cleanup]);
 
@@ -161,12 +284,13 @@ export default function VoiceChat() {
     setMuted(next);
   }, [muted]);
 
-  const active = phase === PHASE.LISTENING || phase === PHASE.SPEAKING;
+  const active = phase === PHASE.LISTENING || phase === PHASE.SPEAKING || phase === PHASE.THINKING;
   const statusText = {
     [PHASE.IDLE]: 'Tippe auf Gespräch starten und unterhalte dich wie am Telefon.',
     [PHASE.CONNECTING]: 'Verbinde…',
     [PHASE.LISTENING]: muted ? 'Mikrofon stumm' : 'Ich höre zu…',
-    [PHASE.SPEAKING]: 'BaitBuddy spricht…',
+    [PHASE.THINKING]: 'Sabrina überlegt…',
+    [PHASE.SPEAKING]: 'Sabrina spricht…',
     [PHASE.ERROR]: errorMsg,
   }[phase];
 
@@ -175,7 +299,7 @@ export default function VoiceChat() {
       <div className="flex items-center justify-between p-4 border-b border-gray-800 sticky top-0 z-10 backdrop-blur-xl bg-gray-950/80">
         <div>
           <h1 className="text-lg font-bold text-white">Live-Gespräch</h1>
-          <p className="text-xs text-gray-500">Echtzeit-Sprache mit BaitBuddy</p>
+          <p className="text-xs text-gray-500">Echtzeit-Sprache mit Sabrina</p>
         </div>
         <button
           onClick={() => { hangUp(); navigate(createPageUrl('AIAssistant')); }}
@@ -208,15 +332,19 @@ export default function VoiceChat() {
             )}
           </AnimatePresence>
           <motion.div
-            animate={active ? { scale: [1, 1.06, 1] } : { scale: 1 }}
+            animate={active ? { scale: [1, 1.04, 1] } : { scale: 1 }}
             transition={{ duration: 1.4, repeat: active ? Infinity : 0 }}
-            className={`w-32 h-32 rounded-full flex items-center justify-center shadow-2xl ${
-              phase === PHASE.SPEAKING ? 'bg-cyan-600' : active ? 'bg-emerald-600' : 'bg-gray-700'
+            className={`w-32 h-32 rounded-full flex items-center justify-center shadow-2xl overflow-hidden ring-4 ${
+              phase === PHASE.SPEAKING ? 'ring-cyan-500/60' : active ? 'ring-emerald-500/60' : 'ring-gray-700'
             }`}
           >
-            {phase === PHASE.CONNECTING
-              ? <Loader2 size={42} className="text-white animate-spin" />
-              : <Mic size={42} className="text-white" />}
+            {phase === PHASE.CONNECTING ? (
+              <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+                <Loader2 size={42} className="text-white animate-spin" />
+              </div>
+            ) : (
+              <SabrinaAvatar speaking={phase === PHASE.SPEAKING} size={128} />
+            )}
           </motion.div>
         </div>
         <p className={`text-sm text-center px-8 ${phase === PHASE.ERROR ? 'text-red-400' : 'text-gray-300'}`}>
@@ -250,22 +378,24 @@ export default function VoiceChat() {
           </button>
         ) : (
           <>
-            <button
-              onClick={toggleMute}
-              disabled={phase === PHASE.CONNECTING}
-              className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors disabled:opacity-50 ${
-                muted ? 'bg-gray-600 text-white' : 'bg-gray-800 text-gray-200 hover:bg-gray-700'
-              }`}
-              title={muted ? 'Stummschaltung aufheben' : 'Stummschalten'}
-            >
-              <Mic size={22} className={muted ? 'opacity-40' : ''} />
-            </button>
+            {/* Stummschalten nur im echten Realtime-Modus (persistenter Mic-Stream) */}
+            {!fallbackMode && (
+              <button
+                onClick={toggleMute}
+                disabled={phase === PHASE.CONNECTING}
+                className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors disabled:opacity-50 ${
+                  muted ? 'bg-gray-600 text-white' : 'bg-gray-800 text-gray-200 hover:bg-gray-700'
+                }`}
+                title={muted ? 'Stummschaltung aufheben' : 'Stummschalten'}
+              >
+                <Mic size={22} className={muted ? 'opacity-40' : ''} />
+              </button>
+            )}
             <button
               onClick={hangUp}
-              className="w-16 h-16 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center shadow-lg transition-colors"
-              title="Auflegen"
+              className="flex items-center gap-2 px-8 py-4 rounded-full bg-red-600 hover:bg-red-500 text-white font-semibold shadow-lg transition-colors"
             >
-              <PhoneOff size={26} />
+              <PhoneOff size={20} /> Gespräch beenden
             </button>
           </>
         )}
