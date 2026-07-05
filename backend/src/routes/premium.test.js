@@ -91,6 +91,62 @@ describe('POST /api/premium/activate', () => {
   });
 });
 
+describe('POST /api/premium/check-feature', () => {
+  async function appWithPlan(planId) {
+    const futureDate = new Date(Date.now() + 24 * 3600 * 1000).toISOString();
+    const user = {
+      id: 'user-1',
+      email: 'angler@baitbuddy.test',
+      user_metadata: planId === 'free' ? {} : { premium_plan_id: planId, premium_expires_at: futureDate },
+    };
+    supabaseMock.current = createSupabaseMock({ authUser: user });
+    vi.resetModules();
+    return (await import('../server.js')).default;
+  }
+
+  it('erlaubt ein Basic-Feature fuer einen Free-Nutzer NICHT', async () => {
+    const freeApp = await appWithPlan('free');
+    const res = await request(freeApp)
+      .post('/api/premium/check-feature')
+      .set('Authorization', 'Bearer test-token')
+      .send({ feature: 'fangbuch' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.allowed).toBe(false);
+  });
+
+  it('erlaubt ein Basic-Feature fuer einen Basic-Nutzer', async () => {
+    const basicApp = await appWithPlan('basic');
+    const res = await request(basicApp)
+      .post('/api/premium/check-feature')
+      .set('Authorization', 'Bearer test-token')
+      .send({ feature: 'fangbuch' });
+
+    expect(res.body.allowed).toBe(true);
+  });
+
+  it('erlaubt ein Elite-Feature fuer einen Basic-Nutzer NICHT', async () => {
+    const basicApp = await appWithPlan('basic');
+    const res = await request(basicApp)
+      .post('/api/premium/check-feature')
+      .set('Authorization', 'Bearer test-token')
+      .send({ feature: 'offline' });
+
+    expect(res.body.allowed).toBe(false);
+    expect(res.body.required_plan).toBe('elite');
+  });
+
+  it('erlaubt unbekannte Feature-Keys standardmaessig (fail-open)', async () => {
+    const freeApp = await appWithPlan('free');
+    const res = await request(freeApp)
+      .post('/api/premium/check-feature')
+      .set('Authorization', 'Bearer test-token')
+      .send({ feature: 'ein_zukuenftiges_feature' });
+
+    expect(res.body.allowed).toBe(true);
+  });
+});
+
 describe('GET /api/premium/status', () => {
   it('liefert free ohne user_metadata', async () => {
     const res = await request(app)
