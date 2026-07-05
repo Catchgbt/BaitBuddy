@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth, optionalAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
+import { sendDbError } from '../lib/errorResponse.js';
 
 const router = Router();
 
@@ -25,7 +26,7 @@ router.get('/community/posts', optionalAuth, async (req, res) => {
   const offset = Math.max(parseInt(req.query.offset) || 0, 0);
   const { data, error } = await supabase.from('community_posts')
     .select('*').order('created_at', { ascending: false }).range(offset, offset + limit - 1);
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data || []);
 });
 
@@ -35,14 +36,14 @@ router.post('/community/posts', requireAuth, async (req, res) => {
     ...filteredBody,
     created_by: req.user.email
   }).select().single();
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data);
 });
 
 router.delete('/community/posts/:id', requireAuth, async (req, res) => {
   const { error } = await supabase.from('community_posts').delete()
     .eq('id', req.params.id).eq('created_by', req.user.email);
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json({ ok: true });
 });
 
@@ -52,7 +53,7 @@ router.post('/community/posts/:id/like', requireAuth, async (req, res) => {
   });
   // 23505 = bereits geliked (Unique-Constraint); nicht erneut hochzählen.
   if (error?.code === '23505') return res.json({ ok: true });
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
 
   // Like-Anzahl aus post_likes aggregieren und auf dem Post persistieren,
   // damit der Zähler nach einem Reload korrekt bleibt.
@@ -74,7 +75,7 @@ router.get('/community/comments', optionalAuth, async (req, res) => {
     .select('*').order('created_at', { ascending: true }).range(offset, offset + limit - 1);
   if (req.query.post_id) query = query.eq('post_id', req.query.post_id);
   const { data, error } = await query;
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data || []);
 });
 
@@ -84,7 +85,7 @@ router.post('/community/comments', requireAuth, async (req, res) => {
   const { data, error } = await supabase.from('community_comments').insert({
     post_id, text, created_by: req.user.email
   }).select().single();
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data);
 });
 
@@ -93,7 +94,7 @@ router.get('/community/voting/leaderboard', optionalAuth, async (req, res) => {
   const offset = Math.max(parseInt(req.query.offset) || 0, 0);
   const { data, error } = await supabase.from('voting_submissions')
     .select('*').order('total_score', { ascending: false }).range(offset, offset + limit - 1);
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data || []);
 });
 
@@ -102,7 +103,7 @@ router.post('/community/voting/submit', requireAuth, async (req, res) => {
   const { data, error } = await supabase.from('voting_submissions').insert({
     ...filteredBody, created_by: req.user.email
   }).select().single();
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data);
 });
 
@@ -111,7 +112,7 @@ router.post('/community/voting/:id/like', requireAuth, async (req, res) => {
     submission_id: req.params.id, user_id: req.user.email
   });
   if (error?.code === '23505') return res.json({ ok: true });
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json({ ok: true });
 });
 
@@ -168,7 +169,7 @@ router.get('/community/clans', optionalAuth, async (req, res) => {
   try {
     return res.json(await buildClanStats(req.query.competition_id || null));
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    return sendDbError(res, e);
   }
 });
 
@@ -188,7 +189,7 @@ router.get('/community/clans/leaderboard', optionalAuth, async (req, res) => {
       }));
     return res.json({ leaderboard });
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    return sendDbError(res, e);
   }
 });
 
@@ -197,7 +198,7 @@ router.post('/community/clans', requireAuth, async (req, res) => {
   const { data: clan, error } = await supabase.from('clans').insert({
     ...filteredBody, created_by: req.user.email
   }).select().single();
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   // Ersteller wird automatisch erstes Mitglied (Modell A: clan_members).
   await supabase.from('clan_members')
     .insert({ clan_id: clan.id, user_id: req.user.email, role: 'owner' });
@@ -214,7 +215,7 @@ router.post('/community/clans/:id/join', requireAuth, async (req, res) => {
     clan_id: req.params.id, user_id: req.user.email
   });
   if (error?.code === '23505') return res.json({ ok: true, already_member: true });
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json({ ok: true });
 });
 
@@ -228,14 +229,14 @@ router.get('/community/clans/:id/leaderboard', optionalAuth, async (req, res) =>
     .select('created_by, species, length_cm')
     .in('created_by', memberIds)
     .order('length_cm', { ascending: false }).limit(20);
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data || []);
 });
 
 router.get('/competitions', optionalAuth, async (req, res) => {
   const { data, error } = await supabase.from('competitions')
     .select('*').eq('is_active', true).order('created_at', { ascending: false });
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data || []);
 });
 
@@ -244,7 +245,7 @@ router.post('/competitions', requireAuth, async (req, res) => {
   const { data, error } = await supabase.from('competitions').insert({
     ...filteredBody, created_by: req.user.email
   }).select().single();
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data);
 });
 
@@ -254,7 +255,7 @@ router.get('/competitions/:id/leaderboard', optionalAuth, async (req, res) => {
   const { data, error } = await supabase.from('voting_submissions')
     .select('*').eq('competition_id', req.params.id)
     .order('total_score', { ascending: false }).range(offset, offset + limit - 1);
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data || []);
 });
 
@@ -268,7 +269,7 @@ router.post('/competitions/:id/submit', requireAuth, async (req, res) => {
     catch_time: new Date().toISOString(),
     total_score: length_cm || 0
   }).select().single();
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data);
 });
 
@@ -280,7 +281,7 @@ router.post('/competitions/:id/join', requireAuth, async (req, res) => {
     total_score: 0
   }).select().single();
   if (error?.code === '23505') return res.json({ ok: true });
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json({ ok: true });
 });
 

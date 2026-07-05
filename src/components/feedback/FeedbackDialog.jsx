@@ -202,7 +202,7 @@ export default function FeedbackDialog({ feature, onClose }) {
                 >
                   {isSaving ? (
                     <span className="flex items-center gap-2">
-                      <span className="animate-spin">⏳</span>
+                      
                       Speichern...
                     </span>
                   ) : (

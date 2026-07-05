@@ -138,15 +138,15 @@ function TripHistory() {
                   {/* Stats */}
                   <div className="grid grid-cols-3 gap-2 mb-2 text-xs">
                     <div className="bg-gray-700/50 rounded px-2 py-1">
-                      <span className="text-gray-400">⏱️ </span>
+                      
                       <span className="text-cyan-300 font-semibold">{trip.stats.duration}</span>
                     </div>
                     <div className="bg-gray-700/50 rounded px-2 py-1">
-                      <span className="text-gray-400">🗺️ </span>
+                      
                       <span className="text-cyan-300 font-semibold">{trip.stats.distance}km</span>
                     </div>
                     <div className="bg-gray-700/50 rounded px-2 py-1">
-                      <span className="text-gray-400">🎣 </span>
+                      
                       <span className="text-cyan-300 font-semibold">{trip.catches?.length || 0}</span>
                     </div>
                   </div>

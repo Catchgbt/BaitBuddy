@@ -264,7 +264,7 @@ function LiveTripPage() {
   const catchIcon = L.divIcon({
     html: `<div style="
       font-size: 24px;
-    ">🎣</div>`,
+    "></div>`,
     iconSize: [24, 24],
     iconAnchor: [12, 12],
   });
@@ -275,7 +275,7 @@ function LiveTripPage() {
       <div className="sticky top-0 z-20 bg-gray-900/95 border-b border-cyan-700 p-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-cyan-400">🎣 Live-Tour</h1>
+            <h1 className="text-2xl font-bold text-cyan-400">Live-Tour</h1>
             <p className="text-xs text-gray-400 mt-1">
               GPS-Tracking, Fang-Logging & Echtzeit-Statistiken
             </p>
@@ -297,16 +297,16 @@ function LiveTripPage() {
           // Start-Screen
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-gradient-to-br from-cyan-900/40 to-blue-900/40 border border-cyan-700 rounded-lg p-6">
-              <h2 className="text-xl font-bold text-cyan-300 mb-4">🚀 Neue Tour starten</h2>
+              <h2 className="text-xl font-bold text-cyan-300 mb-4">Neue Tour starten</h2>
               <div className="space-y-3 mb-6">
                 <div className="text-sm text-gray-300">
                   <strong>Was wird getrackt:</strong>
                   <ul className="mt-2 space-y-1 text-xs text-gray-400">
-                    <li>📍 GPS-Position (hochpräzise)</li>
-                    <li>🗺️ Komplette Route</li>
-                    <li>⏱️ Zeit & Geschwindigkeit</li>
-                    <li>🎣 Alle Fänge mit Position</li>
-                    <li>📊 Live-Statistiken</li>
+                    <li>GPS-Position (hochpräzise)</li>
+                    <li>Komplette Route</li>
+                    <li>Zeit & Geschwindigkeit</li>
+                    <li>Alle Fänge mit Position</li>
+                    <li>Live-Statistiken</li>
                   </ul>
                 </div>
               </div>
@@ -331,25 +331,25 @@ function LiveTripPage() {
             {/* Live-Statistiken */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               <div className="bg-gray-800 border border-gray-700 rounded-lg p-3">
-                <div className="text-xs text-gray-400">⏱️ DAUER</div>
+                <div className="text-xs text-gray-400">DAUER</div>
                 <div className="text-lg font-bold text-cyan-400">{tripData.stats.duration}</div>
               </div>
               <div className="bg-gray-800 border border-gray-700 rounded-lg p-3">
-                <div className="text-xs text-gray-400">🗺️ DISTANZ</div>
+                <div className="text-xs text-gray-400">DISTANZ</div>
                 <div className="text-lg font-bold text-cyan-400">{tripData.stats.distance} km</div>
               </div>
               <div className="bg-gray-800 border border-gray-700 rounded-lg p-3">
-                <div className="text-xs text-gray-400">💨 SPEED</div>
+                <div className="text-xs text-gray-400">SPEED</div>
                 <div className="text-lg font-bold text-cyan-400">{tripData.stats.speed} km/h</div>
               </div>
               <div className="bg-gray-800 border border-gray-700 rounded-lg p-3">
-                <div className="text-xs text-gray-400">🎣 FÄNGE</div>
+                <div className="text-xs text-gray-400">FÄNGE</div>
                 <div className="text-lg font-bold text-cyan-400">{tripData.catches.length}</div>
               </div>
               <div className="bg-gray-800 border border-gray-700 rounded-lg p-3">
-                <div className="text-xs text-gray-400">📡 GPS</div>
+                <div className="text-xs text-gray-400">GPS</div>
                 <div className={`text-lg font-bold ${currentLocation ? 'text-green-400' : 'text-red-400'}`}>
-                  {currentLocation ? '✓ Aktiv' : '✗ Suche'}
+                  {currentLocation ? 'Aktiv' : 'Suche'}
                 </div>
               </div>
             </div>
@@ -403,7 +403,7 @@ function LiveTripPage() {
                       >
                         <Popup>
                           <div className="text-sm">
-                            <strong>🎣 {catch_.species}</strong>
+                            <strong>{catch_.species}</strong>
                             <p className="text-xs text-gray-600 mt-1">
                               {catch_.weight && `${catch_.weight}g • `}
                               {catch_.length && `${catch_.length}cm`}
@@ -563,7 +563,7 @@ function CatchLoggerModal({ onClose, onSave }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
       <div className="bg-gray-900 border border-cyan-700 rounded-lg shadow-2xl max-w-md w-full p-6">
-        <h2 className="text-xl font-bold text-cyan-300 mb-4">🎣 Fang hinzufügen</h2>
+        <h2 className="text-xl font-bold text-cyan-300 mb-4">Fang hinzufügen</h2>
 
         <div className="space-y-4">
           <div>

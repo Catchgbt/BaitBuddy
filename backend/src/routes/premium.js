@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
+import { verifyGooglePlayPurchase, verifyStripePayment } from '../lib/purchaseVerification.js';
+import { sendDbError } from '../lib/errorResponse.js';
 
 const router = Router();
 
@@ -60,20 +62,45 @@ router.post('/plan/status', requireAuth, async (req, res) => {
   });
 });
 
+const PRODUCTS = [
+  { id: 'basic', name: 'Basic', price: 2.99, features: ['Fangbuch', 'Spots', 'Wetter'] },
+  { id: 'pro', name: 'Pro', price: 6.99, features: ['Alles in Basic', 'KI-Assistent', 'Community'] },
+  { id: 'elite', name: 'Elite', price: 12.99, features: ['Alles in Pro', 'Offline', 'Premium-Support'] },
+];
+
 router.get('/premium/products', async (req, res) => {
-  return res.json([
-    { id: 'basic', name: 'Basic', price: 2.99, features: ['Fangbuch', 'Spots', 'Wetter'] },
-    { id: 'pro', name: 'Pro', price: 6.99, features: ['Alles in Basic', 'KI-Assistent', 'Community'] },
-    { id: 'elite', name: 'Elite', price: 12.99, features: ['Alles in Pro', 'Offline', 'Premium-Support'] },
-  ]);
+  return res.json(PRODUCTS);
 });
 
+// Rangfolge der Plaene, niedrig -> hoch. 'free' ist implizit Rang 0.
+const PLAN_RANK = { free: 0, basic: 1, pro: 2, elite: 3 };
+
+// Mindest-Plan je Feature-Key, abgeleitet aus den Produktbeschreibungen oben
+// (fangbuch/spots/wetter = Basic; ki_assistent/community = Pro; offline/
+// premium_support = Elite). check-feature wird vom Frontend aktuell NICHT
+// aufgerufen (die client-seitige PlanGuard/PlanContext-Komponente prueft den
+// Plan direkt) — die Haerte hier ist Vorbereitung fuer zukuenftige serverseitige
+// Durchsetzung, nicht Ersatz fuer PlanGuard. Unbekannte/neue Feature-Keys
+// werden bewusst erlaubt (fail-open), damit dieser Endpunkt nicht kuenftige,
+// hier noch nicht katalogisierte Features blockiert.
+const FEATURE_MIN_PLAN = {
+  fangbuch: 'basic',
+  spots: 'basic',
+  wetter: 'basic',
+  ki_assistent: 'pro',
+  community: 'pro',
+  offline: 'elite',
+  premium_support: 'elite',
+};
+
 router.post('/premium/check-feature', requireAuth, async (req, res) => {
-  const { feature } = req.body;
+  const { feature } = req.body || {};
   const { effectiveId } = resolvePlan(req.user);
-  // Alle Features sind für alle Benutzer freigeschaltet
-  const allowed = true;
-  return res.json({ ok: true, allowed, plan: effectiveId });
+
+  const requiredPlan = feature ? FEATURE_MIN_PLAN[feature] : null;
+  const allowed = !requiredPlan || PLAN_RANK[effectiveId] >= PLAN_RANK[requiredPlan];
+
+  return res.json({ ok: true, allowed, plan: effectiveId, required_plan: requiredPlan || null });
 });
 
 router.post('/premium/checkout', requireAuth, async (req, res) => {
@@ -107,6 +134,15 @@ router.post('/premium/activate', requireAuth, async (req, res) => {
     return res.status(501).json({
       error: 'Kaufverifikation ist serverseitig noch nicht konfiguriert — Premium kann derzeit nicht aktiviert werden'
     });
+  }
+
+  // Echte Verifikation beim jeweiligen Anbieter — siehe purchaseVerification.js
+  // (WICHTIG: dort als ungetestet gegen echte APIs markiert).
+  const verification = purchase_token
+    ? await verifyGooglePlayPurchase({ productId: product_id, purchaseToken: purchase_token })
+    : await verifyStripePayment({ sessionId: transaction_id });
+  if (!verification.valid) {
+    return res.status(402).json({ error: `Zahlung konnte nicht verifiziert werden: ${verification.reason}` });
   }
 
   const current = req.user.user_metadata || {};
@@ -143,7 +179,7 @@ router.post('/premium/activate', requireAuth, async (req, res) => {
   const { error } = await supabase.auth.admin.updateUserById(req.user.id, {
     user_metadata: merged,
   });
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
 
   return res.json({
     ok: true,

@@ -115,7 +115,7 @@ export async function syncOfflineCatches() {
   return { synced, failed, errors };
 }
 
-// ─── Smart Create: Online → POST, Offline → Queue ──────────────────────────────
+// ─── Smart Create: Online POST, Offline Queue ──────────────────────────────
 
 export async function createCatchWithOfflineSupport(catchData) {
   if (checkIsOnline()) {

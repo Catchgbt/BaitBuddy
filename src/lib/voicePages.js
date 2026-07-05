@@ -16,7 +16,7 @@ export const ALLOWED_PAGES = [
   "VoiceLecture"
 ];
 
-// Aliase (immer kleingeschrieben) → kanonischer Key.
+// Aliase (immer kleingeschrieben) kanonischer Key.
 // Deckt deutsche Begriffe, englische Begriffe und die Kurz-Bezeichner ab,
 // die der KI-System-Prompt verwendet (home, log, map, chat, ...).
 const PAGE_ALIASES = {

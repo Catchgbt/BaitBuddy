@@ -331,11 +331,11 @@ export default function MapView({
             <div className="text-sm max-w-xs">
               <strong className="text-base text-emerald-400">{club.name}</strong>
               <p className="text-xs text-gray-400 mt-1">
-                {club.category === 'club' ? '🏛️ Angelverein' : (club.typ ? `🎣 ${club.typ}` : '🎣 Angelpark')}
+                {club.category === 'club' ? 'Angelverein' : (club.typ ? `${club.typ}` : 'Angelpark')}
               </p>
               {club.address && (
                 <p className="text-xs text-gray-400 mt-1">
-                  📍 {club.address.city}
+                  {club.address.city}
                 </p>
               )}
               {Array.isArray(club.fische) && club.fische.length > 0 && (
@@ -355,7 +355,7 @@ export default function MapView({
                   rel="noopener noreferrer"
                   className="text-xs text-cyan-400 underline mt-2 inline-block hover:text-cyan-300"
                 >
-                  🌐 Website
+                  Website
                 </a>
               )}
             </div>
@@ -379,14 +379,14 @@ export default function MapView({
             <div className="text-sm max-w-xs">
               <strong className="text-base text-yellow-400">{shop.name}</strong>
               <p className="text-xs text-gray-400 mt-1">
-                🛒 Angelshop
+                Angelshop
               </p>
               <p className="text-xs text-gray-400 mt-1">
-                📍 {shop.city}
+                {shop.city}
               </p>
               {shop.street && (
                 <p className="text-xs text-gray-400 mt-1">
-                  📮 {shop.street}
+                  {shop.street}
                 </p>
               )}
             </div>
@@ -410,14 +410,14 @@ export default function MapView({
             <div className="text-sm max-w-xs">
               <strong className="text-base text-orange-400">{park.name}</strong>
               <p className="text-xs text-gray-400 mt-1">
-                🌍 {park.type || 'Angelpark'}
+                {park.type || 'Angelpark'}
               </p>
               <p className="text-xs text-gray-400 mt-1">
-                📍 {park.country}
+                {park.country}
               </p>
               {park.address && (
                 <p className="text-xs text-gray-400 mt-1">
-                  📮 {park.address}
+                  {park.address}
                 </p>
               )}
             </div>
@@ -439,16 +439,16 @@ export default function MapView({
         >
           <Popup>
             <div className="text-sm max-w-xs">
-              <strong className="text-base text-cyan-300">🏞️ {fluss.name}</strong>
+              <strong className="text-base text-cyan-300">{fluss.name}</strong>
               <p className="text-xs text-gray-400 mt-1">
-                📏 {fluss.laenge_km} km • {fluss.verlauf}
+                {fluss.laenge_km} km • {fluss.verlauf}
               </p>
               <p className="text-xs text-gray-300 mt-2">
-                <strong>🎣 Fischarten:</strong><br/>
+                <strong>Fischarten:</strong><br/>
                 {fluss.fischarten}
               </p>
               <p className="text-xs text-gray-300 mt-1">
-                <strong>📍 Angelplätze:</strong><br/>
+                <strong>Angelplätze:</strong><br/>
                 {fluss.angelgewaesser}
               </p>
               <p className="text-xs text-gray-400 mt-1">
@@ -474,14 +474,14 @@ export default function MapView({
         >
           <Popup>
             <div className="text-sm max-w-xs">
-              <strong className="text-base text-cyan-400">🌊 {bd.name}</strong>
+              <strong className="text-base text-cyan-400">{bd.name}</strong>
               <p className="text-xs text-gray-400 mt-1">
                 Bathymetrie (Tiefenkarte)
               </p>
               <p className="text-xs text-gray-300 mt-2">
-                📊 GEBCO 2026 Daten<br/>
-                📏 ~500m Auflösung<br/>
-                🗺️ Bounding Box verfügbar
+                GEBCO 2026 Daten<br/>
+                ~500m Auflösung<br/>
+                Bounding Box verfügbar
               </p>
               <p className="text-xs text-gray-500 mt-2">
                 <em>Daten verfügbar sobald GeoTIFF heruntergeladen</em>
@@ -507,14 +507,14 @@ export default function MapView({
             <div className="text-sm max-w-xs">
               <strong className="text-base text-pink-400">{fs.name}</strong>
               <p className="text-xs text-gray-400 mt-1">
-                🌍 {fs.land} • {fs.region}
+                {fs.land} • {fs.region}
               </p>
               <p className="text-xs text-gray-400 mt-1">
-                🎣 {fs.forellenarten}
+                {fs.forellenarten}
               </p>
               {fs.bemerkungen && (
                 <p className="text-xs text-gray-300 mt-1">
-                  💡 {fs.bemerkungen}
+                  {fs.bemerkungen}
                 </p>
               )}
               {fs.website && (
@@ -524,7 +524,7 @@ export default function MapView({
                   rel="noopener noreferrer"
                   className="text-xs text-pink-400 underline mt-2 inline-block hover:text-pink-300"
                 >
-                  🌐 Website
+                  Website
                 </a>
               )}
             </div>
@@ -548,7 +548,7 @@ export default function MapView({
             <div className="text-sm max-w-xs">
               <strong className="text-base text-violet-400">{tk.name}</strong>
               <p className="text-xs text-gray-400 mt-1">
-                📍 {tk.region}
+                {tk.region}
               </p>
               <p className="text-xs text-gray-400 mt-1">
                 {tk.beschreibung}
@@ -559,7 +559,7 @@ export default function MapView({
                 rel="noopener noreferrer"
                 className="text-xs text-violet-400 underline mt-2 inline-block hover:text-violet-300"
               >
-                📄 PDF öffnen
+                PDF öffnen
               </a>
             </div>
           </Popup>

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useOptimisticMutation } from '@/lib/useOptimisticMutation';
+import { functions } from '@/api/frontendClient';
 
 export default function DeleteAccountSection() {
   const [step, setStep] = useState('idle');
@@ -12,9 +13,13 @@ export default function DeleteAccountSection() {
 
   const deleteAccountMutation = useOptimisticMutation({
     mutationFn: async () => {
-      const response = await fetch('/api/functions/deleteAccount', { method: 'POST' });
-      const data = await response.json();
-      if (!data.success) throw new Error(data.error || 'Delete failed');
+      // War zuvor ein direkter fetch() auf /api/functions/deleteAccount — ein
+      // nicht existierender Endpunkt UND ohne Authorization-Header (waere
+      // selbst bei existierendem Endpunkt immer mit 401 gescheitert).
+      // functions.invoke('deleteAccount') ruft korrekt authentifiziert
+      // DELETE /api/user/account auf.
+      const data = await functions.invoke('deleteAccount');
+      if (!data?.success) throw new Error(data?.message || 'Delete failed');
       return data;
     },
     onSuccess: () => {

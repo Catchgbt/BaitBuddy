@@ -101,7 +101,7 @@ export default function TripLiveTicker({ plans = [] }) {
           </span>
           {hint.to && (
             <span className="ml-auto text-xs text-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-              öffnen →
+              öffnen 
             </span>
           )}
         </Link>

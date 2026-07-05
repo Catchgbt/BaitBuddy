@@ -82,7 +82,7 @@ export default function AppearanceSettings() {
 
         {/* Info Box */}
         <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4 text-sm text-cyan-300">
-          💡 <span className="ml-2">Änderungen werden automatisch gespeichert und in allen Fenstern synchronisiert</span>
+          <span className="ml-2">Änderungen werden automatisch gespeichert und in allen Fenstern synchronisiert</span>
         </div>
       </CardContent>
     </Card>

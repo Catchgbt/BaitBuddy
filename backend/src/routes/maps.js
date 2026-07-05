@@ -119,7 +119,7 @@ router.get('/maps/status', requireAuth, requireAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error('Error getting map status:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Interner Fehler' });
   }
 });
 
@@ -224,7 +224,7 @@ router.post('/maps/download', requireAuth, requireAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error('Error triggering download:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Interner Fehler' });
   }
 });
 
@@ -254,7 +254,7 @@ router.post('/maps/download-auto', requireAuth, requireAdmin, async (req, res) =
     });
   } catch (error) {
     console.error('Error triggering auto-download:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Interner Fehler' });
   }
 });
 
@@ -297,7 +297,7 @@ router.delete('/maps/:sourceId', requireAuth, requireAdmin, async (req, res) => 
     });
   } catch (error) {
     console.error('Error deleting map:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Interner Fehler' });
   }
 });
 

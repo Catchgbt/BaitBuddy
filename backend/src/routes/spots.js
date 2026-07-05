@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
+import { sendDbError } from '../lib/errorResponse.js';
 
 const router = Router();
 
@@ -18,13 +19,13 @@ const filterSpotBody = (body) => {
 
 router.get('/spots', requireAuth, async (req, res) => {
   const { data, error } = await supabase.from('spots').select('*').eq('created_by', req.user.email);
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data || []);
 });
 
 router.get('/spots/public', async (req, res) => {
   const { data, error } = await supabase.from('spots').select('id,name,latitude,longitude,water_type').limit(100);
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data);
 });
 
@@ -35,7 +36,7 @@ router.post('/spots', requireAuth, async (req, res) => {
     is_favorite: is_favorite ?? false,
     depth_meters: depth_meters ?? null,
   }).select().single();
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data);
 });
 
@@ -46,14 +47,14 @@ router.patch('/spots/:id', requireAuth, async (req, res) => {
     .eq('id', req.params.id)
     .eq('created_by', req.user.email)
     .select().single();
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data);
 });
 
 router.delete('/spots/:id', requireAuth, async (req, res) => {
   const { error } = await supabase.from('spots').delete()
     .eq('id', req.params.id).eq('created_by', req.user.email);
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json({ ok: true });
 });
 

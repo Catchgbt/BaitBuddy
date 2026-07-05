@@ -379,7 +379,7 @@ Verwende Emojis sparsam aber gezielt für bessere Lesbarkeit.`,
 
                   {msg.role === 'user' && (
                     <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center ml-3 border border-gray-600">
-                      <span className="text-lg">👤</span>
+                      
                     </div>
                   )}
                 </motion.div>
@@ -441,7 +441,7 @@ Verwende Emojis sparsam aber gezielt für bessere Lesbarkeit.`,
             </div>
             
             <div className="flex items-center justify-center gap-2 mt-3 text-xs text-gray-500">
-              <span>✨</span>
+              
               <span>KI-gestützte Antworten können Fehler enthalten</span>
             </div>
           </div>

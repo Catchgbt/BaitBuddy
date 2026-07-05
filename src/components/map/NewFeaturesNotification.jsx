@@ -42,32 +42,32 @@ function NewFeaturesNotification() {
           </div>
           <div className="flex-1">
             <h3 className="text-sm font-semibold text-cyan-300 mb-2">
-              ✨ Neue Karten-Features
+              Neue Karten-Features
             </h3>
             <ul className="text-xs text-gray-300 space-y-1">
               <li className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full" />
-                <strong>🏞️ Deutsche Flüsse:</strong> Rhein, Donau, Main, Mosel, Elbe & 5 weitere
+                <strong>Deutsche Flüsse:</strong> Rhein, Donau, Main, Mosel, Elbe & 5 weitere
               </li>
               <li className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full" />
-                <strong>🗻 Tiefenkarten:</strong> Echte Bathymetrie für Ems, Neckar, Wümme, NOK & Weser
+                <strong>Tiefenkarten:</strong> Echte Bathymetrie für Ems, Neckar, Wümme, NOK & Weser
               </li>
               <li className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full" />
-                <strong>🎣 26 Forellenseen:</strong> Österreich, Schweiz, Slowenien
+                <strong>26 Forellenseen:</strong> Österreich, Schweiz, Slowenien
               </li>
               <li className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full" />
-                <strong>🌊 Bathymetrie:</strong> Alle 16 Bundesländer vorbereitet
+                <strong>Bathymetrie:</strong> Alle 16 Bundesländer vorbereitet
               </li>
               <li className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full" />
-                <strong>⚡ Performance:</strong> Map 4-5s Einfrieren behoben!
+                <strong>Performance:</strong> Map 4-5s Einfrieren behoben!
               </li>
             </ul>
             <p className="text-xs text-gray-400 mt-2">
-              💡 Nutze die neuen Filter rechts oben auf der Karte (🏞️ Flüsse, 🗻 Tiefenkarten, etc.)
+              Nutze die neuen Filter rechts oben auf der Karte (Flüsse, Tiefenkarten, etc.)
             </p>
           </div>
         </div>

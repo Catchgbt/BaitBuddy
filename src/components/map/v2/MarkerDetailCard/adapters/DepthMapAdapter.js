@@ -57,20 +57,20 @@ export async function normalizeDepthMap(tiefenkarte) {
     actions: [
       {
         id: 'open-map',
-        label: '🗺️ Karte öffnen',
+        label: 'Karte öffnen',
         icon: '🗺️',
         variant: 'primary'
       },
       {
         id: 'download',
-        label: '⬇️ Herunterladen',
+        label: 'Herunterladen',
         icon: '⬇️',
         variant: 'secondary'
       },
       {
         id: 'info',
-        label: 'ℹ️ Mehr Infos',
-        icon: 'ℹ️',
+        label: 'ℹMehr Infos',
+        icon: 'ℹ',
         variant: 'secondary'
       }
     ]

@@ -16,7 +16,7 @@ function MapNavigationHub({
 
   const categories = {
     'new-features': {
-      title: '✨ NEU: 6 Advanced Features',
+      title: 'NEU: 6 Advanced Features',
       icon: '🎉',
       description: 'Alle neuen Funktionen in dieser Version',
       features: [
@@ -71,7 +71,7 @@ function MapNavigationHub({
       ],
     },
     'quick-start': {
-      title: '⚡ Schnelleinstieg',
+      title: 'Schnelleinstieg',
       icon: '🚀',
       description: 'Die wichtigsten Funktionen',
       features: [
@@ -99,7 +99,7 @@ function MapNavigationHub({
       ],
     },
     'visualization': {
-      title: '🎨 Visualisierungen',
+      title: 'Visualisierungen',
       icon: '🎨',
       description: 'Verschiedene Kartenansichten & Layer',
       features: [
@@ -130,7 +130,7 @@ function MapNavigationHub({
       ],
     },
     'water-analysis': {
-      title: '💧 Gewässeranalyse',
+      title: 'Gewässeranalyse',
       icon: '💧',
       description: 'Wissenschaftliche Wasser- & Gezeitendaten',
       features: [
@@ -153,7 +153,7 @@ function MapNavigationHub({
       ],
     },
     'smart-features': {
-      title: '🤖 Intelligente Features',
+      title: 'Intelligente Features',
       icon: '🤖',
       description: 'KI-gestützte Vorhersagen & Echtzeitwarnungen',
       features: [
@@ -179,12 +179,12 @@ function MapNavigationHub({
           description: 'Push-Benachrichtigungen bei optimalen Angelbedingungen',
           difficulty: 'easy',
           icon: '🔔',
-          tooltip: 'Aktiviere: Einstellungen → Benachrichtigungen',
+          tooltip: 'Aktiviere: Einstellungen Benachrichtigungen',
         },
       ],
     },
     'performance': {
-      title: '⚡ Performance & Offline',
+      title: 'Performance & Offline',
       icon: '⚡',
       description: 'Cache-Optimierung & Offline-Funktionalität',
       features: [
@@ -211,19 +211,19 @@ function MapNavigationHub({
   const modes = [
     {
       id: 'guided',
-      name: '🎓 Geführt',
+      name: 'Geführt',
       description: 'Features werden Schritt für Schritt erklärt',
       features: ['Tooltips & Tipps', 'Guided Tours', 'Kontexthilfe'],
     },
     {
       id: 'simple',
-      name: '🎯 Einfach',
+      name: 'Einfach',
       description: 'Nur häufigste Funktionen sichtbar',
       features: ['Vereinfachte UI', 'Schnellzugriffe', 'Minimal Features'],
     },
     {
       id: 'advanced',
-      name: '⚙️ Erweitert',
+      name: 'Erweitert',
       description: 'Alle Features sofort zugänglich',
       features: ['Alle Layer', 'Erweiterte Optionen', 'Keine Einschränkungen'],
     },
@@ -245,11 +245,11 @@ function MapNavigationHub({
   const getDifficultyLabel = (difficulty) => {
     switch (difficulty) {
       case 'easy':
-        return '✅ Einfach';
+        return 'Einfach';
       case 'medium':
-        return '⚡ Mittel';
+        return 'Mittel';
       case 'hard':
-        return '🔥 Fortgeschritten';
+        return 'Fortgeschritten';
       default:
         return 'Standard';
     }
@@ -279,7 +279,7 @@ function MapNavigationHub({
       <div className="sticky top-0 bg-gray-900/98 border-b border-cyan-700 p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className="text-2xl">🗺️</div>
+            <div className="text-2xl"></div>
             <h1 className="text-lg font-bold text-cyan-300">Map Navigation Hub</h1>
           </div>
           <button
@@ -369,7 +369,7 @@ function MapNavigationHub({
                     </div>
                     <p className="text-xs text-gray-400 mt-1">{feature.description}</p>
                     {feature.tooltip && (
-                      <p className="text-xs text-yellow-600 mt-1 italic">💡 {feature.tooltip}</p>
+                      <p className="text-xs text-yellow-600 mt-1 italic">{feature.tooltip}</p>
                     )}
                   </div>
                   <ChevronRight className="w-5 h-5 text-gray-500 group-hover:text-cyan-400 transition" />
@@ -390,7 +390,7 @@ function MapNavigationHub({
           {hideHints ? 'Tipps anzeigen' : 'Tipps verbergen'}
         </button>
         <div className="text-xs text-gray-500">
-          💡 Klick auf Features um sie zu aktivieren
+          Klick auf Features um sie zu aktivieren
         </div>
       </div>
     </div>

@@ -59,11 +59,11 @@ function MapFeaturesBadge() {
             5 neue Features
           </div>
           <ul className="space-y-1 text-xs">
-            <li>🏞️ <strong>Deutsche Flüsse</strong> - 10 Hauptflüsse</li>
-            <li>🗻 <strong>Tiefenkarten</strong> - 7 echte Bathymetrien</li>
-            <li>🎣 <strong>Forellenseen</strong> - 26 europäische Seen</li>
-            <li>🌊 <strong>Bathymetrie</strong> - Alle Bundesländer</li>
-            <li>⚡ <strong>Performance</strong> - 4-5s Fix!</li>
+            <li><strong>Deutsche Flüsse</strong> - 10 Hauptflüsse</li>
+            <li><strong>Tiefenkarten</strong> - 7 echte Bathymetrien</li>
+            <li><strong>Forellenseen</strong> - 26 europäische Seen</li>
+            <li><strong>Bathymetrie</strong> - Alle Bundesländer</li>
+            <li><strong>Performance</strong> - 4-5s Fix!</li>
           </ul>
           <p className="text-gray-400 mt-2">
             Filter rechts oben auf der Karte aktivieren

@@ -197,7 +197,7 @@ function VoiceLectureInner() {
                 padding: '4px 0'
               }}
             >
-              ← Zurück zu Themen
+              Zurück zu Themen
             </button>
 
             <h2 style={{ fontSize: 24, fontWeight: 700, color: '#22d3c8', marginBottom: 16 }}>
@@ -289,7 +289,7 @@ function VoiceLectureInner() {
                           cursor: 'pointer',
                         }}
                       >
-                        {isSpeaking ? 'Pausieren' : '▶Vorlesen'}
+                        {isSpeaking ? 'Pausieren' : 'Vorlesen'}
                       </button>
                       <div style={{ color: '#8899aa', fontSize: 12 }}>
                         {isSpeaking ? 'Sabrina liest vor...' : 'Klick auf Vorlesen zum Starten'}

@@ -33,7 +33,7 @@ export default function DeleteAccountDialog() {
       toast.info('Lösche Account-Daten...');
       const response = await functions.invoke('deleteAccount');
 
-      if (response.data?.success) {
+      if (response?.success) {
         toast.success('Account erfolgreich gelöscht!');
         setOpen(false);
         setConfirmText('');
@@ -41,7 +41,7 @@ export default function DeleteAccountDialog() {
           auth.logout('/');
         }, 2000);
       } else {
-        toast.error(response.data?.message || 'Fehler beim Löschen der Account-Daten');
+        toast.error(response?.message || 'Fehler beim Löschen der Account-Daten');
       }
     } catch (error) {
       console.error('Account deletion error:', error);

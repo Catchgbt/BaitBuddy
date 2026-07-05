@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase.js';
 import { invokeLLM } from '../lib/llm.js';
 import { isInClosedSeason } from '../lib/closedSeason.js';
 import { isAllowedFetchUrl } from '../lib/urlSafety.js';
+import { sendDbError } from '../lib/errorResponse.js';
 
 const router = Router();
 
@@ -136,10 +137,8 @@ Regeln: Aktions-Block nur wenn Nutzer wirklich eine Aktion will. Zuerst kurze Be
     return res.json({ ok: true, reply: cleanReply, message: cleanReply, action });
   } catch (e) {
     console.error('[AI Chat Error]', e.message, e.stack);
-    return res.status(500).json({
-      error: e.message,
-      details: e.message.includes('GROQ_API_KEY') ? 'API-Schlüssel nicht konfiguriert' : 'KI-Service Fehler'
-    });
+    const details = e.message.includes('GROQ_API_KEY') ? 'API-Schlüssel nicht konfiguriert' : 'KI-Service Fehler';
+    return res.status(500).json({ error: details, details });
   }
 });
 
@@ -154,7 +153,7 @@ router.post('/ai/analyze-catch', requireAuth, async (req, res) => {
     });
     return res.json({ ok: true, analysis });
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    return sendDbError(res, e);
   }
 });
 
@@ -205,7 +204,7 @@ Regeln:
       confidence: typeof parsed.confidence === 'number' ? parsed.confidence : null
     });
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    return sendDbError(res, e);
   }
 });
 
@@ -215,7 +214,7 @@ router.post('/ai/evaluate-catch', requireAuth, async (req, res) => {
     const reply = await invokeLLM({ prompt: `Bewerte diesen Fang: ${JSON.stringify(catch_data)}. Kontext: ${context || ''}. Antworte auf Deutsch.` });
     return res.json({ ok: true, evaluation: reply });
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    return sendDbError(res, e);
   }
 });
 
@@ -226,7 +225,7 @@ router.post('/ai/generate-catch-report', requireAuth, async (req, res) => {
     const reply = await invokeLLM({ prompt: `Erstelle einen Fangbericht für den Zeitraum ${period || 'letzte 30 Tage'} basierend auf diesen Fängen: ${JSON.stringify(catches?.slice(0, 20))}. Antworte auf Deutsch.` });
     return res.json({ ok: true, report: reply });
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    return sendDbError(res, e);
   }
 });
 
@@ -323,7 +322,7 @@ Antworte AUSSCHLIESSLICH mit einem gültigen JSON-Objekt in exakt diesem Format,
     return res.json({ ok: true, data: { recommendation, catchCount, weather } });
   } catch (e) {
     console.error('[Fishing Recommendation Error]', e.message);
-    return res.status(500).json({ error: e.message });
+    return sendDbError(res, e);
   }
 });
 
@@ -372,7 +371,7 @@ router.post('/ai/tts', requireAuth, async (req, res) => {
     return res.json({ audioBase64: base64Audio, contentType: 'audio/mpeg' });
   } catch (e) {
     console.error('TTS error:', e);
-    return res.status(500).json({ error: e.message });
+    return sendDbError(res, e);
   }
 });
 
@@ -453,7 +452,7 @@ Antworte AUSSCHLIESSLICH mit einem gültigen JSON-Objekt in exakt diesem Format,
     return res.json({ ok: true, data: analysis });
   } catch (e) {
     console.error('[Fish Behavior Analysis Error]', e.message);
-    return res.status(500).json({ error: e.message });
+    return sendDbError(res, e);
   }
 });
 
@@ -534,7 +533,7 @@ router.post('/ai/realtime-session', requireAuth, async (req, res) => {
     return res.json({ ok: true, client_secret: data.client_secret, model, voice });
   } catch (e) {
     console.error('[Realtime Session Error]', e.message);
-    return res.status(500).json({ error: e.message });
+    return sendDbError(res, e);
   }
 });
 

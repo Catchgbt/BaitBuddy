@@ -302,7 +302,7 @@ function LayoutContent({ children, currentPageName }) {
     );
   }
 
-  // Auth noch nicht aufgelöst → Spinner statt Gast-Redirect
+  // Auth noch nicht aufgelöst Spinner statt Gast-Redirect
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">

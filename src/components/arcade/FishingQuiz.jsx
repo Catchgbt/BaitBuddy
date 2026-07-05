@@ -204,7 +204,7 @@ export default function FishingQuiz() {
           animate={{ scale: 1, opacity: 1 }}
           className="text-center space-y-6"
         >
-          <div className="text-7xl mb-4">🧠</div>
+          <div className="text-7xl mb-4"></div>
           <h1 className="text-5xl font-bold text-cyan-400 drop-shadow-[0_0_20px_rgba(34,211,238,0.8)]">
             Angel-Quiz
           </h1>

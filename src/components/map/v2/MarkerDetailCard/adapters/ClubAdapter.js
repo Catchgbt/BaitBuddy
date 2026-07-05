@@ -56,19 +56,19 @@ export async function normalizeClub(club) {
     actions: [
       club.website && {
         id: 'website',
-        label: '🌐 Website besuchen',
+        label: 'Website besuchen',
         icon: '🌐',
         variant: 'primary'
       },
       club.phone && {
         id: 'call',
-        label: '📞 Anrufen',
+        label: 'Anrufen',
         icon: '📞',
         variant: 'primary'
       },
       {
         id: 'navigate',
-        label: '🗺️ Navigation',
+        label: 'Navigation',
         icon: '🗺️',
         variant: 'secondary'
       }

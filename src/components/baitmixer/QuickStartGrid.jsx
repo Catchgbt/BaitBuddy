@@ -185,7 +185,7 @@ export default function QuickStartGrid({
       <Card className="glass-morphism border-cyan-600/30 bg-cyan-900/10">
         <CardContent className="pt-6">
           <div className="flex gap-3">
-            <div className="text-2xl">💡</div>
+            <div className="text-2xl"></div>
             <div className="text-sm text-gray-300">
               <strong>Tipp:</strong> Die vordefinierte Rezepte sind bewährte Mischungen, die du sofort verwenden kannst.
               Klicke auf "Laden & Bearbeiten", um das Rezept zu verfeinern.

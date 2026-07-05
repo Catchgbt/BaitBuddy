@@ -19,6 +19,7 @@ import syncRoutes from './routes/sync.js';
 import waterDataRoutes from './routes/waterData.js';
 import bathymetryRoutes from './routes/bathymetry.js';
 import backupRoutes from './routes/backups.js';
+import { aiRateLimiter, authRateLimiter } from './middleware/rateLimit.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -36,6 +37,19 @@ app.use(express.json({ limit: '10mb' }));
 
 app.get('/health', (req, res) => res.json({ ok: true, app: 'BaitBuddy', version: '1.0.0' }));
 app.get('/api/health', (req, res) => res.json({ ok: true, app: 'BaitBuddy', version: '1.0.0' }));
+
+// Rate-Limiting per Pfad-Präfix (in Tests via NODE_ENV=test übersprungen, damit
+// wiederholte Requests im selben Testlauf nicht in die Limits laufen). Scoped
+// auf teure/sensible Pfade — /api/health und /api/ai/test bleiben unlimitiert.
+// /api/analyze-photo zählt zu den KI-Kosten, liegt aber nicht unter /api/ai,
+// daher separat.
+if (process.env.NODE_ENV !== 'test') {
+  app.use('/api/ai', aiRateLimiter);
+  app.use('/api/analyze-photo', aiRateLimiter);
+  app.use('/api/auth/login', authRateLimiter);
+  app.use('/api/auth/register', authRateLimiter);
+  app.use('/api/auth/refresh', authRateLimiter);
+}
 
 app.use('/api', authRoutes);
 app.use('/api', aiRoutes);

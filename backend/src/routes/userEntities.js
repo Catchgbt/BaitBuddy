@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
+import { sendDbError } from '../lib/errorResponse.js';
 
 const router = Router();
 
@@ -55,10 +56,10 @@ function registerEntity(path, table, allowedFields, { publicRead = false, readOn
       if (req.query.limit) q = q.limit(Number(req.query.limit));
 
       const { data, error } = await q;
-      if (error) return res.status(500).json({ error: error.message });
+      if (error) return sendDbError(res, error);
       return res.json(data || []);
     } catch (e) {
-      return res.status(500).json({ error: e.message });
+      return sendDbError(res, e);
     }
   });
 
@@ -78,7 +79,7 @@ function registerEntity(path, table, allowedFields, { publicRead = false, readOn
     const row = { ...pack(req.body), user_id: req.user.id };
     for (const c of ownerEmailCols) row[c] = req.user.email;
     const { data, error } = await supabase.from(table).insert(row).select().single();
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) return sendDbError(res, error);
     return res.json(data);
   });
 
@@ -88,7 +89,7 @@ function registerEntity(path, table, allowedFields, { publicRead = false, readOn
       .update(pack(req.body))
       .eq('id', req.params.id).eq('user_id', req.user.id)
       .select().single();
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) return sendDbError(res, error);
     return res.json(data);
   });
 
@@ -96,7 +97,7 @@ function registerEntity(path, table, allowedFields, { publicRead = false, readOn
   router.delete(`${path}/:id`, requireAuth, async (req, res) => {
     const { error } = await supabase.from(table).delete()
       .eq('id', req.params.id).eq('user_id', req.user.id);
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) return sendDbError(res, error);
     return res.json({ ok: true });
   });
 }

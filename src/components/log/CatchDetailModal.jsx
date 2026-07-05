@@ -185,7 +185,7 @@ export default function CatchDetailModal({ catchItem, onClose, onEdit, spots }) 
                 {catchItem.is_released && (
                   <div className="col-span-2 flex items-center gap-2 text-emerald-400">
                     <div className="w-5 h-5 rounded-full border-2 border-emerald-400 flex items-center justify-center">
-                      ✓
+                      
                     </div>
                     <span className="font-semibold">Fisch zurückgesetzt (C&R)</span>
                   </div>

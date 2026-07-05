@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { supabase, supabaseUrl, supabaseKey } from '../lib/supabase.js';
 import { requireAuth } from '../middleware/auth.js';
+import { sendDbError } from '../lib/errorResponse.js';
 
 const router = Router();
 
@@ -42,7 +43,7 @@ router.post('/auth/refresh', async (req, res) => {
     }
     return res.json({ token: data.access_token, refresh_token: data.refresh_token });
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    return sendDbError(res, e);
   }
 });
 
@@ -124,7 +125,7 @@ router.patch('/auth/me', requireAuth, async (req, res) => {
   const { data, error } = await supabase.auth.admin.updateUserById(req.user.id, {
     user_metadata: merged,
   });
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   const u = data.user;
   return res.json({
     id: u.id,

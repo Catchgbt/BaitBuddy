@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
+import { sendDbError } from '../lib/errorResponse.js';
 
 const router = Router();
 
@@ -67,7 +68,7 @@ function registerCrud(table, segment) {
     }
 
     const { data, error } = await query;
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) return sendDbError(res, error);
     return res.json((data || []).map(flatten));
   });
 
@@ -75,7 +76,7 @@ function registerCrud(table, segment) {
   router.get(`/gear/${segment}/:id`, requireAuth, async (req, res) => {
     const { data, error } = await supabase.from(table).select('*')
       .eq('id', req.params.id).eq('created_by', req.user.email).single();
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) return sendDbError(res, error);
     return res.json(flatten(data));
   });
 
@@ -84,7 +85,7 @@ function registerCrud(table, segment) {
     const { data, error } = await supabase.from(table).insert({
       created_by: req.user.email, data: pack(req.body),
     }).select().single();
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) return sendDbError(res, error);
     return res.json(flatten(data));
   });
 
@@ -94,7 +95,7 @@ function registerCrud(table, segment) {
     if (!rows.length) return res.json([]);
     const payload = rows.map((r) => ({ created_by: req.user.email, data: pack(r) }));
     const { data, error } = await supabase.from(table).insert(payload).select();
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) return sendDbError(res, error);
     return res.json((data || []).map(flatten));
   });
 
@@ -102,14 +103,14 @@ function registerCrud(table, segment) {
   router.patch(`/gear/${segment}/:id`, requireAuth, async (req, res) => {
     const { data: existing, error: readErr } = await supabase.from(table)
       .select('data').eq('id', req.params.id).eq('created_by', req.user.email).single();
-    if (readErr) return res.status(500).json({ error: readErr.message });
+    if (readErr) return sendDbError(res, readErr);
 
     const merged = { ...(existing?.data || {}), ...pack(req.body) };
     const { data, error } = await supabase.from(table)
       .update({ data: merged, updated_date: new Date().toISOString() })
       .eq('id', req.params.id).eq('created_by', req.user.email)
       .select().single();
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) return sendDbError(res, error);
     return res.json(flatten(data));
   });
 
@@ -117,7 +118,7 @@ function registerCrud(table, segment) {
   router.delete(`/gear/${segment}/:id`, requireAuth, async (req, res) => {
     const { error } = await supabase.from(table).delete()
       .eq('id', req.params.id).eq('created_by', req.user.email);
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) return sendDbError(res, error);
     return res.json({ ok: true });
   });
 }

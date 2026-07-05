@@ -144,7 +144,6 @@ export default function CatchgbtAusrüstung() {
         {/* Dashboard-Karte */}
         <div className="mt-4 rounded-3xl border border-slate-800 bg-slate-900/40 p-4">
           <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
-            <span className="grid h-6 w-6 place-items-center rounded-md border border-slate-700 bg-slate-800">📦</span>
             Vollständigkeit
           </h2>
           <div className="grid grid-cols-3 gap-3">

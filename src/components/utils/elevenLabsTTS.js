@@ -27,7 +27,7 @@ export function cancelElevenLabs() {
 
 /**
  * Holt ElevenLabs-Audio fürs übergebene Text und spielt es ab.
- * Wirft einen Fehler, wenn kein Audio geliefert wird (z. B. API-Key fehlt → 501),
+ * Wirft einen Fehler, wenn kein Audio geliefert wird (z. B. API-Key fehlt 501),
  * damit der Aufrufer auf Browser-TTS zurückfallen kann.
  *
  * @param {string} text
@@ -52,7 +52,7 @@ export async function speakWithElevenLabs(text, callbacks = {}) {
     throw new Error("ElevenLabs lieferte kein Audio");
   }
 
-  // Base64 → Blob
+  // Base64 Blob
   const binary = atob(audioBase64);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) {

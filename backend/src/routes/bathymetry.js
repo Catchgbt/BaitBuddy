@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
+import { sendDbError } from '../lib/errorResponse.js';
 
 const router = Router();
 
@@ -18,7 +19,7 @@ router.get('/bathymetry/regions', requireAuth, async (req, res) => {
     .select('*')
     .eq('user_email', req.user.email)
     .order('created_at', { ascending: false });
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data || []);
 });
 
@@ -32,7 +33,7 @@ router.post('/bathymetry/regions', requireAuth, async (req, res) => {
     .from('bathymetric_maps')
     .insert(insertRow)
     .select().single();
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json(data);
 });
 
@@ -54,7 +55,7 @@ router.post('/bathymetry/regions/:id/download', requireAuth, async (req, res) =>
     .eq('user_email', req.user.email)
     .gte('latitude', bbox.south).lte('latitude', bbox.north)
     .gte('longitude', bbox.west).lte('longitude', bbox.east);
-  if (depthErr) return res.status(500).json({ error: depthErr.message });
+  if (depthErr) return sendDbError(res, depthErr);
 
   const { data: spots, error: spotErr } = await supabase
     .from('spots')
@@ -63,7 +64,7 @@ router.post('/bathymetry/regions/:id/download', requireAuth, async (req, res) =>
     .not('depth_meters', 'is', null)
     .gte('latitude', bbox.south).lte('latitude', bbox.north)
     .gte('longitude', bbox.west).lte('longitude', bbox.east);
-  if (spotErr) return res.status(500).json({ error: spotErr.message });
+  if (spotErr) return sendDbError(res, spotErr);
 
   const points = [
     ...(depthPoints || []).map(p => ({ lat: p.latitude, lng: p.longitude, depth: Number(p.depth_m) })),
@@ -91,7 +92,7 @@ router.post('/bathymetry/regions/:id/download', requireAuth, async (req, res) =>
     .eq('id', region.id)
     .eq('user_email', req.user.email)
     .select().single();
-  if (updateErr) return res.status(500).json({ error: updateErr.message });
+  if (updateErr) return sendDbError(res, updateErr);
   return res.json(updated);
 });
 
@@ -101,7 +102,7 @@ router.delete('/bathymetry/regions/:id', requireAuth, async (req, res) => {
     .delete()
     .eq('id', req.params.id)
     .eq('user_email', req.user.email);
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return sendDbError(res, error);
   return res.json({ ok: true });
 });
 

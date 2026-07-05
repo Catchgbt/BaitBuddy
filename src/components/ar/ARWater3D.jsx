@@ -611,10 +611,15 @@ export default function ARWater3D() {
       sensor.start();
 
       const proxyFn = async (z, x, y) => {
+        // bathymetryProxy liefert bei Fehler null (siehe frontendClient.js) und
+        // der native Client gibt ohnehin kein axios-artiges .config zurück —
+        // ungeschütztes response.config.url warf hier "Cannot read properties
+        // of undefined/null" und riss die ganze AR-Ansicht mit. Fällt jetzt
+        // sauber auf null zurück, das der TileLODManager verträgt.
         const response = await functions.invoke('bathymetryProxy', {}, {
           params: { provider: 'gebco', z, x, y }
         });
-        return response.config.url;
+        return response?.config?.url ?? null;
       };
 
       const decodeFn = (r, g, b) => {

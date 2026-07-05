@@ -109,7 +109,7 @@ function HydrographicAnalysis({ visible = false, bounds = null }) {
           color: rgba(0, 150, 255, 0.8);
           font-size: 20px;
           text-shadow: 0 0 3px rgba(0,0,0,0.5);
-        ">→</div>`,
+        "></div>`,
         iconSize: [20, 20],
         className: 'flow-arrow',
       });
