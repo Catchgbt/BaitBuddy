@@ -6,11 +6,13 @@ import { toast } from 'sonner';
 import { addToOfflineNotesQueue, getOfflineNotesQueue, removeFromOfflineNotesQueue, isOnline } from '@/components/utils/offlineSync';
 import { useHaptic } from '@/components/utils/HapticFeedback';
 import { useSound } from '@/components/utils/SoundManager';
+import { api as apiClient } from '@/api/frontendClient';
 
 export default function AudioNotesWidget() {
   const [isRecording, setIsRecording] = useState(false);
   const [notes, setNotes] = useState([]);
   const [playingId, setPlayingId] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const streamRef = useRef(null);
@@ -20,13 +22,31 @@ export default function AudioNotesWidget() {
   // Load persisted notes on mount
   useEffect(() => {
     loadNotes();
-    window.addEventListener('storage', loadNotes);
-    return () => window.removeEventListener('storage', loadNotes);
+    const interval = setInterval(() => {
+      if (isOnline()) {
+        loadNotes();
+      }
+    }, 10000); // Refresh every 10 seconds when online
+    return () => clearInterval(interval);
   }, []);
 
-  const loadNotes = () => {
-    const queue = getOfflineNotesQueue();
-    setNotes(queue);
+  const loadNotes = async () => {
+    try {
+      setIsLoading(true);
+      if (isOnline()) {
+        const data = await apiClient.get('/dashboard-account-notes');
+        setNotes(data || []);
+      } else {
+        const queue = getOfflineNotesQueue();
+        setNotes(queue);
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Notizen:', error);
+      const queue = getOfflineNotesQueue();
+      setNotes(queue);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const startRecording = async () => {
@@ -48,21 +68,32 @@ export default function AudioNotesWidget() {
         const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         const reader = new FileReader();
 
-        reader.onloadend = () => {
+        reader.onloadend = async () => {
           const base64 = reader.result.split(',')[1];
-          const newNote = addToOfflineNotesQueue({
+          const noteData = {
             audio_data: base64,
             duration_ms: mediaRecorderRef.current?.duration || 0,
             mime_type: 'audio/webm',
             title: `Notiz ${new Date().toLocaleTimeString('de-DE')}`,
-            spot_id: null,
-            catch_id: null,
-          });
+          };
+
+          try {
+            if (isOnline()) {
+              await apiClient.post('/dashboard-account-notes', noteData);
+              toast.success('Audionotiz gespeichert');
+            } else {
+              addToOfflineNotesQueue(noteData);
+              toast.success('Audionotiz lokal gespeichert (wird synchronisiert)');
+            }
+          } catch (error) {
+            console.error('Fehler beim Speichern der Notiz:', error);
+            addToOfflineNotesQueue(noteData);
+            toast.info('Audionotiz lokal gespeichert (Server nicht erreichbar)');
+          }
 
           loadNotes();
           triggerHaptic('light');
           playSound('success');
-          toast.success('Audionotiz gespeichert');
         };
 
         reader.readAsDataURL(blob);
@@ -94,11 +125,11 @@ export default function AudioNotesWidget() {
       triggerHaptic('light');
       const audio = new Audio(`data:${note.mime_type};base64,${note.audio_data}`);
 
-      audio.onplay = () => setPlayingId(note.__id);
+      audio.onplay = () => setPlayingId(note.id);
       audio.onended = () => setPlayingId(null);
       audio.onpause = () => setPlayingId(null);
 
-      if (playingId === note.__id) {
+      if (playingId === note.id) {
         audio.pause();
         setPlayingId(null);
       } else {
@@ -118,11 +149,22 @@ export default function AudioNotesWidget() {
     link.click();
   };
 
-  const deleteNote = (noteId) => {
+  const deleteNote = async (noteId) => {
     triggerHaptic('light');
-    removeFromOfflineNotesQueue(noteId);
+    try {
+      if (isOnline()) {
+        await apiClient.del(`/dashboard-account-notes/${noteId}`);
+        toast.success('Notiz gelöscht');
+      } else {
+        removeFromOfflineNotesQueue(noteId);
+        toast.success('Notiz lokal gelöscht');
+      }
+    } catch (error) {
+      console.error('Fehler beim Löschen der Notiz:', error);
+      removeFromOfflineNotesQueue(noteId);
+      toast.success('Notiz gelöscht');
+    }
     loadNotes();
-    toast.success('Notiz gelöscht');
   };
 
   return (
@@ -160,21 +202,25 @@ export default function AudioNotesWidget() {
       </div>
 
       <div className="space-y-2 max-h-48 overflow-y-auto">
-        {notes.length === 0 ? (
+        {isLoading ? (
+          <p className="text-sm text-gray-500 text-center py-4">
+            Notizen werden geladen...
+          </p>
+        ) : notes.length === 0 ? (
           <p className="text-sm text-gray-500 text-center py-4">
             Keine Audionotizen vorhanden
           </p>
         ) : (
           notes.map((note) => (
             <div
-              key={note.__id}
+              key={note.id}
               className="flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200 hover:border-blue-300"
             >
               <button
                 onClick={() => playNote(note)}
                 className="p-1.5 hover:bg-blue-100 rounded-lg transition"
               >
-                {playingId === note.__id ? (
+                {playingId === note.id ? (
                   <Pause className="w-4 h-4 text-blue-600" />
                 ) : (
                   <Play className="w-4 h-4 text-blue-600" />
@@ -186,7 +232,7 @@ export default function AudioNotesWidget() {
                   {note.title}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {new Date(note.__created).toLocaleTimeString('de-DE')}
+                  {new Date(note.created_at).toLocaleTimeString('de-DE')}
                 </p>
               </div>
 
@@ -199,7 +245,7 @@ export default function AudioNotesWidget() {
               </button>
 
               <button
-                onClick={() => deleteNote(note.__id)}
+                onClick={() => deleteNote(note.id)}
                 className="p-1 hover:bg-red-100 rounded transition"
                 title="Löschen"
               >
