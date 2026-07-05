@@ -4,8 +4,8 @@ import React, { useState, useEffect, memo, useId } from 'react';
 // Lichtstrahlen von der Oberfläche mit gelegentlichen hellen Einstrahlungen,
 // viele aufsteigende, seitlich pendelnde Blasen, Schwebeteilchen und
 // Süßwasserfische, die ruhig durch das Bild ziehen. Sobald ein Fisch das Bild
-// verlassen hat, schwimmt die nächste Art herein (Karpfen → Barsch → Forelle
-// → Hecht → Zander → Wels → …). Rein dekorativ (pointer-events: none).
+// verlassen hat, schwimmt die nächste Art herein (Karpfen Barsch Forelle
+// Hecht Zander Wels …). Rein dekorativ (pointer-events: none).
 //
 // Echte, freigestellte Fischfotos (Wikimedia Commons; Barsch/Forelle/Hecht/Zander
 // Public Domain, Karpfen & Wels CC-BY-SA mit Namensnennung im Impressum — Quellen

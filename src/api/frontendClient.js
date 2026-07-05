@@ -110,7 +110,7 @@ class ApiClient {
 
 export const api = new ApiClient();
 
-// ── Entity → REST Endpoint Mapping ───────────────────────────────────────────
+// ── Entity REST Endpoint Mapping ───────────────────────────────────────────
 const ENTITY_MAP = {
   Catch:          '/api/catches',
   Spot:           '/api/spots',
@@ -242,7 +242,7 @@ const entitiesProxy = new Proxy({}, {
 /** @type {Record<string, ReturnType<typeof makeEntity>>} */
 export const entities = entitiesProxy;
 
-// ── Function → Endpoint Mapping ───────────────────────────────────────────────
+// ── Function Endpoint Mapping ───────────────────────────────────────────────
 const FUNCTION_MAP = {
   catchgbtChat:           (d) => api.post('/api/ai/chat', d),
   realtimeSession:        (d) => api.post('/api/ai/realtime-session', d || {}),

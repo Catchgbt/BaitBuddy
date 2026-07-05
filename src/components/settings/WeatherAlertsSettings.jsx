@@ -117,7 +117,7 @@ export default function WeatherAlertsSettings() {
         <div className="space-y-3 p-4 bg-gray-800/30 rounded-lg border border-gray-700/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-blue-400 text-xl">🌧️</span>
+              
               <div>
                 <Label className="text-base text-white">Regen-Warnung</Label>
                 <p className="text-xs text-gray-400 mt-0.5">
@@ -154,7 +154,7 @@ export default function WeatherAlertsSettings() {
         <div className="space-y-3 p-4 bg-gray-800/30 rounded-lg border border-gray-700/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-gray-400 text-xl">🌬️</span>
+              
               <div>
                 <Label className="text-base text-white">Wind-Warnung</Label>
                 <p className="text-xs text-gray-400 mt-0.5">
@@ -191,7 +191,7 @@ export default function WeatherAlertsSettings() {
         <div className="space-y-3 p-4 bg-gray-800/30 rounded-lg border border-gray-700/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-red-400 text-xl">🌪️</span>
+              
               <div>
                 <Label className="text-base text-white">Sturm-Warnung</Label>
                 <p className="text-xs text-gray-400 mt-0.5">
@@ -228,7 +228,7 @@ export default function WeatherAlertsSettings() {
         <div className="space-y-3 p-4 bg-gray-800/30 rounded-lg border border-gray-700/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-orange-400 text-xl">🌡️</span>
+              
               <div>
                 <Label className="text-base text-white">Temperatur-Warnung</Label>
                 <p className="text-xs text-gray-400 mt-0.5">
@@ -279,7 +279,7 @@ export default function WeatherAlertsSettings() {
         <div className="space-y-3 p-4 bg-gray-800/30 rounded-lg border border-gray-700/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-yellow-400 text-xl">☀️</span>
+              
               <div>
                 <Label className="text-base text-white">UV-Index-Warnung</Label>
                 <p className="text-xs text-gray-400 mt-0.5">
@@ -316,7 +316,7 @@ export default function WeatherAlertsSettings() {
         <div className="space-y-3 p-4 bg-gray-800/30 rounded-lg border border-gray-700/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-cyan-400 text-xl">👁️</span>
+              
               <div>
                 <Label className="text-base text-white">Sichtweiten-Warnung (Nebel)</Label>
                 <p className="text-xs text-gray-400 mt-0.5">
@@ -354,7 +354,7 @@ export default function WeatherAlertsSettings() {
         <div className="space-y-3 p-4 bg-gray-800/30 rounded-lg border border-gray-700/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-blue-300 text-xl">💧</span>
+              
               <div>
                 <Label className="text-base text-white">Taupunkt-Warnung</Label>
                 <p className="text-xs text-gray-400 mt-0.5">

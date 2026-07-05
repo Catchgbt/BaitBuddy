@@ -8,7 +8,13 @@
 
 **Niemals Platzhalter setzen.** Keine Dummy-/Fake-/Mock-Werte, keine `TODO`-Stubs, keine „Lorem ipsum"-Texte, keine Beispiel-/Demo-Platzhalter und keine leeren „Coming soon"-Hülsen im produktiven Code. Immer echte, vollständig funktionsfähige Implementierungen mit echten Daten und echten Anbindungen liefern. Fehlt eine Information oder ist etwas unklar, nachfragen — statt einen Platzhalter einzusetzen.
 
-**Niemals Emojis im App-Code verwenden.** Weder in JSX/HTML-Text, noch in Labels, Buttons, Überschriften, Fehlermeldungen oder sonstigen UI-Elementen. Die App-Oberfläche bleibt emoji-frei — ausnahmslos.
+**Keine dekorativen Emojis im App-Code.** Weder in JSX/HTML-Text, noch in Labels, Buttons, Überschriften, Fehlermeldungen, Toasts, `console.log` oder sonstigen UI-Texten. Dekorative Emojis werden ersatzlos entfernt bzw. — wo ein Icon inhaltlich sinnvoll ist — durch ein `lucide-react`-Icon ersetzt.
+
+**Ausnahme: funktionale Emojis bleiben erlaubt.** Emojis, die als bewusster visueller Identifikator einer Entität dienen und nicht sinnvoll durch Text ersetzbar sind, dürfen bleiben — konkret:
+- Länder-/Sprach-Flaggen im Sprachwähler (`src/components/i18n/LanguageSwitcher.jsx`, `flag: '🇩🇪'` …),
+- Karten-Marker-Icons, bei denen das Emoji das Icon des Marker-/Spot-Typs IST (z. B. `src/components/map/**`, `MarkerDetailCard`-Adapter, `icon`-Datenfelder).
+
+Faustregel: Steht das Emoji als **Datenwert** für das Icon einer Sache (`flag`/`icon`-Feld, Marker-Typ→Symbol-Map), ist es funktional und bleibt. Steht es **dekorativ im Fließtext/Label/Toast**, wird es entfernt.
 
 ## Infrastruktur: nur Vercel & Supabase
 

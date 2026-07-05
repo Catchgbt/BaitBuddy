@@ -65,13 +65,13 @@ export async function normalizeRiver(river) {
     actions: [
       {
         id: 'show-on-map',
-        label: '🗺️ Auf Karte zeigen',
+        label: 'Auf Karte zeigen',
         icon: '🗺️',
         variant: 'primary'
       },
       {
         id: 'add-to-trips',
-        label: '📋 Zur Reise hinzufügen',
+        label: 'Zur Reise hinzufügen',
         icon: '📋',
         variant: 'secondary'
       }

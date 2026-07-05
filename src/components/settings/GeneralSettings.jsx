@@ -109,7 +109,7 @@ export default function GeneralSettings() {
 
                 {hasChanges && (
                     <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-lg text-sm text-cyan-300">
-                        ⚠️ <span className="ml-2">Du hast ungespeicherte Änderungen</span>
+                        <span className="ml-2">Du hast ungespeicherte Änderungen</span>
                     </div>
                 )}
 

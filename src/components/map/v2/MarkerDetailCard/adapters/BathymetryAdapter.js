@@ -65,20 +65,20 @@ export async function normalizeBathymetry(bathymetry) {
     actions: [
       {
         id: 'view-map',
-        label: '🌊 Karte anzeigen',
+        label: 'Karte anzeigen',
         icon: '🌊',
         variant: 'primary'
       },
       {
         id: 'download-data',
-        label: '⬇️ Daten laden',
+        label: 'Daten laden',
         icon: '⬇️',
         variant: 'secondary'
       },
       {
         id: 'info',
-        label: 'ℹ️ Details',
-        icon: 'ℹ️',
+        label: 'ℹDetails',
+        icon: 'ℹ',
         variant: 'secondary'
       }
     ]

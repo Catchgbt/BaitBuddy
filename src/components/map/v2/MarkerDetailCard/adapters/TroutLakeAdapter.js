@@ -58,19 +58,19 @@ export async function normalizeTroutLake(see) {
     actions: [
       see.website && {
         id: 'website',
-        label: '🌐 Website',
+        label: 'Website',
         icon: '🌐',
         variant: 'primary'
       },
       {
         id: 'navigate',
-        label: '🗺️ Navigation',
+        label: 'Navigation',
         icon: '🗺️',
         variant: 'primary'
       },
       {
         id: 'add-trip',
-        label: '📋 Zu Reise hinzufügen',
+        label: 'Zu Reise hinzufügen',
         icon: '📋',
         variant: 'secondary'
       }

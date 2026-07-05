@@ -47,25 +47,25 @@ export async function normalizeSpot(spot) {
     actions: [
       {
         id: 'set-location',
-        label: '📍 Als Standort',
+        label: 'Als Standort',
         icon: '📍',
         variant: 'primary'
       },
       {
         id: 'sports',
-        label: '⚽ Sportarten',
+        label: 'Sportarten',
         icon: '⚽',
         variant: 'secondary'
       },
       {
         id: 'navigate',
-        label: '🗺️ Navigation',
+        label: 'Navigation',
         icon: '🗺️',
         variant: 'secondary'
       },
       {
         id: 'edit',
-        label: '✏️ Bearbeiten',
+        label: 'Bearbeiten',
         icon: '✏️',
         variant: 'secondary'
       }

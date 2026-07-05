@@ -57,7 +57,7 @@ export default function MiniFangbuch() {
               </div>
             ) : (
               <div className="w-20 h-20 rounded-lg flex-shrink-0 bg-gray-700/50 flex items-center justify-center text-3xl">
-                🐟
+                
               </div>
             )}
             <div className="flex-1 min-w-0">

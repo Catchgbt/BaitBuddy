@@ -100,7 +100,7 @@ function AdvancedCacheManager({ visible = true }) {
           </div>
 
           <div className="text-gray-500 text-xs space-y-1">
-            <div>💾 Hits: {stats.hits} | Misses: {stats.misses}</div>
+            <div>Hits: {stats.hits} | Misses: {stats.misses}</div>
             <div className="w-full bg-gray-800 rounded h-1.5 overflow-hidden">
               <div
                 className="bg-gradient-to-r from-green-500 to-blue-500 h-full"
@@ -123,7 +123,7 @@ function AdvancedCacheManager({ visible = true }) {
       </div>
 
       <div className="text-gray-500 text-xs mt-2">
-        ⚡ Offline-Tiles werden automatisch optimiert und komprimiert
+        Offline-Tiles werden automatisch optimiert und komprimiert
       </div>
     </div>
   );

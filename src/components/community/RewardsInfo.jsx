@@ -112,15 +112,15 @@ export default function RewardsInfo() {
         </p>
         <ul className="space-y-2 text-xs text-gray-400">
           <li className="flex items-start gap-2">
-            <span className="text-cyan-400 mt-0.5">→</span>
+            
             <span>Nimm an Wettbewerben teil und sammle Punkte</span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-cyan-400 mt-0.5">→</span>
+            
             <span>Platziere dich in den Top 4</span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-cyan-400 mt-0.5">→</span>
+            
             <span>Erhalte automatisch kostenlose Premium-Features</span>
           </li>
         </ul>

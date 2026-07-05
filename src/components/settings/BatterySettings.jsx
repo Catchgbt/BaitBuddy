@@ -85,7 +85,7 @@ export default function BatterySettings() {
         {/* Info Box */}
         <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 space-y-2">
           <div className="flex gap-2 text-sm">
-            <span>⚡</span>
+            
             <div>
               <p className="font-medium text-yellow-300">Ideal für:</p>
               <p className="text-gray-400 text-xs mt-1">

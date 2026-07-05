@@ -85,7 +85,7 @@ function MapFeaturesInfo() {
         // Kompakte Info-Box
         <div className="bg-gradient-to-r from-cyan-900/40 to-blue-900/40 border border-cyan-700/60 rounded-lg p-4 flex items-start justify-between">
           <div className="flex gap-3 flex-1">
-            <div className="text-2xl mt-0.5">🗺️</div>
+            <div className="text-2xl mt-0.5"></div>
             <div className="flex-1">
               <div className="font-semibold text-cyan-300 flex items-center gap-2">
                 <span>Kartenfunktionen</span>
@@ -119,7 +119,7 @@ function MapFeaturesInfo() {
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="text-3xl">🗺️</div>
+              <div className="text-3xl"></div>
               <div>
                 <h2 className="text-xl font-bold text-cyan-300">Karten-Features</h2>
                 <p className="text-xs text-gray-400">Alle Funktionen & Bedienelemente</p>
@@ -195,11 +195,11 @@ function MapFeaturesInfo() {
                 <span className="text-gray-300">Details & Fahrzeit anzeigen</span>
               </div>
               <div className="flex gap-2">
-                <span className="text-cyan-400 font-semibold min-w-[120px]">Oben links 🟦:</span>
+                <span className="text-cyan-400 font-semibold min-w-[120px]">Oben links :</span>
                 <span className="text-gray-300">Layer-Steuerung (Relief, 3D, Wasser, Satellit)</span>
               </div>
               <div className="flex gap-2">
-                <span className="text-cyan-400 font-semibold min-w-[120px]">Unten links 🟦:</span>
+                <span className="text-cyan-400 font-semibold min-w-[120px]">Unten links :</span>
                 <span className="text-gray-300">Cache-Statistiken & Offline-Status</span>
               </div>
               <div className="flex gap-2">
@@ -214,7 +214,7 @@ function MapFeaturesInfo() {
             <div className="flex gap-2 mb-2">
               <HelpCircle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
               <div>
-                <div className="font-semibold text-yellow-600">💡 Tipps für beste Performance:</div>
+                <div className="font-semibold text-yellow-600">Tipps für beste Performance:</div>
                 <ul className="text-gray-300 text-xs mt-1 space-y-1 ml-6 list-disc">
                   <li>Nicht mehr als 2-3 Layer gleichzeitig aktivieren</li>
                   <li>Offline-Caching für häufige Angelgebiete nutzen</li>

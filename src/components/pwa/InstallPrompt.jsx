@@ -63,7 +63,7 @@ export default function InstallPrompt() {
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center text-2xl">
-                  🎣
+                  
                 </div>
 
                 <div className="flex-1 min-w-0">

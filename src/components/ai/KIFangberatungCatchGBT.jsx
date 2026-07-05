@@ -322,7 +322,7 @@ export default function KIFangberatungCatchGBT({ onStart, onStop, isActive }) {
             aria-label="KI-Buddy - drehbar mit Maus oder Pfeiltasten"
           >
             <div className="w-16 h-16 bg-fuchsia-500/80 rounded-full animate-pulse blur-lg absolute top-2 left-2"></div>
-            <p className="font-bold text-3xl drop-shadow-lg relative">🎣</p>
+            <p className="font-bold text-3xl drop-shadow-lg relative"></p>
             <p className="text-white text-xs font-semibold drop-shadow-md relative bg-black/30 rounded-full px-1">
               KI.Buddy
             </p>

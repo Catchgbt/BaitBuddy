@@ -260,7 +260,7 @@ function FishBehaviorAnalysisSectionInner() {
               <div className="p-4 bg-gray-900/50 rounded-lg border border-gray-700">
                 <h3 className="text-sm font-medium text-cyan-400 mb-2">Luftdruck-Einfluss</h3>
                 <p className="text-lg font-bold text-emerald-400">
-                  {result.pressure_impact === 'positive' ? '✓ Positiv' : result.pressure_impact === 'negative' ? '✗ Negativ' : '- Neutral'}
+                  {result.pressure_impact === 'positive' ? 'Positiv' : result.pressure_impact === 'negative' ? 'Negativ' : '- Neutral'}
                 </p>
               </div>
             </div>
@@ -278,7 +278,7 @@ function FishBehaviorAnalysisSectionInner() {
                 <ul className="space-y-1">
                   {Array.isArray(result.best_times) && result.best_times.map((time, idx) => (
                     <li key={idx} className="text-gray-300 text-sm flex items-start">
-                      <span className="text-emerald-400 mr-2">→</span> {time}
+                      {time}
                     </li>
                   ))}
                 </ul>
@@ -289,7 +289,7 @@ function FishBehaviorAnalysisSectionInner() {
                 <ul className="space-y-1">
                   {Array.isArray(result.feeding_zones) && result.feeding_zones.map((zone, idx) => (
                     <li key={idx} className="text-gray-300 text-sm flex items-start">
-                      <span className="text-emerald-400 mr-2">→</span> {zone}
+                      {zone}
                     </li>
                   ))}
                 </ul>
@@ -331,7 +331,7 @@ function FishBehaviorAnalysisSectionInner() {
                 <ul className="space-y-1">
                   {Array.isArray(result.pressure_pressure_tips) && result.pressure_pressure_tips.map((tip, idx) => (
                     <li key={idx} className="text-gray-300 text-sm flex items-start">
-                      <span className="text-emerald-400 mr-2">→</span> {tip}
+                      {tip}
                     </li>
                   ))}
                 </ul>

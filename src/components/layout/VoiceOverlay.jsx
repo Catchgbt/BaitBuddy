@@ -681,8 +681,7 @@ const VoiceOverlay = ({ isOpen, onClose, currentPageName }) => {
                 whileTap={{ scale: 0.95 }}
               >
                 {tab.icon && <tab.icon className="w-5 h-5" />}
-                {!tab.icon && <span className="text-lg font-bold">🪢</span>}
-                
+
                 {activeTab === tab.id && (
                   <motion.div
                     layoutId="activeTab"
