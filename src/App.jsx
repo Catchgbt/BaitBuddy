@@ -20,6 +20,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { migrateOfflineStorage } from '@/lib/StorageMigration';
 import ErrorBoundary from '@/lib/ErrorBoundary';
 import { initAutoSync } from '@/components/utils/offlineSync';
+import { initNetworkStatus } from '@/utils/networkStatus';
 const CatchStats = lazy(() => import('@/pages/CatchStats'));
 const AdminTracking = lazy(() => import('@/pages/AdminTracking'));
 const Help = lazy(() => import('@/pages/Help'));
@@ -131,8 +132,11 @@ const AnimatedRoutes = () => {
 
 
 function App() {
-  // Initialize storage migration and offline sync on app startup
+  // Initialize network status, storage migration and offline sync on app startup
   useEffect(() => {
+    initNetworkStatus().catch(err => {
+      console.error('[App] Network status init failed:', err);
+    });
     migrateOfflineStorage().catch(err => {
       console.error('[App] Storage migration failed:', err);
     });

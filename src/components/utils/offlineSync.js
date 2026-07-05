@@ -3,7 +3,7 @@
  * Speichert Fänge offline wenn kein Empfang, synchronisiert später
  */
 
-import { isOnline as checkIsOnline, onOnlineStatusChange } from './offlineDataCache';
+import { isOnline as checkIsOnline, onOnlineStatusChange } from '@/utils/networkStatus';
 import { entities, api } from '@/api/frontendClient';
 
 // Re-export for convenience
