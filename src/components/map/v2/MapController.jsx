@@ -5,6 +5,7 @@ import { Spot } from "@/entities/Spot";
 import { FishingClub } from "@/entities/FishingClub";
 import { angelparks } from "@/data/angelparks";
 import fishingClubsCSVExport from "@/data/fishingClubsCSVExport.json";
+import angelparksExport from "@/data/angelparks-export.json";
 import angelshopsCSVExport from "@/data/angelshops.json";
 import angelparksEuCSVExport from "@/data/angelparks_eu.json";
 import tiefenkartenData from "@/data/tiefenkarten.json";
@@ -72,14 +73,16 @@ function MapController() {
     initialData: []
   });
 
-  // Merge: Backend Clubs + CSV Export + statische Angelparks
-  // Backend-Einträge > CSV > statische Parks (Dedupe per id)
+  // Merge: Backend Clubs + CSV Exports + statische Angelparks
+  // Backend-Einträge > CSV-Exports > statische Parks (Dedupe per id)
   const allClubs = useMemo(() => {
     const seen = new Set((fishingClubs || []).map(fc => fc.id));
     const csvClubs = (fishingClubsCSVExport || []).filter(c => !seen.has(c.id));
     csvClubs.forEach(c => seen.add(c.id));
+    const exportedParks = (angelparksExport || []).filter(p => !seen.has(p.id));
+    exportedParks.forEach(p => seen.add(p.id));
     const staticParks = angelparks.filter(p => !seen.has(p.id));
-    return [...fishingClubs, ...csvClubs, ...staticParks];
+    return [...fishingClubs, ...csvClubs, ...exportedParks, ...staticParks];
   }, [fishingClubs]);
 
   // Separate Angelshops (statische CSV-Liste)
