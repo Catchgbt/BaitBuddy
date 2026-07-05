@@ -8,12 +8,18 @@ export default [
   {
     // Global ignores (must be a standalone object in flat config to apply
     // across all files, not just those matched by `files` below).
-    ignores: ["src/lib/**/*", "src/components/ui/**/*"],
+    // src/components/ui/** = Vendor-Komponenten (shadcn) mit viel Rauschen.
+    // .ts/.tsx werden von diesem JS-ESLint nicht geparst (kein
+    // @typescript-eslint konfiguriert) — sie laufen über `npm run typecheck`.
+    ignores: ["src/components/ui/**/*", "**/*.ts", "**/*.tsx"],
   },
   {
     files: [
       "src/components/**/*.{js,mjs,cjs,jsx}",
       "src/pages/**/*.{js,mjs,cjs,jsx}",
+      "src/lib/**/*.{js,mjs,cjs,jsx}",
+      "src/hooks/**/*.{js,mjs,cjs,jsx}",
+      "src/api/**/*.{js,mjs,cjs,jsx}",
       "src/Layout.jsx",
     ],
     ...pluginJs.configs.recommended,
