@@ -15,6 +15,9 @@ import { Badge } from "@/components/ui/badge";
 import { Camera, Edit2, Filter, Trash2, Upload, X, Loader2 } from "lucide-react";
 import { getGuestCatches, addGuestCatch, updateGuestCatch, deleteGuestCatch } from "@/components/utils/guestMode";
 import { fetchCatchesWithFallback, fetchSpotsWithFallback } from "@/components/utils/offlineDataCache";
+import { saveOfflinePhoto } from "@/utils/offlinePhotoStorage";
+import { isOnline } from "@/components/utils/offlineSync";
+import OfflinePhotoQueueStatus from "@/components/log/OfflinePhotoQueueStatus";
 
 const PAGE_SIZE = 20;
 const EMPTY_FORM = {
@@ -188,8 +191,18 @@ export default function LogSection() {
   const uploadPhoto = async (file) => {
     setUploading(true);
     try {
-      const { file_url } = await UploadFile({ file });
-      setForm((prev) => ({ ...prev, photo_url: file_url }));
+      if (isOnline()) {
+        const { file_url } = await UploadFile({ file });
+        setForm((prev) => ({ ...prev, photo_url: file_url }));
+        toast.success('Foto hochgeladen!');
+      } else {
+        const photoId = await saveOfflinePhoto(file);
+        setForm((prev) => ({
+          ...prev,
+          photo_url: `offline_photo_${photoId}`,
+        }));
+        toast.success('Foto offline gespeichert. Wird synchronisiert wenn online.');
+      }
     } catch (error) {
       console.error('Foto-Upload fehlgeschlagen:', error);
       toast.error('Foto konnte nicht hochgeladen werden.');
@@ -202,6 +215,16 @@ export default function LogSection() {
     setIsExtracting(true);
     setUploading(true);
     try {
+      if (!isOnline()) {
+        const photoId = await saveOfflinePhoto(imageFile);
+        setForm((prev) => ({
+          ...prev,
+          photo_url: `offline_photo_${photoId}`,
+        }));
+        toast.info('Offline: Foto gespeichert, aber KI-Extraktion braucht Internetverbindung.');
+        return;
+      }
+
       const { file_url } = await UploadFile({ file: imageFile });
       const extractionSchema = {
         type: "object",
@@ -301,6 +324,9 @@ export default function LogSection() {
       </CardHeader>
 
       <CardContent>
+        {/* Offline Photo Queue Status */}
+        {!isGuest && <OfflinePhotoQueueStatus />}
+
         {/* Filter */}
         <div className="flex flex-wrap gap-3 items-end mb-4">
           <div className="flex items-center gap-2">
