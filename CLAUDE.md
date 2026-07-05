@@ -14,6 +14,15 @@
 
 **Nur Vercel (Hosting/Deploy/Serverless) und Supabase (DB/Auth/Storage) verwenden.** Keine anderen externen Dienste/Backends einführen (kein base44, kein Render, keine sonstigen MCP-Services für Produktionslogik).
 
+## Auth-Architektur: zwei Session-Systeme
+
+Die App hat aktuell **zwei parallele Auth-Systeme**, die beide aktiv genutzt werden:
+
+1. **bb_token/bb_refresh** (`src/api/frontendClient.js`) — der Haupt-Login-Pfad für E-Mail/Passwort. Login läuft über den Backend-Proxy `/api/auth/login` (der Server ruft `supabase.auth.signInWithPassword` mit dem Service-Role-Client auf); Token/Refresh-Token werden als reine Strings im Frontend in `localStorage` gehalten. Ablauf/Refresh läuft ausschließlich über den eigenen 401-getriggerten Refresh-Mechanismus (`ApiClient._refreshSession()` → `POST /api/auth/refresh`).
+2. **Browser-Supabase-Session** (`src/api/supabaseClient.js`) — nur für OAuth-Login (`signInWithOAuth`) und Passwort-Reset (`resetPasswordForEmail`/`updateUser`). `AuthCallback.jsx`/`ResetPassword.jsx` übernehmen die daraus resultierende Session per `onAuthStateChange`/`getSession()` in `bb_token`/`bb_refresh`; `AuthContext.jsx` hält dafür einen App-weiten `onAuthStateChange`-Listener, der SIGNED_IN/SIGNED_OUT/TOKEN_REFRESHED-Events dauerhaft synchronisiert.
+
+**Wichtig:** Beide Systeme würden denselben (rotierenden) Supabase-Refresh-Token verwalten. Damit nicht zwei unabhängige Refresh-Läufe (Browser-Client-Auto-Refresh vs. der eigene 401-Refresh) sich gegenseitig mit einem bereits verbrauchten Token aushebeln, ist `autoRefreshToken` im Supabase-Browser-Client (`src/api/supabaseClient.js`) **bewusst deaktiviert** — der bb_token-Refresh-Pfad ist der einzige aktive Refresh-Mechanismus. Eine vollständige Konsolidierung auf ein einziges Auth-System wurde bewusst zurückgestellt (größerer Eingriff über viele Call-Sites, OAuth-Flows lassen sich ohne echten Browser/echte Provider-Credentials nicht end-to-end verifizieren) — bei künftigen Auth-Änderungen diese Zweiteilung im Hinterkopf behalten.
+
 ## App-Distribution: PlayStore & Apple Store
 
 **Die App muss später auf PlayStore und Apple Store deployed werden.** Code wird darauf optimiert — native APIs, Permissions, Device-Features und Platform-spezifische Anforderungen beachten.
