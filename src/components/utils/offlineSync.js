@@ -5,6 +5,11 @@
 
 import { isOnline as checkIsOnline, onOnlineStatusChange } from '@/utils/networkStatus';
 import { entities, api } from '@/api/frontendClient';
+import {
+  getUnsyncdOfflinePhotos,
+  markPhotoAsSynced,
+  markPhotoSyncError,
+} from '@/utils/offlinePhotoStorage';
 
 // Re-export for convenience
 export const isOnline = checkIsOnline;
@@ -175,8 +180,8 @@ export function initAutoSync() {
   syncUnsubscribe = onOnlineStatusChange(async (online) => {
     if (online) {
       console.log('Online — Starte Synchronisierung...');
-      await new Promise(r => setTimeout(r, 1000)); // Kurz warten für stabile Verbindung
-      await syncOfflineCatches();
+      await new Promise(r => setTimeout(r, 1000));
+      await Promise.all([syncOfflineCatches(), syncOfflinePhotos()]);
     }
   });
 
@@ -186,12 +191,14 @@ export function initAutoSync() {
   // frontendClient.js ein 'plan-updated'-Event — das ist der zuverlässige
   // Zeitpunkt, um die Queue nachzuholen.
   if (typeof window !== 'undefined') {
-    planUpdatedListener = () => { syncOfflineCatches(); };
+    planUpdatedListener = async () => {
+      await Promise.all([syncOfflineCatches(), syncOfflinePhotos()]);
+    };
     window.addEventListener('plan-updated', planUpdatedListener);
   }
 
   if (checkIsOnline()) {
-    syncOfflineCatches();
+    Promise.all([syncOfflineCatches(), syncOfflinePhotos()]);
   }
 }
 
@@ -217,4 +224,86 @@ export function getOfflineQueueStatus() {
     total: catches.length + notes.length,
     isOnline: isOnline(),
   };
+}
+
+// ─── Offline Photos (IndexedDB) ────────────────────────────────────────────────
+
+export async function syncOfflinePhotos() {
+  if (!checkIsOnline()) {
+    console.log('Offline — Foto-Sync verpasst');
+    return { synced: 0, failed: 0, errors: [] };
+  }
+
+  if (!api.getToken()) {
+    console.log('Kein Auth-Token — Foto-Sync verschoben');
+    return { synced: 0, failed: 0, errors: [] };
+  }
+
+  try {
+    const photos = await getUnsyncdOfflinePhotos();
+    if (photos.length === 0) {
+      return { synced: 0, failed: 0, errors: [] };
+    }
+
+    console.log(`Synchronisiere ${photos.length} offline Fotos...`);
+
+    let synced = 0;
+    let failed = 0;
+    const errors = [];
+
+    for (const photo of photos) {
+      try {
+        const blob = new Blob([new Uint8Array(photo.fileData)], {
+          type: photo.mimeType || 'image/jpeg',
+        });
+        const file = new File([blob], photo.fileName, {
+          type: photo.mimeType || 'image/jpeg',
+        });
+
+        const uploadResult = await api.post('/api/storage/upload', {
+          file,
+        });
+
+        if (uploadResult?.file_url) {
+          await markPhotoAsSynced(photo.id);
+          console.log(`Foto ${photo.id} synchronisiert: ${uploadResult.file_url}`);
+          synced++;
+        } else {
+          throw new Error('Keine Upload-URL erhalten');
+        }
+      } catch (e) {
+        console.error(`Fehler beim Sync von Foto ${photo.id}:`, e);
+        await markPhotoSyncError(photo.id, e.message);
+        errors.push({ id: photo.id, error: e.message });
+        failed++;
+      }
+    }
+
+    if (synced > 0) {
+      console.log(`Erfolgreich synchronisiert: ${synced} Fotos`);
+    }
+    if (failed > 0) {
+      console.warn(`Sync fehlgeschlagen: ${failed} Fotos`);
+    }
+
+    return { synced, failed, errors };
+  } catch (e) {
+    console.error('Fehler beim Foto-Sync:', e);
+    return { synced: 0, failed: 0, errors: [{ error: e.message }] };
+  }
+}
+
+export async function getOfflinePhotoStats() {
+  try {
+    const photos = await getUnsyncdOfflinePhotos();
+    return {
+      pendingPhotos: photos.length,
+      hasErrors: photos.some(p => p.syncError),
+    };
+  } catch {
+    return {
+      pendingPhotos: 0,
+      hasErrors: false,
+    };
+  }
 }
