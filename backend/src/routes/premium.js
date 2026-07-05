@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
+import { verifyGooglePlayPurchase, verifyStripePayment } from '../lib/purchaseVerification.js';
 
 const router = Router();
 
@@ -107,6 +108,15 @@ router.post('/premium/activate', requireAuth, async (req, res) => {
     return res.status(501).json({
       error: 'Kaufverifikation ist serverseitig noch nicht konfiguriert — Premium kann derzeit nicht aktiviert werden'
     });
+  }
+
+  // Echte Verifikation beim jeweiligen Anbieter — siehe purchaseVerification.js
+  // (WICHTIG: dort als ungetestet gegen echte APIs markiert).
+  const verification = purchase_token
+    ? await verifyGooglePlayPurchase({ productId: product_id, purchaseToken: purchase_token })
+    : await verifyStripePayment({ sessionId: transaction_id });
+  if (!verification.valid) {
+    return res.status(402).json({ error: `Zahlung konnte nicht verifiziert werden: ${verification.reason}` });
   }
 
   const current = req.user.user_metadata || {};
