@@ -37,7 +37,7 @@ const Sidebar = lazy(() => import("@/components/layout/Sidebar"));
 const QuickCatchDialog = lazy(() => import("@/components/log/QuickCatchDialog"));
 const EnhancedTicker = lazy(() => import("@/components/layout/TipTicker"));
 const FeedbackManager = lazy(() => import("@/components/feedback/FeedbackManager"));
-const AIBuddyWidget = lazy(() => import("@/components/layout/AIBuddyWidget"));
+const AIBuddyWidgetStub = lazy(() => import("@/components/layout/AIBuddyWidgetStub"));
 const FirstLoginTutorialPrompt = lazy(() => import("@/components/tutorial/FirstLoginTutorialPrompt"));
 
 const LazyFallback = () => null;
@@ -431,7 +431,7 @@ function LayoutContent({ children, currentPageName }) {
                 <BottomTabs />
 
                 <SuspenseWithErrorBoundary>
-                  <AIBuddyWidget />
+                  <AIBuddyWidgetStub />
                 </SuspenseWithErrorBoundary>
 
                 <VoiceOverlay 
