@@ -17,7 +17,11 @@ const filterBody = (body, allowedFields) => {
   return filtered;
 };
 
-router.post('/social-media/share', requireAuth, async (req, res) => {
+// Pfad ist Plural, konsistent mit den GET/DELETE-Routen unten und mit
+// ENTITY_MAP['SocialMediaShare'] in frontendClient.js ('/api/social-media/shares').
+// War zuvor Singular ('/social-media/share') — entities.SocialMediaShare.create()
+// traf dadurch nie diese Route (404), das Teilen eines Fangs schlug immer fehl.
+router.post('/social-media/shares', requireAuth, async (req, res) => {
   const filteredBody = filterBody(req.body, ALLOWED_SHARE_FIELDS);
   const { catch_id, platform, message, include_photo } = filteredBody;
 

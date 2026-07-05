@@ -58,3 +58,32 @@ describe('POST /api/fishing/plans (Feld-Mapping)', () => {
     });
   });
 });
+
+describe('DELETE /api/user/account (echte Loeschung)', () => {
+  it('loescht den Auth-User wirklich, statt nur ok:true vorzutaeuschen', async () => {
+    supabaseMock.current.auth.admin = {
+      deleteUser: vi.fn(async () => ({ error: null })),
+    };
+
+    const res = await request(app)
+      .delete('/api/user/account')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(supabaseMock.current.auth.admin.deleteUser).toHaveBeenCalledWith(TEST_USER.id);
+  });
+
+  it('liefert 500, wenn der Auth-User nicht geloescht werden kann', async () => {
+    supabaseMock.current.auth.admin = {
+      deleteUser: vi.fn(async () => ({ error: { message: 'admin api down' } })),
+    };
+
+    const res = await request(app)
+      .delete('/api/user/account')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(res.status).toBe(500);
+    expect(res.body.success).toBe(false);
+  });
+});

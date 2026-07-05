@@ -6,6 +6,7 @@ import path from 'path';
 import { parseDepthFile } from '../lib/depthParser.js';
 import { isInClosedSeason } from '../lib/closedSeason.js';
 import { isAllowedFetchUrl } from '../lib/urlSafety.js';
+import { deleteUserAccount } from '../lib/accountDeletion.js';
 
 const router = Router();
 
@@ -265,9 +266,24 @@ router.get('/trips', requireAuth, async (req, res) => {
   return res.json((data || []).map((r) => r.trip));
 });
 
+// Loescht wirklich alle eigenen Daten des Nutzers (siehe accountDeletion.js
+// fuer die vollstaendige Tabellenliste) sowie den Auth-User selbst. Bislang
+// war das ein reiner No-op-Stub, obwohl das Frontend (DeleteAccountDialog,
+// DeleteAccountSection) dem Nutzer echte Loeschung verspricht.
 router.del = router.delete;
 router.delete('/user/account', requireAuth, async (req, res) => {
-  return res.json({ ok: true, message: 'Account-Löschung eingeleitet' });
+  try {
+    const result = await deleteUserAccount({ userId: req.user.id, email: req.user.email });
+    if (!result.authUserDeleted) {
+      // Der Auth-User selbst konnte nicht geloescht werden — das ist der
+      // kritische Teil (sonst kann sich der Nutzer weiter einloggen).
+      return res.status(500).json({ success: false, message: 'Account konnte nicht vollstaendig geloescht werden', errors: result.errors });
+    }
+    return res.json({ success: true, message: 'Account und alle zugehoerigen Daten wurden geloescht', warnings: result.errors });
+  } catch (e) {
+    console.error('[Account Deletion Error]', e);
+    return res.status(500).json({ success: false, message: e.message });
+  }
 });
 
 router.post('/user/sessions/start', requireAuth, async (req, res) => {
