@@ -19,6 +19,7 @@ import syncRoutes from './routes/sync.js';
 import waterDataRoutes from './routes/waterData.js';
 import bathymetryRoutes from './routes/bathymetry.js';
 import backupRoutes from './routes/backups.js';
+import notesRoutes from './routes/notes.js';
 import { aiRateLimiter, authRateLimiter } from './middleware/rateLimit.js';
 
 const app = express();
@@ -68,6 +69,7 @@ app.use('/api', syncRoutes);
 app.use('/api', waterDataRoutes);
 app.use('/api', bathymetryRoutes);
 app.use('/api', backupRoutes);
+app.use('/api', notesRoutes);
 
 app.use((req, res) => res.status(404).json({ error: `Not found: ${req.method} ${req.path}` }));
 app.use((err, req, res, next) => {
