@@ -8,7 +8,7 @@ import { supabase } from '@/api/supabaseClient';
 import { toast } from 'sonner';
 import LanguageSwitcher from '@/components/i18n/LanguageSwitcher';
 import { LanguageProvider, useLanguage } from '@/components/i18n/LanguageContext';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Wrench } from 'lucide-react';
 import TutorialModal from '@/components/tutorial/TutorialModal';
 import DeleteAccountSection from '@/components/settings/DeleteAccountSection';
 import WaterScene from '@/components/home/WaterScene';
@@ -135,6 +135,18 @@ function FeatureHints() {
       </motion.div>
     </AnimatePresence>
   );
+}
+
+function DashboardMaintenanceNotice() {
+    return (
+        <div className="w-full max-w-md pointer-events-auto rounded-xl bg-black/70 backdrop-blur-xl border border-orange-500/40 shadow-lg shadow-orange-500/10 p-4 flex items-start gap-3">
+            <Wrench className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0 text-left">
+                <p className="text-sm font-semibold text-orange-300">Dashboard wird gerade überarbeitet</p>
+                <p className="text-xs text-orange-200/90 mt-0.5">Wir arbeiten an Verbesserungen. Einige Funktionen können vorübergehend eingeschränkt sein.</p>
+            </div>
+        </div>
+    );
 }
 
 function SideLinks() {
@@ -373,12 +385,7 @@ function LandingPageContent() {
         try {
             const isAuth = await auth.isAuthenticated();
             if (isAuth) {
-                // Zeige Dashboard-Überarbeitung Benachrichtigung
-                toast.info('Dashboard wird gerade überarbeitet', {
-                  description: 'Wir arbeiten an Verbesserungen. Einige Features könnten temporär eingeschränkt sein.',
-                  duration: 5000,
-                });
-
+                let eventPopupShown = false;
                 const alreadySeen = localStorage.getItem('catchgbt_event_popup_seen');
                 if (!alreadySeen) {
                     const events = await entities.AppEvent.filter({ is_active: true });
@@ -388,10 +395,14 @@ function LandingPageContent() {
                         if (now >= new Date(ev.start_date) && now <= new Date(ev.end_date)) {
                             localStorage.setItem('catchgbt_event_popup_seen', '1');
                             const endStr = new Date(ev.end_date).toLocaleDateString('de-DE');
-                            const description = [ev.description, ev.prize ? `Preis: ${ev.prize}` : null, `Event endet am: ${endStr}`].filter(Boolean).join('\n');
+                            const description = [ev.description, ev.prize_description ? `Preis: ${ev.prize_description}` : null, `Event endet am: ${endStr}`].filter(Boolean).join('\n');
                             toast(ev.name, { description, duration: 8000 });
+                            eventPopupShown = true;
                         }
                     }
+                }
+                if (eventPopupShown) {
+                    await new Promise(resolve => setTimeout(resolve, 1500));
                 }
                 window.location.href = createPageUrl('Dashboard');
             } else {
@@ -415,12 +426,7 @@ function LandingPageContent() {
                 await auth.register(loginEmail, loginPassword, loginName);
             }
 
-            // Zeige Dashboard-Überarbeitung Benachrichtigung
-            toast.info('Dashboard wird gerade überarbeitet', {
-              description: 'Wir arbeiten an Verbesserungen. Einige Features könnten temporär eingeschränkt sein.',
-              duration: 5000,
-            });
-
+            let eventPopupShown = false;
             try {
                 const alreadySeen = localStorage.getItem('catchgbt_event_popup_seen');
                 if (!alreadySeen) {
@@ -431,12 +437,16 @@ function LandingPageContent() {
                         if (now >= new Date(ev.start_date) && now <= new Date(ev.end_date)) {
                             localStorage.setItem('catchgbt_event_popup_seen', '1');
                             const endStr = new Date(ev.end_date).toLocaleDateString('de-DE');
-                            const description = [ev.description, ev.prize ? `Preis: ${ev.prize}` : null, `Event endet am: ${endStr}`].filter(Boolean).join('\n');
+                            const description = [ev.description, ev.prize_description ? `Preis: ${ev.prize_description}` : null, `Event endet am: ${endStr}`].filter(Boolean).join('\n');
                             toast(ev.name, { description, duration: 8000 });
+                            eventPopupShown = true;
                         }
                     }
                 }
             } catch {}
+            if (eventPopupShown) {
+                await new Promise(resolve => setTimeout(resolve, 1500));
+            }
             window.location.href = createPageUrl('Dashboard');
         } catch (err) {
             const errorMsg = err.data?.error || err.message || 'Anmeldung fehlgeschlagen. Bitte prüfe deine Zugangsdaten.';
@@ -477,12 +487,6 @@ function LandingPageContent() {
     };
 
     const handleGuestLogin = () => {
-        // Zeige Dashboard-Überarbeitung Benachrichtigung
-        toast.info('Dashboard wird gerade überarbeitet', {
-          description: 'Wir arbeiten an Verbesserungen. Einige Features könnten temporär eingeschränkt sein.',
-          duration: 5000,
-        });
-
         setGuestSession({ is_guest: true });
         window.location.href = createPageUrl('Dashboard');
     };
@@ -857,6 +861,8 @@ function LandingPageContent() {
             >
                 <div className="min-h-full flex flex-col items-center justify-center gap-4">
                     <FeatureHints />
+
+                    <DashboardMaintenanceNotice />
 
                     <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-12">
                         <div className="pointer-events-auto order-2 lg:order-2">

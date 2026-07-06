@@ -312,6 +312,17 @@ function LayoutContent({ children, currentPageName }) {
       <>
         <SEO />
         {children}
+        <Toaster
+          position="bottom-center"
+          offset="80px"
+          expand={true}
+          richColors={true}
+          className="toaster-custom"
+          toastOptions={{
+            duration: 4000,
+            className: 'toast-animated',
+          }}
+        />
       </>
     );
   }
