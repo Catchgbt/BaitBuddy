@@ -32,9 +32,6 @@ export default function Dashboard() {
   const [weather, setWeather] = useState(null);
   const [nearestSpots, setNearestSpots] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [pullStart, setPullStart] = useState(0);
-  const [pullDistance, setPullDistance] = useState(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
@@ -243,41 +240,6 @@ export default function Dashboard() {
 
     cleanupSessions();
     loadData();
-
-    const handleTouchStart = (e) => {
-      if (window.scrollY === 0) {
-        setPullStart(e.touches[0].clientY);
-      }
-    };
-
-    const handleTouchMove = (e) => {
-      if (pullStart > 0) {
-        const distance = e.touches[0].clientY - pullStart;
-        if (distance > 0 && distance < 150) {
-          setPullDistance(distance);
-        }
-      }
-    };
-
-    const handleTouchEnd = async () => {
-      if (pullDistance > 80) {
-        setIsRefreshing(true);
-        await loadData();
-        setIsRefreshing(false);
-      }
-      setPullStart(0);
-      setPullDistance(0);
-    };
-
-    window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('touchmove', handleTouchMove, { passive: true });
-    window.addEventListener('touchend', handleTouchEnd);
-
-    return () => {
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchend', handleTouchEnd);
-    };
   }, []);
 
   const getWeatherDesc = (code) => {
