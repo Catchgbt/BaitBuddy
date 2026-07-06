@@ -34,8 +34,8 @@ export default function AudioNotesWidget() {
     try {
       setIsLoading(true);
       if (isOnline()) {
-        const data = await apiClient.get('/dashboard-account-notes');
-        setNotes(data || []);
+        const data = await apiClient.get('/api/dashboard-account-notes');
+        setNotes(Array.isArray(data) ? data : []);
       } else {
         const queue = getOfflineNotesQueue();
         setNotes(queue);
@@ -79,7 +79,7 @@ export default function AudioNotesWidget() {
 
           try {
             if (isOnline()) {
-              await apiClient.post('/dashboard-account-notes', noteData);
+              await apiClient.post('/api/dashboard-account-notes', noteData);
               toast.success('Audionotiz gespeichert');
             } else {
               addToOfflineNotesQueue(noteData);
@@ -153,7 +153,7 @@ export default function AudioNotesWidget() {
     triggerHaptic('light');
     try {
       if (isOnline()) {
-        await apiClient.del(`/dashboard-account-notes/${noteId}`);
+        await apiClient.del(`/api/dashboard-account-notes/${noteId}`);
         toast.success('Notiz gelöscht');
       } else {
         removeFromOfflineNotesQueue(noteId);

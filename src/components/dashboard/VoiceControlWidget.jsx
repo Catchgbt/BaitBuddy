@@ -154,7 +154,7 @@ export default function VoiceControlWidget() {
         awaitingCommandRef.current = true;
         setVoiceState('listening');
         isSpeakingRef.current = true;
-        await speak('Ja, bitte?');
+        await speakWithFallback('Ja, bitte?', { voiceEnabled: true, lang: LANGUAGE, rate: 1.0 });
         isSpeakingRef.current = false;
         setTranscript('');
         return;
