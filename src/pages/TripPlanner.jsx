@@ -215,7 +215,17 @@ function TripPlannerContent() {
 
         <TripLiveTicker plans={plans} />
 
-        {plans.length === 0 ? (
+        {formOpen ? (
+          <div className="max-w-2xl mx-auto">
+            <TripForm
+              key={`form-${editingPlan?.id || 'new'}`}
+              onClose={() => setFormOpen(false)}
+              onSave={handleSaveTrip}
+              plan={editingPlan}
+              currentLocation={currentLocation}
+            />
+          </div>
+        ) : plans.length === 0 ? (
           <Card className="glass-morphism border-gray-800">
             <CardContent className="p-8 text-center">
               <Compass className="w-12 h-12 text-cyan-500/70 mx-auto mb-3" />
@@ -299,15 +309,7 @@ function TripPlannerContent() {
 
             {/* Detail */}
             <div className="lg:sticky lg:top-6 self-start">
-              {formOpen ? (
-                <TripForm
-                  key={`form-${editingPlan?.id || 'new'}`}
-                  onClose={() => setFormOpen(false)}
-                  onSave={handleSaveTrip}
-                  plan={editingPlan}
-                  currentLocation={currentLocation}
-                />
-              ) : selectedPlan ? (
+              {selectedPlan ? (
                 <TripDetail
                   plan={selectedPlan}
                   spot={readSpot(selectedPlan.spot_info)}
