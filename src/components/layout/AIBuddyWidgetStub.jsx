@@ -52,13 +52,7 @@ function SimpleAvatar({ onClickAvatar }) {
     }
   });
 
-  const [isHidden, setIsHidden] = useState(() => {
-    try {
-      return localStorage.getItem('buddy-widget-hidden') === 'true';
-    } catch {
-      return false;
-    }
-  });
+  const [isHidden, setIsHidden] = useState(false);
 
   React.useEffect(() => {
     const handleResize = () => {
