@@ -5,7 +5,7 @@
 //  - Statische Same-Origin-Assets (/assets/, /icons/, Bilder, Fonts):
 //    Stale-While-Revalidate (schneller Start + Hintergrund-Update)
 //  - API-Aufrufe (/api/) und Cross-Origin-Requests: immer direkt ans Netzwerk
-const VERSION = 'v3';
+const VERSION = 'v4';
 const SHELL_CACHE = `baitbuddy-shell-${VERSION}`;
 const ASSET_CACHE = `baitbuddy-assets-${VERSION}`;
 

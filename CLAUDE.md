@@ -82,3 +82,7 @@ Folgende Funktionen müssen implementiert werden:
 ## Previews automatisch mergen
 
 **Preview-Branches werden automatisch zu `main` gemergt**, wenn alle Checks grün sind.
+
+## PR-Watching: Check-ins nicht ankündigen
+
+Beim Beobachten eines PRs (CI-Status, Review-Kommentare) niemals ankündigen, dass ein Check-in geplant/eingeplant wird (z. B. "Ich plane einen Check-in in ~30 Minuten ein"). Check-ins/Nachschauen im Hintergrund einfach durchführen bzw. weglassen, ohne das vorher zu erwähnen oder zu fragen.
