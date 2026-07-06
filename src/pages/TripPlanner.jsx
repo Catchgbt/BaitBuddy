@@ -301,6 +301,7 @@ function TripPlannerContent() {
             <div className="lg:sticky lg:top-6 self-start">
               {formOpen ? (
                 <TripForm
+                  key={`form-${editingPlan?.id || 'new'}`}
                   onClose={() => setFormOpen(false)}
                   onSave={handleSaveTrip}
                   plan={editingPlan}
