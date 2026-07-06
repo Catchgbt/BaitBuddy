@@ -89,7 +89,7 @@ function fromPlan(plan) {
 }
 
 export default function TripForm({ onClose, onSave, plan, currentLocation }) {
-  const [form, setForm] = useState(EMPTY);
+  const [form, setForm] = useState(() => fromPlan(plan));
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
