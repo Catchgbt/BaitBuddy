@@ -268,17 +268,31 @@ function LayoutContent({ children, currentPageName }) {
   // Service Worker Registrierung - angepasst für Backend-Funktion
   useEffect(() => {
     if ('serviceWorker' in navigator) {
+      // Sobald der neue Service Worker die Kontrolle übernimmt (nach einem
+      // Deploy), einmalig neu laden, damit Benutzer nicht auf einer alten
+      // gecachten Version hängen bleiben, ohne es zu bemerken.
+      let reloadedForUpdate = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (reloadedForUpdate) return;
+        reloadedForUpdate = true;
+        window.location.reload();
+      });
+
       window.addEventListener('load', () => {
         navigator.serviceWorker
           .register('/sw.js', {
             scope: '/'
           })
           .then((registration) => {
-            
+            // Regelmäßig auf Updates prüfen, auch wenn die Seite lange offen bleibt
+            setInterval(() => {
+              registration.update().catch(() => {});
+            }, 60 * 60 * 1000);
+
             // Prüfe auf Updates
             registration.addEventListener('updatefound', () => {
               const newWorker = registration.installing;
-              
+
               newWorker.addEventListener('statechange', () => {
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                   window.dispatchEvent(new CustomEvent('sw-update-available'));
