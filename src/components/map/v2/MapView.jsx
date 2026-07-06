@@ -44,6 +44,7 @@ const createCustomIcon = (color, emoji, size = 32) => {
 
 const spotIcon = createCustomIcon("#3b82f6", "📍");
 const clubIcon = createCustomIcon("#10b981", "🏛️");
+const angelparkIcon = createCustomIcon("#65a30d", "🎣", 30);
 const angelshopIcon = createCustomIcon("#eab308", "🛒", 28);
 const angelParkEuIcon = createCustomIcon("#ea580c", "🌍", 28);
 const locationIcon = createCustomIcon("#ef4444", "📌");
@@ -163,6 +164,7 @@ export default function MapView({
   zoom,
   spots,
   fishingClubs,
+  angelparks = [],
   angelshops = [],
   angelparksEu = [],
   waterBodies = [],
@@ -176,6 +178,7 @@ export default function MapView({
   onLocationClick,
   onSpotClick,
   onClubClick,
+  onAngelparkClick,
   onAngelshopClick,
   onAngelParkEuClick,
   onWaterBodiesLoad,
@@ -351,6 +354,45 @@ export default function MapView({
               {club.website && (
                 <a
                   href={club.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-cyan-400 underline mt-2 inline-block hover:text-cyan-300"
+                >
+                  Website
+                </a>
+              )}
+            </div>
+          </Popup>
+        </Marker>
+      ))}
+
+      {/* Angelparks (CSV-Export) */}
+      {angelparks.filter(park => park.coordinates && park.coordinates.lat != null && park.coordinates.lng != null).map((park) => (
+        <Marker
+          key={park.id}
+          position={[park.coordinates.lat, park.coordinates.lng]}
+          icon={angelparkIcon}
+          eventHandlers={{
+            click: () => onAngelparkClick(park)
+          }}
+          alt={`Angelpark: ${park.name} in ${park.address?.city || 'location unknown'}`}
+          aria-label={`Angelpark marker for ${park.name}`}
+        >
+          <Popup>
+            <div className="text-sm max-w-xs">
+              <strong className="text-base text-lime-400">{park.name}</strong>
+              <p className="text-xs text-gray-400 mt-1">Angelpark</p>
+              {park.address && (park.address.city || park.address.street) && (
+                <p className="text-xs text-gray-400 mt-1">
+                  {[park.address.street, park.address.city].filter(Boolean).join(', ')}
+                </p>
+              )}
+              {park.phone && (
+                <p className="text-xs text-gray-400 mt-1">{park.phone}</p>
+              )}
+              {park.website && (
+                <a
+                  href={park.website.startsWith('http') ? park.website : `https://${park.website}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs text-cyan-400 underline mt-2 inline-block hover:text-cyan-300"

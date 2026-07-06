@@ -8,6 +8,7 @@ export { normalizeBathymetry } from './BathymetryAdapter';
 const adapters = {
   spot: () => import('./SpotAdapter').then(m => m.normalizeSpot),
   club: () => import('./ClubAdapter').then(m => m.normalizeClub),
+  angelpark: () => import('./ClubAdapter').then(m => m.normalizeClub),
   fluss: () => import('./RiverAdapter').then(m => m.normalizeRiver),
   tiefenkarte: () => import('./DepthMapAdapter').then(m => m.normalizeDepthMap),
   forellensee: () => import('./TroutLakeAdapter').then(m => m.normalizeTroutLake),
