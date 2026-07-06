@@ -42,6 +42,15 @@ self.addEventListener('message', (event) => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
 
+// Error handling für Port-Disconnects
+self.addEventListener('error', (event) => {
+  console.error('[SW] Service Worker Error:', event.error || event.message);
+});
+
+self.addEventListener('unhandledrejection', (event) => {
+  console.error('[SW] Unhandled Promise Rejection:', event.reason);
+});
+
 function isStaticAsset(url) {
   return (
     url.pathname.startsWith('/assets/') ||
@@ -66,10 +75,18 @@ self.addEventListener('fetch', (event) => {
       fetch(request)
         .then((response) => {
           const copy = response.clone();
-          caches.open(SHELL_CACHE).then((cache) => cache.put('/index.html', copy));
+          caches.open(SHELL_CACHE).then((cache) => cache.put('/index.html', copy))
+            .catch(err => console.warn('[SW] Cache put failed:', err));
           return response;
         })
-        .catch(() => caches.match('/index.html').then((r) => r || caches.match('/')))
+        .catch((error) => {
+          console.warn('[SW] Navigation fetch failed:', error);
+          return caches.match('/index.html').then((r) => r || caches.match('/'))
+            .catch(err => {
+              console.error('[SW] Fallback to cached shell failed:', err);
+              return new Response('Offline - App Shell nicht verfügbar', { status: 503 });
+            });
+        })
     );
     return;
   }
@@ -77,17 +94,28 @@ self.addEventListener('fetch', (event) => {
   // Statische Assets: Stale-While-Revalidate
   if (isStaticAsset(url)) {
     event.respondWith(
-      caches.open(ASSET_CACHE).then((cache) =>
-        cache.match(request).then((cached) => {
-          const network = fetch(request)
-            .then((response) => {
-              if (response && response.status === 200) cache.put(request, response.clone());
-              return response;
-            })
-            .catch(() => cached);
-          return cached || network;
+      caches.open(ASSET_CACHE)
+        .then((cache) =>
+          cache.match(request).then((cached) => {
+            const network = fetch(request)
+              .then((response) => {
+                if (response && response.status === 200) {
+                  cache.put(request, response.clone())
+                    .catch(err => console.warn('[SW] Cache update failed:', err));
+                }
+                return response;
+              })
+              .catch((error) => {
+                console.warn('[SW] Asset fetch failed, using cache:', error);
+                return cached;
+              });
+            return cached || network;
+          })
+        )
+        .catch((cacheError) => {
+          console.error('[SW] Cache access failed:', cacheError);
+          return fetch(request).catch(() => null);
         })
-      )
     );
   }
 });
