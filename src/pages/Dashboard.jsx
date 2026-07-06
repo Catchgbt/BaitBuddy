@@ -462,7 +462,7 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
 
         <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-orange-500/20 to-amber-500/20 backdrop-blur-sm p-4 border border-orange-500/30 shadow-lg shadow-orange-500/10">
           <div className="flex items-start gap-3">
-            <span className="text-2xl flex-shrink-0 mt-1">🔧</span>
+            <Wrench className="w-6 h-6 text-orange-400 flex-shrink-0 mt-1" />
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-orange-300 mb-1">Dashboard wird gerade überarbeitet</h3>
               <p className="text-sm text-orange-200">Wir arbeiten an Verbesserungen. Das Dashboard sollte in Kürze vollständig funktionieren.</p>
