@@ -36,20 +36,44 @@ export default function Dashboard() {
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [showCommunityDialog, setShowCommunityDialog] = useState(false);
+  const isMountedRef = React.useRef(true);
 
   const loadData = async () => {
     try {
-      const currentUser = await auth.me();
-      setUser(currentUser);
+      if (!isMountedRef.current) return;
 
-      let spots = await Spot.list('', 100).catch(() => []);
+      let currentUser = null;
+      try {
+        currentUser = await auth.me();
+      } catch (authError) {
+        console.error('Dashboard: Authentifizierung fehlgeschlagen:', authError);
+      }
+      if (isMountedRef.current && currentUser) {
+        setUser(currentUser);
+      }
+
+      let spots = [];
+      try {
+        spots = await Spot.list('', 100);
+        if (!Array.isArray(spots)) spots = [];
+      } catch (spotError) {
+        console.warn('Dashboard: Spots konnten nicht geladen werden:', spotError);
+        spots = [];
+      }
 
       // Cache Spots wenn online
       if (spots.length > 0 && navigator.onLine) {
-        await cacheEntityData('spots', spots);
+        await cacheEntityData('spots', spots).catch(() => {});
       } else if (spots.length === 0) {
         // Fallback zu gecachten Spots wenn offline
-        spots = await getOfflineData('spots');
+        try {
+          const cachedSpots = await getOfflineData('spots');
+          if (Array.isArray(cachedSpots) && cachedSpots.length > 0) {
+            spots = cachedSpots;
+          }
+        } catch (cacheError) {
+          console.warn('Dashboard: Gecachte Spots konnten nicht geladen werden:', cacheError);
+        }
       }
 
       let userLocation = null;
@@ -69,22 +93,31 @@ export default function Dashboard() {
       // Versuche frische Geolokation nur wenn keine gespeicherte vorhanden
       if (!userLocation && navigator.geolocation) {
         try {
-          await new Promise((resolve, reject) => {
+          await new Promise((resolve) => {
+            const timeoutId = setTimeout(() => resolve(), 5000);
             navigator.geolocation.getCurrentPosition(
               (position) => {
+                clearTimeout(timeoutId);
                 userLocation = {
                   lat: position.coords.latitude,
                   lon: position.coords.longitude
                 };
-                localStorage.setItem("fm_current_location", JSON.stringify(userLocation));
+                try {
+                  localStorage.setItem("fm_current_location", JSON.stringify(userLocation));
+                } catch (e) {
+                  console.warn('Dashboard: Standort konnte nicht gespeichert werden:', e);
+                }
                 resolve();
               },
-              reject,
+              () => {
+                clearTimeout(timeoutId);
+                resolve();
+              },
               { timeout: 5000, maximumAge: 300000 }
             );
           });
         } catch (error) {
-          // Geolocation fallback to cached location
+          console.warn('Dashboard: Geolocation Fehler:', error);
         }
       }
 
@@ -93,32 +126,53 @@ export default function Dashboard() {
 
         // Versuche gecachtes Wetter zu laden
         if (!navigator.onLine) {
-          const cachedWeather = await getCachedWeather(userLocation.lat, userLocation.lon);
-          if (cachedWeather) {
-            weatherData = cachedWeather;
+          try {
+            const cachedWeather = await getCachedWeather(userLocation.lat, userLocation.lon);
+            if (cachedWeather) {
+              weatherData = cachedWeather;
+            }
+          } catch (error) {
+            console.warn('Dashboard: Gecachte Wetterdaten konnten nicht geladen werden:', error);
           }
         } else {
           // Hole frische Daten online
           try {
-            const weatherPromise = fetch(
-              `https://api.open-meteo.com/v1/forecast?latitude=${userLocation.lat}&longitude=${userLocation.lon}&current=temperature_2m,wind_speed_10m,weather_code&timezone=auto`
-            ).then(res => res.json()).catch(() => null);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-            weatherData = await weatherPromise;
+            const weatherPromise = fetch(
+              `https://api.open-meteo.com/v1/forecast?latitude=${userLocation.lat}&longitude=${userLocation.lon}&current=temperature_2m,wind_speed_10m,weather_code&timezone=auto`,
+              { signal: controller.signal }
+            ).then(res => res.json()).finally(() => clearTimeout(timeoutId));
+
+            weatherData = await weatherPromise.catch(() => null);
 
             // Cache frische Wetterdaten
             if (weatherData && weatherData.current) {
-              await cacheWeatherData(userLocation.lat, userLocation.lon, weatherData.current);
+              await cacheWeatherData(userLocation.lat, userLocation.lon, weatherData.current).catch(() => {});
+            } else if (weatherData && weatherData.temperature_2m !== undefined) {
+              await cacheWeatherData(userLocation.lat, userLocation.lon, weatherData).catch(() => {});
             }
           } catch (error) {
-            // Weather fetch error - will use cached data
+            console.warn('Dashboard: Frische Wetterdaten konnten nicht geladen werden:', error);
+            // Fallback zu gecachten Daten
+            try {
+              const cachedWeather = await getCachedWeather(userLocation.lat, userLocation.lon);
+              if (cachedWeather) {
+                weatherData = cachedWeather;
+              }
+            } catch (e) {
+              console.warn('Dashboard: Gecachte Wetterdaten als Fallback nicht verfügbar:', e);
+            }
           }
         }
 
-        if (weatherData && weatherData.current) {
-          setWeather(weatherData.current);
-        } else if (weatherData && weatherData.temperature_2m !== undefined) {
-          setWeather(weatherData);
+        if (isMountedRef.current) {
+          if (weatherData && weatherData.current) {
+            setWeather(weatherData.current);
+          } else if (weatherData && weatherData.temperature_2m !== undefined) {
+            setWeather(weatherData);
+          }
         }
 
         if (spots.length > 0) {
@@ -141,19 +195,27 @@ export default function Dashboard() {
 
           spotsWithDist.sort((a, b) => a.distance - b.distance);
           const topTwo = spotsWithDist.slice(0, 2);
-          if (topTwo.length > 0) {
+          if (topTwo.length > 0 && isMountedRef.current) {
             setNearestSpots(topTwo);
           }
         }
-      } else if (spots.length > 0) {
+      } else if (spots.length > 0 && isMountedRef.current) {
         setNearestSpots(spots.slice(0, 2));
       }
     } catch (error) {
       console.error('Dashboard: Daten konnten nicht geladen werden:', error);
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   };
+
+  React.useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     window.scrollTo(0, 0);
