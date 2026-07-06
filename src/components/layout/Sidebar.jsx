@@ -18,7 +18,7 @@ export default function Sidebar({ isOpen, setIsOpen, currentPageName, user, load
   const { t } = useLanguage();
 
   const mainItems = [
-    { name: "Dashboard", path: "Dashboard", key: "nav.dashboard" },
+    { name: "Dashboard", path: "Dashboard", key: "nav.dashboard", isUnderConstruction: true },
     { name: "Fangbuch", path: "Logbook", key: "nav.logbook" },
     { name: "Fang-Uebersicht", path: "CatchStats", key: "nav.catchstats" },
     { name: "Spots & Karte", path: "Map", key: "nav.map" },
@@ -111,6 +111,11 @@ export default function Sidebar({ isOpen, setIsOpen, currentPageName, user, load
                   'text-gray-300 active:text-white active:bg-gray-700'}
               `}>
         <span>{displayText}</span>
+        {item.isUnderConstruction && (
+          <span className="flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-orange-500/20 text-orange-300 border border-orange-500/40 flex items-center gap-1">
+            🔧 Überarbeitung
+          </span>
+        )}
         {item.isBeta && (
           <span className="flex-shrink-0 px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40">
             BETA
