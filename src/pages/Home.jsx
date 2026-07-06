@@ -373,6 +373,12 @@ function LandingPageContent() {
         try {
             const isAuth = await auth.isAuthenticated();
             if (isAuth) {
+                // Zeige Dashboard-Überarbeitung Benachrichtigung
+                toast.info('Dashboard wird gerade überarbeitet', {
+                  description: 'Wir arbeiten an Verbesserungen. Einige Features könnten temporär eingeschränkt sein.',
+                  duration: 5000,
+                });
+
                 const alreadySeen = localStorage.getItem('catchgbt_event_popup_seen');
                 if (!alreadySeen) {
                     const events = await entities.AppEvent.filter({ is_active: true });
@@ -408,6 +414,13 @@ function LandingPageContent() {
             } else {
                 await auth.register(loginEmail, loginPassword, loginName);
             }
+
+            // Zeige Dashboard-Überarbeitung Benachrichtigung
+            toast.info('Dashboard wird gerade überarbeitet', {
+              description: 'Wir arbeiten an Verbesserungen. Einige Features könnten temporär eingeschränkt sein.',
+              duration: 5000,
+            });
+
             try {
                 const alreadySeen = localStorage.getItem('catchgbt_event_popup_seen');
                 if (!alreadySeen) {
@@ -464,6 +477,12 @@ function LandingPageContent() {
     };
 
     const handleGuestLogin = () => {
+        // Zeige Dashboard-Überarbeitung Benachrichtigung
+        toast.info('Dashboard wird gerade überarbeitet', {
+          description: 'Wir arbeiten an Verbesserungen. Einige Features könnten temporär eingeschränkt sein.',
+          duration: 5000,
+        });
+
         setGuestSession({ is_guest: true });
         window.location.href = createPageUrl('Dashboard');
     };

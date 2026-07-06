@@ -457,8 +457,18 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
         aria-atomic="false"
         className="sr-only"
       />
-      
+
       <div className="space-y-6">
+
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-orange-500/20 to-amber-500/20 backdrop-blur-sm p-4 border border-orange-500/30 shadow-lg shadow-orange-500/10">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl flex-shrink-0 mt-1">🔧</span>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-orange-300 mb-1">Dashboard wird gerade überarbeitet</h3>
+              <p className="text-sm text-orange-200">Wir arbeiten an Verbesserungen. Das Dashboard sollte in Kürze vollständig funktionieren.</p>
+            </div>
+          </div>
+        </div>
 
         <WeatherWarningBanner />
 
@@ -607,6 +617,7 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Schnellzugriff</h3>
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
             {[
+              { name: "Dashboard", path: "Dashboard", Icon: BarChart2, color: "text-cyan-400", bg: "from-cyan-500/10 to-cyan-600/5", isUnderConstruction: true },
               { name: "Karte", path: "Map", offline: true, Icon: MapPin, color: "text-blue-400", bg: "from-blue-500/10 to-blue-600/5" },
               { name: "Wetter", path: "Weather", offline: true, Icon: Cloud, color: "text-sky-400", bg: "from-sky-500/10 to-sky-600/5" },
               { name: "Fangbuch", path: "Logbook", offline: true, Icon: BookOpen, color: "text-cyan-400", bg: "from-cyan-500/10 to-cyan-600/5" },
@@ -624,7 +635,12 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
               const inner = (
                 <>
                   <div className={`absolute inset-0 bg-gradient-to-br ${feature.bg} opacity-0 group-hover:opacity-100 transition-opacity`} />
-                  <div className="relative flex flex-col items-center gap-2">
+                  <div className="relative flex flex-col items-center gap-2 w-full">
+                    {feature.isUnderConstruction && (
+                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center text-xs font-bold text-white">
+                        🔧
+                      </div>
+                    )}
                     <Icon className={`w-5 h-5 ${feature.color} group-hover:scale-110 transition-transform`} />
                     <div className="text-xs font-medium text-gray-400 group-hover:text-white transition-colors leading-tight text-center">{feature.name}</div>
                     {feature.offline && (
