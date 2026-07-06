@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { BUDDY_TEXT_CSS } from '@/components/layout/BuddyTextAvatar';
+import JuleAvatar from '@/components/ai/JuleAvatar';
 import { getTipForPage } from '@/lib/buddyTips';
 import { getRandomBuddyJoke, getRandomFarewellMessage } from '@/lib/buddyJokes';
 import { useAuth } from '@/lib/AuthContext';
@@ -449,8 +449,6 @@ export default function AIBuddyWidget() {
 
   return (
     <>
-      <style>{BUDDY_TEXT_CSS}</style>
-
       <div
         ref={widgetRef}
         className="fixed z-50"
@@ -494,15 +492,10 @@ export default function AIBuddyWidget() {
               <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
                 <div className="flex items-center gap-2">
                   <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-blue-300 bg-blue-100">
-                    <img
-                      src="/assets/buddy/marina-avatar.png"
-                      alt="Sabrina"
-                      className="w-full h-full object-cover object-top"
-                      draggable={false}
-                    />
+                    <JuleAvatar size={36} showHints={false} />
                   </div>
                   <div>
-                    <h2 className="text-sm font-bold text-gray-800">Sabrina</h2>
+                    <h2 className="text-sm font-bold text-gray-800">Jule</h2>
                     <p className="text-xs text-gray-500">Dein Angel-Buddy</p>
                   </div>
                 </div>
@@ -645,25 +638,14 @@ export default function AIBuddyWidget() {
           }}
         >
           <div
-            className={`relative w-24 h-24 rounded-full overflow-hidden bg-transparent transition-all ${
+            className={`relative w-24 h-24 transition-all ${
               isListening
-                ? 'drop-shadow-[0_0_8px_rgba(248,113,113,0.7)]'
+                ? 'drop-shadow-[0_0_10px_rgba(63,224,208,0.8)]'
                 : 'drop-shadow-lg'
             }`}
           >
-            <img
-              src="/assets/buddy/marina-avatar.png"
-              alt="Sabrina – dein Angel-Buddy"
-              className={`w-full h-full object-cover object-top ${
-                isTalking ? 'buddy-text-speaking' : isListening ? 'buddy-text-listening' : 'buddy-text-breathing'
-              }`}
-              draggable={false}
-            />
+            <JuleAvatar speaking={isTalking} listening={isListening} size={96} />
           </div>
-
-          {isListening && (
-            <div className="absolute bottom-0 left-0 w-4 h-4 bg-red-500 rounded-full ring-2 ring-white animate-pulse" />
-          )}
         </motion.div>
       </div>
     </>
