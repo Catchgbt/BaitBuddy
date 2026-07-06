@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import VoiceControlWidget from "@/components/dashboard/VoiceControlWidget";
 import MiniKarte from "@/components/home/MiniKarte";
-import { Brain, Mic, BookOpen, ArrowRight, MapPin, Cloud, BarChart2, MessageCircle, Camera, Waves, Wrench, Calendar, Users, Trophy, GraduationCap, Loader2 } from "lucide-react";
+import { Brain, Mic, BookOpen, ArrowRight, MapPin, Cloud, BarChart2, MessageCircle, Camera, Waves, Wrench, Calendar, Users, Trophy, GraduationCap, Loader2, AlertTriangle, RefreshCw } from "lucide-react";
 import SchonzeitWarner from "@/components/dashboard/SchonzeitWarner";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -21,6 +21,7 @@ import { usePredictivePrefetch } from "@/hooks/usePredictivePrefetch";
 import PageContainer from "@/components/layout/PageContainer";
 import CommunityPostDialog from "@/components/community/CommunityPostDialog";
 import WeatherWarningBanner from "@/components/weather/WeatherWarningBanner";
+import SuspenseWithErrorBoundary from "@/components/utils/SuspenseWithErrorBoundary";
 
 export default function Dashboard() {
   const queryClient = useQueryClient();
@@ -36,17 +37,22 @@ export default function Dashboard() {
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [showCommunityDialog, setShowCommunityDialog] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const isMountedRef = React.useRef(true);
 
   const loadData = async () => {
     try {
       if (!isMountedRef.current) return;
 
+      let authFailed = false;
+      let spotsFailed = false;
+
       let currentUser = null;
       try {
         currentUser = await auth.me();
       } catch (authError) {
         console.error('Dashboard: Authentifizierung fehlgeschlagen:', authError);
+        authFailed = true;
       }
       if (isMountedRef.current && currentUser) {
         setUser(currentUser);
@@ -58,7 +64,12 @@ export default function Dashboard() {
         if (!Array.isArray(spots)) spots = [];
       } catch (spotError) {
         console.warn('Dashboard: Spots konnten nicht geladen werden:', spotError);
+        spotsFailed = true;
         spots = [];
+      }
+
+      if (isMountedRef.current) {
+        setLoadError(authFailed && spotsFailed);
       }
 
       // Cache Spots wenn online
@@ -204,18 +215,15 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error('Dashboard: Daten konnten nicht geladen werden:', error);
+      if (isMountedRef.current) {
+        setLoadError(true);
+      }
     } finally {
       if (isMountedRef.current) {
         setLoading(false);
       }
     }
   };
-
-  React.useEffect(() => {
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -292,6 +300,8 @@ export default function Dashboard() {
   }, [user, greetingPlayed, speak]);
 
   useEffect(() => {
+    isMountedRef.current = true;
+
     const cleanupSessions = async () => {
       try {
         await functions.invoke('cleanupOldSessions');
@@ -302,6 +312,10 @@ export default function Dashboard() {
 
     cleanupSessions();
     loadData();
+
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
   const getWeatherDesc = (code) => {
@@ -460,17 +474,29 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
 
       <div className="space-y-6">
 
-        <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-orange-500/20 to-amber-500/20 backdrop-blur-sm p-4 border border-orange-500/30 shadow-lg shadow-orange-500/10">
-          <div className="flex items-start gap-3">
-            <Wrench className="w-6 h-6 text-orange-400 flex-shrink-0 mt-1" />
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-orange-300 mb-1">Dashboard wird gerade überarbeitet</h3>
-              <p className="text-sm text-orange-200">Wir arbeiten an Verbesserungen. Das Dashboard sollte in Kürze vollständig funktionieren.</p>
+        {loadError && (
+          <div className="relative overflow-hidden rounded-xl bg-red-500/10 backdrop-blur-sm p-4 border border-red-500/30" role="alert">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-6 h-6 text-red-400 flex-shrink-0 mt-1" />
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-red-300 mb-1">Dashboard-Daten konnten nicht geladen werden</h3>
+                <p className="text-sm text-red-200/80 mb-3">Die Verbindung zum Server ist fehlgeschlagen. Bitte prüfe deine Internetverbindung und versuche es erneut.</p>
+                <Button
+                  size="sm"
+                  onClick={() => { setLoadError(false); loadData(); }}
+                  className="bg-red-600 hover:bg-red-700 text-white gap-2"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Erneut versuchen
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        <WeatherWarningBanner />
+        <SuspenseWithErrorBoundary isMinimal={true}>
+          <WeatherWarningBanner />
+        </SuspenseWithErrorBoundary>
 
         <div className="flex items-center justify-between border-b border-gray-800/50 pb-5">
           <Button
@@ -493,7 +519,9 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
 
           <div className="flex flex-col items-end gap-2">
             <OfflineCacheIndicator />
-            <VoiceControlWidget />
+            <SuspenseWithErrorBoundary isMinimal={true}>
+              <VoiceControlWidget />
+            </SuspenseWithErrorBoundary>
           </div>
         </div>
 
@@ -549,7 +577,9 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
           </p>
         </Link>
 
-        <SchonzeitWarner />
+        <SuspenseWithErrorBoundary isMinimal={true}>
+          <SchonzeitWarner />
+        </SuspenseWithErrorBoundary>
 
         <div className="space-y-4 sm:grid sm:grid-cols-2 sm:gap-6">
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900/80 to-gray-900/40 backdrop-blur-sm p-6 sm:p-8 border border-gray-800/50">
@@ -605,19 +635,24 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
           </div>
 
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900/80 to-gray-900/40 backdrop-blur-sm border border-gray-800/50">
-          <MiniKarte />
+          <SuspenseWithErrorBoundary isMinimal={true}>
+            <MiniKarte />
+          </SuspenseWithErrorBoundary>
         </div>
 
+        <SuspenseWithErrorBoundary isMinimal={true}>
+          <FishingRecommendationCard />
+        </SuspenseWithErrorBoundary>
 
-        <FishingRecommendationCard />
-
-        <AudioNotesWidget />
+        <SuspenseWithErrorBoundary isMinimal={true}>
+          <AudioNotesWidget />
+        </SuspenseWithErrorBoundary>
 
         <div className="space-y-3">
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Schnellzugriff</h3>
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
             {[
-              { name: "Dashboard", path: "Dashboard", Icon: BarChart2, color: "text-cyan-400", bg: "from-cyan-500/10 to-cyan-600/5", isUnderConstruction: true },
+              { name: "Dashboard", path: "Dashboard", Icon: BarChart2, color: "text-cyan-400", bg: "from-cyan-500/10 to-cyan-600/5" },
               { name: "Karte", path: "Map", offline: true, Icon: MapPin, color: "text-blue-400", bg: "from-blue-500/10 to-blue-600/5" },
               { name: "Wetter", path: "Weather", offline: true, Icon: Cloud, color: "text-sky-400", bg: "from-sky-500/10 to-sky-600/5" },
               { name: "Fangbuch", path: "Logbook", offline: true, Icon: BookOpen, color: "text-cyan-400", bg: "from-cyan-500/10 to-cyan-600/5" },
@@ -636,11 +671,6 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
                 <>
                   <div className={`absolute inset-0 bg-gradient-to-br ${feature.bg} opacity-0 group-hover:opacity-100 transition-opacity`} />
                   <div className="relative flex flex-col items-center gap-2 w-full">
-                    {feature.isUnderConstruction && (
-                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center text-xs font-bold text-white">
-                        🔧
-                      </div>
-                    )}
                     <Icon className={`w-5 h-5 ${feature.color} group-hover:scale-110 transition-transform`} />
                     <div className="text-xs font-medium text-gray-400 group-hover:text-white transition-colors leading-tight text-center">{feature.name}</div>
                     {feature.offline && (

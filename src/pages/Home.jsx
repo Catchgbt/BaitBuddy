@@ -8,7 +8,7 @@ import { supabase } from '@/api/supabaseClient';
 import { toast } from 'sonner';
 import LanguageSwitcher from '@/components/i18n/LanguageSwitcher';
 import { LanguageProvider, useLanguage } from '@/components/i18n/LanguageContext';
-import { Eye, EyeOff, Wrench } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import TutorialModal from '@/components/tutorial/TutorialModal';
 import DeleteAccountSection from '@/components/settings/DeleteAccountSection';
 import WaterScene from '@/components/home/WaterScene';
@@ -135,18 +135,6 @@ function FeatureHints() {
       </motion.div>
     </AnimatePresence>
   );
-}
-
-function DashboardMaintenanceNotice() {
-    return (
-        <div className="w-full max-w-md pointer-events-auto rounded-xl bg-black/70 backdrop-blur-xl border border-orange-500/40 shadow-lg shadow-orange-500/10 p-4 flex items-start gap-3">
-            <Wrench className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0 text-left">
-                <p className="text-sm font-semibold text-orange-300">Dashboard wird gerade überarbeitet</p>
-                <p className="text-xs text-orange-200/90 mt-0.5">Wir arbeiten an Verbesserungen. Einige Funktionen können vorübergehend eingeschränkt sein.</p>
-            </div>
-        </div>
-    );
 }
 
 function SideLinks() {
@@ -861,8 +849,6 @@ function LandingPageContent() {
             >
                 <div className="min-h-full flex flex-col items-center justify-center gap-4">
                     <FeatureHints />
-
-                    <DashboardMaintenanceNotice />
 
                     <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-12">
                         <div className="pointer-events-auto order-2 lg:order-2">
