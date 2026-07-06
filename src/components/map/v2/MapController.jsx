@@ -41,6 +41,7 @@ function MapController() {
     spots: true,
     clubs: true,
     parks: true,
+    angelparks: true,
     waters: true,
     angelshops: true,
     angelparksEu: true,
@@ -73,17 +74,33 @@ function MapController() {
     initialData: []
   });
 
+  // Dedizierte Angelpark-Ebene aus dem CSV-Export.
+  // Alle Einträge werden als eigene Kategorie 'angelpark' geführt, damit sie
+  // auf der Karte klar als Angelparks erkennbar sind (eigener Marker/Filter).
+  const allAngelparks = useMemo(() => {
+    return (angelparksExport || [])
+      .filter(p => p.coordinates && p.coordinates.lat != null && p.coordinates.lng != null)
+      .map(p => ({ ...p, category: 'angelpark' }));
+  }, []);
+
+  // IDs der Angelpark-Ebene, um Doppel-Marker in der Vereins-Ebene zu vermeiden.
+  const angelparkIds = useMemo(
+    () => new Set(allAngelparks.map(p => p.id)),
+    [allAngelparks]
+  );
+
   // Merge: Backend Clubs + CSV Exports + statische Angelparks
-  // Backend-Einträge > CSV-Exports > statische Parks (Dedupe per id)
+  // Backend-Einträge > CSV-Exports > statische Parks (Dedupe per id).
+  // Einträge, die bereits in der Angelpark-Ebene stecken, werden hier
+  // ausgeschlossen, damit sie nicht doppelt (Verein + Angelpark) erscheinen.
   const allClubs = useMemo(() => {
     const seen = new Set((fishingClubs || []).map(fc => fc.id));
     const csvClubs = (fishingClubsCSVExport || []).filter(c => !seen.has(c.id));
     csvClubs.forEach(c => seen.add(c.id));
-    const exportedParks = (angelparksExport || []).filter(p => !seen.has(p.id));
-    exportedParks.forEach(p => seen.add(p.id));
     const staticParks = angelparks.filter(p => !seen.has(p.id));
-    return [...fishingClubs, ...csvClubs, ...exportedParks, ...staticParks];
-  }, [fishingClubs]);
+    return [...fishingClubs, ...csvClubs, ...staticParks]
+      .filter(c => !angelparkIds.has(c.id));
+  }, [fishingClubs, angelparkIds]);
 
   // Separate Angelshops (statische CSV-Liste)
   const allAngelshops = useMemo(() => {
@@ -332,6 +349,9 @@ function MapController() {
     const categoryMatch = category === 'club' ? filters.clubs : (category === 'spot' ? filters.parks : false);
     return categoryMatch && matchesSearch(fc.name);
   });
+  const filteredAngelparks = filters.angelparks
+    ? allAngelparks.filter(park => matchesSearch(park.name))
+    : [];
   const filteredAngelshops = filters.angelshops
     ? allAngelshops.filter(shop => matchesSearch(shop.name))
     : [];
@@ -444,7 +464,7 @@ function MapController() {
 
            <div aria-live="polite" aria-atomic="true">
              <div className="text-xs text-gray-300 px-2 py-1 bg-gray-900/50 rounded" role="status">
-               {filteredSpots.length} Spots • {filteredClubs.length} Vereine • {filteredAngelshops.length} Shops • {filteredAngelparksEu.length} EU Parks • {filteredWaters.length} Gewässer • {filteredTiefenkarten.length} Tiefenkarten • {filteredForellenseen.length} Seen • {filteredBathymetrie.length} Bathymetrie • {filteredFluesse.length} Flüsse
+               {filteredSpots.length} Spots • {filteredClubs.length} Vereine • {filteredAngelparks.length} Angelparks • {filteredAngelshops.length} Shops • {filteredAngelparksEu.length} EU Parks • {filteredWaters.length} Gewässer • {filteredTiefenkarten.length} Tiefenkarten • {filteredForellenseen.length} Seen • {filteredBathymetrie.length} Bathymetrie • {filteredFluesse.length} Flüsse
              </div>
            </div>
 
@@ -479,6 +499,16 @@ function MapController() {
                }`}
              >
                Parks
+             </button>
+             <button
+               onClick={() => setFilters({ ...filters, angelparks: !filters.angelparks })}
+               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                 filters.angelparks
+                   ? 'bg-lime-600 text-white ring-2 ring-lime-400/50'
+                   : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+               }`}
+             >
+               Angelparks
              </button>
              <button
                onClick={() => setFilters({ ...filters, angelshops: !filters.angelshops })}
@@ -619,6 +649,7 @@ function MapController() {
            zoom={mapZoom}
            spots={filteredSpots}
            fishingClubs={filteredClubs}
+           angelparks={filteredAngelparks}
            angelshops={filteredAngelshops}
            angelparksEu={filteredAngelparksEu}
            waterBodies={filteredWaters}
@@ -632,6 +663,7 @@ function MapController() {
            onLocationClick={handleLocationClick}
            onSpotClick={(spot) => handleLocationClick(spot, 'spot')}
            onClubClick={(club) => handleLocationClick(club, 'club')}
+           onAngelparkClick={(park) => handleLocationClick(park, 'angelpark')}
            onAngelshopClick={(shop) => handleLocationClick(shop, 'angelshop')}
            onAngelParkEuClick={(park) => handleLocationClick(park, 'angelpark_eu')}
            onWaterBodiesLoad={setWaterBodies}
