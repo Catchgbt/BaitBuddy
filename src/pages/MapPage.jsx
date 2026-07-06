@@ -20,7 +20,25 @@ import MapModeManager from "@/components/map/MapModeManager";
 import { RadarLayer, useRainviewerRadar, RADAR_MODES } from "@/components/map/RadarOverlay";
 import { MapPin, CloudRain, Crosshair, Play, Pause, ChevronDown, Sunrise, Ticket } from "lucide-react";
 import SunriseSunsetPanel from "@/components/map/SunriseSunsetPanel";
+import PublicSpotsClusterLayer from "@/components/map/PublicSpotsClusterLayer";
 import { PERMIT_LOCATIONS, CATEGORY_LABELS, GERMAN_STATES } from "@/data/permitLocations";
+import angelparksExport from "@/data/angelparks-export.json";
+
+// Statische Angelvereine & Parks (~700). Diese Standorte liegen als Datendatei
+// vor (nicht in der DB) und werden in die öffentlichen Spots gemerged, damit die
+// Karte tatsächlich die versprochenen ~700 Orte zeigt.
+const STATIC_PUBLIC_LOCATIONS = (Array.isArray(angelparksExport) ? angelparksExport : [])
+  .filter((p) => p?.coordinates?.lat != null && p?.coordinates?.lng != null)
+  .map((p) => ({
+    id: p.id,
+    name: p.name,
+    category: p.category || "club",
+    coordinates: { lat: Number(p.coordinates.lat), lng: Number(p.coordinates.lng) },
+    address: p.address,
+    website: p.website,
+    phone: p.phone,
+    source: p.source,
+  }));
 
 // Leaflet CSS laden
 if (typeof document !== "undefined") {
@@ -54,11 +72,6 @@ const defaultIcon = createIcon(
 
 const userIcon = createIcon(
   "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
-  "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png"
-);
-
-const greenIcon = createIcon(
-  "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
   "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png"
 );
 
@@ -218,6 +231,24 @@ export default function MapPage() {
     return locations;
   };
 
+  // Backend-Hotspots (DB) mit den statischen Angelvereinen/Parks (~700)
+  // zusammenführen. Backend-Einträge haben Vorrang; Dedupe über die id.
+  const mergePublicLocations = (backendLocations) => {
+    const seen = new Set();
+    const merged = [];
+    for (const loc of backendLocations) {
+      if (loc?.id != null && seen.has(loc.id)) continue;
+      if (loc?.id != null) seen.add(loc.id);
+      merged.push(loc);
+    }
+    for (const loc of STATIC_PUBLIC_LOCATIONS) {
+      if (loc.id != null && seen.has(loc.id)) continue;
+      if (loc.id != null) seen.add(loc.id);
+      merged.push(loc);
+    }
+    return merged;
+  };
+
   const calculateTravelTime = useCallback(async (spot) => {
     if (!gpsLocation) return;
 
@@ -258,13 +289,16 @@ export default function MapPage() {
 
     try {
       const response = await functions.invoke('angelspotsGeojson');
-      const locations = parsePublicSpots(response);
+      const locations = mergePublicLocations(parsePublicSpots(response));
       if (locations.length > 0) {
         setPublicLocations(locations);
         setShowPublicSpots(true);
       }
     } catch (error) {
       console.error("Fehler beim Laden öffentlicher Spots:", error);
+      // Auch ohne Backend zeigen wir wenigstens die statischen ~700 Angelparks.
+      setPublicLocations(mergePublicLocations([]));
+      setShowPublicSpots(true);
     }
 
     setLoading(false);
@@ -273,7 +307,7 @@ export default function MapPage() {
   const loadPublicSpots = useCallback(async () => {
     try {
       const response = await functions.invoke('angelspotsGeojson');
-      const locations = parsePublicSpots(response);
+      const locations = mergePublicLocations(parsePublicSpots(response));
       setPublicLocations(locations);
       setShowPublicSpots(true);
 
@@ -283,8 +317,13 @@ export default function MapPage() {
       });
     } catch (error) {
       console.error("Fehler beim Laden öffentlicher Spots:", error);
-      toast.error("Fehler beim Laden der öffentlichen Spots");
-      setPublicLocations([]);
+      const locations = mergePublicLocations([]);
+      setPublicLocations(locations);
+      setShowPublicSpots(true);
+      toast.success("Öffentliche Spots geladen", {
+        description: `${locations.length} Angelvereine & Parks`,
+        duration: 2000
+      });
     }
   }, []);
 
@@ -637,34 +676,10 @@ export default function MapPage() {
               </Marker>
             ))}
 
-            {showPublicSpots && validPublicLocations.map((location) => {
-              const coords = location.coordinates;
-              const categoryLabel =
-                location.category === 'club' ? 'Angelverein'
-                : location.category === 'spot' ? (location.water_type ? location.water_type.charAt(0).toUpperCase() + location.water_type.slice(1) : 'Angelspot')
-                : 'Angelpark';
-
-              return (
-                <Marker
-                  key={location.id}
-                  position={[Number(coords.lat), Number(coords.lng)]}
-                  icon={greenIcon}
-                  eventHandlers={{
-                    click: () => setSelectedLocation({ ...location, type: location.category || 'club' })
-                  }}
-                >
-                  <Popup>
-                    <div className="min-w-[200px]">
-                      <div className="font-semibold text-base mb-1">{location.name}</div>
-                      <div className="text-sm text-gray-600">{categoryLabel}</div>
-                      {location.address && (
-                        <div className="text-xs text-gray-500 mt-1">{location.address.city}</div>
-                      )}
-                    </div>
-                  </Popup>
-                </Marker>
-              );
-            })}
+            <PublicSpotsClusterLayer
+              locations={validPublicLocations}
+              visible={showPublicSpots}
+            />
 
             {showPermitLocations && filteredPermitLocations.map((loc) => (
               <Marker
