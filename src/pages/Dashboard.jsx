@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import VoiceControlWidget from "@/components/dashboard/VoiceControlWidget";
 import MiniKarte from "@/components/home/MiniKarte";
-import { Brain, Mic, BookOpen, ArrowRight, MapPin, Cloud, BarChart2, MessageCircle, Camera, Waves, Wrench, Calendar, Users, Trophy, GraduationCap, Loader2 } from "lucide-react";
+import { Brain, Mic, BookOpen, ArrowRight, MapPin, Cloud, BarChart2, MessageCircle, Camera, Waves, Wrench, Calendar, Users, Trophy, GraduationCap, Loader2, X } from "lucide-react";
 import SchonzeitWarner from "@/components/dashboard/SchonzeitWarner";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -460,16 +460,6 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
 
       <div className="space-y-6">
 
-        <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-orange-500/20 to-amber-500/20 backdrop-blur-sm p-4 border border-orange-500/30 shadow-lg shadow-orange-500/10">
-          <div className="flex items-start gap-3">
-            <span className="text-2xl flex-shrink-0 mt-1">🔧</span>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-orange-300 mb-1">Dashboard wird gerade überarbeitet</h3>
-              <p className="text-sm text-orange-200">Wir arbeiten an Verbesserungen. Das Dashboard sollte in Kürze vollständig funktionieren.</p>
-            </div>
-          </div>
-        </div>
-
         <WeatherWarningBanner />
 
         <div className="flex items-center justify-between border-b border-gray-800/50 pb-5">
@@ -505,7 +495,7 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
               className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors flex items-center justify-center"
               style={{ minHeight: '44px', minWidth: '44px' }}
             >
-              X
+              <X className="w-5 h-5" />
             </button>
             <h3 className="text-lg font-bold text-purple-300 mb-4">KI Angel-Analyse</h3>
             <div className="text-gray-200 whitespace-pre-wrap leading-relaxed">
@@ -617,7 +607,7 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Schnellzugriff</h3>
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
             {[
-              { name: "Dashboard", path: "Dashboard", Icon: BarChart2, color: "text-cyan-400", bg: "from-cyan-500/10 to-cyan-600/5", isUnderConstruction: true },
+              { name: "Dashboard", path: "Dashboard", Icon: BarChart2, color: "text-cyan-400", bg: "from-cyan-500/10 to-cyan-600/5" },
               { name: "Karte", path: "Map", offline: true, Icon: MapPin, color: "text-blue-400", bg: "from-blue-500/10 to-blue-600/5" },
               { name: "Wetter", path: "Weather", offline: true, Icon: Cloud, color: "text-sky-400", bg: "from-sky-500/10 to-sky-600/5" },
               { name: "Fangbuch", path: "Logbook", offline: true, Icon: BookOpen, color: "text-cyan-400", bg: "from-cyan-500/10 to-cyan-600/5" },
@@ -636,11 +626,6 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
                 <>
                   <div className={`absolute inset-0 bg-gradient-to-br ${feature.bg} opacity-0 group-hover:opacity-100 transition-opacity`} />
                   <div className="relative flex flex-col items-center gap-2 w-full">
-                    {feature.isUnderConstruction && (
-                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center text-xs font-bold text-white">
-                        🔧
-                      </div>
-                    )}
                     <Icon className={`w-5 h-5 ${feature.color} group-hover:scale-110 transition-transform`} />
                     <div className="text-xs font-medium text-gray-400 group-hover:text-white transition-colors leading-tight text-center">{feature.name}</div>
                     {feature.offline && (
