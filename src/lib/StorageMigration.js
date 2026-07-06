@@ -26,42 +26,78 @@ export async function migrateOfflineStorage() {
       errors: [],
     };
 
-    // Migrate catches
+    // Migrate catches with retry logic for disconnects
     try {
       const catchesJson = localStorage.getItem('catchgbt_offline_catches');
       if (catchesJson) {
         const catches = JSON.parse(catchesJson);
-        await OfflineDataStore.cacheCatches(catches);
-        results.catches = catches.length;
+        try {
+          await OfflineDataStore.cacheCatches(catches);
+          results.catches = catches.length;
+        } catch (e) {
+          if (e.message?.includes('Port') || e.message?.includes('disconnect')) {
+            console.warn('[Migration] Port disconnect during catches migration, retrying...');
+            await new Promise(r => setTimeout(r, 500));
+            await OfflineDataStore.cacheCatches(catches);
+            results.catches = catches.length;
+          } else {
+            throw e;
+          }
+        }
       }
     } catch (e) {
       results.errors.push(`Catches migration failed: ${e.message}`);
+      console.warn('[Migration] Catches migration error:', e);
     }
 
-    // Migrate spots
+    // Migrate spots with retry logic
     try {
       const spotsJson = localStorage.getItem('catchgbt_offline_spots');
       if (spotsJson) {
         const spots = JSON.parse(spotsJson);
-        await OfflineDataStore.cacheSpots(spots);
-        results.spots = spots.length;
+        try {
+          await OfflineDataStore.cacheSpots(spots);
+          results.spots = spots.length;
+        } catch (e) {
+          if (e.message?.includes('Port') || e.message?.includes('disconnect')) {
+            console.warn('[Migration] Port disconnect during spots migration, retrying...');
+            await new Promise(r => setTimeout(r, 500));
+            await OfflineDataStore.cacheSpots(spots);
+            results.spots = spots.length;
+          } else {
+            throw e;
+          }
+        }
       }
     } catch (e) {
       results.errors.push(`Spots migration failed: ${e.message}`);
+      console.warn('[Migration] Spots migration error:', e);
     }
 
     // Migrate metadata
     try {
       const lastSync = localStorage.getItem('catchgbt_offline_last_sync');
       if (lastSync) {
-        await OfflineDataStore.setMetadata('lastSync_catches', lastSync);
-        results.metadata = 1;
+        try {
+          await OfflineDataStore.setMetadata('lastSync_catches', lastSync);
+          results.metadata = 1;
+        } catch (e) {
+          if (e.message?.includes('Port') || e.message?.includes('disconnect')) {
+            console.warn('[Migration] Port disconnect during metadata migration, retrying...');
+            await new Promise(r => setTimeout(r, 500));
+            await OfflineDataStore.setMetadata('lastSync_catches', lastSync);
+            results.metadata = 1;
+          } else {
+            throw e;
+          }
+        }
       }
     } catch (e) {
       results.errors.push(`Metadata migration failed: ${e.message}`);
+      console.warn('[Migration] Metadata migration error:', e);
     }
 
-    // Mark migration complete
+    // Mark migration complete (even if there were non-critical errors)
     localStorage.setItem(MIGRATION_KEY, 'true');
     localStorage.setItem('catchgbt_migration_timestamp', new Date().toISOString());
 
