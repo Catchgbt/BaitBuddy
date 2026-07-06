@@ -114,8 +114,7 @@ export default function TripFormDialog({ open, onClose, onSave, plan, currentLoc
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const submitForm = async () => {
     if (!form.title.trim()) return;
 
     const lat = form.lat !== "" ? parseFloat(form.lat) : null;
@@ -155,6 +154,11 @@ export default function TripFormDialog({ open, onClose, onSave, plan, currentLoc
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    submitForm();
   };
 
   return (
@@ -374,7 +378,11 @@ export default function TripFormDialog({ open, onClose, onSave, plan, currentLoc
             <Button type="button" variant="outline" onClick={onClose} className="border-gray-700 hover:bg-gray-800/50">
               Abbrechen
             </Button>
-            <Button type="submit" disabled={saving || !form.title.trim()} className="bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white font-semibold rounded-lg">
+            <Button
+              type="button"
+              onClick={submitForm}
+              disabled={saving || !form.title.trim()}
+              className="bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
               {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
               {plan ? "Speichern" : "Erstellen"}
             </Button>
