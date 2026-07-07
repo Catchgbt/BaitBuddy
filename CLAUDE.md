@@ -1,88 +1,174 @@
-# BaitBuddy — Entwicklungsregeln für Claude
+# BaitBuddy — Entwicklungsrichtlinien für Claude
 
-## Kommunikation
+## 🎯 Projekt-Übersicht
+**BaitBuddy** ist eine React Native Angeln-App für iOS/Android mit AI-gestütztem KI-Buddy. Backend läuft auf Vercel, Datenspeicher auf Supabase.
 
-**Immer auf Deutsch antworten** — alle Antworten, Erklärungen und Zusammenfassungen in dieser Session und in zukünftigen Sessions auf Deutsch. (Code, Commit-Messages und PR-Titel dürfen technisch/englisch bleiben, wo üblich.)
+## 📋 Sprache & Kommunikation
+- **Immer auf Deutsch antworten** (Erklärungen, Zusammenfassungen, Text)
+- Code, Commits und PR-Titel dürfen englisch sein, wo technisch sinnvoll
+- Keine Ankündigungen von Check-ins beim PR-Watching (einfach im Hintergrund erledigen)
 
-## Keine Platzhalter und keine Emojis im Code
+## 🚫 Code-Standards: Keine Platzhalter, keine dekorativen Emojis
 
-**Niemals Platzhalter setzen.** Keine Dummy-/Fake-/Mock-Werte, keine `TODO`-Stubs, keine „Lorem ipsum"-Texte, keine Beispiel-/Demo-Platzhalter und keine leeren „Coming soon"-Hülsen im produktiven Code. Immer echte, vollständig funktionsfähige Implementierungen mit echten Daten und echten Anbindungen liefern. Fehlt eine Information oder ist etwas unklar, nachfragen — statt einen Platzhalter einzusetzen.
+### Platzhalter absolut verboten
+Keine `TODO`-Stubs, `Lorem ipsum`, Mock-Werte, leere „Coming soon"-Hülsen oder Dummy-Daten im produktiven Code. **Immer echte, funktionierende Implementierungen mit echten Daten und echten API-Anbindungen liefern.** Falls Information fehlt → nachfragen statt Platzhalter setzen.
 
-**Keine dekorativen Emojis im App-Code.** Weder in JSX/HTML-Text, noch in Labels, Buttons, Überschriften, Fehlermeldungen, Toasts, `console.log` oder sonstigen UI-Texten. Dekorative Emojis werden ersatzlos entfernt bzw. — wo ein Icon inhaltlich sinnvoll ist — durch ein `lucide-react`-Icon ersetzt.
+### Emojis: Funktional ja, dekorativ nein
+- ❌ **Keine** dekorativen Emojis in UI-Text, Labels, Buttons, Überschriften, Fehlermeldungen, Toasts oder `console.log`
+- ✅ **Funktionale Emojis bleiben**: 
+  - Länder-/Sprach-Flaggen (z. B. `LanguageSwitcher.jsx`: `🇩🇪`, `🇬🇧`)
+  - Marker-Icons auf der Karte (z. B. Fisch-Spot = `icon`-Datenfeld)
 
-**Ausnahme: funktionale Emojis bleiben erlaubt.** Emojis, die als bewusster visueller Identifikator einer Entität dienen und nicht sinnvoll durch Text ersetzbar sind, dürfen bleiben — konkret:
-- Länder-/Sprach-Flaggen im Sprachwähler (`src/components/i18n/LanguageSwitcher.jsx`, `flag: '🇩🇪'` …),
-- Karten-Marker-Icons, bei denen das Emoji das Icon des Marker-/Spot-Typs IST (z. B. `src/components/map/**`, `MarkerDetailCard`-Adapter, `icon`-Datenfelder).
+**Faustregel:** Emoji als Datenwert für ein Icon? Funktional → bleibt. Emoji dekorativ im Text? → weg, ggf. durch `lucide-react`-Icon ersetzen.
 
-Faustregel: Steht das Emoji als **Datenwert** für das Icon einer Sache (`flag`/`icon`-Feld, Marker-Typ→Symbol-Map), ist es funktional und bleibt. Steht es **dekorativ im Fließtext/Label/Toast**, wird es entfernt.
+---
 
-## Infrastruktur: nur Vercel & Supabase
+## 🏗️ Tech-Stack
 
-**Nur Vercel (Hosting/Deploy/Serverless) und Supabase (DB/Auth/Storage) verwenden.** Keine anderen externen Dienste/Backends einführen (kein base44, kein Render, keine sonstigen MCP-Services für Produktionslogik).
+| Layer | Technologie |
+|-------|-------------|
+| **Frontend** | React Native (Expo oder Bare Workflow) |
+| **Backend** | Express (Node.js) auf Vercel Serverless |
+| **Datenbank & Auth** | Supabase (Realtime, Offline Sync) |
+| **Package Manager** | npm mit legacy peer deps (`--legacy-peer-deps`) |
+| **CI/CD** | GitHub Actions + Fastlane (App Store Deploy) |
 
-## Auth-Architektur: zwei Session-Systeme
+---
 
-Die App hat aktuell **zwei parallele Auth-Systeme**, die beide aktiv genutzt werden:
+## 🔑 Auth-Architektur: Zwei Session-Systeme
 
-1. **bb_token/bb_refresh** (`src/api/frontendClient.js`) — der Haupt-Login-Pfad für E-Mail/Passwort. Login läuft über den Backend-Proxy `/api/auth/login` (der Server ruft `supabase.auth.signInWithPassword` mit dem Service-Role-Client auf); Token/Refresh-Token werden als reine Strings im Frontend in `localStorage` gehalten. Ablauf/Refresh läuft ausschließlich über den eigenen 401-getriggerten Refresh-Mechanismus (`ApiClient._refreshSession()` → `POST /api/auth/refresh`).
-2. **Browser-Supabase-Session** (`src/api/supabaseClient.js`) — nur für OAuth-Login (`signInWithOAuth`) und Passwort-Reset (`resetPasswordForEmail`/`updateUser`). `AuthCallback.jsx`/`ResetPassword.jsx` übernehmen die daraus resultierende Session per `onAuthStateChange`/`getSession()` in `bb_token`/`bb_refresh`; `AuthContext.jsx` hält dafür einen App-weiten `onAuthStateChange`-Listener, der SIGNED_IN/SIGNED_OUT/TOKEN_REFRESHED-Events dauerhaft synchronisiert.
+Die App nutzt **absichtlich zwei parallele Auth-Pfade**, beide aktiv:
 
-**Wichtig:** Beide Systeme würden denselben (rotierenden) Supabase-Refresh-Token verwalten. Damit nicht zwei unabhängige Refresh-Läufe (Browser-Client-Auto-Refresh vs. der eigene 401-Refresh) sich gegenseitig mit einem bereits verbrauchten Token aushebeln, ist `autoRefreshToken` im Supabase-Browser-Client (`src/api/supabaseClient.js`) **bewusst deaktiviert** — der bb_token-Refresh-Pfad ist der einzige aktive Refresh-Mechanismus. Eine vollständige Konsolidierung auf ein einziges Auth-System wurde bewusst zurückgestellt (größerer Eingriff über viele Call-Sites, OAuth-Flows lassen sich ohne echten Browser/echte Provider-Credentials nicht end-to-end verifizieren) — bei künftigen Auth-Änderungen diese Zweiteilung im Hinterkopf behalten.
+### 1. `bb_token` / `bb_refresh` (Haupt-Pfad für E-Mail/Passwort)
+- Stored in `localStorage` (reine Strings)
+- Login via Backend-Proxy: `POST /api/auth/login` → Server-seitig `supabase.auth.signInWithPassword` (Service-Role-Client)
+- Refresh: Nur über 401-getriggerter eigener Mechanismus (`ApiClient._refreshSession()` → `POST /api/auth/refresh`)
+- Location: `src/api/frontendClient.js`
 
-## App-Distribution: PlayStore & Apple Store
+### 2. Browser-Supabase-Session (nur OAuth + Passwort-Reset)
+- `signInWithOAuth` für Social-Login
+- `resetPasswordForEmail` / `updateUser` für Passwort-Handling
+- Synchronisierung in `bb_token`/`bb_refresh` via `AuthCallback.jsx` / `ResetPassword.jsx`
+- `AuthContext.jsx` hält zentralen `onAuthStateChange`-Listener (SIGNED_IN/SIGNED_OUT/TOKEN_REFRESHED)
+- Location: `src/api/supabaseClient.js`
 
-**Die App muss später auf PlayStore und Apple Store deployed werden.** Code wird darauf optimiert — native APIs, Permissions, Device-Features und Platform-spezifische Anforderungen beachten.
+### ⚠️ Kritisch
+`autoRefreshToken` ist in `supabaseClient.js` **deaktiviert**, um Token-Konflikt zu vermeiden (nur `bb_token`-Refresh ist aktiv). Eine vollständige Konsolidierung wurde bewusst zurückgestellt (zu großer Eingriff, OAuth nicht offline verifizierbar). **Bei zukünftigen Auth-Änderungen diese Dualität beachten.**
 
-## Tech Stack: React Native
+---
 
-**Frontend**: React Native (Expo oder Bare Workflow je nach Anforderung)  
-**Backend**: Express (Node.js) auf Vercel Serverless  
-**Datenbank & Auth**: Supabase (Realtime, Offline Sync via `@supabase/supabase-js`)  
-**Package Manager**: npm mit legacy peer deps  
-**CI/CD**: GitHub Actions + Fastlane für App Store Deployment
+## 🤖 KI-Buddy (CloudMD) — Kernfeature
 
-## Device-Features
+Der **KI-Buddy** ist zentrales Feature mit oberster Priorität. Muss reibungslos, stabil und performant laufen.
 
-Folgende Funktionen müssen implementiert werden:
-- **Kamera** — Fotos von Fängen, Ködern, Spots
-- **GPS/Location** — Spot-Tracking, Kartenfunktion, Geotagging
-- **Offline-Sync** — Daten lokal speichern, asynchron zu Supabase synchen
-- **Push Notifications** — Wetter-Warnungen, Events, Community-Updates
+### Anforderungen
+- Intuitive Konversations-UI
+- Kontext-bewusste Antworten (Spot-Info, Wetter, Köder-Tipps)
+- Schnelle Response-Zeit (< 2 Sek. Latenz)
+- Funktioniert auch offline (gecachte Responses)
+- Personalisierte Empfehlungen basierend auf User-History
 
-**Regel**: Permissions müssen präzise gecheckt werden. Nie blind Berechtigungen anfordern.
+### Architektur
+- **Frontend**: `src/components/KiBuddy/` (Chat-UI, Input, Message-List)
+- **Backend**: `api/routes/kibuddy.js` (Prompt-Handling, LLM-Integration, Context-Building)
+- **Datenbank**: Supabase-Tabellen für Chat-History, User-Context, Cached-Responses
+- **LLM**: Claude API (via Anthropic SDK, nicht direkt vom Frontend)
 
-## Performance-Anforderungen
+### Dev-Checkliste
+- [ ] Keine Platzhalter in KI-Responses (echte Kontextdaten)
+- [ ] Fehlerbehandlung robust (Timeout, API-Fehler, Offline)
+- [ ] Unit & Integration Tests für KI-Logik
+- [ ] Performance-Test (Response < 2 Sek.)
+- [ ] Accessibility (Screen Reader, Mobile)
+- [ ] App Store Review vorbereitet (Privacy, Datenhandling dokumentiert)
 
-- **App-Start**: < 3 Sekunden vom Tap bis UI bereit
-- **Low-End Support**: Funktioniert auf Geräten mit ≤2GB RAM
-- **Offline-First**: Core-Funktionen funktionieren ohne Internet
+---
 
-**Regel**: Immer auf echten Devices testen, nicht nur Simulator/Emulator.
+## 📱 Device-Features (Pflicht)
 
-## Build & Release
+| Feature | Anforderung |
+|---------|-----------|
+| **Kamera** | Fotos von Fängen, Ködern, Spots |
+| **GPS/Location** | Spot-Tracking, Kartenfunktion, Geotagging |
+| **Offline-Sync** | Lokale Speicherung, async. Supabase-Sync |
+| **Push Notifications** | Wetter-Warnungen, Events, Community-Updates |
 
-**Fastlane + GitHub Actions**:
-1. PR gemergt zu `main`
-2. GitHub Actions baut APK/IPA via Fastlane
-3. Automatischer Upload zu Google Play & Apple App Store (über Beta-Track zuerst)
+**Regel:** Permissions immer präzise checken, niemals blind anfordern.
+
+---
+
+## ⚡ Performance-Anforderungen
+
+- **App-Start:** < 3 Sekunden (Tap → UI bereit)
+- **Low-End-Geräte:** Funktioniert mit ≤2GB RAM
+- **Offline-First:** Core-Features funktionieren ohne Internet
+- **KI-Buddy Response:** < 2 Sekunden
+
+**Regel:** Immer auf echten Devices testen (nicht nur Simulator/Emulator).
+
+---
+
+## 🏭 Infrastruktur: Nur Vercel & Supabase
+
+- ✅ Vercel (Hosting, Serverless, Deploy)
+- ✅ Supabase (DB, Auth, Realtime, Storage)
+- ❌ **Keine** anderen externen Dienste/Backends (kein Render, keine zusätzlichen MCP-Services)
+
+---
+
+## 📦 Build & Release
+
+**Automatisiert via GitHub Actions + Fastlane:**
+1. PR → `main` gemergt
+2. GitHub Actions baut APK/IPA automatisch
+3. Upload zu Google Play & Apple App Store (Beta-Track zuerst)
 4. Release-Notes auto-generiert aus Commits
 
-**Kein manueller Upload** — alles automatisiert über CI/CD.
+**Kein manueller Upload erlaubt** — alles CI/CD.
 
-## App Store Richtlinien
+---
 
-**Apple App Store & Google Play haben strenge Regeln**:
-- Privacy Policy muss inline erreichbar sein
-- Datenhandling muss dokumentiert werden (besonders Location, Kamera)
-- Keine versteckten Berechtigungen
-- Testflights/Beta-Versionen vor öffentlichem Release
+## 🎁 App Store Compliance
 
-**Regel**: Bei neuen Features immer prüfen, ob App Store Review verlangt wird.
+Apple App Store & Google Play verlangen:
+- ✅ Privacy Policy inline erreichbar
+- ✅ Datenhandling dokumentiert (Location, Kamera, Microphone)
+- ✅ Keine versteckten Permissions
+- ✅ Testflight/Beta vor Release
+- ✅ App Review für sensible Features geplant
 
-## Previews automatisch mergen
+**Bei neuen Features:** App Store Review Anforderungen prüfen.
 
-**Preview-Branches werden automatisch zu `main` gemergt**, wenn alle Checks grün sind.
+---
 
-## PR-Watching: Check-ins nicht ankündigen
+## 🔄 Git & PR-Workflow
 
-Beim Beobachten eines PRs (CI-Status, Review-Kommentare) niemals ankündigen, dass ein Check-in geplant/eingeplant wird (z. B. "Ich plane einen Check-in in ~30 Minuten ein"). Check-ins/Nachschauen im Hintergrund einfach durchführen bzw. weglassen, ohne das vorher zu erwähnen oder zu fragen.
+### Merging
+- Preview-Branches → `main` automatisch, wenn Checks grün
+- Hauptentwicklung auf designiertem Feature-Branch
+- Immer Pull Request vor Merge (für Code Review + Checks)
+
+### PR-Watching
+- CI-Fails, Review-Kommentare, Konflikte eigenverantwortlich beheben
+- Check-ins im Hintergrund durchführen — **nie ankündigen** (z. B. "plane Check-in in 30 Min.")
+- Stille Durchführung oder komplett weglassen
+
+---
+
+## ✅ Code-Review Checkliste
+
+Vor jedem Commit prüfen:
+- [ ] Keine Platzhalter (keine `TODO`, keine Mock-Daten)
+- [ ] Keine dekorativen Emojis
+- [ ] Echte Implementierung, nicht Stub
+- [ ] KI-Buddy-Code: Robuste Fehlerbehandlung, Tests
+- [ ] Performance: App-Start < 3 Sek., KI-Response < 2 Sek.
+- [ ] Keine neuen Secrets/Credentials in Code
+- [ ] TypeScript/Linting clean
+- [ ] Tests grün (Unit, Integration, E2E wenn relevant)
+
+---
+
+## 📝 Dokumentation Updaten
+
+Diese CLAUDE.md ist das **Source of Truth** für Entwicklungsregeln. Bei signifikanten Änderungen (neue Auth-Systeme, Device-Features, KI-Buddy-Architektur) **sofort hier updaten**, damit alle Claude-Sessions konsistent arbeiten.
