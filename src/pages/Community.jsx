@@ -99,6 +99,7 @@ export default function Community() {
       setCurrentUser(user);
     } catch (error) {
       console.error("Fehler beim Laden des Users:", error);
+      toast.error("Authentifizierung erforderlich. Bitte melden Sie sich an.");
     }
   };
 
