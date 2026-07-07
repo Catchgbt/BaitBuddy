@@ -5,6 +5,7 @@ import { Mic } from "lucide-react";
 import { useHaptic } from "@/components/utils/HapticFeedback";
 import { motion, AnimatePresence } from "framer-motion";
 import { isOnline, onOnlineStatusChange } from "@/utils/networkStatus";
+import JuleAvatar from "@/components/ai/JuleAvatar";
 
 export default function KiBuddyBar({ onToggleChatbot, chatbotOpen, onOpenVoice }) {
   const [user, setUser] = useState(null);
@@ -115,11 +116,7 @@ export default function KiBuddyBar({ onToggleChatbot, chatbotOpen, onOpenVoice }
               <div className={`w-12 h-12 rounded-2xl bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center transform transition-all hover:rotate-12 shadow-lg ${
                 chatbotOpen ? 'animate-pulse scale-110 ring-2 ring-purple-400' : 'animate-pulse'
               }`}>
-                <img
-                  src="/assets/buddy/marina-avatar.png"
-                  alt="KI Buddy"
-                  className="w-10 h-10 rounded-xl object-cover"
-                />
+                <JuleAvatar size={40} showHints={false} className="rounded-xl overflow-hidden" />
                 
                 <div className="absolute -top-1 -right-1">
                   <div className={`w-3 h-3 rounded-full ${

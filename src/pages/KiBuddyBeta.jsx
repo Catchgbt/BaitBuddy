@@ -7,7 +7,7 @@ import { events } from "@/api/frontendClient";
 import { findOfflineBuddyAnswer, getOfflineBuddyFallback } from "@/lib/offlineBuddyQuestions";
 
 import PremiumGuard from "@/components/premium/PremiumGuard";
-import SabrinaAvatar from "@/components/ai/SabrinaAvatar";
+import JuleAvatar from "@/components/ai/JuleAvatar";
 
 export default function KiBuddyBeta() {
   return (
@@ -20,7 +20,7 @@ export default function KiBuddyBeta() {
 function KiBuddyBetaInner() {
   useFeatureTracking("ai_buddy");
   const { trackAIChat } = useEventActivityTracking();
-  const [messages, setMessages] = useState([{ role: "system", text: "Hallo! Ich bin Sabrina, deine KI-Angelexpertin. Stelle mir eine Frage!" }]);
+  const [messages, setMessages] = useState([{ role: "system", text: "Hallo! Ich bin Jule, deine KI-Angelexpertin. Stelle mir eine Frage!" }]);
   const [input, setInput] = useState("");
   const [status, setStatus] = useState("");
   const [tonAn, setTonAn] = useState(true);
@@ -291,7 +291,7 @@ function KiBuddyBetaInner() {
 
   const statusLabels = {
     listening: "Ich höre zu...",
-    speaking: "Sabrina spricht...",
+    speaking: "Jule spricht...",
     thinking: "Denke nach...",
     "": "Tippe oder aktiviere das Mikrofon"
   };
@@ -358,9 +358,9 @@ function KiBuddyBetaInner() {
 
           {/* Avatar row */}
           <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", background: "#0a1624", borderTop: "1px solid #111e2e", borderBottom: "1px solid #111e2e" }}>
-            <SabrinaAvatar speaking={isSpeaking} size={52} style={{ borderRadius: 14, overflow: "hidden", flexShrink: 0, boxShadow: avatarGlow, transition: "box-shadow 0.3s" }} />
+            <JuleAvatar speaking={isSpeaking} listening={status === "listening"} showHints={false} size={52} style={{ borderRadius: 14, overflow: "hidden", flexShrink: 0, boxShadow: avatarGlow, transition: "box-shadow 0.3s" }} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: "#e0f0ff" }}>Sabrina</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: "#e0f0ff" }}>Jule</div>
               <div style={{ fontSize: 12, color: "#556677", marginTop: 2 }}>Deine KI-Angelexpertin</div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 3, height: 24, opacity: isSpeaking ? 1 : 0, transition: "opacity 0.3s" }}>
@@ -403,7 +403,7 @@ function KiBuddyBetaInner() {
                   <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#7adba0", animation: "bbDot 1s infinite", animationDelay: "0.2s" }} />
                   <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#7adba0", animation: "bbDot 1s infinite", animationDelay: "0.4s" }} />
                 </span>
-                <span>Sabrina denkt nach – das kann einen Moment dauern…</span>
+                <span>Jule denkt nach – das kann einen Moment dauern…</span>
               </div>
             )}
           </div>

@@ -22,6 +22,7 @@ function getDefaultPos() {
 
 // Import the full widget – will be lazy loaded only on first interaction
 import AIBuddyWidget from '@/components/layout/AIBuddyWidget';
+import JuleAvatar from '@/components/ai/JuleAvatar';
 
 export default function AIBuddyWidgetStub() {
   const [widgetLoaded, setWidgetLoaded] = useState(false);
@@ -201,13 +202,8 @@ function SimpleAvatar({ onClickAvatar }) {
           },
         }}
       >
-        <div className="relative w-24 h-24 rounded-full overflow-hidden bg-transparent drop-shadow-lg">
-          <img
-            src="/assets/buddy/marina-avatar.png"
-            alt="Sabrina – dein Angel-Buddy"
-            className="w-full h-full object-cover object-top"
-            draggable={false}
-          />
+        <div className="relative w-24 h-24 drop-shadow-lg">
+          <JuleAvatar size={96} />
         </div>
       </motion.div>
     </div>

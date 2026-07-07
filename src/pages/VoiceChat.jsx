@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, PhoneOff, Phone, X, Loader2 } from 'lucide-react';
 import { functions } from '@/api/frontendClient';
 import { speakWithFallback, cancelElevenLabs } from '@/components/utils/elevenLabsTTS';
-import SabrinaAvatar from '@/components/ai/SabrinaAvatar';
+import JuleAvatar from '@/components/ai/JuleAvatar';
 import { createPageUrl } from '@/utils';
 import { toast } from 'sonner';
 
@@ -182,7 +182,7 @@ export default function VoiceChat() {
     if (transcriptRef.current.length) {
       startFallbackRecognition();
     } else {
-      const greeting = 'Hi, ich bin Sabrina, deine Angel-Expertin. Was möchtest du wissen?';
+      const greeting = 'Hi, ich bin Jule, deine Angel-Expertin. Was möchtest du wissen?';
       setTranscript([{ role: 'assistant', text: greeting }]);
       speakFallbackAndListen(greeting);
     }
@@ -289,8 +289,8 @@ export default function VoiceChat() {
     [PHASE.IDLE]: 'Tippe auf Gespräch starten und unterhalte dich wie am Telefon.',
     [PHASE.CONNECTING]: 'Verbinde…',
     [PHASE.LISTENING]: muted ? 'Mikrofon stumm' : 'Ich höre zu…',
-    [PHASE.THINKING]: 'Sabrina überlegt…',
-    [PHASE.SPEAKING]: 'Sabrina spricht…',
+    [PHASE.THINKING]: 'Jule überlegt…',
+    [PHASE.SPEAKING]: 'Jule spricht…',
     [PHASE.ERROR]: errorMsg,
   }[phase];
 
@@ -299,7 +299,7 @@ export default function VoiceChat() {
       <div className="flex items-center justify-between p-4 border-b border-gray-800 sticky top-0 z-10 backdrop-blur-xl bg-gray-950/80">
         <div>
           <h1 className="text-lg font-bold text-white">Live-Gespräch</h1>
-          <p className="text-xs text-gray-500">Echtzeit-Sprache mit Sabrina</p>
+          <p className="text-xs text-gray-500">Echtzeit-Sprache mit Jule</p>
         </div>
         <button
           onClick={() => { hangUp(); navigate(createPageUrl('AIAssistant')); }}
@@ -343,7 +343,7 @@ export default function VoiceChat() {
                 <Loader2 size={42} className="text-white animate-spin" />
               </div>
             ) : (
-              <SabrinaAvatar speaking={phase === PHASE.SPEAKING} size={128} />
+              <JuleAvatar speaking={phase === PHASE.SPEAKING} listening={phase === PHASE.LISTENING} showHints={false} size={128} />
             )}
           </motion.div>
         </div>
