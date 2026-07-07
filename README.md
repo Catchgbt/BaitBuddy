@@ -192,13 +192,56 @@ Or use **Expo Go** to scan the QR code in the repository.
 
 ---
 
-## 🔒 Security
+## 🔒 Security & Privacy
 
-- Firebase Authentication with secure token handling
+- Supabase Authentication with secure token handling
 - HTTPS for all API communications
 - Environment variables for sensitive credentials
 - Input validation and sanitization
 - Rate limiting on API calls
+- End-to-end encryption for sensitive data
+
+**Datenschutz:**
+- 📋 **[Datenschutzrichtlinie](PRIVACY.md)** – Vollständige Erläuterung aller erfassten Daten
+- 📱 **[App Store Berechtigungen](APP_STORE_PERMISSIONS.md)** – Details zu Standort, Kamera, Mikrofon
+- ✅ **DSGVO-konform** – Datenportabilität, Löschungsrecht, Transparenz
+- 🔐 **Keine Datenweitergabe** – Ihre Daten werden nicht an Werbetreibende verkauft
+
+**Berechtigungen verwalten:**
+- Standort: Optional, kann in Einstellungen deaktiviert werden
+- Kamera: Nur für Fangfotos, lokal gespeichert
+- Mikrofon: Nur während Voice-Chat, nicht persistent
+
+---
+
+## 🤖 KI-Buddy (Jule)
+
+**Intelligent Fishing Assistant**
+- Kontextuelle Fragen beantworten basierend auf Fangbuch, Wetter, Schonzeiten
+- Foto-Analyse: Automatische Fischart-Erkennung und Gewichtsschätzung
+- Personalisierte Empfehlungen basierend auf deiner Historie
+- Voice Chat optional (OpenAI Realtime oder Spracherkennung)
+- Funktioniert offline mit gecachten Responses
+
+**KI-Modelle:**
+- Chat: Groq (Llama) für schnelle Inferenz
+- Realtime Voice: OpenAI Realtime API (optional)
+- Bild-Analyse: Claude Vision für Fang-Fotos
+
+---
+
+## ✅ App Store Compliance
+
+BaitBuddy erfüllt die Anforderungen für Apple App Store und Google Play:
+
+- ✅ Datenschutzrichtlinie dokumentiert
+- ✅ Alle Berechtigungen rechtfertigt und dokumentiert
+- ✅ Benutzerrechte implementiert (Datenlöschung, Export, Widerspruch)
+- ✅ Konto-Löschung löscht alle Daten innerhalb 30 Tagen
+- ✅ Keine versteckten Tracking- oder Nutzungsgebühren
+- ✅ Alterseinstufung: 13+ Jahre (COPPA-konform)
+
+Siehe: [APP_STORE_PERMISSIONS.md](APP_STORE_PERMISSIONS.md) für vollständige Release-Checkliste
 
 ---
 

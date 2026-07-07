@@ -468,6 +468,8 @@ export default function AIBuddyWidget() {
       <div
         ref={widgetRef}
         className="fixed z-50"
+        role="region"
+        aria-label="KI-Buddy Chat Widget"
         style={{
           left: currentPos.x,
           top: currentPos.y,
@@ -518,13 +520,15 @@ export default function AIBuddyWidget() {
                 <button
                   onClick={handleCloseBubble}
                   className="p-1 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0"
+                  aria-label="Chat schließen"
+                  title="Chat schließen"
                 >
                   <X size={18} className="text-gray-600" />
                 </button>
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gradient-to-b from-white to-blue-50">
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gradient-to-b from-white to-blue-50" role="log" aria-live="polite" aria-label="Chat-Nachrichten">
                 {messages.length === 0 ? (
                   <div className="flex flex-col items-start justify-start h-full gap-3">
                     <div className="text-sm">
@@ -541,6 +545,7 @@ export default function AIBuddyWidget() {
                             onClick={() => handleSendMessage(suggestion)}
                             disabled={isLoading}
                             className="w-full text-left px-3 py-2 bg-blue-100 hover:bg-blue-200 disabled:bg-gray-200 text-blue-900 text-xs rounded-lg transition-colors truncate"
+                            aria-label={`Frage senden: ${suggestion}`}
                           >
                             {suggestion}
                           </button>
@@ -600,11 +605,14 @@ export default function AIBuddyWidget() {
                     placeholder="Schreib eine Frage..."
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white text-gray-900 placeholder-gray-400"
                     disabled={isLoading}
+                    aria-label="Chat-Eingabefeld"
                   />
                   <button
                     onClick={() => inputValue.trim() && handleSendMessage(inputValue)}
                     disabled={isLoading || !inputValue.trim()}
                     className="p-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-lg transition-colors flex-shrink-0"
+                    aria-label="Nachricht senden"
+                    title="Nachricht senden (Enter)"
                   >
                     <Send size={16} />
                   </button>
@@ -618,6 +626,8 @@ export default function AIBuddyWidget() {
                       ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse'
                       : 'bg-green-500 hover:bg-green-600 text-white disabled:bg-gray-300'
                   }`}
+                  aria-label={isListening ? 'Spracherkennung stoppen' : 'Spracherkennung starten'}
+                  aria-pressed={isListening}
                 >
                   <Mic size={14} />
                   {isListening ? 'Höre zu...' : 'Sprich'}
