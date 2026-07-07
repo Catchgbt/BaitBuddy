@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { ai } from '@/api/frontendClient';
 import { speakWithFallback } from '@/components/utils/elevenLabsTTS';
 import { speakWithBrowserTTS } from '@/components/utils/browserTTS';
+import { findOfflineBuddyAnswer, getOfflineBuddyFallback } from '@/lib/offlineBuddyQuestions';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Mic, Send, X } from 'lucide-react';
 
@@ -351,7 +352,22 @@ export default function AIBuddyWidget() {
         }
       } catch (err) {
         console.error('Chat error:', err);
-        setChatError('Fehler beim Laden der Antwort');
+        // Kein hartes Sackgassen-Fehlerbild: Jule antwortet aus dem
+        // vorgefertigten Offline-Wissen weiter, damit sie nie stumm bleibt.
+        const offlineReply = findOfflineBuddyAnswer(text) || getOfflineBuddyFallback();
+        setMessages((prev) => [...prev, { role: 'assistant', content: offlineReply }]);
+        setIsTalking(true);
+        try {
+          await speakWithFallback(offlineReply, {
+            voiceEnabled: true,
+            lang: 'de-DE',
+            rate: 1.0,
+          });
+        } catch {
+          try {
+            await speakWithBrowserTTS(offlineReply, { lang: 'de-DE', rate: 1.0 });
+          } catch { /* TTS ist optional */ }
+        }
       } finally {
         isLoadingRef.current = false;
         setIsLoading(false);
