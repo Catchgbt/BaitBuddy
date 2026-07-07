@@ -24,6 +24,7 @@ import {
 
 const AVATAR_SIZE = BUDDY_AVATAR_SIZE;
 const DRAG_THRESHOLD = BUDDY_TIMEOUTS.DRAG_THRESHOLD;
+const DRAG_THRESHOLD_TOUCH = BUDDY_TIMEOUTS.DRAG_THRESHOLD_TOUCH;
 
 function clampPos(x, y) {
   if (typeof window === 'undefined') return { x, y };
@@ -286,7 +287,7 @@ export default function AIBuddyWidget() {
 
     const dx = Math.abs(touch.clientX - ds.startX);
     const dy = Math.abs(touch.clientY - ds.startY);
-    if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) {
+    if (dx > DRAG_THRESHOLD_TOUCH || dy > DRAG_THRESHOLD_TOUCH) {
       ds.moved = true;
     }
 
