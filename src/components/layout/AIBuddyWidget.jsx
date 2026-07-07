@@ -346,8 +346,13 @@ export default function AIBuddyWidget() {
               lang: 'de-DE',
               rate: 1.0,
             });
-          } catch {
-            await speakWithBrowserTTS(speakText, { lang: 'de-DE', rate: 1.0 });
+          } catch (err) {
+            console.error('speakWithFallback failed, trying browser TTS:', err);
+            try {
+              await speakWithBrowserTTS(speakText, { lang: 'de-DE', rate: 1.0 });
+            } catch (e2) {
+              console.warn('Both TTS methods failed:', e2);
+            }
           }
         }
       } catch (err) {
@@ -363,10 +368,13 @@ export default function AIBuddyWidget() {
             lang: 'de-DE',
             rate: 1.0,
           });
-        } catch {
+        } catch (err) {
+          console.error('speakWithFallback failed in offline mode, trying browser TTS:', err);
           try {
             await speakWithBrowserTTS(offlineReply, { lang: 'de-DE', rate: 1.0 });
-          } catch { /* TTS ist optional */ }
+          } catch (e2) {
+            console.warn('Both TTS methods failed in offline mode:', e2);
+          }
         }
       } finally {
         isLoadingRef.current = false;
@@ -393,9 +401,12 @@ export default function AIBuddyWidget() {
 
   // Bubble controls
   const handleCloseBubble = useCallback(() => {
+    if (isListening) {
+      stopListening();
+    }
     setIsOpen(false);
     hideWidget();
-  }, [hideWidget]);
+  }, [hideWidget, isListening, stopListening]);
 
   const handleShowBubble = useCallback(() => {
     showWidget();
@@ -612,7 +623,7 @@ export default function AIBuddyWidget() {
 
                 <button
                   onClick={handleVoiceInput}
-                  disabled={isLoading}
+                  disabled={isLoading || isListening}
                   className={`w-full py-2 px-4 rounded-lg font-semibold text-xs flex items-center justify-center gap-2 transition-colors ${
                     isListening
                       ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse'
