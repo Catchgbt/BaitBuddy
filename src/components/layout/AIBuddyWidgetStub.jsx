@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { BUDDY_AVATAR_SIZE } from '@/lib/buddyStorageKeys';
+import { BUDDY_AVATAR_SIZE, BUDDY_TIMEOUTS } from '@/lib/buddyStorageKeys';
 
 const AVATAR_SIZE = BUDDY_AVATAR_SIZE;
 
@@ -93,7 +93,7 @@ function SimpleAvatar({ onClickAvatar }) {
 
         const dx = Math.abs(ev.clientX - ds.startX);
         const dy = Math.abs(ev.clientY - ds.startY);
-        if (dx > 5 || dy > 5) {
+        if (dx > BUDDY_TIMEOUTS.DRAG_THRESHOLD || dy > BUDDY_TIMEOUTS.DRAG_THRESHOLD) {
           ds.moved = true;
         }
 
@@ -202,8 +202,8 @@ function SimpleAvatar({ onClickAvatar }) {
           },
         }}
       >
-        <div className="relative w-24 h-24 drop-shadow-lg">
-          <JuleAvatar size={96} />
+        <div className="relative w-14 h-14 drop-shadow-lg">
+          <JuleAvatar size={56} />
         </div>
       </motion.div>
     </div>

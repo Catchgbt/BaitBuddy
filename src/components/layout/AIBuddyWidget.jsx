@@ -664,13 +664,13 @@ export default function AIBuddyWidget() {
           }}
         >
           <div
-            className={`relative w-24 h-24 transition-all ${
+            className={`relative w-14 h-14 transition-all ${
               isListening
                 ? 'drop-shadow-[0_0_10px_rgba(63,224,208,0.8)]'
                 : 'drop-shadow-lg'
             }`}
           >
-            <JuleAvatar speaking={isTalking} listening={isListening} size={96} />
+            <JuleAvatar speaking={isTalking} listening={isListening} size={56} />
           </div>
         </motion.div>
       </div>
