@@ -21,6 +21,7 @@ import { migrateOfflineStorage } from '@/lib/StorageMigration';
 import ErrorBoundary from '@/lib/ErrorBoundary';
 import { initAutoSync } from '@/components/utils/offlineSync';
 import { initNetworkStatus } from '@/utils/networkStatus';
+import { prefetchAllPages } from '@/lib/prefetchPages';
 const CatchStats = lazy(() => import('@/pages/CatchStats'));
 const AdminTracking = lazy(() => import('@/pages/AdminTracking'));
 const Help = lazy(() => import('@/pages/Help'));
@@ -141,6 +142,9 @@ function App() {
       console.error('[App] Storage migration failed:', err);
     });
     initAutoSync();
+    // Alle Seiten-Chunks im Hintergrund vorladen, damit sie offline verfügbar
+    // sind (der SW cached sie per Stale-While-Revalidate erst nach dem Abruf).
+    prefetchAllPages();
   }, []);
 
   return (
