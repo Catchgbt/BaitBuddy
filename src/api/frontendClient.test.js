@@ -143,6 +143,69 @@ describe('entities (frontendClient)', () => {
   });
 });
 
+describe('auth (Offline-Toleranz)', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.restoreAllMocks();
+  });
+
+  it('me() spiegelt das Profil in den Cache und liefert es offline zurueck', async () => {
+    api.setToken('gueltig');
+    const profile = { id: 'u1', email: 'a@b.de', full_name: 'Test' };
+
+    // 1) Online: Profil kommt vom Server und wird gecacht
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(jsonResponse(profile)));
+    await expect(auth.me()).resolves.toEqual(profile);
+    expect(auth.getCachedUser()).toEqual(profile);
+
+    // 2) Offline: fetch wirft ohne HTTP-Status -> gecachtes Profil als Fallback
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+    await expect(auth.me()).resolves.toEqual(profile);
+  });
+
+  it('me() reicht einen 401 durch und nutzt NICHT den Cache', async () => {
+    api.setToken('abgelaufen');
+    auth.getCachedUser(); // leer
+    localStorage.setItem('bb_user', JSON.stringify({ id: 'u1' }));
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      jsonResponse({ error: 'Ungueltiger Token' }, { ok: false, status: 401 })
+    ));
+
+    await expect(auth.me()).rejects.toThrow('Ungueltiger Token');
+  });
+
+  it('isAuthenticated() gilt offline mit Token und gecachtem Profil als angemeldet', async () => {
+    api.setToken('gueltig');
+    localStorage.setItem('bb_user', JSON.stringify({ id: 'u1' }));
+
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+    await expect(auth.isAuthenticated()).resolves.toBe(true);
+  });
+
+  it('isAuthenticated() ist offline OHNE gecachtes Profil nicht angemeldet', async () => {
+    api.setToken('gueltig');
+
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+    await expect(auth.isAuthenticated()).resolves.toBe(false);
+  });
+
+  it('login() cacht das mitgelieferte Profil', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      jsonResponse({ token: 't', refresh_token: 'r', user: { id: 'u1', email: 'a@b.de' } })
+    ));
+
+    await auth.login('a@b.de', 'pw');
+    expect(auth.getCachedUser()).toEqual({ id: 'u1', email: 'a@b.de' });
+  });
+
+  it('logout() entfernt das gecachte Profil', () => {
+    localStorage.setItem('bb_user', JSON.stringify({ id: 'u1' }));
+    auth.clearCachedUser();
+    expect(auth.getCachedUser()).toBeNull();
+  });
+});
+
 describe('integrations.Core.InvokeLLM (strukturierte Antworten)', () => {
   beforeEach(() => {
     localStorage.clear();
