@@ -48,6 +48,9 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
+      // auth.me() liefert offline (Netzwerkfehler) das zwischengespeicherte
+      // Profil zurück, sofern ein Token vorliegt — ein zuvor angemeldeter Nutzer
+      // bleibt damit ohne Verbindung angemeldet.
       const currentUser = await auth.me();
       setUser(currentUser);
       setIsAuthenticated(true);
@@ -55,6 +58,9 @@ export const AuthProvider = ({ children }) => {
       console.error('Auth check failed:', error);
       setIsAuthenticated(false);
       setUser(null);
+      // Nur bei einer echten Ablehnung (401/403) die Tokens verwerfen. Bei einem
+      // reinen Netzwerkfehler ohne gecachtes Profil bleibt das Token erhalten,
+      // damit die Anmeldung nach Wiederkehr des Netzes automatisch greift.
       if (error.status === 401 || error.status === 403) {
         auth.setToken(null);
         auth.setRefreshToken?.(null);
@@ -69,6 +75,7 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
     auth.setToken(null);
     auth.setRefreshToken?.(null);
+    auth.clearCachedUser?.();
     // Falls die Session ueber OAuth/Passwort-Reset lief, haelt der Browser-
     // Supabase-Client sonst eine eigene, weiter auto-refreshende Session am
     // Leben, die der neue onAuthStateChange-Listener oben nach einem Logout

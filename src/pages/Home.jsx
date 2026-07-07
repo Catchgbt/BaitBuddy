@@ -4,6 +4,7 @@ import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { createPageUrl } from '@/utils';
 import { setGuestSession } from '@/components/utils/guestMode';
+import { isOnline } from '@/utils/networkStatus';
 import { supabase } from '@/api/supabaseClient';
 import { toast } from 'sonner';
 import LanguageSwitcher from '@/components/i18n/LanguageSwitcher';
@@ -407,6 +408,14 @@ function LandingPageContent() {
         setLoginLoading(true);
         setLoginError('');
         setLoginInfo('');
+        // Ohne Verbindung lässt sich keine neue Sitzung aufbauen. Ein zuvor
+        // angemeldeter Nutzer landet dank Offline-Auth gar nicht erst hier;
+        // ein Erstlogin braucht jedoch das Netz — dann klare Rückmeldung geben.
+        if (!isOnline()) {
+            setLoginError('Keine Internetverbindung. Zum Anmelden ist eine Verbindung erforderlich.');
+            setLoginLoading(false);
+            return;
+        }
         try {
             if (loginMode === 'login') {
                 await auth.login(loginEmail, loginPassword);

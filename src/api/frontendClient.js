@@ -4,6 +4,42 @@
 const API_URL = import.meta.env.VITE_API_URL || '';
 const TOKEN_KEY = 'bb_token';
 const REFRESH_KEY = 'bb_refresh';
+const USER_KEY = 'bb_user';
+
+// ── Offline-Profil-Cache ───────────────────────────────────────────────────────
+// Damit ein bereits angemeldeter Nutzer die App auch ohne Netz weiter nutzen kann,
+// wird sein Profil nach jedem erfolgreichen Login/`me()` gespiegelt. Bei einem
+// reinen Netzwerkfehler (offline) dient es als Fallback, statt ihn auszusperren.
+function setCachedUser(user) {
+  try {
+    if (user && typeof localStorage !== 'undefined') {
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+    }
+  } catch { /* Cache ist unkritisch */ }
+}
+
+function getCachedUser() {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const raw = localStorage.getItem(USER_KEY);
+      return raw ? JSON.parse(raw) : null;
+    }
+  } catch { /* ignore */ }
+  return null;
+}
+
+function clearCachedUser() {
+  try {
+    if (typeof localStorage !== 'undefined') localStorage.removeItem(USER_KEY);
+  } catch { /* ignore */ }
+}
+
+// Ein Fehler ohne HTTP-Status kam nie beim Server an (offline, DNS, Timeout).
+// Nur solche Fehler rechtfertigen den Offline-Fallback — ein 401/403 ist eine
+// echte Ablehnung und muss zum Logout führen.
+function isNetworkError(error) {
+  return error != null && error.status == null;
+}
 
 // ── Raw HTTP Client ───────────────────────────────────────────────────────────
 class ApiClient {
@@ -313,18 +349,54 @@ const FUNCTION_MAP = {
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 export const auth = {
-  me: () => api.get('/api/auth/me'),
+  // Liefert das aktuelle Profil. Offline (Netzwerkfehler) wird — sofern ein Token
+  // vorliegt — das zwischengespeicherte Profil zurückgegeben, damit ein zuvor
+  // angemeldeter Nutzer die App ohne Verbindung weiter verwenden kann. Bei einem
+  // echten Auth-Fehler (401/403) wird der Fehler weitergereicht.
+  me: async () => {
+    try {
+      const user = await api.get('/api/auth/me');
+      setCachedUser(user);
+      return user;
+    } catch (error) {
+      if (isNetworkError(error) && api.getToken()) {
+        const cached = getCachedUser();
+        if (cached) return cached;
+      }
+      throw error;
+    }
+  },
 
-  updateMe: (data) => api.patch('/api/auth/me', data),
+  updateMe: async (data) => {
+    const user = await api.patch('/api/auth/me', data);
+    setCachedUser(user);
+    return user;
+  },
 
   // base44-SDK-Kompatibilität: gleicher Endpunkt wie updateMe
-  updateMyUserData: (data) => api.patch('/api/auth/me', data),
+  updateMyUserData: async (data) => {
+    const user = await api.patch('/api/auth/me', data);
+    setCachedUser(user);
+    return user;
+  },
 
   isAuthenticated: async () => {
     if (!api.getToken()) return false;
-    try { await api.get('/api/auth/me'); return true; }
-    catch { return false; }
+    try {
+      const user = await api.get('/api/auth/me');
+      setCachedUser(user);
+      return true;
+    } catch (error) {
+      // Offline mit gültigem Token und bekanntem Profil: als angemeldet werten,
+      // sonst würde der Nutzer ohne Netz vom eigenen Konto ausgesperrt.
+      if (isNetworkError(error) && getCachedUser()) return true;
+      return false;
+    }
   },
+
+  getCachedUser,
+
+  clearCachedUser,
 
   getToken: () => api.getToken(),
 
@@ -335,6 +407,7 @@ export const auth = {
   logout: (redirectUrl) => {
     api.setToken(null);
     api.setRefreshToken(null);
+    clearCachedUser();
     if (typeof window !== 'undefined') {
       window.location.href = redirectUrl || '/';
     }
@@ -351,6 +424,7 @@ export const auth = {
       if (res.token) {
         api.setToken(res.token);
         if (res.refresh_token) api.setRefreshToken(res.refresh_token);
+        if (res.user) setCachedUser(res.user);
         // Trigger PlanContext to reload plan after token is set
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new Event('plan-updated'));
@@ -364,6 +438,7 @@ export const auth = {
       if (res.token) {
         api.setToken(res.token);
         if (res.refresh_token) api.setRefreshToken(res.refresh_token);
+        if (res.user) setCachedUser(res.user);
         // Trigger PlanContext to reload plan after token is set
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new Event('plan-updated'));
