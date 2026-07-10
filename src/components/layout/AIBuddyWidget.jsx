@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import JuleAvatar from '@/components/ai/JuleAvatar';
 import { getTipForPage } from '@/lib/buddyTips';
@@ -8,7 +8,7 @@ import { ai } from '@/api/frontendClient';
 import { speakWithFallback } from '@/components/utils/elevenLabsTTS';
 import { speakWithBrowserTTS } from '@/components/utils/browserTTS';
 import { findOfflineBuddyAnswer, getOfflineBuddyFallback } from '@/lib/offlineBuddyQuestions';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Mic, Send, X } from 'lucide-react';
 
 import { useChatMessages } from '@/hooks/useChatMessages';
@@ -19,7 +19,6 @@ import {
   BUDDY_STORAGE_KEYS,
   BUDDY_TIMEOUTS,
   BUDDY_AVATAR_SIZE,
-  BUDDY_DRAG_DEBOUNCE,
 } from '@/lib/buddyStorageKeys';
 
 const AVATAR_SIZE = BUDDY_AVATAR_SIZE;
@@ -41,10 +40,67 @@ function getDefaultPos() {
   };
 }
 
+// Eigener State + React.memo: Tastenanschläge im Eingabefeld rendern so nur
+// diese Subkomponente neu, nicht die gesamte Nachrichtenliste/Avatar-Animation.
+const ChatInput = React.memo(function ChatInput({ isLoading, isListening, onSend, onVoiceInput }) {
+  const [value, setValue] = useState('');
+
+  const submit = () => {
+    const text = value.trim();
+    if (!text) return;
+    onSend(text);
+    setValue('');
+  };
+
+  return (
+    <div className="border-t border-gray-200 bg-white p-3 space-y-2">
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') submit();
+          }}
+          placeholder="Schreib eine Frage..."
+          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white text-gray-900 placeholder-gray-400"
+          disabled={isLoading}
+          aria-label="Chat-Eingabefeld"
+        />
+        <button
+          onClick={submit}
+          disabled={isLoading || !value.trim()}
+          className="p-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-lg transition-colors flex-shrink-0"
+          aria-label="Nachricht senden"
+          title="Nachricht senden (Enter)"
+        >
+          <Send size={16} />
+        </button>
+      </div>
+
+      <button
+        onClick={onVoiceInput}
+        disabled={isLoading}
+        className={`w-full py-2 px-4 rounded-lg font-semibold text-xs flex items-center justify-center gap-2 transition-colors ${
+          isListening
+            ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse'
+            : 'bg-green-500 hover:bg-green-600 text-white disabled:bg-gray-300'
+        }`}
+        aria-label={isListening ? 'Spracherkennung stoppen' : 'Spracherkennung starten'}
+        aria-pressed={isListening}
+      >
+        <Mic size={14} />
+        {isListening ? 'Höre zu...' : 'Sprich'}
+      </button>
+    </div>
+  );
+});
+
 export default function AIBuddyWidget() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const prefersReducedMotion = useReducedMotion();
 
   // Use new hooks for centralized state
   const {
@@ -53,24 +109,6 @@ export default function AIBuddyWidget() {
     messagesRef,
     messagesEndRef,
   } = useChatMessages();
-
-  const {
-    isListening,
-    transcript,
-    start: startListening,
-    stop: stopListening,
-  } = useSpeechRecognition({
-    onResult: (text) => {
-      if (text?.trim()) {
-        setInputValue(text);
-        setIsHidden(false);
-        setIsOpen(true);
-        if (handleSendMessageRef.current) {
-          handleSendMessageRef.current(text);
-        }
-      }
-    },
-  });
 
   const {
     widgetPos: pos,
@@ -91,12 +129,7 @@ export default function AIBuddyWidget() {
 
   // Persisted state to localStorage
   const isHidden = isWidgetHidden;
-  const setIsHidden = (value) => {
-    if (value) hideWidget();
-    else showWidget();
-  };
   const [isNodding, setIsNodding] = useState(false);
-  const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [chatError, setChatError] = useState(null);
   const [smallBubbleText, setSmallBubbleText] = useState('');
@@ -109,7 +142,6 @@ export default function AIBuddyWidget() {
   const smallBubbleTimerRef = useRef(null);
   const userActivityTimerRef = useRef(null);
   const isLoadingRef = useRef(false);
-  const positionDebounceRef = useRef(null);
 
   const dragStateRef = useRef({
     active: false,
@@ -120,16 +152,29 @@ export default function AIBuddyWidget() {
     moved: false,
   });
 
+  // Stabiler Speech-Callback: verhindert, dass useSpeechRecognition die
+  // Recognition-Instanz bei jedem Render neu aufbaut (das würde eine laufende
+  // Aufnahme abbrechen). showWidget und die State-Setter sind stabil.
+  const handleSpeechResult = useCallback((text) => {
+    if (text?.trim()) {
+      showWidget();
+      setIsOpen(true);
+      if (handleSendMessageRef.current) {
+        handleSendMessageRef.current(text);
+      }
+    }
+  }, [showWidget]);
+
+  const {
+    isListening,
+    start: startListening,
+    stop: stopListening,
+  } = useSpeechRecognition({ onResult: handleSpeechResult });
+
   const currentPage = location.pathname.replace(/^\//, '').split('/')[0] || 'Dashboard';
   const tip = getTipForPage(currentPage);
 
-
-  // Sync messages & auto-scroll
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
+  // Auto-Scroll bei neuen Nachrichten wird zentral in useChatMessages erledigt.
 
   // Page tracking for auto-open & jokes
   useEffect(() => {
@@ -170,27 +215,7 @@ export default function AIBuddyWidget() {
     } catch {}
   }, [currentPage, isOpen, isHidden, buddyVoiceEnabled, addVisitedPage, cleanupVisitedPages]);
 
-  // Debounced position persistence
-  useEffect(() => {
-    if (positionDebounceRef.current) {
-      clearTimeout(positionDebounceRef.current);
-    }
-
-    positionDebounceRef.current = setTimeout(() => {
-      try {
-        const posKey = BUDDY_STORAGE_KEYS.WIDGET_POSITION;
-        if (pos) {
-          localStorage.setItem(posKey, JSON.stringify(pos));
-        }
-      } catch {}
-    }, BUDDY_DRAG_DEBOUNCE);
-
-    return () => {
-      if (positionDebounceRef.current) {
-        clearTimeout(positionDebounceRef.current);
-      }
-    };
-  }, [pos]);
+  // Positions-Persistenz erfolgt gedrosselt zentral in useBuddyStorage.
 
   // Window resize clamping
   useEffect(() => {
@@ -315,7 +340,6 @@ export default function AIBuddyWidget() {
       setIsLoading(true);
       const history = [...messagesRef.current, { role: 'user', content: text }];
       setMessages(history);
-      setInputValue('');
       setChatError(null);
       setIsNodding(true);
 
@@ -339,10 +363,10 @@ export default function AIBuddyWidget() {
         }
 
         const speakText = actionNote ? `${botMessage} ${actionNote}`.trim() : botMessage;
-        if (speakText) {
+        if (speakText && buddyVoiceEnabled) {
           try {
             await speakWithFallback(speakText, {
-              voiceEnabled: true,
+              voiceEnabled: buddyVoiceEnabled,
               lang: 'de-DE',
               rate: 1.0,
             });
@@ -357,16 +381,18 @@ export default function AIBuddyWidget() {
         const offlineReply = findOfflineBuddyAnswer(text) || getOfflineBuddyFallback();
         setMessages((prev) => [...prev, { role: 'assistant', content: offlineReply }]);
         setIsTalking(true);
-        try {
-          await speakWithFallback(offlineReply, {
-            voiceEnabled: true,
-            lang: 'de-DE',
-            rate: 1.0,
-          });
-        } catch {
+        if (buddyVoiceEnabled) {
           try {
-            await speakWithBrowserTTS(offlineReply, { lang: 'de-DE', rate: 1.0 });
-          } catch { /* TTS ist optional */ }
+            await speakWithFallback(offlineReply, {
+              voiceEnabled: buddyVoiceEnabled,
+              lang: 'de-DE',
+              rate: 1.0,
+            });
+          } catch {
+            try {
+              await speakWithBrowserTTS(offlineReply, { lang: 'de-DE', rate: 1.0 });
+            } catch { /* TTS ist optional */ }
+          }
         }
       } finally {
         isLoadingRef.current = false;
@@ -375,7 +401,7 @@ export default function AIBuddyWidget() {
         setIsNodding(false);
       }
     },
-    [navigate, getStoredLocation, messagesRef, setMessages]
+    [navigate, getStoredLocation, messagesRef, setMessages, buddyVoiceEnabled]
   );
 
   useEffect(() => {
@@ -433,15 +459,15 @@ export default function AIBuddyWidget() {
   const isOnRight = currentPos.x + AVATAR_SIZE / 2 > (typeof window !== 'undefined' ? window.innerWidth / 2 : 200);
   const isOnBottom = currentPos.y + AVATAR_SIZE / 2 > (typeof window !== 'undefined' ? window.innerHeight / 2 : 400);
 
-  const bubbleStyle = {
+  const bubbleStyle = useMemo(() => ({
     position: 'absolute',
     ...(isOnBottom ? { bottom: AVATAR_SIZE + 12 } : { top: AVATAR_SIZE + 12 }),
     ...(isOnRight ? { right: 0 } : { left: 0 }),
-  };
+  }), [isOnBottom, isOnRight]);
 
   const smallBubbleStyle = bubbleStyle;
 
-  const bubbleVariants = {
+  const bubbleVariants = useMemo(() => ({
     hidden: {
       opacity: 0,
       scale: 0.85,
@@ -453,15 +479,39 @@ export default function AIBuddyWidget() {
       scale: 0.85,
       y: isOnBottom ? 20 : -20,
     },
-  };
+  }), [isOnBottom]);
 
-  const tailPosition = isOnBottom
+  const tailPosition = useMemo(() => (isOnBottom
     ? {
         className: `absolute -bottom-2 ${isOnRight ? 'right-6' : 'left-6'} w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-blue-200`,
       }
     : {
         className: `absolute -top-2 ${isOnRight ? 'right-6' : 'left-6'} w-0 h-0 border-l-[6px] border-r-[6px] border-b-[6px] border-l-transparent border-r-transparent border-b-blue-200`,
-      };
+      }), [isOnBottom, isOnRight]);
+
+  // Avatar-Animation: Endlos-Loops (repeat: Infinity) verursachen konstante
+  // Repaints/Akku-Last. Bei prefers-reduced-motion komplett statisch halten.
+  const avatarAnimate = useMemo(() => {
+    if (prefersReducedMotion) return { scale: 1, y: 0 };
+    return {
+      scale: isListening ? [1, 1.06, 1, 1.04, 1] : 1,
+      y: isListening ? [0, -6, 0, -3, 0] : [0, -4, 0],
+    };
+  }, [prefersReducedMotion, isListening]);
+
+  const avatarTransition = useMemo(() => {
+    if (prefersReducedMotion) return { duration: 0 };
+    return {
+      scale: isListening
+        ? { duration: 0.7, repeat: Infinity, ease: 'easeInOut' }
+        : { type: 'spring', stiffness: 300, damping: 12 },
+      y: {
+        duration: isListening ? 0.7 : 3,
+        repeat: Infinity,
+        ease: 'easeInOut',
+      },
+    };
+  }, [prefersReducedMotion, isListening]);
 
   return (
     <>
@@ -591,48 +641,12 @@ export default function AIBuddyWidget() {
               </div>
 
               {/* Input Section */}
-              <div className="border-t border-gray-200 bg-white p-3 space-y-2">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && inputValue.trim()) {
-                        handleSendMessage(inputValue);
-                      }
-                    }}
-                    placeholder="Schreib eine Frage..."
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white text-gray-900 placeholder-gray-400"
-                    disabled={isLoading}
-                    aria-label="Chat-Eingabefeld"
-                  />
-                  <button
-                    onClick={() => inputValue.trim() && handleSendMessage(inputValue)}
-                    disabled={isLoading || !inputValue.trim()}
-                    className="p-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-lg transition-colors flex-shrink-0"
-                    aria-label="Nachricht senden"
-                    title="Nachricht senden (Enter)"
-                  >
-                    <Send size={16} />
-                  </button>
-                </div>
-
-                <button
-                  onClick={handleVoiceInput}
-                  disabled={isLoading}
-                  className={`w-full py-2 px-4 rounded-lg font-semibold text-xs flex items-center justify-center gap-2 transition-colors ${
-                    isListening
-                      ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse'
-                      : 'bg-green-500 hover:bg-green-600 text-white disabled:bg-gray-300'
-                  }`}
-                  aria-label={isListening ? 'Spracherkennung stoppen' : 'Spracherkennung starten'}
-                  aria-pressed={isListening}
-                >
-                  <Mic size={14} />
-                  {isListening ? 'Höre zu...' : 'Sprich'}
-                </button>
-              </div>
+              <ChatInput
+                isLoading={isLoading}
+                isListening={isListening}
+                onSend={handleSendMessage}
+                onVoiceInput={handleVoiceInput}
+              />
 
               {/* Bubble Tail */}
               <div {...tailPosition} />
@@ -647,21 +661,9 @@ export default function AIBuddyWidget() {
           onTouchStart={handleAvatarTouchStart}
           onTouchMove={handleAvatarTouchMove}
           onTouchEnd={handleAvatarTouchEnd}
-          whileHover={{ scale: 1.08 }}
-          animate={{
-            scale: (isListening) ? [1, 1.06, 1, 1.04, 1] : 1,
-            y: (isListening) ? [0, -6, 0, -3, 0] : [0, -4, 0],
-          }}
-          transition={{
-            scale: (isListening)
-              ? { duration: 0.7, repeat: Infinity, ease: 'easeInOut' }
-              : { type: 'spring', stiffness: 300, damping: 12 },
-            y: {
-              duration: (isListening) ? 0.7 : 3,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            },
-          }}
+          whileHover={prefersReducedMotion ? undefined : { scale: 1.08 }}
+          animate={avatarAnimate}
+          transition={avatarTransition}
         >
           <div
             className={`relative w-14 h-14 transition-all ${

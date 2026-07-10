@@ -1,4 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { BUDDY_DRAG_DEBOUNCE } from '@/lib/buddyStorageKeys';
 
 const STORAGE_KEYS = {
   WIDGET_POSITION: 'buddy-widget-pos',
@@ -47,12 +48,27 @@ export function useBuddyStorage() {
     return null;
   });
 
+  // Positions-Persistenz gedrosselt: setWidgetPos feuert pro Drag-Frame, ein
+  // synchroner localStorage-Write je Frame würde das Ziehen ruckeln lassen.
+  // Deshalb wird der Schreibvorgang zentral hier gebündelt (einziger Pfad).
+  const posPersistTimerRef = useRef(null);
   useEffect(() => {
-    try {
-      if (widgetPos) {
-        localStorage.setItem(STORAGE_KEYS.WIDGET_POSITION, JSON.stringify(widgetPos));
+    if (posPersistTimerRef.current) {
+      clearTimeout(posPersistTimerRef.current);
+    }
+    posPersistTimerRef.current = setTimeout(() => {
+      try {
+        if (widgetPos) {
+          localStorage.setItem(STORAGE_KEYS.WIDGET_POSITION, JSON.stringify(widgetPos));
+        }
+      } catch {}
+    }, BUDDY_DRAG_DEBOUNCE);
+
+    return () => {
+      if (posPersistTimerRef.current) {
+        clearTimeout(posPersistTimerRef.current);
       }
-    } catch {}
+    };
   }, [widgetPos]);
 
   useEffect(() => {
