@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, lazy, Suspense } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { BUDDY_AVATAR_SIZE, BUDDY_TIMEOUTS } from '@/lib/buddyStorageKeys';
+import JuleAvatar from '@/components/ai/JuleAvatar';
 
 const AVATAR_SIZE = BUDDY_AVATAR_SIZE;
+
+// Das vollständige Widget (framer-motion-Chat, TTS, ai-Client, Offline-Wissen)
+// wird erst bei der ersten Interaktion als eigener Chunk nachgeladen. So bleibt
+// der initiale Layout-Chunk klein (App-Start-Budget < 3 Sek.).
+const AIBuddyWidget = lazy(() => import('@/components/layout/AIBuddyWidget'));
 
 function clampPos(x, y) {
   if (typeof window === 'undefined') return { x, y };
@@ -20,10 +26,6 @@ function getDefaultPos() {
   };
 }
 
-// Import the full widget – will be lazy loaded only on first interaction
-import AIBuddyWidget from '@/components/layout/AIBuddyWidget';
-import JuleAvatar from '@/components/ai/JuleAvatar';
-
 export default function AIBuddyWidgetStub() {
   const [widgetLoaded, setWidgetLoaded] = useState(false);
 
@@ -32,18 +34,20 @@ export default function AIBuddyWidgetStub() {
     setWidgetLoaded(true);
   };
 
+  if (!widgetLoaded) {
+    return <SimpleAvatar onClickAvatar={handleAvatarClick} />;
+  }
+
+  // Solange der Widget-Chunk lädt, bleibt der Avatar sichtbar (kein Flackern).
   return (
-    <>
-      {!widgetLoaded ? (
-        <SimpleAvatar onClickAvatar={handleAvatarClick} />
-      ) : (
-        <AIBuddyWidget />
-      )}
-    </>
+    <Suspense fallback={<SimpleAvatar onClickAvatar={handleAvatarClick} />}>
+      <AIBuddyWidget />
+    </Suspense>
   );
 }
 
 function SimpleAvatar({ onClickAvatar }) {
+  const prefersReducedMotion = useReducedMotion();
   const [pos, setPos] = useState(() => {
     try {
       const stored = localStorage.getItem('buddy-widget-pos');
@@ -52,8 +56,6 @@ function SimpleAvatar({ onClickAvatar }) {
       return getDefaultPos();
     }
   });
-
-  const [isHidden, setIsHidden] = useState(false);
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -146,7 +148,7 @@ function SimpleAvatar({ onClickAvatar }) {
 
     const dx = Math.abs(touch.clientX - ds.startX);
     const dy = Math.abs(touch.clientY - ds.startY);
-    if (dx > 5 || dy > 5) {
+    if (dx > BUDDY_TIMEOUTS.DRAG_THRESHOLD || dy > BUDDY_TIMEOUTS.DRAG_THRESHOLD) {
       ds.moved = true;
     }
 
@@ -170,10 +172,6 @@ function SimpleAvatar({ onClickAvatar }) {
 
   const currentPos = pos || getDefaultPos();
 
-  if (isHidden) {
-    return null;
-  }
-
   return (
     <div
       className="fixed z-50"
@@ -190,11 +188,9 @@ function SimpleAvatar({ onClickAvatar }) {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        whileHover={{ scale: 1.08 }}
-        animate={{
-          y: [0, -4, 0],
-        }}
-        transition={{
+        whileHover={prefersReducedMotion ? undefined : { scale: 1.08 }}
+        animate={prefersReducedMotion ? { y: 0 } : { y: [0, -4, 0] }}
+        transition={prefersReducedMotion ? { duration: 0 } : {
           y: {
             duration: 3,
             repeat: Infinity,
