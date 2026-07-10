@@ -1,4 +1,9 @@
 import 'dotenv/config';
+// Leitet in async-Route-Handlern geworfene Rejections an die Error-Middleware
+// weiter. Express 4 tut das nicht von selbst — ohne dies würde ein geworfener
+// Fehler (z.B. Netzwerk-/Timeout aus Supabase oder fetch) zu einer unbehandelten
+// Rejection und der Request bliebe bis zum Plattform-Timeout hängen.
+import 'express-async-errors';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -75,7 +80,13 @@ app.use('/api', functionsRoutes);
 
 app.use((req, res) => res.status(404).json({ error: `Not found: ${req.method} ${req.path}` }));
 app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
   console.error('Unhandled error:', err);
+  // Upstream-Timeouts (Groq, OpenAI, ElevenLabs, open-meteo, GoTrue) sauber als
+  // Gateway-Timeout melden statt als generischen 500.
+  if (err?.timeout || err?.name === 'FetchTimeoutError' || err?.name === 'AbortError') {
+    return res.status(504).json({ error: 'Zeitüberschreitung beim externen Dienst — bitte erneut versuchen' });
+  }
   res.status(500).json({ error: 'Interner Fehler' });
 });
 

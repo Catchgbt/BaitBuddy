@@ -1,297 +1,206 @@
 # BaitBuddy – AI-Powered Fishing Companion
 
-A production-grade React Native mobile application that combines intelligent AI recommendations, real-time catch tracking, and fishing condition analysis. Built for anglers who want data-driven insights to plan successful fishing trips.
+BaitBuddy ist eine Angel-App mit KI-gestütztem Buddy, Fangbuch, Karten- und
+Wetterfunktionen. Sie läuft als Web-App und wird für Android in einen
+Capacitor-WebView verpackt.
 
-**BaitBuddy** demonstrates modern mobile development practices: cross-platform development with React Native & Expo, TypeScript for type safety, Firebase for real-time data, and seamless AI integration for smart recommendations.
+**Live:** https://bait-buddy.vercel.app
 
 ---
 
 ## 🎯 Key Features
 
-✨ **Intelligent Recommendations**
-- AI-powered catch analysis and insights
-- Smart fishing condition recommendations
-- Data-driven trip planning
+**Intelligenter KI-Buddy (Jule)**
+- Kontextbewusste Antworten auf Basis von Fangbuch, Wetter und Schonzeiten
+- Foto-Analyse: Fischart-Erkennung und Größen-/Gewichtsschätzung
+- Optionaler Voice-Chat (Web Speech API, ElevenLabs TTS, OpenAI Realtime)
+- Offline-Fallback mit vorgefertigten Antworten
 
-📱 **Catch Tracking & Analytics**
-- Log and track your catches
-- Analyze fishing patterns
-- View detailed catch statistics and history
+**Fangbuch & Analyse**
+- Fänge erfassen und auswerten, inkl. Foto und Standort
+- Statistiken, Ranglisten, Events
 
-🌍 **Real-Time Fishing Conditions**
-- Current weather and water conditions
-- Location-based recommendations
-- Environmental insights for successful fishing
+**Karte & Bedingungen**
+- Leaflet-Karte mit eigenen Spots, öffentlichen Angelorten (geclustert) und Genehmigungs-Standorten
+- Wetter- und Wasserdaten, Solunar-/Gezeiten-Hinweise
 
-⚡ **Seamless Cross-Platform Experience**
-- Native iOS & Android apps from single codebase
-- Smooth 60fps performance
-- Offline-capable with real-time sync
-
-🔐 **Secure & Reliable**
-- Firebase authentication
-- Real-time data synchronization
-- Cloud-backed storage
+**Offline-fähig**
+- Kernfunktionen (u. a. Fang erfassen) funktionieren ohne Verbindung und synchronisieren später
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Category | Technology |
-|----------|------------|
-| **Mobile** | React Native, Expo, TypeScript |
-| **Navigation** | React Navigation |
-| **Backend** | Firebase (Firestore, Authentication) |
-| **API** | REST API Integration |
-| **State Management** | Context API / Redux |
-| **UI Components** | React Native Paper / Custom Components |
-| **Deployment** | Vercel (Web), Expo (Mobile) |
-| **CI/CD** | GitHub Actions |
+| Layer | Technologie |
+|-------|-------------|
+| **Frontend** | Vite 6 + React 18 (JSX), Tailwind CSS, Radix/shadcn-UI, React Router |
+| **Server-State** | TanStack Query |
+| **Mobile-Wrapper** | Capacitor 6 (Android-WebView) |
+| **Karten** | Leaflet + react-leaflet + leaflet.markercluster |
+| **Backend** | Express (Node.js) als Vercel Serverless Function (`backend/`, gemountet über `api/[...path].mjs`) |
+| **Datenbank & Auth** | Supabase (Postgres, GoTrue-Auth, Storage) |
+| **LLM** | Groq (Llama) für Chat & Vision; OpenAI Realtime (optional) für Voice; ElevenLabs (optional) für TTS |
+| **Tests** | Vitest (Unit), Playwright (E2E) |
+| **CI/CD** | GitHub Actions; Vercel-Deploy (Web), Android-AAB-Build via Actions |
+
+> Hinweis: Es kommt **kein** React Native/Expo, **kein** Firebase und (noch) **kein**
+> Supabase-Realtime zum Einsatz. Der Datenzugriff läuft über einen eigenen
+> REST-Client (`src/api/frontendClient.js`) gegen das Express-Backend.
 
 ---
 
 ## 🚀 Getting Started
 
-### Prerequisites
-- Node.js 18+ and npm
-- Expo CLI: `npm install -g expo-cli`
-- Xcode (for iOS) or Android Studio (for Android)
+### Voraussetzungen
+- Node.js 18+ und npm
+- Supabase-Projekt (URL + Keys), Groq-API-Key für KI-Funktionen
 
 ### Installation
 
 ```bash
-# Clone the repository
+# Repository klonen
 git clone https://github.com/smokemoney81/baitbuddy.git
 cd baitbuddy
 
-# Install dependencies
-npm install
+# Abhängigkeiten installieren (Peer-Deps-Konflikte im Baum → legacy-peer-deps)
+npm install --legacy-peer-deps
 
-# Create environment file
-cp .env.example .env.local
+# Backend-Abhängigkeiten
+npm install --legacy-peer-deps --prefix backend
 
-# Add your Firebase credentials to .env.local
-EXPO_PUBLIC_FIREBASE_API_KEY=your_api_key
-EXPO_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-# ... other Firebase config
+# Environment-Variablen setzen (siehe backend/.env.example)
+# u. a. SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, GROQ_API_KEY
 
-# Start the development server
-expo start
+# Frontend-Dev-Server
+npm run dev
+
+# Backend lokal (separates Terminal)
+npm run start --prefix backend
 ```
 
-### Running on Device
+### Nützliche Scripts
 
 ```bash
-# For iOS
-expo start --ios
+npm run dev        # Vite Dev-Server
+npm run build      # Produktions-Build (Web)
+npm run lint       # ESLint (--quiet)
+npm run typecheck  # tsc checkJs über die konfigurierte Allowlist
+npm test           # Vitest (Frontend + Backend)
+npm run test:e2e   # Playwright E2E-Smoke
+```
 
-# For Android
-expo start --android
+### Android (Capacitor)
 
-# Scan QR code with Expo Go app (iOS/Android)
+```bash
+npx cap sync android
+npx cap open android
 ```
 
 ---
 
-## 📊 Project Structure
+## 📊 Projektstruktur (Auszug)
 
 ```
 baitbuddy/
-├── app/                      # App navigation and screens
-│   ├── (tabs)/              # Tab-based navigation
-│   │   ├── home.tsx
-│   │   ├── catches.tsx
-│   │   ├── analytics.tsx
-│   │   └── profile.tsx
-│   └── _layout.tsx          # Root layout
-├── components/              # Reusable UI components
-│   ├── CatchCard.tsx
-│   ├── WeatherWidget.tsx
-│   └── RecommendationCard.tsx
-├── services/               # Business logic
-│   ├── firebaseConfig.ts
-│   ├── catchService.ts
-│   ├── weatherService.ts
-│   └── aiService.ts
-├── hooks/                  # Custom React hooks
-│   ├── useCatches.ts
-│   ├── useWeather.ts
-│   └── useRecommendations.ts
-├── types/                  # TypeScript types
-│   └── index.ts
-├── constants/              # App constants
-│   └── config.ts
-└── package.json
+├── api/[...path].mjs       # Vercel-Entry: re-exportiert die Express-App
+├── backend/                # Express-Backend (Serverless)
+│   └── src/
+│       ├── server.js       # App, Middleware, Router-Mounts
+│       ├── routes/         # ai, auth, catches, spots, community, events, …
+│       ├── lib/            # llm, supabase, fetchWithTimeout, errorResponse, …
+│       └── middleware/     # auth, rateLimit
+├── src/                    # Vite/React-Frontend
+│   ├── pages/              # Route-Seiten (Home, MapPage, KiBuddyBeta, …)
+│   ├── components/         # Feature-Komponenten (ai, chatbot, map, community, …)
+│   ├── hooks/              # useChatMessages, useSpeechRecognition, …
+│   ├── api/                # frontendClient.js (REST), supabaseClient.js (OAuth)
+│   ├── lib/                # AuthContext, ThemeContext, query-client, …
+│   └── services/           # NotificationService, TideService, …
+├── supabase/               # schema.sql, migrations/, security.sql
+├── android/                # Capacitor-Android-Projekt
+└── e2e/                    # Playwright-Tests
 ```
 
 ---
 
-## 🔌 API Integration
+## 🔌 Integrationen
 
-### Firebase
-- **Firestore:** Real-time catch database
-- **Authentication:** User login and registration
-- **Cloud Functions:** Backend processing for AI recommendations
+**Supabase** – Postgres-Datenbank, GoTrue-Auth, Storage (Fang-Fotos).
 
-### External APIs
-- **Weather API:** Real-time fishing conditions
-- **AI Service:** Intelligent catch analysis and recommendations
-- **Maps API:** Location-based features
+**Express-Backend** – kapselt alle Datenzugriffe und KI-Aufrufe; der
+Service-Role-Key bleibt ausschließlich serverseitig.
+
+**Externe APIs** – Groq (LLM), open-meteo (Wetter), optional OpenAI Realtime und
+ElevenLabs (Voice/TTS).
 
 ---
 
-## 🤖 AI Features
+## 🔐 Auth-Architektur (zwei Session-Systeme)
 
-**Intelligent Recommendations Engine**
-- Analyzes catch patterns and historical data
-- Considers current weather, water conditions, and time
-- Provides personalized fishing recommendations
-- Learns from user feedback to improve accuracy
-
-**Catch Intelligence**
-- Automatic catch classification and species identification
-- Size and weight estimation
-- Environmental context analysis
-
----
-
-## 📈 Performance Metrics
-
-- **App Load Time:** < 2 seconds
-- **Frame Rate:** 60 FPS on modern devices
-- **Bundle Size:** Optimized for fast downloads
-- **API Response Time:** < 500ms average
-- **Real-time Sync:** < 1 second latency
+1. **`bb_token`/`bb_refresh`** (Haupt-Pfad, E-Mail/Passwort): Login über
+   `POST /api/auth/login`, Refresh nur 401-getriggert über
+   `POST /api/auth/refresh` (`src/api/frontendClient.js`).
+2. **Browser-Supabase-Session** (nur OAuth + Passwort-Reset): `autoRefreshToken`
+   ist bewusst **deaktiviert**, damit beide Systeme nicht um das single-use
+   Refresh-Token konkurrieren (`src/api/supabaseClient.js`, `src/lib/AuthContext.jsx`).
 
 ---
 
 ## 🧪 Testing
 
 ```bash
-# Run unit tests
-npm run test
-
-# Run integration tests
-npm run test:integration
-
-# Generate coverage report
-npm run test:coverage
+npm test           # Vitest (Frontend jsdom + Backend node)
+npm run test:e2e   # Playwright-Smoke (nicht-blockierend in CI)
 ```
-
----
-
-## 📱 Live Demo & Download
-
-**Web Version:** https://bait-buddy.vercel.app
-
-**Mobile:** Download from:
-- [Apple App Store](#)
-- [Google Play Store](#)
-
-Or use **Expo Go** to scan the QR code in the repository.
 
 ---
 
 ## 🔒 Security & Privacy
 
-- Supabase Authentication with secure token handling
-- HTTPS for all API communications
-- Environment variables for sensitive credentials
-- Input validation and sanitization
-- Rate limiting on API calls
-- End-to-end encryption for sensitive data
+- Supabase-Auth mit sicherer Token-Behandlung, HTTPS für alle API-Aufrufe
+- Service-Role-Key nur serverseitig; keine Secrets im Frontend-Bundle
+- Rate-Limiting auf teuren/sensiblen Pfaden (`/api/ai`, Auth) — best-effort pro Instanz
+- Input-Validierung, SSRF-Allowlist für Bild-Fetches
 
 **Datenschutz:**
-- 📋 **[Datenschutzrichtlinie](PRIVACY.md)** – Vollständige Erläuterung aller erfassten Daten
-- 📱 **[App Store Berechtigungen](APP_STORE_PERMISSIONS.md)** – Details zu Standort, Kamera, Mikrofon
-- ✅ **DSGVO-konform** – Datenportabilität, Löschungsrecht, Transparenz
-- 🔐 **Keine Datenweitergabe** – Ihre Daten werden nicht an Werbetreibende verkauft
+- **[Datenschutzrichtlinie](PRIVACY.md)** – vollständige Erläuterung aller erfassten Daten
+- **[App Store Berechtigungen](APP_STORE_PERMISSIONS.md)** – Details zu Standort, Kamera, Mikrofon
+- **DSGVO-konform** – Datenportabilität, Löschungsrecht, Transparenz
+- **Keine Datenweitergabe** – Daten werden nicht an Werbetreibende verkauft
 
-**Berechtigungen verwalten:**
-- Standort: Optional, kann in Einstellungen deaktiviert werden
-- Kamera: Nur für Fangfotos, lokal gespeichert
-- Mikrofon: Nur während Voice-Chat, nicht persistent
+**Berechtigungen:**
+- Standort: optional, in Einstellungen deaktivierbar
+- Kamera: nur für Fangfotos
+- Mikrofon: nur während Voice-Chat, nicht persistent
 
 ---
 
 ## 🤖 KI-Buddy (Jule)
 
-**Intelligent Fishing Assistant**
-- Kontextuelle Fragen beantworten basierend auf Fangbuch, Wetter, Schonzeiten
-- Foto-Analyse: Automatische Fischart-Erkennung und Gewichtsschätzung
-- Personalisierte Empfehlungen basierend auf deiner Historie
-- Voice Chat optional (OpenAI Realtime oder Spracherkennung)
-- Funktioniert offline mit gecachten Responses
-
-**KI-Modelle:**
-- Chat: Groq (Llama) für schnelle Inferenz
-- Realtime Voice: OpenAI Realtime API (optional)
-- Bild-Analyse: Claude Vision für Fang-Fotos
+- Kontextuelle Antworten auf Basis von Fangbuch, Wetter und Schonzeiten
+- Foto-Analyse: Fischart-Erkennung und Gewichtsschätzung (Groq Vision)
+- Personalisierte Empfehlungen basierend auf der Historie
+- Voice-Chat optional (OpenAI Realtime oder Web Speech API + ElevenLabs)
+- Offline-Fallback mit gecachten Antworten
 
 ---
 
 ## ✅ App Store Compliance
 
-BaitBuddy erfüllt die Anforderungen für Apple App Store und Google Play:
+- Datenschutzrichtlinie dokumentiert, alle Berechtigungen begründet
+- Benutzerrechte implementiert (Datenlöschung, Export, Widerspruch)
+- Konto-Löschung entfernt alle Daten
+- Keine versteckten Tracking- oder Nutzungsgebühren
 
-- ✅ Datenschutzrichtlinie dokumentiert
-- ✅ Alle Berechtigungen rechtfertigt und dokumentiert
-- ✅ Benutzerrechte implementiert (Datenlöschung, Export, Widerspruch)
-- ✅ Konto-Löschung löscht alle Daten innerhalb 30 Tagen
-- ✅ Keine versteckten Tracking- oder Nutzungsgebühren
-- ✅ Alterseinstufung: 13+ Jahre (COPPA-konform)
-
-Siehe: [APP_STORE_PERMISSIONS.md](APP_STORE_PERMISSIONS.md) für vollständige Release-Checkliste
+Siehe [APP_STORE_PERMISSIONS.md](APP_STORE_PERMISSIONS.md) für die Release-Checkliste.
 
 ---
 
 ## 📝 Contributing
 
-Contributions are welcome! Please follow these steps:
+1. Repository forken
+2. Feature-Branch anlegen (`git checkout -b feature/MeinFeature`)
+3. Änderungen committen
+4. Branch pushen und Pull Request öffnen
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-For major changes, please open an issue first to discuss proposed changes.
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
-
----
-
-## 🙏 Acknowledgments
-
-- React Native and Expo communities
-- Firebase for backend infrastructure
-- All contributors and testers
-
----
-
-## 📞 Support & Contact
-
-- 📧 Email: S.s.bedburg@gmail.com
-- 🐛 Report issues: [GitHub Issues](https://github.com/smokemoney81/BaitBuddy/issues)
-- 💬 Discussions: [GitHub Discussions](https://github.com/smokemoney81/BaitBuddy/discussions)
-
----
-
-## 🚀 Project Status
-
-**Status:** 🟢 Production | Active Development
-
-**Next Updates:**
-- [ ] Advanced analytics dashboard
-- [ ] Community features
-- [ ] Fish species database expansion
-- [ ] Offline mode improvements
-
----
-
-*Built with ❤️ by Sam | React Native Developer*  
-*Last updated: July 2026*
+Für größere Änderungen bitte zuerst ein Issue zur Abstimmung öffnen.

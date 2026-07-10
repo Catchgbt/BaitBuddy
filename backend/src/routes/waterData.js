@@ -2,8 +2,11 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
 import { sendDbError } from '../lib/errorResponse.js';
+import { fetchWithTimeout } from '../lib/fetchWithTimeout.js';
 
 const router = Router();
+
+const UPSTREAM_TIMEOUT_MS = 10000;
 
 const QUALITY_SAMPLES = { low: 4, med: 8, high: 16, ultra: 24 };
 const ALLOWED_QUALITY = new Set(['low', 'med', 'high', 'ultra']);
@@ -17,7 +20,7 @@ async function fetchOpenMeteoForecast(lat, lon, hours) {
   url.searchParams.set('past_hours', String(Math.min(hours, 24)));
   url.searchParams.set('forecast_hours', '1');
   url.searchParams.set('timezone', 'auto');
-  const res = await fetch(url.toString());
+  const res = await fetchWithTimeout(url.toString(), {}, UPSTREAM_TIMEOUT_MS);
   if (!res.ok) throw new Error(`Open-Meteo Forecast Fehler: ${res.status}`);
   return res.json();
 }
@@ -30,7 +33,7 @@ async function fetchOpenMeteoMarine(lat, lon, hours) {
   url.searchParams.set('past_hours', String(Math.min(hours, 24)));
   url.searchParams.set('forecast_hours', '1');
   url.searchParams.set('timezone', 'auto');
-  const res = await fetch(url.toString());
+  const res = await fetchWithTimeout(url.toString(), {}, UPSTREAM_TIMEOUT_MS);
   if (!res.ok) return null;
   return res.json();
 }

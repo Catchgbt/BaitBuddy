@@ -16,12 +16,14 @@ export const AuthProvider = ({ children }) => {
 
   // Login per E-Mail/Passwort läuft über den eigenen Backend-Proxy (auth.login)
   // und betrifft nur bb_token/bb_refresh — der Browser-Supabase-Client hat dabei
-  // gar keine eigene Session. Bei OAuth/Passwort-Reset läuft die Session aber
-  // über DIESEN Client, der sie per autoRefreshToken im Hintergrund erneuert
-  // (rotierende Refresh-Tokens). AuthCallback.jsx synct das einmalig beim
-  // Login, hört danach aber nicht mehr zu — ohne diesen App-weiten Listener
-  // verpasst bb_refresh jede spätere Rotation und wird irgendwann ungültig,
-  // obwohl die Supabase-Session an sich noch gültig ist.
+  // gar keine eigene Session. Bei OAuth/Passwort-Reset entsteht die Session
+  // dagegen über DIESEN Client. Achtung: autoRefreshToken ist in
+  // supabaseClient.js bewusst DEAKTIVIERT (der einzige aktive Refresh-Pfad ist
+  // der 401-getriggerte bb_refresh in frontendClient.js), damit sich beide
+  // Systeme nicht um das single-use Refresh-Token streiten. Dieser App-weite
+  // Listener spiegelt daher vor allem SIGNED_IN (initialer OAuth-Login) und
+  // SIGNED_OUT nach bb_token/bb_refresh; TOKEN_REFRESHED feuert von diesem
+  // Client praktisch nicht, wird aber sicherheitshalber mit behandelt.
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.access_token) {

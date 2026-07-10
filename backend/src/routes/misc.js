@@ -8,8 +8,11 @@ import { isInClosedSeason } from '../lib/closedSeason.js';
 import { isAllowedFetchUrl } from '../lib/urlSafety.js';
 import { deleteUserAccount } from '../lib/accountDeletion.js';
 import { sendDbError } from '../lib/errorResponse.js';
+import { fetchWithTimeout } from '../lib/fetchWithTimeout.js';
 
 const router = Router();
+
+const UPSTREAM_TIMEOUT_MS = 10000;
 
 // Spalten von fishing_plans (siehe supabase/schema.sql + Live-Schema-Audit).
 // War zuvor auf ['name','date','location','target_species','notes',
@@ -130,7 +133,7 @@ router.post('/water/bathymetry', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'file_url muss aus dem eigenen Supabase-Storage stammen' });
     }
 
-    const fileRes = await fetch(file_url).catch(() => null);
+    const fileRes = await fetchWithTimeout(file_url, {}, UPSTREAM_TIMEOUT_MS).catch(() => null);
     if (!fileRes || !fileRes.ok) {
       return res.status(400).json({ error: 'Datei konnte nicht geladen werden' });
     }
@@ -180,8 +183,9 @@ router.post('/water/bathymetry', requireAuth, async (req, res) => {
 router.post('/weather', optionalAuth, async (req, res) => {
   const { latitude, longitude } = req.body;
   try {
-    const w = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,wind_speed_10m,weather_code,relative_humidity_2m&hourly=temperature_2m,precipitation_probability&timezone=auto`
+    const w = await fetchWithTimeout(
+      `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,wind_speed_10m,weather_code,relative_humidity_2m&hourly=temperature_2m,precipitation_probability&timezone=auto`,
+      {}, UPSTREAM_TIMEOUT_MS
     ).then(r => r.json());
     return res.json(w);
   } catch (e) {
@@ -201,9 +205,10 @@ router.post('/weather/alerts', optionalAuth, async (req, res) => {
     return res.status(400).json({ error: 'latitude und longitude erforderlich' });
   }
   try {
-    const data = await fetch(
+    const data = await fetchWithTimeout(
       `https://api.brightsky.dev/alerts?lat=${lat}&lon=${lon}`,
-      { headers: { Accept: 'application/json' } }
+      { headers: { Accept: 'application/json' } },
+      UPSTREAM_TIMEOUT_MS
     ).then(r => r.json());
 
     const raw = Array.isArray(data?.alerts) ? data.alerts : [];

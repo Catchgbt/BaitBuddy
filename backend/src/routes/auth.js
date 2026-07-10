@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { supabase, supabaseUrl, supabaseKey } from '../lib/supabase.js';
 import { requireAuth } from '../middleware/auth.js';
 import { sendDbError } from '../lib/errorResponse.js';
+import { fetchWithTimeout } from '../lib/fetchWithTimeout.js';
 
 const router = Router();
 
@@ -32,11 +33,11 @@ router.post('/auth/refresh', async (req, res) => {
   if (!refresh_token) return res.status(400).json({ error: 'refresh_token erforderlich' });
 
   try {
-    const r = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+    const r = await fetchWithTimeout(`${supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', apikey: supabaseKey },
       body: JSON.stringify({ refresh_token }),
-    });
+    }, 10000);
     const data = await r.json().catch(() => ({}));
     if (!r.ok || !data.access_token) {
       return res.status(401).json({ error: 'Sitzung abgelaufen – bitte neu anmelden' });

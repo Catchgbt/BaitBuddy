@@ -5,6 +5,11 @@ import { invokeLLM } from '../lib/llm.js';
 import { isInClosedSeason } from '../lib/closedSeason.js';
 import { isAllowedFetchUrl } from '../lib/urlSafety.js';
 import { sendDbError } from '../lib/errorResponse.js';
+import { fetchWithTimeout } from '../lib/fetchWithTimeout.js';
+
+// open-meteo ist optional/schnell — kurzes Timeout, damit ein hängender
+// Wetterdienst nie die KI-Antwort blockiert.
+const WEATHER_TIMEOUT_MS = 8000;
 
 const router = Router();
 
@@ -57,50 +62,51 @@ router.post('/ai/chat', requireAuth, async (req, res) => {
     const wantsSpots = /spot|angelplatz|wo angel/i.test(lastMsg);
     const wantsWeather = /wetter|temperatur|wind/i.test(lastMsg);
 
-    const contextParts = [];
-
-    if (wantsCatches) {
-      const { data: catches } = await supabase
-        .from('catches').select('*')
-        .eq('created_by', userEmail)
-        .order('catch_time', { ascending: false }).limit(10);
-      if (catches?.length) {
-        contextParts.push('FANGBUCH:\n' + catches.map(c =>
+    // Kontext-Quellen laufen parallel statt sequenziell — spart Latenz vor dem
+    // LLM-Call (Ziel < 2 s). Jede Quelle liefert einen fertigen Kontext-String
+    // oder null; die Reihenfolge (Fänge, Schonzeiten, Spots, Wetter) bleibt fix.
+    const [catchesPart, rulesPart, spotsPart, weatherPart] = await Promise.all([
+      (async () => {
+        if (!wantsCatches) return null;
+        const { data: catches } = await supabase
+          .from('catches').select('*')
+          .eq('created_by', userEmail)
+          .order('catch_time', { ascending: false }).limit(10);
+        if (!catches?.length) return null;
+        return 'FANGBUCH:\n' + catches.map(c =>
           `- ${c.species || '?'}, ${c.length_cm || '?'}cm, ${c.weight_kg || '?'}kg, Köder: ${c.bait_used || '?'}`
-        ).join('\n'));
-      }
-    }
-
-    if (wantsRules) {
-      const { data: rules } = await supabase.from('rule_entries').select('*').limit(30);
-      if (rules?.length) {
+        ).join('\n');
+      })(),
+      (async () => {
+        if (!wantsRules) return null;
+        const { data: rules } = await supabase.from('rule_entries').select('*').limit(30);
+        if (!rules?.length) return null;
         const active = rules.filter(r => isInClosedSeason(r.closed_from, r.closed_to));
-        if (active.length) {
-          contextParts.push('AKTIVE SCHONZEITEN:\n' + active.map(r =>
-            `- ${r.fish} (${r.region}): bis ${r.closed_to}`
-          ).join('\n'));
-        }
-      }
-    }
+        if (!active.length) return null;
+        return 'AKTIVE SCHONZEITEN:\n' + active.map(r =>
+          `- ${r.fish} (${r.region}): bis ${r.closed_to}`
+        ).join('\n');
+      })(),
+      (async () => {
+        if (!wantsSpots) return null;
+        const { data: spots } = await supabase
+          .from('spots').select('name,water_type')
+          .eq('created_by', userEmail).limit(10);
+        if (!spots?.length) return null;
+        return 'MEINE SPOTS:\n' + spots.map(s => `- ${s.name} (${s.water_type})`).join('\n');
+      })(),
+      (async () => {
+        if (!(wantsWeather && userLocation?.latitude)) return null;
+        const w = await fetchWithTimeout(
+          `https://api.open-meteo.com/v1/forecast?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&current=temperature_2m,wind_speed_10m,weather_code&timezone=auto`,
+          {}, WEATHER_TIMEOUT_MS
+        ).then(r => r.json()).catch(() => null);
+        if (!w?.current) return null;
+        return `WETTER: ${w.current.temperature_2m}°C, Wind: ${w.current.wind_speed_10m}m/s`;
+      })(),
+    ]);
 
-    if (wantsSpots) {
-      const { data: spots } = await supabase
-        .from('spots').select('name,water_type')
-        .eq('created_by', userEmail).limit(10);
-      if (spots?.length) {
-        contextParts.push('MEINE SPOTS:\n' + spots.map(s => `- ${s.name} (${s.water_type})`).join('\n'));
-      }
-    }
-
-    if (wantsWeather && userLocation?.latitude) {
-      const w = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&current=temperature_2m,wind_speed_10m,weather_code&timezone=auto`
-      ).then(r => r.json()).catch(() => null);
-      if (w?.current) {
-        contextParts.push(`WETTER: ${w.current.temperature_2m}°C, Wind: ${w.current.wind_speed_10m}m/s`);
-      }
-    }
-
+    const contextParts = [catchesPart, rulesPart, spotsPart, weatherPart].filter(Boolean);
     const context = contextParts.length ? '\n\n--- App-Daten ---\n' + contextParts.join('\n\n') + '\n---\n' : '';
 
     const systemPrompt = `Du bist BaitBuddy, ein erfahrener und sympathischer Angel-Kumpel und Experte. Du sprichst locker und natürlich wie in einem echten Gespräch am Wasser — nicht steif oder formell. Antworte kurz und gesprächig (meist 1–3 Sätze). Keine Emojis, keine Aufzählungen mit Sternchen oder Spiegelstrichen — nur flüssige Sätze.
@@ -173,7 +179,7 @@ router.post('/analyze-photo', requireAuth, async (req, res) => {
       if (!isAllowedFetchUrl(imageBase64)) {
         return res.status(400).json({ error: 'Bild-URL muss aus dem eigenen Supabase-Storage stammen' });
       }
-      const imgRes = await fetch(imageBase64);
+      const imgRes = await fetchWithTimeout(imageBase64, {}, WEATHER_TIMEOUT_MS);
       if (!imgRes.ok) return res.status(400).json({ error: 'Bild konnte nicht heruntergeladen werden' });
       const buffer = await imgRes.arrayBuffer();
       imageBase64 = Buffer.from(buffer).toString('base64');
@@ -255,28 +261,34 @@ router.post('/ai/fishing-recommendation', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'latitude und longitude erforderlich' });
     }
 
-    // Wetter am Standort holen
-    let weather = null;
-    try {
-      const w = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,wind_speed_10m,weather_code,surface_pressure,relative_humidity_2m&timezone=auto`
-      ).then(r => r.json());
-      if (w?.current) {
-        weather = {
-          temperature: w.current.temperature_2m,
-          wind: w.current.wind_speed_10m,
-          pressure: w.current.surface_pressure,
-          humidity: w.current.relative_humidity_2m,
-          condition: WMO[w.current.weather_code] ?? 'unbekannt'
-        };
-      }
-    } catch { /* Wetter optional */ }
-
-    // Fangbuch des Nutzers laden
-    const { data: catches } = await supabase
-      .from('catches').select('*')
-      .eq('created_by', req.user.email)
-      .order('catch_time', { ascending: false }).limit(30);
+    // Wetter und Fangbuch parallel laden — spart Latenz vor dem LLM-Call.
+    const [weather, catches] = await Promise.all([
+      (async () => {
+        try {
+          const w = await fetchWithTimeout(
+            `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,wind_speed_10m,weather_code,surface_pressure,relative_humidity_2m&timezone=auto`,
+            {}, WEATHER_TIMEOUT_MS
+          ).then(r => r.json());
+          if (w?.current) {
+            return {
+              temperature: w.current.temperature_2m,
+              wind: w.current.wind_speed_10m,
+              pressure: w.current.surface_pressure,
+              humidity: w.current.relative_humidity_2m,
+              condition: WMO[w.current.weather_code] ?? 'unbekannt'
+            };
+          }
+        } catch { /* Wetter optional */ }
+        return null;
+      })(),
+      (async () => {
+        const { data } = await supabase
+          .from('catches').select('*')
+          .eq('created_by', req.user.email)
+          .order('catch_time', { ascending: false }).limit(30);
+        return data;
+      })(),
+    ]);
     const catchCount = catches?.length || 0;
 
     const catchSummary = catchCount
@@ -348,7 +360,7 @@ router.post('/ai/tts', requireAuth, async (req, res) => {
   const voiceId = process.env.ELEVENLABS_VOICE_ID || 'onwK4e9ZLuTAKqWW03F9';
 
   try {
-    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+    const response = await fetchWithTimeout(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: 'POST',
       headers: {
         'xi-api-key': apiKey,
@@ -393,8 +405,9 @@ router.post('/ai/fish-behavior-analysis', requireAuth, async (req, res) => {
     let currentWeather = null;
     if (latitude != null && longitude != null) {
       try {
-        const w = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,wind_speed_10m,weather_code,surface_pressure,relative_humidity_2m&timezone=auto`
+        const w = await fetchWithTimeout(
+          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,wind_speed_10m,weather_code,surface_pressure,relative_humidity_2m&timezone=auto`,
+          {}, WEATHER_TIMEOUT_MS
         ).then(r => r.json());
         if (w?.current) {
           currentWeather = {
@@ -488,24 +501,29 @@ router.post('/ai/realtime-session', requireAuth, async (req, res) => {
   const voice = process.env.OPENAI_REALTIME_VOICE || 'verse';
 
   try {
-    // Persönlichen Kontext laden, damit sich das Gespräch echt anfühlt
-    const parts = [];
-    const { data: catches } = await supabase
-      .from('catches').select('species,length_cm,bait_used,catch_time')
-      .eq('created_by', req.user.email)
-      .order('catch_time', { ascending: false }).limit(8);
-    if (catches?.length) {
-      parts.push('Letzte Fänge: ' + catches.map(c =>
-        `${c.species || '?'} (${c.length_cm || '?'}cm${c.bait_used ? ', Köder ' + c.bait_used : ''})`
-      ).join(', '));
-    }
-    try {
-      const { data: rules } = await supabase.from('rule_entries').select('fish,region,closed_from,closed_to').limit(40);
-      const active = (rules || []).filter(r => isInClosedSeason(r.closed_from, r.closed_to));
-      if (active.length) {
-        parts.push('Aktive Schonzeiten gerade: ' + active.map(r => `${r.fish} (${r.region}) bis ${r.closed_to}`).join(', '));
-      }
-    } catch { /* Schonzeiten optional */ }
+    // Persönlichen Kontext laden (Fänge + Schonzeiten parallel), damit sich das
+    // Gespräch echt anfühlt — ohne die Session-Erstellung unnötig zu verzögern.
+    const [catchesPart, rulesPart] = await Promise.all([
+      (async () => {
+        const { data: catches } = await supabase
+          .from('catches').select('species,length_cm,bait_used,catch_time')
+          .eq('created_by', req.user.email)
+          .order('catch_time', { ascending: false }).limit(8);
+        if (!catches?.length) return null;
+        return 'Letzte Fänge: ' + catches.map(c =>
+          `${c.species || '?'} (${c.length_cm || '?'}cm${c.bait_used ? ', Köder ' + c.bait_used : ''})`
+        ).join(', ');
+      })(),
+      (async () => {
+        try {
+          const { data: rules } = await supabase.from('rule_entries').select('fish,region,closed_from,closed_to').limit(40);
+          const active = (rules || []).filter(r => isInClosedSeason(r.closed_from, r.closed_to));
+          if (!active.length) return null;
+          return 'Aktive Schonzeiten gerade: ' + active.map(r => `${r.fish} (${r.region}) bis ${r.closed_to}`).join(', ');
+        } catch { /* Schonzeiten optional */ return null; }
+      })(),
+    ]);
+    const parts = [catchesPart, rulesPart].filter(Boolean);
     const ctx = parts.length ? `\n\nWas du über diesen Angler weißt:\n- ${parts.join('\n- ')}` : '';
 
     const instructions = `Du bist BaitBuddy – ein erfahrener, sympathischer Angel-Kumpel und Experte. `
@@ -520,7 +538,7 @@ router.post('/ai/realtime-session', requireAuth, async (req, res) => {
       + `Erinnere an Schonzeiten und Events, falls relevant. `
       + `Sei motivierend und positiv – Angeln soll Spaß machen!` + ctx;
 
-    const r = await fetch('https://api.openai.com/v1/realtime/sessions', {
+    const r = await fetchWithTimeout('https://api.openai.com/v1/realtime/sessions', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
