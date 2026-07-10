@@ -14,7 +14,6 @@
     "src/integrations/**/*.js",
     "src/lib/optimistic/**/*.ts",
     "src/lib/query-client.js",
-    "src/lib/StorageMigration.js",
     "src/lib/IndexedDBWrapper.js",
     "src/lib/AuthContext.jsx",
     "src/components/utils/offlineSync.js"

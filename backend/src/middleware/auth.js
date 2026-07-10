@@ -1,23 +1,69 @@
 import { supabase } from '../lib/supabase.js';
 
+// Kurzlebiger Cache für die Token-Verifikation. supabase.auth.getUser(token)
+// ist ein Netzwerk-Roundtrip zu GoTrue — ohne Cache passiert der bei JEDEM
+// authentifizierten Request. Innerhalb einer warmen Serverless-Instanz, die
+// mehrere Requests desselben Nutzers bedient, spart der Cache diese Roundtrips.
+// Bewusst kurze TTL, damit ein widerrufenes Token nur maximal TTL-lang gültig
+// bleibt. Der Cache ist pro Instanz (wie das Rate-Limiting) — kein globaler
+// Zustand nötig, da er nur ein Optimierung ist, keine Sicherheitsgrenze.
+const TOKEN_CACHE_TTL_MS = 60 * 1000;
+const TOKEN_CACHE_MAX = 1000;
+const tokenCache = new Map(); // token -> { user, expires }
+
+function getCachedUser(token) {
+  const hit = tokenCache.get(token);
+  if (!hit) return null;
+  if (hit.expires <= Date.now()) {
+    tokenCache.delete(token);
+    return null;
+  }
+  return hit.user;
+}
+
+function setCachedUser(token, user) {
+  // Einfache Größenbegrenzung: ältesten Eintrag entfernen (Map ist
+  // insertion-ordered), damit der Cache nicht unbegrenzt wächst.
+  if (tokenCache.size >= TOKEN_CACHE_MAX) {
+    const oldest = tokenCache.keys().next().value;
+    if (oldest !== undefined) tokenCache.delete(oldest);
+  }
+  tokenCache.set(token, { user, expires: Date.now() + TOKEN_CACHE_TTL_MS });
+}
+
+async function resolveUser(token) {
+  const cached = getCachedUser(token);
+  if (cached) return cached;
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data?.user) return null;
+  setCachedUser(token, data.user);
+  return data.user;
+}
+
 export async function requireAuth(req, res, next) {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'Kein Token' });
 
-  const { data, error } = await supabase.auth.getUser(token);
-  if (error || !data.user) return res.status(401).json({ error: 'Ungültiger Token' });
+  const user = await resolveUser(token);
+  if (!user) return res.status(401).json({ error: 'Ungültiger Token' });
 
-  req.user = data.user;
+  req.user = user;
   next();
 }
 
 export async function optionalAuth(req, res, next) {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (token) {
-    const { data } = await supabase.auth.getUser(token);
-    if (data?.user) req.user = data.user;
+    const user = await resolveUser(token);
+    if (user) req.user = user;
   }
   next();
+}
+
+// Nur für Tests: Cache leeren, damit sich Testfälle nicht gegenseitig
+// beeinflussen.
+export function __clearTokenCache() {
+  tokenCache.clear();
 }
 
 // Muss NACH requireAuth in der Middleware-Kette stehen (braucht req.user).
