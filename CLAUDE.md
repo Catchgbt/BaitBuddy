@@ -122,6 +122,14 @@ Der **KI-Buddy** ist zentrales Feature mit oberster Priorität. Muss reibungslos
 - ✅ Supabase (DB, Auth, Realtime, Storage)
 - ❌ **Keine** anderen externen Dienste/Backends (kein Render, keine zusätzlichen MCP-Services)
 
+> **Rate-Limiting-Store:** Das API-Rate-Limiting (`backend/src/middleware/rateLimit.js`)
+> nutzt optional **Vercel KV** (Upstash Redis, ioredis-kompatibel) als
+> instanzübergreifenden Zähler — aktiviert über die Env-Variable `KV_URL`
+> (Fallback `REDIS_URL`). Ohne gesetzte Env fällt es automatisch auf den
+> In-Memory-Store zurück (lokal/Dev/Tests unverändert). Vercel KV bleibt innerhalb
+> „nur Vercel & Supabase". Fällt der KV-Store aus, blockiert das die App nicht
+> (Fail-Open).
+
 ---
 
 ## 📦 Build & Release
@@ -132,9 +140,12 @@ Der **KI-Buddy** ist zentrales Feature mit oberster Priorität. Muss reibungslos
 3. Upload zu Google Play erfolgt aus dem Artefakt (Beta-Track zuerst)
 4. **Keine iOS-Pipeline** vorhanden
 
-> Hinweis: Es existieren aktuell zwei sehr ähnliche Android-Build-Workflows
-> (`build-android.yml`, `build-apk.yml`), die sich nur in der Java-Version und
-> den Signierungsschritten unterscheiden — Konsolidierung ist vorgemerkt.
+> Hinweis: Der Android-Build läuft über **einen** Workflow
+> (`.github/workflows/build-android.yml`, Trigger: `v*`-Tag **oder**
+> manuell per `workflow_dispatch`). Er baut sowohl ein Debug-APK zum
+> Sideloaden als auch das signierte Release-**AAB** — der AAB-Signierschritt
+> läuft nur, wenn das `KEYSTORE_BASE64`-Secret gesetzt ist. Der frühere
+> zweite Workflow (`build-apk.yml`) wurde konsolidiert und entfernt.
 
 ---
 

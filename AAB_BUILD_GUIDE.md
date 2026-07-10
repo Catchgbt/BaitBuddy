@@ -4,8 +4,10 @@ Diese Anleitung beschreibt den Prozess zum Erstellen einer AAB-Datei (Android Ap
 
 ## Voraussetzungen
 
-- Node.js 18+ und npm
-- Android SDK (API 35) und Android Studio
+- Node.js 22 und npm (CI-Version; lokal ≥18 möglich)
+- JDK 21 (Temurin) — von der CI genutzt
+- Android SDK: Platform 36 + Build-Tools 36.0.0 (die CI installiert diese; das Projekt kompiliert weiterhin gegen `compileSdk`/`targetSdk` 35, `minSdk` 24 — siehe `android/variables.gradle`)
+- Gradle 8.9 (per Wrapper; die CI hebt den Wrapper vor dem Build auf 8.9 an)
 - Keystore-Datei für Code-Signierung (.jks oder .keystore)
 - Google Play Store Developer-Account
 
@@ -198,16 +200,25 @@ Beispiel:
 - Release 1.0.1 → versionCode=2, versionName="1.0.1"
 - Release 1.1.0 → versionCode=3, versionName="1.1.0"
 
-## CI/CD Integration (Vercel)
+## CI/CD Integration
+
+### Vercel (Web + API)
 
 Vercel baut automatisch bei jedem Push zu `main`:
 - ✅ Frontend wird zu `dist/` gebaut
 - ✅ Backend wird installiert
 - ✅ API wird auf Vercel Serverless deployed
 
-Für AAB-Builds:
+### GitHub Actions (Android)
+
+`.github/workflows/build-android.yml` baut den Android-Client:
+- **Trigger:** Push eines `v*`-Tags **oder** manuell per `workflow_dispatch`
+- **Toolchain:** Node 22, JDK 21 (Temurin), Android Platform/Build-Tools 36, Gradle 8.9
+- **Artefakte:** Debug-APK (`assembleDebug`, immer) zum Sideloaden sowie signiertes Release-**AAB** (`bundleRelease`) — der AAB-Schritt läuft nur, wenn das `KEYSTORE_BASE64`-Secret gesetzt ist
+- Signierung erfolgt in CI über die `KEYSTORE_*`/`KEY_*`-Secrets (kein Keystore im Repo)
+
+Alternativ lokal bauen und hochladen:
 ```bash
-# Lokal bauen und hochladen
 npm run build
 cd android && ./gradlew bundleRelease
 # android/app/build/outputs/bundle/release/app-release.aab hochladen
@@ -223,5 +234,5 @@ cd android && ./gradlew bundleRelease
 
 ---
 
-**Letzte Aktualisierung**: Juni 2026
+**Letzte Aktualisierung**: Juli 2026
 **Für Fragen oder Probleme**: Kontaktiere das Development-Team
