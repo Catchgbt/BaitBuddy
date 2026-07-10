@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, memo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import SwipeToRefresh from "@/components/utils/SwipeToRefresh";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +17,156 @@ import PlanGuard from "@/components/premium/PlanGuard";
 import ChatWidget from "@/components/community/ChatWidget";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
 
+// Eigenständiges Kommentar-Eingabefeld mit LOKALEM State. Vorher lag der
+// Kommentartext im Community-State, wodurch jeder Tastenanschlag den gesamten
+// Feed neu rendern ließ. Jetzt bleibt das Tippen auf diese Komponente begrenzt.
+const CommentInput = memo(function CommentInput({ onSubmit }) {
+  const [text, setText] = useState("");
+  const submit = () => {
+    const value = text.trim();
+    if (!value) {
+      toast.error("Kommentar darf nicht leer sein");
+      return;
+    }
+    // Optimistisch leeren; der Parent stellt bei Fehler den Text wieder her.
+    setText("");
+    onSubmit(value);
+  };
+  return (
+    <div className="flex gap-2 pt-2">
+      <Input
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Dein Kommentar..."
+        className="bg-gray-800/50 border-gray-700 text-white"
+        onKeyPress={(e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            submit();
+          }
+        }}
+      />
+      <Button onClick={submit} size="sm" className="bg-emerald-600 hover:bg-emerald-700">
+        <Send className="w-4 h-4" />
+      </Button>
+    </div>
+  );
+});
+
+// Memoisierte Post-Karte: rendert nur neu, wenn sich ihre eigenen Props ändern.
+// So lösen unabhängige Re-Renders des Feeds (z.B. der 30s-Aktive-Nutzer-Tick
+// oder das Tippen in der Suche) kein Neurendern aller Karten mehr aus.
+const PostCard = memo(function PostCard({
+  post, userCache, isOwnPost, isCommenting, isDeleting, isReported,
+  onLike, onToggleComment, onReport, onDelete, onSubmitComment,
+}) {
+  const authorOf = (email) => userCache[email] || null;
+  const nameOf = (email) => {
+    const u = authorOf(email);
+    return u?.full_name || u?.nickname || email?.split('@')[0] || 'Anonym';
+  };
+  const picOf = (email) => authorOf(email)?.profile_picture_url || null;
+
+  const profilePic = picOf(post.created_by);
+  const displayName = nameOf(post.created_by);
+
+  return (
+    <div>
+      <Card className="glass-morphism border-gray-800">
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              {profilePic ? (
+                <img src={profilePic} alt={displayName} className="w-10 h-10 rounded-full object-cover border-2 border-emerald-400" />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center border-2 border-emerald-400">
+                  <UserIcon className="w-5 h-5 text-white" />
+                </div>
+              )}
+              <div>
+                <p className="font-semibold text-white">{displayName}</p>
+                <p className="text-xs text-gray-400">
+                  {new Date(post.created_at).toLocaleDateString('de-DE', {
+                    day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                  })}
+                </p>
+              </div>
+            </div>
+
+            {isOwnPost && (
+              <Button
+                variant="ghost" size="sm"
+                onClick={() => onDelete(post.id)}
+                disabled={isDeleting}
+                className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+              >
+                {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+
+        <CardContent className="space-y-4">
+          {post.text && <p className="text-gray-200 whitespace-pre-wrap">{post.text}</p>}
+
+          {post.photo_url && (
+            <img src={post.photo_url} alt="Post" className="w-full rounded-lg max-h-96 object-cover" />
+          )}
+
+          <div className="flex items-center gap-4 pt-2 border-t border-gray-800">
+            <Button variant="ghost" size="sm" onClick={() => onLike(post.id, post.likes || 0)} className="text-gray-400 hover:text-red-400">
+              <Heart className="w-4 h-4 mr-1" />
+              {post.likes || 0}
+            </Button>
+
+            <Button variant="ghost" size="sm" onClick={() => onToggleComment(post.id)} className="text-gray-400 hover:text-cyan-400">
+              <MessageCircle className="w-4 h-4 mr-1" />
+              {post.comments?.length || 0}
+            </Button>
+
+            {!isOwnPost && (
+              <Button
+                variant="ghost" size="sm"
+                onClick={() => onReport(post.id)}
+                className={`ml-auto ${isReported ? 'text-amber-400 cursor-default' : 'text-gray-400 hover:text-amber-400'}`}
+                title={isReported ? 'Bereits gemeldet' : 'Post melden'}
+              >
+                <AlertTriangle className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+
+          {post.comments && post.comments.length > 0 && (
+            <div className="space-y-2 pt-2 border-t border-gray-800">
+              {post.comments.map((comment) => {
+                const commentProfilePic = picOf(comment.created_by);
+                const commentDisplayName = nameOf(comment.created_by);
+                return (
+                  <div key={comment.id} className="flex gap-2">
+                    {commentProfilePic ? (
+                      <img src={commentProfilePic} alt={commentDisplayName} className="w-8 h-8 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
+                        <UserIcon className="w-4 h-4 text-white" />
+                      </div>
+                    )}
+                    <div className="flex-1 bg-gray-800/50 rounded-lg p-2">
+                      <p className="text-xs font-semibold text-emerald-400 mb-1">{commentDisplayName}</p>
+                      <p className="text-sm text-gray-300">{comment.text}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {isCommenting && <CommentInput onSubmit={(text) => onSubmitComment(post.id, text)} />}
+        </CardContent>
+      </Card>
+    </div>
+  );
+});
+
 export default function Community() {
   useFeatureTracking("community");
   const [posts, setPosts] = useState([]);
@@ -26,7 +176,6 @@ export default function Community() {
   const [imagePreview, setImagePreview] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [commenting, setCommenting] = useState(null);
-  const [commentText, setCommentText] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
   const [userCache, setUserCache] = useState({});
   const [deletingPostId, setDeletingPostId] = useState(null);
@@ -163,15 +312,10 @@ export default function Community() {
   const eventCompetitions = competitions.filter(c => c.competition_type === 'event');
   const otherCompetitions = competitions.filter(c => c.competition_type !== 'photo_contest' && c.competition_type !== 'most_catches' && c.competition_type !== 'event');
 
-  const getUserDisplayName = (email) => {
+  const getUserDisplayName = useCallback((email) => {
     const user = userCache[email];
     return user?.full_name || user?.nickname || email?.split('@')[0] || 'Anonym';
-  };
-
-  const getUserProfilePicture = (email) => {
-    const user = userCache[email];
-    return user?.profile_picture_url || null;
-  };
+  }, [userCache]);
 
   const filteredPosts = posts.filter(post => {
     const query = searchQuery.toLowerCase();
@@ -180,7 +324,7 @@ export default function Community() {
     return matchesText || matchesCreator;
   });
 
-  const loadPosts = async () => {
+  const loadPosts = useCallback(async () => {
     setLoading(true);
     try {
       const [postsData, allComments] = await Promise.all([
@@ -243,7 +387,7 @@ export default function Community() {
       toast.error("Posts konnten nicht geladen werden");
     }
     setLoading(false);
-  };
+  }, [userCache]);
 
 
   const handleImageSelect = (e) => {
@@ -299,9 +443,9 @@ export default function Community() {
     }
   };
 
-  const handleLike = async (postId, currentLikes) => {
-    // Optimistic update
-    setPosts(posts.map(p => 
+  const handleLike = useCallback(async (postId, currentLikes) => {
+    // Optimistic update (funktionales setState → Handler bleibt referenzstabil)
+    setPosts(prev => prev.map(p =>
       p.id === postId ? { ...p, likes: currentLikes + 1 } : p
     ));
 
@@ -310,15 +454,16 @@ export default function Community() {
     } catch (error) {
       console.error("Fehler beim Liken:", error);
       // Revert on error
-      setPosts(posts.map(p => 
+      setPosts(prev => prev.map(p =>
         p.id === postId ? { ...p, likes: currentLikes } : p
       ));
       toast.error("Like fehlgeschlagen");
     }
-  };
+  }, []);
 
-  const handleComment = async (postId) => {
-    if (!commentText.trim()) {
+  const handleComment = useCallback(async (postId, rawText) => {
+    const text = (rawText || "").trim();
+    if (!text) {
       toast.error("Kommentar darf nicht leer sein");
       return;
     }
@@ -328,7 +473,6 @@ export default function Community() {
       return;
     }
 
-    const text = commentText.trim();
     const tempId = `temp-${Date.now()}`;
     const optimisticComment = {
       id: tempId,
@@ -343,7 +487,6 @@ export default function Community() {
         ? { ...p, comments: [...(p.comments || []), optimisticComment] }
         : p
     ));
-    setCommentText("");
 
     try {
       const newComment = await entities.Comment.create({
@@ -363,12 +506,11 @@ export default function Community() {
           ? { ...p, comments: (p.comments || []).filter(c => c.id !== tempId) }
           : p
       ));
-      setCommentText(text);
       toast.error("Kommentar fehlgeschlagen");
     }
-  };
+  }, [currentUser]);
 
-  const handleReport = async (postId) => {
+  const handleReport = useCallback(async (postId) => {
     if (reportedPostIds.includes(postId)) {
       toast.info("Du hast diesen Post bereits gemeldet");
       return;
@@ -383,9 +525,13 @@ export default function Community() {
       console.error("Fehler beim Melden:", error);
       toast.error("Melden fehlgeschlagen");
     }
-  };
+  }, [reportedPostIds]);
 
-  const handleDeletePost = async (postId) => {
+  const toggleComment = useCallback((postId) => {
+    setCommenting(prev => (prev === postId ? null : postId));
+  }, []);
+
+  const handleDeletePost = useCallback(async (postId) => {
     if (!window.confirm("Post wirklich löschen?")) return;
 
     setDeletingPostId(postId);
@@ -399,7 +545,7 @@ export default function Community() {
     } finally {
       setDeletingPostId(null);
     }
-  };
+  }, [loadPosts]);
 
   const queryClient = useQueryClient();
 
@@ -602,166 +748,22 @@ export default function Community() {
 
         {/* Posts Feed */}
         <div className="space-y-4">
-          {filteredPosts.map((post) => {
-            const profilePic = getUserProfilePicture(post.created_by);
-            const displayName = getUserDisplayName(post.created_by);
-            const isOwnPost = currentUser && post.created_by === currentUser.email;
-
-            return (
-              <div key={post.id}>
-                <Card className="glass-morphism border-gray-800">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        {profilePic ? (
-                          <img 
-                            src={profilePic} 
-                            alt={displayName}
-                            className="w-10 h-10 rounded-full object-cover border-2 border-emerald-400"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center border-2 border-emerald-400">
-                            <UserIcon className="w-5 h-5 text-white" />
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-semibold text-white">{displayName}</p>
-                          <p className="text-xs text-gray-400">
-                            {new Date(post.created_at).toLocaleDateString('de-DE', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </p>
-                        </div>
-                      </div>
-
-                      {isOwnPost && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeletePost(post.id)}
-                          disabled={deletingPostId === post.id}
-                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                        >
-                          {deletingPostId === post.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <X className="w-4 h-4" />
-                          )}
-                        </Button>
-                      )}
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="space-y-4">
-                    {post.text && <p className="text-gray-200 whitespace-pre-wrap">{post.text}</p>}
-
-                    {post.photo_url && (
-                      <img 
-                        src={post.photo_url} 
-                        alt="Post" 
-                        className="w-full rounded-lg max-h-96 object-cover"
-                      />
-                    )}
-
-                    <div className="flex items-center gap-4 pt-2 border-t border-gray-800">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleLike(post.id, post.likes || 0)}
-                        className="text-gray-400 hover:text-red-400"
-                      >
-                        <Heart className="w-4 h-4 mr-1" />
-                        {post.likes || 0}
-                      </Button>
-
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setCommenting(commenting === post.id ? null : post.id)}
-                        className="text-gray-400 hover:text-cyan-400"
-                      >
-                        <MessageCircle className="w-4 h-4 mr-1" />
-                        {post.comments?.length || 0}
-                      </Button>
-
-                      {!isOwnPost && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleReport(post.id)}
-                          className={`ml-auto ${reportedPostIds.includes(post.id) ? 'text-amber-400 cursor-default' : 'text-gray-400 hover:text-amber-400'}`}
-                          title={reportedPostIds.includes(post.id) ? 'Bereits gemeldet' : 'Post melden'}
-                        >
-                          <AlertTriangle className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-
-                    {/* Kommentare */}
-                    {post.comments && post.comments.length > 0 && (
-                      <div className="space-y-2 pt-2 border-t border-gray-800">
-                        {post.comments.map((comment) => {
-                          const commentProfilePic = getUserProfilePicture(comment.created_by);
-                          const commentDisplayName = getUserDisplayName(comment.created_by);
-
-                          return (
-                            <div key={comment.id} className="flex gap-2">
-                              {commentProfilePic ? (
-                                <img 
-                                  src={commentProfilePic} 
-                                  alt={commentDisplayName}
-                                  className="w-8 h-8 rounded-full object-cover"
-                                />
-                              ) : (
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
-                                  <UserIcon className="w-4 h-4 text-white" />
-                                </div>
-                              )}
-                              <div className="flex-1 bg-gray-800/50 rounded-lg p-2">
-                                <p className="text-xs font-semibold text-emerald-400 mb-1">
-                                  {commentDisplayName}
-                                </p>
-                                <p className="text-sm text-gray-300">{comment.text}</p>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {/* Kommentar-Eingabe */}
-                    {commenting === post.id && (
-                      <div className="flex gap-2 pt-2">
-                        <Input
-                          value={commentText}
-                          onChange={(e) => setCommentText(e.target.value)}
-                          placeholder="Dein Kommentar..."
-                          className="bg-gray-800/50 border-gray-700 text-white"
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                              e.preventDefault();
-                              handleComment(post.id);
-                            }
-                          }}
-                        />
-                        <Button
-                          onClick={() => handleComment(post.id)}
-                          size="sm"
-                          className="bg-emerald-600 hover:bg-emerald-700"
-                        >
-                          <Send className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-            </div>
-            );
-          })}
+          {filteredPosts.map((post) => (
+            <PostCard
+              key={post.id}
+              post={post}
+              userCache={userCache}
+              isOwnPost={!!currentUser && post.created_by === currentUser.email}
+              isCommenting={commenting === post.id}
+              isDeleting={deletingPostId === post.id}
+              isReported={reportedPostIds.includes(post.id)}
+              onLike={handleLike}
+              onToggleComment={toggleComment}
+              onReport={handleReport}
+              onDelete={handleDeletePost}
+              onSubmitComment={handleComment}
+            />
+          ))}
         </div>
 
         {filteredPosts.length === 0 && posts.length > 0 && (
