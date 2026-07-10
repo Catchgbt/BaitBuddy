@@ -12,6 +12,21 @@ export default defineConfig({
     },
   },
   test: {
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'lcov'],
+      reportsDirectory: './coverage',
+      // Nur eigener Quellcode; Tests, Setup, Vendor-UI und generierte Artefakte
+      // verwässern die Aussage sonst.
+      include: ['src/**/*.{js,jsx}', 'backend/src/**/*.js'],
+      exclude: [
+        '**/*.test.{js,jsx}',
+        'src/test/**',
+        'backend/test/**',
+        'src/components/ui/**',
+        'src/**/*.d.ts',
+      ],
+    },
     projects: [
       {
         extends: true,
