@@ -87,15 +87,31 @@ async function applyItem(req, item) {
   return { ok: false, clientId: item.clientId, error: 'Unbekannter Pfad' };
 }
 
+// Obergrenze für die Batch-Größe, damit ein einzelner Request die Funktion
+// nicht überlastet, sowie parallele Ausführung mit begrenzter Nebenläufigkeit,
+// statt N Items strikt seriell abzuarbeiten (das konnte bei großen Queues in
+// den Funktions-Timeout laufen).
+const SYNC_MAX_ITEMS = 200;
+const SYNC_CONCURRENCY = 5;
+
 router.post('/sync/upload', requireAuth, async (req, res) => {
   const items = Array.isArray(req.body?.items) ? req.body.items : [];
   if (items.length === 0) {
     return res.status(400).json({ error: 'Keine Items zum Hochladen' });
   }
-  const results = [];
-  for (const item of items) {
-    results.push(await applyItem(req, item));
+  if (items.length > SYNC_MAX_ITEMS) {
+    return res.status(413).json({ error: `Zu viele Items (max. ${SYNC_MAX_ITEMS} pro Upload)` });
   }
+
+  // Ergebnis-Reihenfolge = Eingabe-Reihenfolge beibehalten; Items werden in
+  // Fenstern von SYNC_CONCURRENCY parallel verarbeitet.
+  const results = new Array(items.length);
+  for (let start = 0; start < items.length; start += SYNC_CONCURRENCY) {
+    const window = items.slice(start, start + SYNC_CONCURRENCY);
+    const settled = await Promise.all(window.map((item) => applyItem(req, item)));
+    settled.forEach((r, i) => { results[start + i] = r; });
+  }
+
   const ok = results.filter(r => r.ok).length;
   const failed = results.length - ok;
   return res.json({
