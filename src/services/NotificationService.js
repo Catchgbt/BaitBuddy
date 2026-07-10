@@ -5,10 +5,17 @@ import TideService from './TideService';
 import SolunarService from './SolunarService';
 import FishPredictionService from './FishPredictionService';
 
+// Gültige Icon-/Badge-URLs (Notification-API ignoriert Emoji-Strings). Die
+// echten PWA-Icons liegen unter public/icons/.
+const NOTIFICATION_ICON = '/icons/icon-192.png';
+const CHECK_INTERVAL_MS = 5 * 60 * 1000;
+
 class NotificationService {
   constructor() {
     this.enabled = false;
     this.checkInterval = null;
+    this.monitorCoords = null;
+    this._visibilityHandler = null;
     this.settings = {
       solunarThreshold: 70, // Nur Major Events ab diesem Score
       tideThreshold: 50, // Gezeitenhöhe-Schwelle
@@ -71,25 +78,53 @@ class NotificationService {
       return;
     }
 
-    if (this.checkInterval) {
-      clearInterval(this.checkInterval);
+    this.monitorCoords = { latitude, longitude };
+    this._stopInterval();
+
+    // Polling nur bei sichtbarer App: Im Hintergrund feuert der WebView-Timer
+    // ohnehin nicht zuverlässig und die 5-Minuten-Prüfung (Tide/Solunar/
+    // Prediction) würde nur Akku kosten. Bei Rückkehr in den Vordergrund
+    // sofort wieder aufnehmen.
+    if (typeof document !== 'undefined' && !this._visibilityHandler) {
+      this._visibilityHandler = () => {
+        if (document.visibilityState === 'visible') {
+          this._startInterval();
+        } else {
+          this._stopInterval();
+        }
+      };
+      document.addEventListener('visibilitychange', this._visibilityHandler);
     }
 
-    // Prüfe alle 5 Minuten
-    this.checkInterval = setInterval(async () => {
-      await this.checkConditions(latitude, longitude);
-    }, 5 * 60 * 1000);
+    this._startInterval();
+  }
 
+  _startInterval() {
+    if (this.checkInterval || !this.monitorCoords) return;
+    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+    const { latitude, longitude } = this.monitorCoords;
+    this.checkInterval = setInterval(() => {
+      this.checkConditions(latitude, longitude);
+    }, CHECK_INTERVAL_MS);
     // Erste Prüfung sofort
     this.checkConditions(latitude, longitude);
   }
 
-  // Stoppe Überwachung
-  stopMonitoring() {
+  _stopInterval() {
     if (this.checkInterval) {
       clearInterval(this.checkInterval);
       this.checkInterval = null;
     }
+  }
+
+  // Stoppe Überwachung
+  stopMonitoring() {
+    this._stopInterval();
+    this.monitorCoords = null;
+    if (this._visibilityHandler && typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', this._visibilityHandler);
+    }
+    this._visibilityHandler = null;
   }
 
   // Überprüfe aktuelle Bedingungen
@@ -137,7 +172,7 @@ class NotificationService {
         await this.sendNotification(
           'Optimale Solunar-Zeit!',
           `${major.description}\nIn ${nextEvent.hours}h ${String(nextEvent.minutes).padStart(2, '0')}m\nQualität: ${major.quality}%`,
-          { tag: notificationKey, badge: '🎣' }
+          { tag: notificationKey }
         );
 
         this.lastNotifications[notificationKey] = date;
@@ -161,7 +196,7 @@ class NotificationService {
         await this.sendNotification(
           `${current.nextEvent} nähert sich!`,
           `${recommendation}\nIn ${current.timeToNext.hours}h ${String(current.timeToNext.minutes).padStart(2, '0')}m`,
-          { tag: notificationKey, badge: '🌊' }
+          { tag: notificationKey }
         );
 
         this.lastNotifications[notificationKey] = date;
@@ -186,12 +221,10 @@ class NotificationService {
       const notificationKey = `prediction_${date.toDateString()}_${species}`;
 
       if (!this.lastNotifications[notificationKey]) {
-        const emoji = this.getSpeciesEmoji(species);
-
         await this.sendNotification(
-          `${emoji} Beste Fangzeit für ${species}!`,
+          `Beste Fangzeit für ${species}!`,
           `Vorhersage: ${data.score}% - ${data.recommendation}\nJetzt ist eine großartige Zeit!`,
-          { tag: notificationKey, badge: emoji }
+          { tag: notificationKey }
         );
 
         this.lastNotifications[notificationKey] = date;
@@ -211,8 +244,8 @@ class NotificationService {
 
       const notification = new Notification(title, {
         body,
-        icon: '/baitbuddy-icon.svg',
-        badge: '🎣',
+        icon: NOTIFICATION_ICON,
+        badge: NOTIFICATION_ICON,
         tag: options.tag || 'baitbuddy',
         requireInteraction: false,
         ...options,
@@ -242,19 +275,6 @@ class NotificationService {
         delete this.lastNotifications[key];
       }
     }
-  }
-
-  // Hilfsfunktion: Get Species Emoji
-  getSpeciesEmoji(species) {
-    const emojis = {
-      'Hecht': '🐟',
-      'Barsch': '🐠',
-      'Forelle': '🐟',
-      'Schleie': '🐟',
-      'Aal': '🐍',
-      'Karpfen': '🐟',
-    };
-    return emojis[species] || '🎣';
   }
 
   // Debug: Sende Test-Notification

@@ -1,7 +1,9 @@
 # BaitBuddy — Entwicklungsrichtlinien für Claude
 
 ## 🎯 Projekt-Übersicht
-**BaitBuddy** ist eine React Native Angeln-App für iOS/Android mit AI-gestütztem KI-Buddy. Backend läuft auf Vercel, Datenspeicher auf Supabase.
+**BaitBuddy** ist eine Angel-App mit AI-gestütztem KI-Buddy. Technisch ist es eine **Vite + React 18 Web-App**, die für Android per **Capacitor** in einen WebView verpackt wird (die Android-Hülle lädt aktuell die Live-Vercel-Site). Backend läuft als Express-App auf Vercel Serverless, Datenspeicher auf Supabase.
+
+> Wichtig: Es ist **kein** React Native/Expo und **kein** Firebase. „Device-Features" nutzen Browser-Web-APIs im WebView. Supabase-**Realtime** wird derzeit **nicht** verwendet — der Datenzugriff läuft über einen eigenen REST-Client (`src/api/frontendClient.js`) gegen das Backend.
 
 ## 📋 Sprache & Kommunikation
 - **Immer auf Deutsch antworten** (Erklärungen, Zusammenfassungen, Text)
@@ -27,11 +29,13 @@ Keine `TODO`-Stubs, `Lorem ipsum`, Mock-Werte, leere „Coming soon"-Hülsen ode
 
 | Layer | Technologie |
 |-------|-------------|
-| **Frontend** | React Native (Expo oder Bare Workflow) |
-| **Backend** | Express (Node.js) auf Vercel Serverless |
-| **Datenbank & Auth** | Supabase (Realtime, Offline Sync) |
+| **Frontend** | Vite 6 + React 18 (JSX), Tailwind, Radix/shadcn-UI, React Router, TanStack Query |
+| **Mobile-Wrapper** | Capacitor 6 (Android-WebView) |
+| **Backend** | Express (Node.js) auf Vercel Serverless (`backend/`, gemountet über `api/[...path].mjs`) |
+| **Datenbank & Auth** | Supabase (Postgres, GoTrue-Auth, Storage) — Zugriff über eigenen REST-Client, **kein** Realtime |
+| **LLM** | Groq (Llama) für Chat & Vision; OpenAI Realtime (optional) für Voice; ElevenLabs (optional) für TTS |
 | **Package Manager** | npm mit legacy peer deps (`--legacy-peer-deps`) |
-| **CI/CD** | GitHub Actions + Fastlane (App Store Deploy) |
+| **CI/CD** | GitHub Actions (Web-Deploy via Vercel, Android-AAB-Build). **Kein Fastlane, keine iOS-Pipeline.** |
 
 ---
 
@@ -69,10 +73,14 @@ Der **KI-Buddy** ist zentrales Feature mit oberster Priorität. Muss reibungslos
 - Personalisierte Empfehlungen basierend auf User-History
 
 ### Architektur
-- **Frontend**: `src/components/KiBuddy/` (Chat-UI, Input, Message-List)
-- **Backend**: `api/routes/kibuddy.js` (Prompt-Handling, LLM-Integration, Context-Building)
-- **Datenbank**: Supabase-Tabellen für Chat-History, User-Context, Cached-Responses
-- **LLM**: Claude API (via Anthropic SDK, nicht direkt vom Frontend)
+- **Frontend**: verteilt über mehrere Stellen (es gibt **kein** `src/components/KiBuddy/`-Verzeichnis):
+  - `src/components/layout/AIBuddyWidget.jsx` — das schwebende Chat-Widget (Haupt-Surface)
+  - `src/pages/KiBuddyBeta.jsx` — eigenständige Voice-Buddy-Seite (Jule)
+  - `src/components/ai/`, `src/components/chatbot/`, `src/components/home/MiniKiBuddy*.jsx`
+  - Hooks: `useChatMessages`, `useSpeechRecognition`, `useElevenLabsVoice`
+- **Backend**: `backend/src/routes/ai.js` (`POST /api/ai/chat` u. a.) mit `backend/src/lib/llm.js` für die LLM-Anbindung. (Es gibt **kein** `api/routes/kibuddy.js`.)
+- **Datenbank**: Supabase-Tabellen (`catches`, `spots`, `rule_entries` …) liefern den Kontext; Chat-Historie wird clientseitig gehalten.
+- **LLM**: **Groq (Llama)** über natives `fetch` in `backend/src/lib/llm.js` — Text (`llama-3.3-70b-versatile`) und Vision. Der Aufruf erfolgt serverseitig, nie direkt vom Frontend. (Das `@anthropic-ai/sdk`-Paket ist als Root-Dependency vorhanden, wird im Backend aber nicht genutzt.)
 
 ### Dev-Checkliste
 - [ ] Keine Platzhalter in KI-Responses (echte Kontextdaten)
@@ -118,13 +126,15 @@ Der **KI-Buddy** ist zentrales Feature mit oberster Priorität. Muss reibungslos
 
 ## 📦 Build & Release
 
-**Automatisiert via GitHub Actions + Fastlane:**
-1. PR → `main` gemergt
-2. GitHub Actions baut APK/IPA automatisch
-3. Upload zu Google Play & Apple App Store (Beta-Track zuerst)
-4. Release-Notes auto-generiert aus Commits
+**Automatisiert via GitHub Actions (kein Fastlane):**
+1. PR → `main` gemergt → Vercel deployt die Web-App automatisch
+2. Auf `v*`-Tag baut GitHub Actions das Android-**AAB** (Signierung in CI)
+3. Upload zu Google Play erfolgt aus dem Artefakt (Beta-Track zuerst)
+4. **Keine iOS-Pipeline** vorhanden
 
-**Kein manueller Upload erlaubt** — alles CI/CD.
+> Hinweis: Es existieren aktuell zwei sehr ähnliche Android-Build-Workflows
+> (`build-android.yml`, `build-apk.yml`), die sich nur in der Java-Version und
+> den Signierungsschritten unterscheiden — Konsolidierung ist vorgemerkt.
 
 ---
 

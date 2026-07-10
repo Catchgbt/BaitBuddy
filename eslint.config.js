@@ -65,6 +65,10 @@ export default [
         { ignore: ["cmdk-input-wrapper", "toast-close"] },
       ],
       "react-hooks/rules-of-hooks": "error",
+      // Als "warn", damit `lint --quiet` (CI) nicht rot wird, aber ein volles
+      // `eslint .` die Stale-Closure-/Effect-Dependency-Fehlerklasse sichtbar
+      // macht — genau die Klasse, die zuletzt mehrfach Bugs verursacht hat.
+      "react-hooks/exhaustive-deps": "warn",
     },
   },
 ];

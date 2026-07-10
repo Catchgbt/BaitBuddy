@@ -38,7 +38,21 @@ function KiBuddyBetaInner() {
   // Läuft ein fortlaufendes Gespräch? Als Ref, damit die TTS-Callbacks (die in
   // einer alten Closure hängen) immer den aktuellen Wert sehen.
   const conversationActiveRef = useRef(false);
+  // Spiegelt `messages` synchron, damit `ask()` beim Aufbau der Chat-Historie
+  // die soeben hinzugefügten Turns bereits sieht — der State-Update ist zum
+  // Zeitpunkt des Aufrufs noch nicht geflusht (Stale-Closure). Zugleich Guard
+  // gegen State-Updates/TTS nach Unmount.
+  const messagesRef = useRef(messages);
+  const isMountedRef = useRef(true);
   const { speak, stop: stopVoice, isSpeaking } = useElevenLabsVoice();
+
+  // Einzige Schreibstelle für Nachrichten: hält Ref und State synchron und
+  // unterbindet Updates nach dem Unmount.
+  function appendMessages(...items) {
+    if (!isMountedRef.current || items.length === 0) return;
+    messagesRef.current = [...messagesRef.current, ...items];
+    setMessages(messagesRef.current);
+  }
 
   useEffect(() => {
     const loadActiveEvent = async () => {
@@ -70,6 +84,7 @@ function KiBuddyBetaInner() {
   }
 
   async function speakWithElevenLabs(text) {
+    if (!isMountedRef.current) return;
     setStatus("speaking");
     startWave();
     const success = await speak(text, {
@@ -100,7 +115,7 @@ function KiBuddyBetaInner() {
   // Nach jeder Antwort im laufenden Gespräch das Mikrofon automatisch wieder
   // öffnen — so entsteht ein flüssiges Hin und Her, ohne erneut zu tippen.
   function maybeContinueConversation() {
-    if (conversationActiveRef.current && !recRef.current) {
+    if (isMountedRef.current && conversationActiveRef.current && !recRef.current) {
       startListening();
     }
   }
@@ -108,7 +123,7 @@ function KiBuddyBetaInner() {
   function startConversation() {
     setConversationActive(true);
     conversationActiveRef.current = true;
-    setMessages(m => [...m, { role: "system", text: "Gespräch gestartet. Stell mir deine Frage." }]);
+    appendMessages({ role: "system", text: "Gespräch gestartet. Stell mir deine Frage." });
     startListening();
   }
 
@@ -117,25 +132,28 @@ function KiBuddyBetaInner() {
     conversationActiveRef.current = false;
     stopMic();
     stopSpeaking();
-    setMessages(m => [...m, { role: "system", text: "Gespräch beendet." }]);
+    appendMessages({ role: "system", text: "Gespräch beendet." });
   }
 
   async function ask(q, isRetry = false) {
     setStatus("thinking");
     try {
-      const chatMessages = messages
+      // Historie aus der Ref bauen — der auslösende User-Turn wurde bereits über
+      // appendMessages angehängt und ist hier enthalten (kein erneutes Pushen).
+      const chatMessages = messagesRef.current
         .filter(m => m.role !== "system")
         .map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.text }));
-      chatMessages.push({ role: "user", content: q });
 
       const res = await catchgbtChat({
         messages: chatMessages,
         context: "ki_buddy_beta"
       });
 
+      if (!isMountedRef.current) return;
+
       const ans = res?.reply || res?.message || "Keine Antwort erhalten.";
       retryRef.current = 0;
-      setMessages(m => [...m, { role: "assistant", text: ans }]);
+      appendMessages({ role: "assistant", text: ans });
       if (activeEventId) {
         trackAIChat(activeEventId);
       }
@@ -146,13 +164,15 @@ function KiBuddyBetaInner() {
         maybeContinueConversation();
       }
     } catch (error) {
+      if (!isMountedRef.current) return;
+
       // Bei Verbindungsfehlern: Versuche offline Antwort zu finden
       const offlineAnswer = findOfflineBuddyAnswer(q);
 
       if (offlineAnswer) {
         // Offline-Antwort gefunden
         retryRef.current = 0;
-        setMessages(m => [...m, { role: "assistant", text: offlineAnswer }]);
+        appendMessages({ role: "assistant", text: offlineAnswer });
         if (tonAn) {
           speakWithElevenLabs(offlineAnswer);
         } else {
@@ -167,6 +187,7 @@ function KiBuddyBetaInner() {
         retryRef.current += 1;
         setStatus("thinking");
         await new Promise(r => setTimeout(r, 800));
+        if (!isMountedRef.current) return;
         return ask(q, true);
       }
 
@@ -174,7 +195,10 @@ function KiBuddyBetaInner() {
       retryRef.current = 0;
       setStatus("");
       const fallbackMessage = getOfflineBuddyFallback();
-      setMessages(m => [...m, { role: "system", text: "Offline-Modus: Keine Internetverbindung. Verwende vorgefertigte Antworten." }, { role: "assistant", text: fallbackMessage }]);
+      appendMessages(
+        { role: "system", text: "Offline-Modus: Keine Internetverbindung. Verwende vorgefertigte Antworten." },
+        { role: "assistant", text: fallbackMessage }
+      );
       maybeContinueConversation();
     }
   }
@@ -183,7 +207,7 @@ function KiBuddyBetaInner() {
     const q = input.trim();
     if (!q) return;
     setInput("");
-    setMessages(m => [...m, { role: "user", text: q }]);
+    appendMessages({ role: "user", text: q });
     ask(q);
   }
 
@@ -204,7 +228,7 @@ function KiBuddyBetaInner() {
     if (recRef.current) return;
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) {
-      setMessages(m => [...m, { role: "system", text: "Spracherkennung nicht unterstuetzt." }]);
+      appendMessages({ role: "system", text: "Spracherkennung nicht unterstuetzt." });
       return;
     }
     const rec = new SR();
@@ -233,14 +257,14 @@ function KiBuddyBetaInner() {
           setConfidence(Math.round(finalConfidence * 100));
         }
         stopMic();
-        setMessages(m => [...m, { role: "user", text: q }]);
+        appendMessages({ role: "user", text: q });
         ask(q);
       }
     };
 
     rec.onerror = ev => {
       const label = ERROR_LABELS[ev?.error];
-      if (label) setMessages(m => [...m, { role: "system", text: label }]);
+      if (label) appendMessages({ role: "system", text: label });
       stopMic();
     };
     rec.onend = () => { if (recRef.current) stopMic(); };
@@ -261,7 +285,7 @@ function KiBuddyBetaInner() {
         if (conversationActiveRef.current) {
           startListening();
         } else {
-          setMessages(m => [...m, { role: "system", text: "Keine Sprache erkannt (Timeout). Bitte erneut versuchen." }]);
+          appendMessages({ role: "system", text: "Keine Sprache erkannt (Timeout). Bitte erneut versuchen." });
         }
       }
     }, 8000);
@@ -276,12 +300,20 @@ function KiBuddyBetaInner() {
     if (status === "listening") setStatus("");
   }
 
-  useEffect(() => () => {
-    clearTimeout(timeoutRef.current);
-    conversationActiveRef.current = false;
-    try { recRef.current?.stop(); } catch {}
-    recRef.current = null;
-  }, []);
+  useEffect(() => {
+    // Beim (Re-)Mount wieder als aktiv markieren — sonst bliebe die Ref nach dem
+    // StrictMode-Doppelmount auf false stehen.
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      clearTimeout(timeoutRef.current);
+      conversationActiveRef.current = false;
+      clearInterval(waveRef.current);
+      try { recRef.current?.stop(); } catch {}
+      recRef.current = null;
+      try { stopVoice(); } catch {}
+    };
+  }, [stopVoice]);
 
   const avatarGlow = isSpeaking
     ? "0 0 0 3px rgba(34,211,200,0.45)"

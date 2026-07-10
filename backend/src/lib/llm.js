@@ -1,5 +1,11 @@
 // Groq API (OpenAI-kompatibel) – kein SDK nötig, nutzt natives fetch.
+import { fetchWithTimeout } from './fetchWithTimeout.js';
+
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+
+// LLM-Antworten können langsamer sein als andere Upstreams; großzügigeres
+// Timeout, aber immer noch unter dem Vercel-Funktionslimit.
+const LLM_TIMEOUT_MS = 30000;
 
 // Text-Modell und Vision-Modell (für Bildanalyse)
 const TEXT_MODEL = 'llama-3.3-70b-versatile';
@@ -40,14 +46,14 @@ export async function invokeLLM({ prompt, imageBase64 = null }) {
     messages.push({ role: 'user', content: prompt });
   }
 
-  const res = await fetch(GROQ_URL, {
+  const res = await fetchWithTimeout(GROQ_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${apiKey}`
     },
     body: JSON.stringify({ model, messages, max_tokens: 1024 })
-  });
+  }, LLM_TIMEOUT_MS);
 
   if (!res.ok) {
     const body = await res.text().catch(() => '');
@@ -55,5 +61,9 @@ export async function invokeLLM({ prompt, imageBase64 = null }) {
   }
 
   const data = await res.json();
-  return data.choices[0].message.content;
+  const content = data?.choices?.[0]?.message?.content;
+  if (typeof content !== 'string') {
+    throw new Error('Groq API lieferte eine unerwartete Antwortstruktur (keine Nachricht).');
+  }
+  return content;
 }

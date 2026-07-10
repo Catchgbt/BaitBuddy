@@ -13,6 +13,18 @@ export function useSpeechRecognition(options = {}) {
   const recognition = useRef(null);
   const timeoutIdRef = useRef(null);
 
+  // Callbacks in Refs halten, damit sie im Setup-Effect NICHT als Dependency
+  // auftauchen. Sonst würde ein Consumer mit inline (nicht memoisierten)
+  // onResult/onError die SpeechRecognition-Instanz bei jedem Render neu bauen
+  // und aktives Zuhören abbrechen. So bleibt die Instanz stabil, die Callbacks
+  // sind trotzdem immer aktuell.
+  const onResultRef = useRef(onResult);
+  const onErrorRef = useRef(onError);
+  useEffect(() => {
+    onResultRef.current = onResult;
+    onErrorRef.current = onError;
+  });
+
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -44,8 +56,8 @@ export function useSpeechRecognition(options = {}) {
 
       setTranscript(result);
 
-      if (onResult) {
-        onResult(result);
+      if (onResultRef.current) {
+        onResultRef.current(result);
       }
     };
 
@@ -64,8 +76,8 @@ export function useSpeechRecognition(options = {}) {
         console.warn(errorMsg);
         toast.error(`Sprachfehler: ${event.error}`);
 
-        if (onError) {
-          onError(new Error(errorMsg));
+        if (onErrorRef.current) {
+          onErrorRef.current(new Error(errorMsg));
         }
       }
     };
@@ -85,7 +97,7 @@ export function useSpeechRecognition(options = {}) {
         clearTimeout(timeoutIdRef.current);
       }
     };
-  }, [language, timeout, onResult, onError]);
+  }, [language, timeout]);
 
   const start = useCallback(() => {
     if (recognition.current && !isListening) {
