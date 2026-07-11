@@ -5,8 +5,8 @@ import React from 'react';
 
 // Gleiche Mocks wie im AIBuddyWidget-Test: Der Stub lädt das volle Widget als
 // Lazy-Chunk nach, dessen schwere Abhängigkeiten hier nicht relevant sind.
-vi.mock('@/components/ai/JuleAvatar', () => ({
-  default: () => <div data-testid="jule-avatar" />,
+vi.mock('@/components/ai/BuddyAvatar', () => ({
+  default: () => <div data-testid="buddy-avatar" />,
 }));
 vi.mock('@/lib/AuthContext', () => ({
   useAuth: () => ({ user: null }),
@@ -109,7 +109,7 @@ describe('AIBuddyWidgetStub – erster Klick öffnet den Chat', () => {
   it('zeigt beim Öffnen einer Seite die seitenspezifische Frage-Blase (ohne Widget-Chunk)', async () => {
     renderStub(['/Weather']);
 
-    const bubble = await screen.findByLabelText('Chat mit Jule öffnen', {}, { timeout: 3000 });
+    const bubble = await screen.findByLabelText('Chat mit dem KI-Buddy öffnen', {}, { timeout: 3000 });
     expect(bubble).toHaveTextContent('Soll ich dir sagen, ob das Wetter heute zum Angeln passt?');
 
     // Der volle Chat ist dabei noch NICHT geladen/offen.
@@ -119,7 +119,7 @@ describe('AIBuddyWidgetStub – erster Klick öffnet den Chat', () => {
   it('öffnet den vollen Chat beim Tippen auf die Frage-Blase', async () => {
     renderStub(['/Weather']);
 
-    const bubble = await screen.findByLabelText('Chat mit Jule öffnen', {}, { timeout: 3000 });
+    const bubble = await screen.findByLabelText('Chat mit dem KI-Buddy öffnen', {}, { timeout: 3000 });
     fireEvent.click(bubble);
 
     expect(
@@ -134,14 +134,14 @@ describe('AIBuddyWidgetStub – erster Klick öffnet den Chat', () => {
 
     renderStub(['/Weather']);
 
-    const bubble = await screen.findByLabelText('Chat mit Jule öffnen', {}, { timeout: 3000 });
+    const bubble = await screen.findByLabelText('Chat mit dem KI-Buddy öffnen', {}, { timeout: 3000 });
     expect(bubble).toHaveTextContent('Soll ich dir sagen, ob das Wetter heute zum Angeln passt?');
   });
 
   it('zeigt bei jedem Seitenwechsel erneut die Frage zur neuen Funktion', async () => {
     renderStub(['/Weather'], { withNavTo: '/Map' });
 
-    const bubble = await screen.findByLabelText('Chat mit Jule öffnen', {}, { timeout: 3000 });
+    const bubble = await screen.findByLabelText('Chat mit dem KI-Buddy öffnen', {}, { timeout: 3000 });
     expect(bubble).toHaveTextContent('Soll ich dir sagen, ob das Wetter heute zum Angeln passt?');
 
     fireEvent.click(screen.getByText('navigiere-/Map'));

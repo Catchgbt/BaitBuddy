@@ -10,7 +10,7 @@ Capacitor-WebView verpackt.
 
 ## 🎯 Key Features
 
-**Intelligenter KI-Buddy (Jule)**
+**Intelligenter KI-Buddy**
 - Kontextbewusste Antworten auf Basis von Fangbuch, Wetter und Schonzeiten
 - Foto-Analyse: Fischart-Erkennung und Größen-/Gewichtsschätzung
 - Optionaler Voice-Chat (Web Speech API, ElevenLabs TTS, OpenAI Realtime)
@@ -175,7 +175,7 @@ npm run test:e2e   # Playwright-Smoke (nicht-blockierend in CI)
 
 ---
 
-## 🤖 KI-Buddy (Jule)
+## 🤖 KI-Buddy
 
 - Kontextuelle Antworten auf Basis von Fangbuch, Wetter und Schonzeiten
 - Foto-Analyse: Fischart-Erkennung und Gewichtsschätzung (Groq Vision)

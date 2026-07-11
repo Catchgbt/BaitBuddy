@@ -49,7 +49,7 @@ _"BaitBuddy benötigt Kamerazugriff, um Fotos von Ihren Fängen und Ausrüstung 
 
 - **Erforderlich für:**
   - Sprachgespräche mit KI-Buddy (Voice Chat)
-  - Spracherkennung für Fragen an Jule
+  - Spracherkennung für Fragen an den KI-Buddy
   - Optionale Voice-to-Text Eingabe
 
 - **Datenschutz:**

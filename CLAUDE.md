@@ -75,7 +75,7 @@ Der **KI-Buddy** ist zentrales Feature mit oberster Priorität. Muss reibungslos
 ### Architektur
 - **Frontend**: verteilt über mehrere Stellen (es gibt **kein** `src/components/KiBuddy/`-Verzeichnis):
   - `src/components/layout/AIBuddyWidget.jsx` — das schwebende Chat-Widget (Haupt-Surface)
-  - `src/pages/KiBuddyBeta.jsx` — eigenständige Voice-Buddy-Seite (Jule)
+  - `src/pages/KiBuddyBeta.jsx` — eigenständige Voice-Buddy-Seite
   - `src/components/ai/`, `src/components/chatbot/`, `src/components/home/MiniKiBuddy*.jsx`
   - Hooks: `useChatMessages`, `useSpeechRecognition`, `useElevenLabsVoice`
 - **Backend**: `backend/src/routes/ai.js` (`POST /api/ai/chat` u. a.) mit `backend/src/lib/llm.js` für die LLM-Anbindung. (Es gibt **kein** `api/routes/kibuddy.js`.)

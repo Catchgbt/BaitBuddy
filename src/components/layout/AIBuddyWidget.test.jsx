@@ -5,8 +5,8 @@ import React from 'react';
 
 // Schwere/irrelevante Abhängigkeiten mocken, damit der Test das Verhalten der
 // Chat-Logik isoliert prüft (KI-Buddy: robuste Fehlerbehandlung + Voice-Setting).
-vi.mock('@/components/ai/JuleAvatar', () => ({
-  default: () => <div data-testid="jule-avatar" />,
+vi.mock('@/components/ai/BuddyAvatar', () => ({
+  default: () => <div data-testid="buddy-avatar" />,
 }));
 vi.mock('@/lib/AuthContext', () => ({
   useAuth: () => ({ user: null }),
@@ -130,7 +130,7 @@ describe('AIBuddyWidget – Chat-Verhalten', () => {
   it('meldet sich beim Öffnen einer Seite mit einer seitenspezifischen Frage in der kleinen Blase', async () => {
     renderWidget(['/Weather']);
 
-    const bubble = await screen.findByLabelText('Chat mit Jule öffnen', {}, { timeout: 3000 });
+    const bubble = await screen.findByLabelText('Chat mit dem KI-Buddy öffnen', {}, { timeout: 3000 });
     expect(bubble).toHaveTextContent('Soll ich dir sagen, ob das Wetter heute zum Angeln passt?');
 
     // Der volle Chat ist dabei noch NICHT offen.
@@ -144,14 +144,14 @@ describe('AIBuddyWidget – Chat-Verhalten', () => {
 
     renderWidget(['/Weather']);
 
-    const bubble = await screen.findByLabelText('Chat mit Jule öffnen', {}, { timeout: 3000 });
+    const bubble = await screen.findByLabelText('Chat mit dem KI-Buddy öffnen', {}, { timeout: 3000 });
     expect(bubble).toHaveTextContent('Soll ich dir sagen, ob das Wetter heute zum Angeln passt?');
   });
 
   it('öffnet den vollen Chat, wenn man auf die kleine Frage-Blase tippt', async () => {
     renderWidget(['/Weather']);
 
-    const bubble = await screen.findByLabelText('Chat mit Jule öffnen', {}, { timeout: 3000 });
+    const bubble = await screen.findByLabelText('Chat mit dem KI-Buddy öffnen', {}, { timeout: 3000 });
     fireEvent.click(bubble);
 
     expect(await screen.findByLabelText('Chat-Eingabefeld')).toBeInTheDocument();

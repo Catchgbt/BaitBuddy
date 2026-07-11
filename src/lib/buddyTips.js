@@ -1,6 +1,6 @@
 // Seiten-spezifische KI-Buddy Tipps
 // Format: pageName -> { title, message, question, suggestions }
-// - question: kurze, seitenspezifische Frage, mit der Jule sich in der kleinen
+// - question: kurze, seitenspezifische Frage, mit der sich der KI-Buddy in der kleinen
 //   Sprechblase meldet, sobald eine Seite zum ersten Mal geöffnet wird.
 
 export const BUDDY_TIPS = {
@@ -255,7 +255,7 @@ export function getTipForPage(pageName) {
 }
 
 /**
- * Hole die seitenspezifische Frage, mit der Jule sich beim ersten Öffnen einer
+ * Hole die seitenspezifische Frage, mit der sich der KI-Buddy beim ersten Öffnen einer
  * Seite in der kleinen Sprechblase meldet.
  * @param {string} pageName - Name der Seite (z.B. "Dashboard", "Weather")
  * @returns {string} Seitenspezifische Frage

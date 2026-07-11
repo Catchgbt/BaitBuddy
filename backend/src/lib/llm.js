@@ -13,7 +13,7 @@ const VISION_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
 
 // Transiente Upstream-Fehler (Rate-Limit, Gateway-/Server-Fehler) einmal kurz
 // erneut versuchen, statt sie sofort als 5xx durchzureichen — direkt relevant
-// für Jules Zuverlässigkeit. MAX_LLM_RETRIES sind ZUSÄTZLICHE Versuche.
+// für die Zuverlässigkeit des KI-Buddys. MAX_LLM_RETRIES sind ZUSÄTZLICHE Versuche.
 const MAX_LLM_RETRIES = 2;
 const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
 

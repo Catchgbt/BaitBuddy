@@ -4,7 +4,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { BUDDY_AVATAR_SIZE, BUDDY_TIMEOUTS, BUDDY_STORAGE_KEYS } from '@/lib/buddyStorageKeys';
 import { getQuestionForPage, getPageNameFromPathname } from '@/lib/buddyTips';
 import { speakWithBrowserTTS } from '@/components/utils/browserTTS';
-import JuleAvatar from '@/components/ai/JuleAvatar';
+import BuddyAvatar from '@/components/ai/BuddyAvatar';
 
 const AVATAR_SIZE = BUDDY_AVATAR_SIZE;
 
@@ -299,7 +299,7 @@ function SimpleAvatar({ onClickAvatar, lastTouchRef, bubbleText, showBubble, onB
             style={bubbleStyle}
             role="button"
             tabIndex={0}
-            aria-label="Chat mit Jule öffnen"
+            aria-label="Chat mit dem KI-Buddy öffnen"
             onClick={onBubbleClick}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
@@ -334,7 +334,7 @@ function SimpleAvatar({ onClickAvatar, lastTouchRef, bubbleText, showBubble, onB
         }}
       >
         <div className="relative w-14 h-14 drop-shadow-lg">
-          <JuleAvatar size={56} />
+          <BuddyAvatar size={56} />
         </div>
       </motion.div>
     </div>

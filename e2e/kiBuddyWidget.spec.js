@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { installApiMocks } from './fixtures/apiMock.js';
 
-// Regressionstest fuer den KI-Buddy: Ein Klick auf den schwebenden Jule-Avatar
+// Regressionstest fuer den KI-Buddy: Ein Klick auf den schwebenden KI-Buddy-Avatar
 // muss den Chat sichtbar oeffnen. Der Bug dahinter: `contain: layout style paint`
 // auf [role="region"] (globals.css) clippte die absolut positionierte Chat-Blase
 // auf die 56x56px-Box des Widget-Wrappers — der Chat war im DOM "visible", wurde
@@ -22,7 +22,7 @@ test.describe('KI-Buddy Widget', () => {
     // Avatar des Widget-Stubs (schwebt unten rechts). Klick per Koordinaten:
     // Die Endlos-Schwebe-Animation (framer-motion) laesst Playwrights
     // Stabilitaets-Check bei element.click() sonst haengen.
-    const avatar = page.locator('.fixed.z-50 img[alt="Jule"]').last();
+    const avatar = page.locator('.fixed.z-50 svg[aria-label="KI-Buddy"]').last();
     await avatar.waitFor({ state: 'visible', timeout: 15_000 });
     const box = await avatar.boundingBox();
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
