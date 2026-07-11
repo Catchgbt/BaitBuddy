@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import JuleAvatar from '@/components/ai/JuleAvatar';
-import { getTipForPage } from '@/lib/buddyTips';
-import { getRandomBuddyJoke, getRandomFarewellMessage } from '@/lib/buddyJokes';
+import { getTipForPage, getQuestionForPage } from '@/lib/buddyTips';
+import { getRandomFarewellMessage } from '@/lib/buddyJokes';
 import { useAuth } from '@/lib/AuthContext';
 import { ai } from '@/api/frontendClient';
 import { speakWithFallback } from '@/components/utils/elevenLabsTTS';
@@ -184,7 +184,10 @@ export default function AIBuddyWidget() {
 
   // Auto-Scroll bei neuen Nachrichten wird zentral in useChatMessages erledigt.
 
-  // Page tracking for auto-open & jokes
+  // Page tracking: Beim ersten Öffnen einer Seite meldet sich Jule mit einer
+  // seitenspezifischen Frage zur Funktion in der kleinen Sprechblase. Der volle
+  // Chat öffnet sich erst per Klick (auf Blase oder Avatar) – nicht mehr
+  // automatisch.
   useEffect(() => {
     cleanupVisitedPages();
 
@@ -202,22 +205,29 @@ export default function AIBuddyWidget() {
       const hasVisited = visited.includes(currentPage);
 
       if (!hasVisited && !isOpen) {
-        setIsOpen(true);
         addVisitedPage(currentPage);
 
-        const timer = setTimeout(() => setIsOpen(false), 5000);
-        let jokeTimer = null;
+        // Kleine Verzögerung, damit der Seitenwechsel visuell abgeschlossen ist,
+        // bevor die Frage-Blase erscheint.
+        const questionTimer = setTimeout(() => {
+          const question = getQuestionForPage(currentPage);
+          showSmallBubbleWithText(question, { farewell: false });
 
-        if (buddyVoiceEnabled) {
-          jokeTimer = setTimeout(() => {
-            const joke = getRandomBuddyJoke();
-            showSmallBubbleWithText(joke);
-          }, 6000);
-        }
+          if (buddyVoiceEnabled) {
+            speakWithFallback(question, {
+              voiceEnabled: buddyVoiceEnabled,
+              lang: 'de-DE',
+              rate: 1.0,
+            }).catch(() => {
+              speakWithBrowserTTS(question, { lang: 'de-DE', rate: 1.0 }).catch(() => {
+                /* TTS ist optional */
+              });
+            });
+          }
+        }, 800);
 
         return () => {
-          clearTimeout(timer);
-          if (jokeTimer) clearTimeout(jokeTimer);
+          clearTimeout(questionTimer);
         };
       }
     } catch {}
@@ -440,23 +450,41 @@ export default function AIBuddyWidget() {
     setIsOpen(true);
   }, [showWidget]);
 
-  // Small bubble with auto-close & farewell
-  const showSmallBubbleWithText = useCallback((text) => {
+  // Small bubble with auto-close & optional farewell
+  const showSmallBubbleWithText = useCallback((text, { farewell = true } = {}) => {
     setSmallBubbleText(text);
     setShowSmallBubble(true);
 
     if (smallBubbleTimerRef.current) clearTimeout(smallBubbleTimerRef.current);
     if (userActivityTimerRef.current) clearTimeout(userActivityTimerRef.current);
 
+    // Frage-Blasen (farewell: false) blenden nach Ablauf einfach aus, ohne die
+    // Abschieds-Nachricht – sie sollen zum Antippen einladen, nicht abwiegeln.
+    if (!farewell) {
+      smallBubbleTimerRef.current = setTimeout(() => {
+        setShowSmallBubble(false);
+      }, BUDDY_TIMEOUTS.SMALL_BUBBLE);
+      return;
+    }
+
     userActivityTimerRef.current = setTimeout(() => {
-      const farewell = getRandomFarewellMessage();
-      setSmallBubbleText(farewell);
+      const farewellMsg = getRandomFarewellMessage();
+      setSmallBubbleText(farewellMsg);
 
       smallBubbleTimerRef.current = setTimeout(() => {
         setShowSmallBubble(false);
       }, 2000);
     }, BUDDY_TIMEOUTS.SMALL_BUBBLE);
   }, []);
+
+  // Klick/Tap auf die kleine Frage-Blase öffnet den vollen Chat.
+  const handleSmallBubbleClick = useCallback(() => {
+    if (smallBubbleTimerRef.current) clearTimeout(smallBubbleTimerRef.current);
+    if (userActivityTimerRef.current) clearTimeout(userActivityTimerRef.current);
+    setShowSmallBubble(false);
+    showWidget();
+    setIsOpen(true);
+  }, [showWidget]);
 
   // Cleanup timers
   useEffect(() => {
@@ -546,10 +574,23 @@ export default function AIBuddyWidget() {
               initial={{ opacity: 0, scale: 0.8, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.8, y: 10 }}
-              className="bg-white border-2 border-blue-300 rounded-2xl px-4 py-3 shadow-lg max-w-xs whitespace-normal"
+              className="bg-white border-2 border-blue-300 rounded-2xl px-4 py-3 shadow-lg max-w-xs whitespace-normal cursor-pointer hover:border-blue-400 transition-colors"
               style={smallBubbleStyle}
+              role="button"
+              tabIndex={0}
+              aria-label="Chat mit Jule öffnen"
+              onClick={handleSmallBubbleClick}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSmallBubbleClick();
+                }
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
             >
               <p className="text-sm text-gray-800 leading-relaxed">{smallBubbleText}</p>
+              <p className="text-xs text-blue-500 mt-1">Tippen zum Chatten</p>
               <div className={`absolute ${isOnRight ? 'right-8' : 'left-8'} -bottom-2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-blue-300`} />
             </motion.div>
           )}

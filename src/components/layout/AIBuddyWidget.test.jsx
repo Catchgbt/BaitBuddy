@@ -32,15 +32,24 @@ import AIBuddyWidget from './AIBuddyWidget';
 import { ai } from '@/api/frontendClient';
 import { speakWithFallback } from '@/components/utils/elevenLabsTTS';
 
-function renderWidget() {
+function renderWidget(initialEntries = ['/dashboard']) {
   return render(
-    <MemoryRouter initialEntries={['/dashboard']}>
+    <MemoryRouter initialEntries={initialEntries}>
       <AIBuddyWidget />
     </MemoryRouter>
   );
 }
 
+// Der volle Chat öffnet sich nicht mehr automatisch – ein Tap auf den Avatar
+// klappt ihn auf.
+function openChatViaAvatar() {
+  const avatar = document.querySelector('.cursor-grab');
+  fireEvent.touchStart(avatar, { touches: [{ clientX: 200, clientY: 400 }] });
+  fireEvent.touchEnd(avatar, { changedTouches: [{ clientX: 200, clientY: 400 }] });
+}
+
 async function sendMessage(text) {
+  openChatViaAvatar();
   const input = await screen.findByLabelText('Chat-Eingabefeld');
   fireEvent.change(input, { target: { value: text } });
   fireEvent.keyDown(input, { key: 'Enter' });
@@ -118,5 +127,25 @@ describe('AIBuddyWidget – Chat-Verhalten', () => {
     fireEvent.mouseUp(document);
 
     expect(screen.getByLabelText('Chat-Eingabefeld')).toBeInTheDocument();
+  });
+
+  it('meldet sich beim ersten Öffnen einer Seite mit einer seitenspezifischen Frage in der kleinen Blase', async () => {
+    // Weather ist noch nicht besucht -> Jule stellt die Weather-Frage.
+    renderWidget(['/Weather']);
+
+    const bubble = await screen.findByLabelText('Chat mit Jule öffnen', {}, { timeout: 3000 });
+    expect(bubble).toHaveTextContent('Soll ich dir sagen, ob das Wetter heute zum Angeln passt?');
+
+    // Der volle Chat ist dabei noch NICHT offen.
+    expect(screen.queryByLabelText('Chat-Eingabefeld')).not.toBeInTheDocument();
+  });
+
+  it('öffnet den vollen Chat, wenn man auf die kleine Frage-Blase tippt', async () => {
+    renderWidget(['/Weather']);
+
+    const bubble = await screen.findByLabelText('Chat mit Jule öffnen', {}, { timeout: 3000 });
+    fireEvent.click(bubble);
+
+    expect(await screen.findByLabelText('Chat-Eingabefeld')).toBeInTheDocument();
   });
 });
