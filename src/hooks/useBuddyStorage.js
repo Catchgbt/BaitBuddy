@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { BUDDY_DRAG_DEBOUNCE } from '@/lib/buddyStorageKeys';
+import { BUDDY_DRAG_DEBOUNCE, BUDDY_AVATAR_SIZE } from '@/lib/buddyStorageKeys';
 
 const STORAGE_KEYS = {
   WIDGET_POSITION: 'buddy-widget-pos',
@@ -13,7 +13,15 @@ export function useBuddyStorage() {
     try {
       const stored = localStorage.getItem(STORAGE_KEYS.WIDGET_POSITION);
       if (stored) {
-        return JSON.parse(stored);
+        // Gespeicherte Position auf den aktuellen Viewport clampen — sie kann
+        // von einem groesseren Screen (Rotation, anderes Geraet) stammen und
+        // laege sonst ausserhalb des sichtbaren Bereichs.
+        const parsed = JSON.parse(stored);
+        if (typeof window === 'undefined') return parsed;
+        return {
+          x: Math.max(0, Math.min(parsed?.x || 0, window.innerWidth - BUDDY_AVATAR_SIZE)),
+          y: Math.max(0, Math.min(parsed?.y || 0, window.innerHeight - BUDDY_AVATAR_SIZE)),
+        };
       }
     } catch {}
     return null;

@@ -33,8 +33,13 @@ function BathymetricCrowdsourcingInner() {
   }, []);
 
   const loadUser = async () => {
-    const u = await auth.me();
-    setUser(u);
+    try {
+      const u = await auth.me();
+      setUser(u);
+    } catch {
+      // Gast (kein Token): user bleibt null, Admin-Funktionen bleiben aus.
+      setUser(null);
+    }
   };
 
   const loadMaps = async () => {

@@ -87,13 +87,17 @@
     -webkit-user-select: none;
   }
   
-  /* Live region styling - ARIA compatible */
+  /* Live region styling - ARIA compatible.
+     Wichtig: [role="region"] gehoert NICHT hierher — das ist eine generische
+     Landmark-Rolle (kein Live-Region-Attribut). "contain: paint" clippt alle
+     Kinder auf die Box des Elements und hat z. B. die absolut positionierte
+     Chat-Blase des KI-Buddy-Widgets (56x56px-Wrapper mit role="region")
+     komplett weggeschnitten. */
   [aria-live="polite"],
   [aria-live="assertive"],
   [role="status"],
   [role="alert"],
-  [role="log"],
-  [role="region"] {
+  [role="log"] {
    contain: layout style paint;
   }
 
