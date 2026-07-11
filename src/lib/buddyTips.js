@@ -231,6 +231,18 @@ export const DEFAULT_TIP = {
 };
 
 /**
+ * Leite den Seitennamen aus dem Router-Pathname ab (erstes Pfadsegment).
+ * Die Startseite "/" rendert laut pages.config die Home-Seite, deshalb
+ * fällt der leere Pfad auf "Home" zurück.
+ * @param {string} pathname - location.pathname (z.B. "/Weather", "/events/123")
+ * @returns {string} Seitenname passend zu den BUDDY_TIPS-Keys
+ */
+export function getPageNameFromPathname(pathname) {
+  const first = (pathname || '').replace(/^\//, '').split('/')[0];
+  return first || 'Home';
+}
+
+/**
  * Hole den Tip für eine Seite basierend auf pageName
  * @param {string} pageName - Name der Seite (z.B. "Dashboard", "Weather")
  * @returns {object} Tip-Objekt mit title, message, question, suggestions
