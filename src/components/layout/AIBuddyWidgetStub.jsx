@@ -1,6 +1,9 @@
-import React, { useState, lazy, Suspense } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
-import { BUDDY_AVATAR_SIZE, BUDDY_TIMEOUTS } from '@/lib/buddyStorageKeys';
+import React, { useState, useRef, useEffect, useCallback, lazy, Suspense } from 'react';
+import { useLocation } from 'react-router-dom';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { BUDDY_AVATAR_SIZE, BUDDY_TIMEOUTS, BUDDY_STORAGE_KEYS } from '@/lib/buddyStorageKeys';
+import { getQuestionForPage, getPageNameFromPathname } from '@/lib/buddyTips';
+import { speakWithBrowserTTS } from '@/components/utils/browserTTS';
 import JuleAvatar from '@/components/ai/JuleAvatar';
 
 const AVATAR_SIZE = BUDDY_AVATAR_SIZE;
@@ -27,30 +30,123 @@ function getDefaultPos() {
 }
 
 export default function AIBuddyWidgetStub() {
+  const location = useLocation();
   const [widgetLoaded, setWidgetLoaded] = useState(false);
 
-  // Avatar click triggers lazy load and open
-  const handleAvatarClick = () => {
+  // Zeitstempel des letzten Taps auf den Stub-Avatar. Wird an das nachgeladene
+  // Widget durchgereicht, damit dessen Geister-Mausevent-Guard den Tap kennt,
+  // der den Chunk geladen hat — sonst würde der vom Browser synthetisierte
+  // Kompatibilitäts-Mausklick den frisch geöffneten Chat sofort wieder schließen.
+  const lastTouchRef = useRef(0);
+
+  // Seitenspezifische Frage-Blase: Meldet sich beim ersten Besuch einer Seite,
+  // solange nur der Stub gemountet ist. Ohne diese Logik hier erschiene die
+  // Frage nie, denn das volle Widget (das sie ebenfalls kann) wird erst nach
+  // dem ersten Klick geladen.
+  const [bubbleText, setBubbleText] = useState('');
+  const [showBubble, setShowBubble] = useState(false);
+  const bubbleTimerRef = useRef(null);
+  const hideTimerRef = useRef(null);
+
+  const currentPage = getPageNameFromPathname(location.pathname);
+
+  // Klick auf Avatar oder Frage-Blase: Widget-Chunk laden UND den Chat direkt
+  // öffnen (initialOpen). Vorher lud der erste Klick nur den Chunk nach, der
+  // Chat blieb zu — für den Nutzer sah das aus, als würde nichts passieren.
+  const loadWidgetOpen = useCallback(() => {
+    if (bubbleTimerRef.current) clearTimeout(bubbleTimerRef.current);
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    setShowBubble(false);
     setWidgetLoaded(true);
-  };
+  }, []);
+
+  useEffect(() => {
+    if (widgetLoaded) return undefined;
+
+    try {
+      if (localStorage.getItem(BUDDY_STORAGE_KEYS.WIDGET_HIDDEN) === 'true') return undefined;
+
+      const visited = JSON.parse(
+        localStorage.getItem(BUDDY_STORAGE_KEYS.VISITED_PAGES) || '[]'
+      );
+      if (visited.includes(currentPage)) return undefined;
+    } catch {
+      return undefined;
+    }
+
+    // Kleine Verzögerung, damit der Seitenwechsel visuell abgeschlossen ist,
+    // bevor die Frage-Blase erscheint. Die Seite wird erst hier als besucht
+    // markiert (nicht schon im Effekt-Body), damit der doppelte Effekt-Lauf
+    // in React.StrictMode die Blase nicht verschluckt.
+    bubbleTimerRef.current = setTimeout(() => {
+      try {
+        const visited = JSON.parse(
+          localStorage.getItem(BUDDY_STORAGE_KEYS.VISITED_PAGES) || '[]'
+        );
+        if (!visited.includes(currentPage)) {
+          visited.push(currentPage);
+          localStorage.setItem(BUDDY_STORAGE_KEYS.VISITED_PAGES, JSON.stringify(visited));
+        }
+      } catch {}
+
+      const question = getQuestionForPage(currentPage);
+      setBubbleText(question);
+      setShowBubble(true);
+
+      try {
+        if (localStorage.getItem(BUDDY_STORAGE_KEYS.VOICE_ENABLED) !== 'false') {
+          speakWithBrowserTTS(question, { lang: 'de-DE', rate: 1.0 }).catch(() => {
+            /* TTS ist optional */
+          });
+        }
+      } catch {}
+
+      hideTimerRef.current = setTimeout(() => {
+        setShowBubble(false);
+      }, BUDDY_TIMEOUTS.SMALL_BUBBLE);
+    }, 800);
+
+    return () => {
+      if (bubbleTimerRef.current) clearTimeout(bubbleTimerRef.current);
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    };
+  }, [currentPage, widgetLoaded]);
 
   if (!widgetLoaded) {
-    return <SimpleAvatar onClickAvatar={handleAvatarClick} />;
+    return (
+      <SimpleAvatar
+        onClickAvatar={loadWidgetOpen}
+        lastTouchRef={lastTouchRef}
+        bubbleText={bubbleText}
+        showBubble={showBubble}
+        onBubbleClick={loadWidgetOpen}
+      />
+    );
   }
 
   // Solange der Widget-Chunk lädt, bleibt der Avatar sichtbar (kein Flackern).
   return (
-    <Suspense fallback={<SimpleAvatar onClickAvatar={handleAvatarClick} />}>
-      <AIBuddyWidget />
+    <Suspense
+      fallback={
+        <SimpleAvatar
+          onClickAvatar={loadWidgetOpen}
+          lastTouchRef={lastTouchRef}
+          bubbleText={bubbleText}
+          showBubble={false}
+          onBubbleClick={loadWidgetOpen}
+        />
+      }
+    >
+      <AIBuddyWidget initialOpen initialLastTouch={lastTouchRef.current} />
     </Suspense>
   );
 }
 
-function SimpleAvatar({ onClickAvatar }) {
+function SimpleAvatar({ onClickAvatar, lastTouchRef, bubbleText, showBubble, onBubbleClick }) {
   const prefersReducedMotion = useReducedMotion();
   const [pos, setPos] = useState(() => {
     try {
-      const stored = localStorage.getItem('buddy-widget-pos');
+      const stored = localStorage.getItem(BUDDY_STORAGE_KEYS.WIDGET_POSITION);
       return stored ? JSON.parse(stored) : getDefaultPos();
     } catch {
       return getDefaultPos();
@@ -74,12 +170,10 @@ function SimpleAvatar({ onClickAvatar }) {
     moved: false,
   });
 
-  // Siehe AIBuddyWidget: verhindert, dass die vom Browser nach einem Tap
-  // synthetisierten Geister-Mausevents den Klick ein zweites Mal auslösen.
-  const lastTouchRef = React.useRef(0);
-
   const handleMouseDown = React.useCallback(
     (e) => {
+      // Siehe AIBuddyWidget: verhindert, dass die vom Browser nach einem Tap
+      // synthetisierten Geister-Mausevents den Klick ein zweites Mal auslösen.
       if (Date.now() - lastTouchRef.current < 700) return;
       e.preventDefault();
       if (dragStateRef.current.active) return;
@@ -108,7 +202,7 @@ function SimpleAvatar({ onClickAvatar }) {
           const newPos = clampPos(ev.clientX - ds.offsetX, ev.clientY - ds.offsetY);
           setPos(newPos);
           try {
-            localStorage.setItem('buddy-widget-pos', JSON.stringify(newPos));
+            localStorage.setItem(BUDDY_STORAGE_KEYS.WIDGET_POSITION, JSON.stringify(newPos));
           } catch {}
         }
       };
@@ -126,7 +220,7 @@ function SimpleAvatar({ onClickAvatar }) {
       document.addEventListener('mousemove', onMove);
       document.addEventListener('mouseup', onUp);
     },
-    [pos, onClickAvatar]
+    [pos, onClickAvatar, lastTouchRef]
   );
 
   const handleTouchStart = React.useCallback(
@@ -144,7 +238,7 @@ function SimpleAvatar({ onClickAvatar }) {
         moved: false,
       };
     },
-    [pos]
+    [pos, lastTouchRef]
   );
 
   const handleTouchMove = React.useCallback((e) => {
@@ -162,7 +256,7 @@ function SimpleAvatar({ onClickAvatar }) {
       const newPos = clampPos(touch.clientX - ds.offsetX, touch.clientY - ds.offsetY);
       setPos(newPos);
       try {
-        localStorage.setItem('buddy-widget-pos', JSON.stringify(newPos));
+        localStorage.setItem(BUDDY_STORAGE_KEYS.WIDGET_POSITION, JSON.stringify(newPos));
       } catch {}
       e.preventDefault();
     }
@@ -175,9 +269,17 @@ function SimpleAvatar({ onClickAvatar }) {
     if (!wasDrag) {
       onClickAvatar();
     }
-  }, [onClickAvatar]);
+  }, [onClickAvatar, lastTouchRef]);
 
   const currentPos = pos || getDefaultPos();
+  const isOnRight = currentPos.x + AVATAR_SIZE / 2 > (typeof window !== 'undefined' ? window.innerWidth / 2 : 200);
+  const isOnBottom = currentPos.y + AVATAR_SIZE / 2 > (typeof window !== 'undefined' ? window.innerHeight / 2 : 400);
+
+  const bubbleStyle = {
+    position: 'absolute',
+    ...(isOnBottom ? { bottom: AVATAR_SIZE + 12 } : { top: AVATAR_SIZE + 12 }),
+    ...(isOnRight ? { right: 0 } : { left: 0 }),
+  };
 
   return (
     <div
@@ -189,6 +291,34 @@ function SimpleAvatar({ onClickAvatar }) {
         height: AVATAR_SIZE,
       }}
     >
+      <AnimatePresence>
+        {showBubble && bubbleText && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 10 }}
+            className="bg-white border-2 border-blue-300 rounded-2xl px-4 py-3 shadow-lg max-w-xs whitespace-normal cursor-pointer hover:border-blue-400 transition-colors"
+            style={bubbleStyle}
+            role="button"
+            tabIndex={0}
+            aria-label="Chat mit Jule öffnen"
+            onClick={onBubbleClick}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onBubbleClick();
+              }
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+          >
+            <p className="text-sm text-gray-800 leading-relaxed">{bubbleText}</p>
+            <p className="text-xs text-blue-500 mt-1">Tippen zum Chatten</p>
+            <div className={`absolute ${isOnRight ? 'right-8' : 'left-8'} -bottom-2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-blue-300`} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <motion.div
         className="relative cursor-grab active:cursor-grabbing select-none touch-none"
         onMouseDown={handleMouseDown}

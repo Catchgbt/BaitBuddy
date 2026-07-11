@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import JuleAvatar from '@/components/ai/JuleAvatar';
-import { getTipForPage, getQuestionForPage } from '@/lib/buddyTips';
+import { getTipForPage, getQuestionForPage, getPageNameFromPathname } from '@/lib/buddyTips';
 import { getRandomFarewellMessage } from '@/lib/buddyJokes';
 import { useAuth } from '@/lib/AuthContext';
 import { ai } from '@/api/frontendClient';
@@ -96,7 +96,11 @@ const ChatInput = React.memo(function ChatInput({ isLoading, isListening, onSend
   );
 });
 
-export default function AIBuddyWidget() {
+// initialOpen: true, wenn das Widget als Reaktion auf einen Nutzer-Klick (Stub)
+// gemountet wird — der Chat soll dann sofort offen sein, nicht erst nach einem
+// zweiten Klick. initialLastTouch übernimmt den Zeitstempel des Stub-Taps,
+// damit der Geister-Mausevent-Guard über den Stub→Widget-Wechsel hinweg greift.
+export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 0 } = {}) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -124,7 +128,7 @@ export default function AIBuddyWidget() {
   } = useBuddyStorage();
 
   // Local UI states
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(initialOpen);
   const [isTalking, setIsTalking] = useState(false);
 
   // Persisted state to localStorage
@@ -157,8 +161,18 @@ export default function AIBuddyWidget() {
   // (mousedown/mouseup ~300 ms später) aus. Ohne diesen Guard toggelt der Tap
   // den Chat auf (touchend) und sofort wieder zu (mouseup) — für den Nutzer
   // „passiert nix". Der Zeitstempel lässt den Maus-Handler diese Geister-Events
-  // ignorieren.
-  const lastTouchRef = useRef(0);
+  // ignorieren. Startwert kommt vom Stub (initialLastTouch), damit der Guard
+  // auch für den Tap greift, der das Widget überhaupt erst nachgeladen hat.
+  const lastTouchRef = useRef(initialLastTouch);
+
+  // Wurde das Widget per Klick auf den Stub-Avatar geöffnet, muss ein zuvor
+  // gesetztes Hidden-Flag zurückgenommen werden, sonst bleibt der Chat trotz
+  // isOpen unsichtbar (Bubbles sind an !isHidden gekoppelt).
+  useEffect(() => {
+    if (initialOpen) {
+      showWidget();
+    }
+  }, [initialOpen, showWidget]);
 
   // Stabiler Speech-Callback: verhindert, dass useSpeechRecognition die
   // Recognition-Instanz bei jedem Render neu aufbaut (das würde eine laufende
@@ -179,7 +193,7 @@ export default function AIBuddyWidget() {
     stop: stopListening,
   } = useSpeechRecognition({ onResult: handleSpeechResult });
 
-  const currentPage = location.pathname.replace(/^\//, '').split('/')[0] || 'Dashboard';
+  const currentPage = getPageNameFromPathname(location.pathname);
   const tip = getTipForPage(currentPage);
 
   // Auto-Scroll bei neuen Nachrichten wird zentral in useChatMessages erledigt.
