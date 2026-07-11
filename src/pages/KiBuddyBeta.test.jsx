@@ -7,7 +7,7 @@ import React from 'react';
 vi.mock('@/components/premium/PremiumGuard', () => ({
   default: ({ children }) => <>{children}</>,
 }));
-vi.mock('@/components/ai/JuleAvatar', () => ({ default: () => <div data-testid="jule" /> }));
+vi.mock('@/components/ai/BuddyAvatar', () => ({ default: () => <div data-testid="buddy-avatar" /> }));
 vi.mock('@/hooks/useFeatureTracking', () => ({ useFeatureTracking: () => {} }));
 vi.mock('@/hooks/useEventActivityTracking', () => ({
   useEventActivityTracking: () => ({ trackAIChat: vi.fn() }),

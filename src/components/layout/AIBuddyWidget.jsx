@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import JuleAvatar from '@/components/ai/JuleAvatar';
+import BuddyAvatar from '@/components/ai/BuddyAvatar';
 import { getTipForPage, getQuestionForPage, getPageNameFromPathname } from '@/lib/buddyTips';
 import { getRandomFarewellMessage } from '@/lib/buddyJokes';
 import { useAuth } from '@/lib/AuthContext';
@@ -231,7 +231,7 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
 
   // Auto-Scroll bei neuen Nachrichten wird zentral in useChatMessages erledigt.
 
-  // Page tracking: Bei jedem Öffnen einer Seite meldet sich Jule mit einer
+  // Page tracking: Bei jedem Öffnen einer Seite meldet sich der KI-Buddy mit einer
   // seitenspezifischen Frage zur Funktion in der kleinen Sprechblase. Der volle
   // Chat öffnet sich erst per Klick (auf Blase oder Avatar) – nicht
   // automatisch. lastQuestionPageRef verhindert nur, dass Effekt-Neuläufe ohne
@@ -439,7 +439,7 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
         }
       } catch (err) {
         console.error('Chat error:', err);
-        // Kein hartes Sackgassen-Fehlerbild: Jule antwortet aus dem
+        // Kein hartes Sackgassen-Fehlerbild: der KI-Buddy antwortet aus dem
         // vorgefertigten Offline-Wissen weiter, damit sie nie stumm bleibt.
         const offlineReply = findOfflineBuddyAnswer(text) || getOfflineBuddyFallback();
         setMessages((prev) => [...prev, { role: 'assistant', content: offlineReply }]);
@@ -500,7 +500,7 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
     setIsOpen(true);
   }, [showWidget]);
 
-  // Cleanup timers + laufende Sprachausgabe beim Unmount stoppen, damit Jule
+  // Cleanup timers + laufende Sprachausgabe beim Unmount stoppen, damit der KI-Buddy
   // nach dem Weg-Navigieren nicht weiterredet.
   useEffect(() => {
     isMountedRef.current = true;
@@ -596,7 +596,7 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
               style={smallBubbleStyle}
               role="button"
               tabIndex={0}
-              aria-label="Chat mit Jule öffnen"
+              aria-label="Chat mit dem KI-Buddy öffnen"
               onClick={handleSmallBubbleClick}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -631,10 +631,10 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
               <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
                 <div className="flex items-center gap-2">
                   <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-blue-300 bg-blue-100">
-                    <JuleAvatar size={36} showHints={false} />
+                    <BuddyAvatar size={36} showHints={false} />
                   </div>
                   <div>
-                    <h2 className="text-sm font-bold text-gray-800">Jule</h2>
+                    <h2 className="text-sm font-bold text-gray-800">KI-Buddy</h2>
                     <p className="text-xs text-gray-500">Dein Angel-Buddy</p>
                   </div>
                 </div>
@@ -743,7 +743,7 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
                 : 'drop-shadow-lg'
             }`}
           >
-            <JuleAvatar speaking={isTalking} listening={isListening} size={56} />
+            <BuddyAvatar speaking={isTalking} listening={isListening} size={56} />
           </div>
         </motion.div>
       </div>

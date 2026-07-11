@@ -51,7 +51,7 @@ E-Mail: kaisaschnitt99@gmail.com
 - **Provider:** Browser Web Speech API oder OpenAI Whisper (lokal verarbeitet)
 
 ### 3.6 KI-Buddy Gespräche
-- **Chat-Verlauf** – zwischen Benutzer und KI-Buddy (Jule)
+- **Chat-Verlauf** – zwischen Benutzer und KI-Buddy
 - **Speicherung:** In Supabase für Kontext über Sessions
 - **Nutzung:** Kontextuelle Antworten, personalisierte Empfehlungen
 - **Datenschutz:** Nur der Benutzers eigene Chats sind für ihn sichtbar

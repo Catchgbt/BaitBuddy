@@ -292,7 +292,7 @@ function VoiceLectureInner() {
                         {isSpeaking ? 'Pausieren' : 'Vorlesen'}
                       </button>
                       <div style={{ color: '#8899aa', fontSize: 12 }}>
-                        {isSpeaking ? 'Jule liest vor...' : 'Klick auf Vorlesen zum Starten'}
+                        {isSpeaking ? 'KI-Buddy liest vor...' : 'Klick auf Vorlesen zum Starten'}
                       </div>
                     </div>
 

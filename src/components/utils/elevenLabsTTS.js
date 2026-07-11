@@ -6,7 +6,7 @@
 import { functions } from "@/api/frontendClient";
 
 // Modul-globaler Singleton: Es spielt bewusst immer nur EINE Stimme gleichzeitig.
-// Konsequenz: Gleichzeitiges TTS aus Jule (KiBuddyBeta) und dem schwebenden Widget
+// Konsequenz: Gleichzeitiges TTS aus dem KI-Buddy (KiBuddyBeta) und dem schwebenden Widget
 // teilt sich diese eine Wiedergabe – ein neuer speak-Aufruf bricht den vorherigen ab
 // (cancelElevenLabs). Das ist gewolltes Verhalten und kein Bug bei paralleler Nutzung.
 let currentAudio = null;
