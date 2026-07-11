@@ -138,7 +138,14 @@ function SimpleAvatar({ onClickAvatar, lastTouchRef, bubbleText, showBubble, onB
   const [pos, setPos] = useState(() => {
     try {
       const stored = localStorage.getItem(BUDDY_STORAGE_KEYS.WIDGET_POSITION);
-      return stored ? JSON.parse(stored) : getDefaultPos();
+      if (stored) {
+        // Gespeicherte Position stammt evtl. von einem groesseren Screen
+        // (Rotation, anderes Geraet) — ohne Clamping laege der Avatar
+        // ausserhalb des Viewports und waere unerreichbar.
+        const parsed = JSON.parse(stored);
+        return clampPos(parsed?.x || 0, parsed?.y || 0);
+      }
+      return getDefaultPos();
     } catch {
       return getDefaultPos();
     }

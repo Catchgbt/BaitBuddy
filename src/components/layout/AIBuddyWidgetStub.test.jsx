@@ -73,7 +73,11 @@ describe('AIBuddyWidgetStub – erster Klick öffnet den Chat', () => {
 
     // Der Chat (Eingabefeld) muss nach dem einen Tap sichtbar sein — vorher
     // lud der erste Tap nur den Widget-Chunk nach und der Chat blieb zu.
-    expect(await screen.findByLabelText('Chat-Eingabefeld')).toBeInTheDocument();
+    // Timeout > Default: Der erste Lazy-Import des Widget-Moduls braucht auf
+    // kalten CI-Runnern (Vitest-Transform) gelegentlich laenger als 1s.
+    expect(
+      await screen.findByLabelText('Chat-Eingabefeld', {}, { timeout: 5000 })
+    ).toBeInTheDocument();
   });
 
   it('öffnet den Chat per Maus-Klick auf den Avatar', async () => {
@@ -82,13 +86,15 @@ describe('AIBuddyWidgetStub – erster Klick öffnet den Chat', () => {
     fireEvent.mouseDown(avatar, { clientX: 200, clientY: 400 });
     fireEvent.mouseUp(document);
 
-    expect(await screen.findByLabelText('Chat-Eingabefeld')).toBeInTheDocument();
+    expect(
+      await screen.findByLabelText('Chat-Eingabefeld', {}, { timeout: 5000 })
+    ).toBeInTheDocument();
   });
 
   it('lässt den frisch geöffneten Chat durch Geister-Mausevents NICHT wieder zufallen', async () => {
     renderStub();
     tapAvatar();
-    await screen.findByLabelText('Chat-Eingabefeld');
+    await screen.findByLabelText('Chat-Eingabefeld', {}, { timeout: 5000 });
 
     // Nach dem Stub→Widget-Wechsel treffen die vom Browser synthetisierten
     // Kompatibilitäts-Mausevents den NEUEN Avatar. Der Guard muss den
@@ -116,7 +122,9 @@ describe('AIBuddyWidgetStub – erster Klick öffnet den Chat', () => {
     const bubble = await screen.findByLabelText('Chat mit Jule öffnen', {}, { timeout: 3000 });
     fireEvent.click(bubble);
 
-    expect(await screen.findByLabelText('Chat-Eingabefeld')).toBeInTheDocument();
+    expect(
+      await screen.findByLabelText('Chat-Eingabefeld', {}, { timeout: 5000 })
+    ).toBeInTheDocument();
   });
 
   it('zeigt die Frage-Blase auch auf Seiten, die früher schon besucht wurden', async () => {
