@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup, act } from '@testing-library/react';
 import React from 'react';
 
 // PremiumGuard und schwere Abhängigkeiten wegmocken, damit der Test die
@@ -61,5 +61,37 @@ describe('KiBuddyBeta – Chat-Historie', () => {
       { role: 'assistant', content: 'erste Antwort' },
       { role: 'user', content: 'zweite Frage' },
     ]);
+  });
+});
+
+describe('KiBuddyBeta – Abbruch bei Unmount', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+  afterEach(() => cleanup());
+
+  it('übergibt ein AbortSignal an catchgbtChat und aktualisiert nach Unmount keinen State mehr', async () => {
+    let resolveChat;
+    catchgbtChat.mockImplementation(() => new Promise((res) => { resolveChat = res; }));
+
+    const { unmount } = render(<KiBuddyBeta />);
+
+    await ask('frage vor unmount');
+
+    // Der laufende Request bekommt ein AbortSignal mit, damit er beim Unmount
+    // abgebrochen werden kann.
+    const opts = catchgbtChat.mock.calls[0][1];
+    expect(opts?.signal).toBeInstanceOf(AbortSignal);
+
+    unmount();
+
+    // Späte Auflösung nach dem Unmount darf keinen State-Update/Crash auslösen.
+    await act(async () => {
+      resolveChat({ reply: 'zu spät' });
+      await Promise.resolve();
+    });
+
+    expect(screen.queryByText('zu spät')).not.toBeInTheDocument();
   });
 });

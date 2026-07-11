@@ -47,9 +47,10 @@ app.get('/api/health', (req, res) => res.json({ ok: true, app: 'BaitBuddy', vers
 
 // Rate-Limiting per Pfad-Präfix (in Tests via NODE_ENV=test übersprungen, damit
 // wiederholte Requests im selben Testlauf nicht in die Limits laufen). Scoped
-// auf teure/sensible Pfade — /api/health und /api/ai/test bleiben unlimitiert.
-// /api/analyze-photo zählt zu den KI-Kosten, liegt aber nicht unter /api/ai,
-// daher separat.
+// auf teure/sensible Pfade: Das /api/ai-Präfix deckt ALLE KI-Routen ab, inkl.
+// /api/ai/test (auth-pflichtig + limitiert). Nur /health und /api/health sind
+// unlimitiert (kein LLM-Call). /api/analyze-photo zählt zu den KI-Kosten,
+// liegt aber nicht unter /api/ai, daher separat verdrahtet.
 if (process.env.NODE_ENV !== 'test') {
   app.use('/api/ai', aiRateLimiter);
   app.use('/api/analyze-photo', aiRateLimiter);

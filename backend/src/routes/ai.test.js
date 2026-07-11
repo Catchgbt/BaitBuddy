@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
 import { createSupabaseMock } from '../../test/mockSupabase.js';
 
@@ -65,5 +65,132 @@ describe('POST /api/ai/chat', () => {
       .send({ messages: [{ role: 'user', content: 'Hallo' }] });
 
     expect(res.status).toBe(500);
+  });
+
+  it('lehnt messages ab, die kein Array sind (400 statt 500)', async () => {
+    llmMock.invokeLLM = vi.fn();
+    const res = await request(app)
+      .post('/api/ai/chat')
+      .set('Authorization', 'Bearer tok')
+      .send({ messages: 'kein array' });
+
+    expect(res.status).toBe(400);
+    expect(llmMock.invokeLLM).not.toHaveBeenCalled();
+  });
+
+  it('kappt überlange Nachrichten-Contents vor dem Prompt-Aufbau', async () => {
+    let prompt = '';
+    llmMock.invokeLLM = vi.fn(async (args) => { prompt = args.prompt; return 'ok'; });
+    const huge = 'a'.repeat(9000);
+
+    const res = await request(app)
+      .post('/api/ai/chat')
+      .set('Authorization', 'Bearer tok')
+      .send({ messages: [{ role: 'user', content: huge }] });
+
+    expect(res.status).toBe(200);
+    // Content wird auf 4000 Zeichen gekappt: 4000 'a' am Stück kommen vor,
+    // 4001 nicht mehr.
+    expect(prompt).toContain('a'.repeat(4000));
+    expect(prompt).not.toContain('a'.repeat(4001));
+  });
+});
+
+describe('POST /api/ai/analyze-catch (SSRF-Schutz)', () => {
+  it('lehnt eine fremde Bild-URL ab, ohne die KI aufzurufen (400)', async () => {
+    llmMock.invokeLLM = vi.fn();
+    const res = await request(app)
+      .post('/api/ai/analyze-catch')
+      .set('Authorization', 'Bearer tok')
+      .send({ file_url: 'https://evil.example.com/internal.jpg' });
+
+    expect(res.status).toBe(400);
+    expect(llmMock.invokeLLM).not.toHaveBeenCalled();
+  });
+
+  it('akzeptiert direktes Base64 und ruft die KI auf', async () => {
+    llmMock.invokeLLM = vi.fn().mockResolvedValue('Ein Hecht, ca. 70cm.');
+    const res = await request(app)
+      .post('/api/ai/analyze-catch')
+      .set('Authorization', 'Bearer tok')
+      .send({ image_base64: 'QUJD' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.analysis).toBe('Ein Hecht, ca. 70cm.');
+  });
+});
+
+describe('POST /api/ai/tts', () => {
+  const origKey = process.env.ELEVENLABS_API_KEY;
+
+  afterEach(() => {
+    if (origKey === undefined) delete process.env.ELEVENLABS_API_KEY;
+    else process.env.ELEVENLABS_API_KEY = origKey;
+    vi.unstubAllGlobals();
+  });
+
+  it('gibt 400 zurück, wenn kein Text übergeben wird', async () => {
+    const res = await request(app)
+      .post('/api/ai/tts')
+      .set('Authorization', 'Bearer tok')
+      .send({ text: '' });
+    expect(res.status).toBe(400);
+  });
+
+  it('gibt 501 zurück, wenn kein ElevenLabs-Key konfiguriert ist', async () => {
+    delete process.env.ELEVENLABS_API_KEY;
+    const res = await request(app)
+      .post('/api/ai/tts')
+      .set('Authorization', 'Bearer tok')
+      .send({ text: 'Hallo' });
+    expect(res.status).toBe(501);
+  });
+
+  it('gibt 502 zurück, wenn der ElevenLabs-Upstream fehlschlägt', async () => {
+    process.env.ELEVENLABS_API_KEY = 'test-eleven-key';
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: false,
+      status: 500,
+      text: async () => 'upstream boom',
+    })));
+
+    const res = await request(app)
+      .post('/api/ai/tts')
+      .set('Authorization', 'Bearer tok')
+      .send({ text: 'Hallo' });
+    expect(res.status).toBe(502);
+  });
+});
+
+describe('POST /api/ai/realtime-session', () => {
+  const origKey = process.env.OPENAI_API_KEY;
+
+  afterEach(() => {
+    if (origKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = origKey;
+    vi.unstubAllGlobals();
+  });
+
+  it('gibt 503 zurück, wenn kein OpenAI-Key konfiguriert ist', async () => {
+    delete process.env.OPENAI_API_KEY;
+    const res = await request(app)
+      .post('/api/ai/realtime-session')
+      .set('Authorization', 'Bearer tok')
+      .send({});
+    expect(res.status).toBe(503);
+  });
+
+  it('gibt 502 zurück, wenn der OpenAI-Upstream fehlschlägt', async () => {
+    process.env.OPENAI_API_KEY = 'test-openai-key';
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: false,
+      json: async () => ({ error: { message: 'OpenAI down' } }),
+    })));
+
+    const res = await request(app)
+      .post('/api/ai/realtime-session')
+      .set('Authorization', 'Bearer tok')
+      .send({});
+    expect(res.status).toBe(502);
   });
 });
