@@ -74,8 +74,13 @@ function SimpleAvatar({ onClickAvatar }) {
     moved: false,
   });
 
+  // Siehe AIBuddyWidget: verhindert, dass die vom Browser nach einem Tap
+  // synthetisierten Geister-Mausevents den Klick ein zweites Mal auslösen.
+  const lastTouchRef = React.useRef(0);
+
   const handleMouseDown = React.useCallback(
     (e) => {
+      if (Date.now() - lastTouchRef.current < 700) return;
       e.preventDefault();
       if (dragStateRef.current.active) return;
 
@@ -126,6 +131,7 @@ function SimpleAvatar({ onClickAvatar }) {
 
   const handleTouchStart = React.useCallback(
     (e) => {
+      lastTouchRef.current = Date.now();
       if (dragStateRef.current.active) return;
       const touch = e.touches[0];
       const currentPos = pos || getDefaultPos();
@@ -163,6 +169,7 @@ function SimpleAvatar({ onClickAvatar }) {
   }, []);
 
   const handleTouchEnd = React.useCallback(() => {
+    lastTouchRef.current = Date.now();
     const wasDrag = dragStateRef.current.moved;
     dragStateRef.current = { active: false, startX: 0, startY: 0, offsetX: 0, offsetY: 0, moved: false };
     if (!wasDrag) {
