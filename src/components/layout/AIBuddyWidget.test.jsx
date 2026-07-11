@@ -93,4 +93,25 @@ describe('AIBuddyWidget – Chat-Verhalten', () => {
 
     expect(await screen.findByText('OFFLINE_FALLBACK_ANTWORT')).toBeInTheDocument();
   });
+
+  it('öffnet den Chat bei einem Tap und lässt ihn durch Geister-Mausevents NICHT wieder zufallen', async () => {
+    const { container } = renderWidget();
+
+    // Der Avatar-Wrapper trägt die Drag-/Klick-Handler (cursor-grab).
+    const avatar = container.querySelector('.cursor-grab');
+    expect(avatar).toBeTruthy();
+
+    // Tap: touchstart -> touchend öffnet den Chat.
+    fireEvent.touchStart(avatar, { touches: [{ clientX: 200, clientY: 400 }] });
+    fireEvent.touchEnd(avatar, { changedTouches: [{ clientX: 200, clientY: 400 }] });
+
+    expect(await screen.findByLabelText('Chat-Eingabefeld')).toBeInTheDocument();
+
+    // Vom Browser nachgereichte Kompatibilitäts-Mausevents (Ghost-Click) dürfen
+    // den soeben geöffneten Chat nicht sofort wieder schließen.
+    fireEvent.mouseDown(avatar, { clientX: 200, clientY: 400 });
+    fireEvent.mouseUp(document);
+
+    expect(screen.getByLabelText('Chat-Eingabefeld')).toBeInTheDocument();
+  });
 });

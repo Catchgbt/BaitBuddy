@@ -152,6 +152,14 @@ export default function AIBuddyWidget() {
     moved: false,
   });
 
+  // Zeitpunkt der letzten Touch-Interaktion. Ein Tap löst zusätzlich zu den
+  // Touch-Events noch die vom Browser synthetisierten Kompatibilitäts-Mausevents
+  // (mousedown/mouseup ~300 ms später) aus. Ohne diesen Guard toggelt der Tap
+  // den Chat auf (touchend) und sofort wieder zu (mouseup) — für den Nutzer
+  // „passiert nix". Der Zeitstempel lässt den Maus-Handler diese Geister-Events
+  // ignorieren.
+  const lastTouchRef = useRef(0);
+
   // Stabiler Speech-Callback: verhindert, dass useSpeechRecognition die
   // Recognition-Instanz bei jedem Render neu aufbaut (das würde eine laufende
   // Aufnahme abbrechen). showWidget und die State-Setter sind stabil.
@@ -242,6 +250,8 @@ export default function AIBuddyWidget() {
 
   const handleAvatarMouseDown = useCallback(
     (e) => {
+      // Geister-Mausevent kurz nach einem Tap ignorieren (siehe lastTouchRef).
+      if (Date.now() - lastTouchRef.current < 700) return;
       e.preventDefault();
       if (dragStateRef.current.active) return;
 
@@ -289,6 +299,7 @@ export default function AIBuddyWidget() {
 
   const handleAvatarTouchStart = useCallback(
     (e) => {
+      lastTouchRef.current = Date.now();
       if (dragStateRef.current.active) return;
       const touch = e.touches[0];
       const currentPos = pos || getDefaultPos();
@@ -323,6 +334,7 @@ export default function AIBuddyWidget() {
   }, [setPos]);
 
   const handleAvatarTouchEnd = useCallback(() => {
+    lastTouchRef.current = Date.now();
     const wasDrag = dragStateRef.current.moved;
     dragStateRef.current = { active: false, startX: 0, startY: 0, offsetX: 0, offsetY: 0, moved: false };
     if (!wasDrag && handleAvatarClickRef.current) {
