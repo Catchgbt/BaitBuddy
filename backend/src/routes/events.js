@@ -166,10 +166,24 @@ router.patch('/events/:id', requireAuth, async (req, res) => {
       return res.status(403).json({ error: 'Keine Berechtigung' });
     }
 
+    // Nur echte Spalten der events-Tabelle uebernehmen. Das Frontend schickt
+    // teils zusaetzliche Felder (z. B. 'participants'), die Postgrest sonst mit
+    // "Could not find the 'participants' column" ablehnt; created_by/id bleiben
+    // ebenfalls unveraenderbar.
+    const EVENT_UPDATE_FIELDS = [
+      'name', 'description', 'start_date', 'end_date', 'template_id',
+      'event_type', 'scoring_method', 'target_species', 'prize_description',
+      'status', 'is_active',
+    ];
+    const patch = {};
+    for (const k of EVENT_UPDATE_FIELDS) {
+      if (k in req.body) patch[k] = req.body[k];
+    }
+
     const { data, error } = await supabase
       .from('events')
       .update({
-        ...req.body,
+        ...patch,
         updated_at: new Date().toISOString()
       })
       .eq('id', req.params.id)

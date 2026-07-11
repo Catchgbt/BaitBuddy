@@ -1,7 +1,7 @@
 -- Create dashboard_account_notes table
 -- Stores text and audio notes linked to user accounts
 create table if not exists dashboard_account_notes (
-  id          uuid primary key default uuid_generate_v4(),
+  id          uuid primary key default gen_random_uuid(),
   user_id     text not null,
   content     text,
   audio_data  text,
