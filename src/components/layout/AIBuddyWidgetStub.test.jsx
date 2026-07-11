@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useNavigate } from 'react-router-dom';
 import React from 'react';
 
 // Gleiche Mocks wie im AIBuddyWidget-Test: Der Stub lädt das volle Widget als
@@ -30,10 +30,20 @@ vi.mock('@/api/frontendClient', () => ({
 
 import AIBuddyWidgetStub from './AIBuddyWidgetStub';
 
-function renderStub(initialEntries = ['/Weather']) {
+function NavigateButton({ to }) {
+  const navigate = useNavigate();
+  return (
+    <button type="button" onClick={() => navigate(to)}>
+      {`navigiere-${to}`}
+    </button>
+  );
+}
+
+function renderStub(initialEntries = ['/Weather'], { withNavTo } = {}) {
   return render(
     <MemoryRouter initialEntries={initialEntries}>
       <AIBuddyWidgetStub />
+      {withNavTo && <NavigateButton to={withNavTo} />}
     </MemoryRouter>
   );
 }
@@ -58,9 +68,6 @@ describe('AIBuddyWidgetStub – erster Klick öffnet den Chat', () => {
   });
 
   it('öffnet den vollen Chat schon beim ERSTEN Tap auf den Avatar (nicht erst beim zweiten)', async () => {
-    // Seite als besucht markieren, damit keine Frage-Blase dazwischenfunkt.
-    localStorage.setItem('buddy-visited-pages', JSON.stringify(['Weather']));
-
     renderStub();
     tapAvatar();
 
@@ -70,8 +77,6 @@ describe('AIBuddyWidgetStub – erster Klick öffnet den Chat', () => {
   });
 
   it('öffnet den Chat per Maus-Klick auf den Avatar', async () => {
-    localStorage.setItem('buddy-visited-pages', JSON.stringify(['Weather']));
-
     renderStub();
     const avatar = document.querySelector('.cursor-grab');
     fireEvent.mouseDown(avatar, { clientX: 200, clientY: 400 });
@@ -81,8 +86,6 @@ describe('AIBuddyWidgetStub – erster Klick öffnet den Chat', () => {
   });
 
   it('lässt den frisch geöffneten Chat durch Geister-Mausevents NICHT wieder zufallen', async () => {
-    localStorage.setItem('buddy-visited-pages', JSON.stringify(['Weather']));
-
     renderStub();
     tapAvatar();
     await screen.findByLabelText('Chat-Eingabefeld');
@@ -97,7 +100,7 @@ describe('AIBuddyWidgetStub – erster Klick öffnet den Chat', () => {
     expect(screen.getByLabelText('Chat-Eingabefeld')).toBeInTheDocument();
   });
 
-  it('zeigt beim ersten Besuch einer Seite die seitenspezifische Frage-Blase (ohne Widget-Chunk)', async () => {
+  it('zeigt beim Öffnen einer Seite die seitenspezifische Frage-Blase (ohne Widget-Chunk)', async () => {
     renderStub(['/Weather']);
 
     const bubble = await screen.findByLabelText('Chat mit Jule öffnen', {}, { timeout: 3000 });
@@ -116,12 +119,29 @@ describe('AIBuddyWidgetStub – erster Klick öffnet den Chat', () => {
     expect(await screen.findByLabelText('Chat-Eingabefeld')).toBeInTheDocument();
   });
 
-  it('zeigt keine Frage-Blase auf bereits besuchten Seiten', async () => {
+  it('zeigt die Frage-Blase auch auf Seiten, die früher schon besucht wurden', async () => {
+    // Altbestand aus der früheren "nur beim ersten Besuch"-Logik darf die
+    // Blase nicht mehr unterdrücken.
     localStorage.setItem('buddy-visited-pages', JSON.stringify(['Weather']));
 
     renderStub(['/Weather']);
 
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    expect(screen.queryByLabelText('Chat mit Jule öffnen')).not.toBeInTheDocument();
+    const bubble = await screen.findByLabelText('Chat mit Jule öffnen', {}, { timeout: 3000 });
+    expect(bubble).toHaveTextContent('Soll ich dir sagen, ob das Wetter heute zum Angeln passt?');
+  });
+
+  it('zeigt bei jedem Seitenwechsel erneut die Frage zur neuen Funktion', async () => {
+    renderStub(['/Weather'], { withNavTo: '/Map' });
+
+    const bubble = await screen.findByLabelText('Chat mit Jule öffnen', {}, { timeout: 3000 });
+    expect(bubble).toHaveTextContent('Soll ich dir sagen, ob das Wetter heute zum Angeln passt?');
+
+    fireEvent.click(screen.getByText('navigiere-/Map'));
+
+    await screen.findByText(
+      'Möchtest du hier einen neuen Angel-Spot eintragen?',
+      {},
+      { timeout: 3000 }
+    );
   });
 });

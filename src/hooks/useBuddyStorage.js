@@ -3,13 +3,10 @@ import { BUDDY_DRAG_DEBOUNCE } from '@/lib/buddyStorageKeys';
 
 const STORAGE_KEYS = {
   WIDGET_POSITION: 'buddy-widget-pos',
-  VISITED_PAGES: 'buddy-visited-pages',
   WIDGET_HIDDEN: 'buddy-widget-hidden',
   VOICE_ENABLED: 'buddy-voice-enabled',
   USER_LOCATION: 'userLocation',
 };
-
-const MAX_VISITED_PAGES = 100;
 
 export function useBuddyStorage() {
   const [widgetPos, setWidgetPos] = useState(() => {
@@ -97,36 +94,6 @@ export function useBuddyStorage() {
     setWidgetPos(pos);
   }, []);
 
-  const getVisitedPages = useCallback(() => {
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEYS.VISITED_PAGES) || '[]');
-    } catch {
-      return [];
-    }
-  }, []);
-
-  const addVisitedPage = useCallback((page) => {
-    try {
-      const visited = getVisitedPages();
-      if (!visited.includes(page)) {
-        visited.push(page);
-        localStorage.setItem(STORAGE_KEYS.VISITED_PAGES, JSON.stringify(visited));
-      }
-    } catch {}
-  }, [getVisitedPages]);
-
-  const cleanupVisitedPages = useCallback(() => {
-    try {
-      const visited = getVisitedPages();
-      if (visited.length > MAX_VISITED_PAGES) {
-        const trimmed = visited.slice(-MAX_VISITED_PAGES);
-        localStorage.setItem(STORAGE_KEYS.VISITED_PAGES, JSON.stringify(trimmed));
-      }
-    } catch (e) {
-      localStorage.removeItem(STORAGE_KEYS.VISITED_PAGES);
-    }
-  }, [getVisitedPages]);
-
   const hideWidget = useCallback(() => {
     setIsWidgetHidden(true);
   }, []);
@@ -154,9 +121,6 @@ export function useBuddyStorage() {
     showWidget,
     isVoiceEnabled,
     toggleVoice,
-    getVisitedPages,
-    addVisitedPage,
-    cleanupVisitedPages,
     userLocation,
     getLocation,
     setLocation: setLocationValue,

@@ -16,7 +16,6 @@ import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { useBuddyStorage } from '@/hooks/useBuddyStorage';
 import { executeBuddyAction } from '@/utils/buddyActions';
 import {
-  BUDDY_STORAGE_KEYS,
   BUDDY_TIMEOUTS,
   BUDDY_AVATAR_SIZE,
 } from '@/lib/buddyStorageKeys';
@@ -122,8 +121,6 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
     showWidget,
     isVoiceEnabled: buddyVoiceEnabled,
     toggleVoice: toggleBuddyVoice,
-    addVisitedPage,
-    cleanupVisitedPages,
     getLocation: getStoredLocation,
   } = useBuddyStorage();
 
@@ -165,6 +162,39 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
   // auch für den Tap greift, der das Widget überhaupt erst nachgeladen hat.
   const lastTouchRef = useRef(initialLastTouch);
 
+  // Merkt sich, für welche Seite die Frage-Blase zuletzt gezeigt wurde. Wird
+  // vom Stub-Übergang nicht zurückgesetzt — nach dem Nachladen zeigt der
+  // Seitenwechsel-Effekt die Frage für neue Seiten weiterhin an.
+  const lastQuestionPageRef = useRef(null);
+
+  // Kleine Blase mit Auto-Ausblenden & optionaler Abschieds-Nachricht.
+  // Definition vor dem Page-Tracking-Effekt, der sie als Dependency nutzt.
+  const showSmallBubbleWithText = useCallback((text, { farewell = true } = {}) => {
+    setSmallBubbleText(text);
+    setShowSmallBubble(true);
+
+    if (smallBubbleTimerRef.current) clearTimeout(smallBubbleTimerRef.current);
+    if (userActivityTimerRef.current) clearTimeout(userActivityTimerRef.current);
+
+    // Frage-Blasen (farewell: false) blenden nach Ablauf einfach aus, ohne die
+    // Abschieds-Nachricht – sie sollen zum Antippen einladen, nicht abwiegeln.
+    if (!farewell) {
+      smallBubbleTimerRef.current = setTimeout(() => {
+        setShowSmallBubble(false);
+      }, BUDDY_TIMEOUTS.SMALL_BUBBLE);
+      return;
+    }
+
+    userActivityTimerRef.current = setTimeout(() => {
+      const farewellMsg = getRandomFarewellMessage();
+      setSmallBubbleText(farewellMsg);
+
+      smallBubbleTimerRef.current = setTimeout(() => {
+        setShowSmallBubble(false);
+      }, 2000);
+    }, BUDDY_TIMEOUTS.SMALL_BUBBLE);
+  }, []);
+
   // Wurde das Widget per Klick auf den Stub-Avatar geöffnet, muss ein zuvor
   // gesetztes Hidden-Flag zurückgenommen werden, sonst bleibt der Chat trotz
   // isOpen unsichtbar (Bubbles sind an !isHidden gekoppelt).
@@ -198,54 +228,42 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
 
   // Auto-Scroll bei neuen Nachrichten wird zentral in useChatMessages erledigt.
 
-  // Page tracking: Beim ersten Öffnen einer Seite meldet sich Jule mit einer
+  // Page tracking: Bei jedem Öffnen einer Seite meldet sich Jule mit einer
   // seitenspezifischen Frage zur Funktion in der kleinen Sprechblase. Der volle
-  // Chat öffnet sich erst per Klick (auf Blase oder Avatar) – nicht mehr
-  // automatisch.
+  // Chat öffnet sich erst per Klick (auf Blase oder Avatar) – nicht
+  // automatisch. lastQuestionPageRef verhindert nur, dass Effekt-Neuläufe ohne
+  // Seitenwechsel (z. B. Chat schließen, Voice-Toggle) dieselbe Blase erneut
+  // aufpoppen lassen.
   useEffect(() => {
-    cleanupVisitedPages();
+    if (isHidden || isOpen) return undefined;
+    if (lastQuestionPageRef.current === currentPage) return undefined;
 
-    try {
-      if (isHidden) return;
+    // Kleine Verzögerung, damit der Seitenwechsel visuell abgeschlossen ist,
+    // bevor die Frage-Blase erscheint. Die Seite wird erst im Timer als
+    // "gezeigt" markiert, damit der doppelte Effekt-Lauf in React.StrictMode
+    // die Blase nicht verschluckt.
+    const questionTimer = setTimeout(() => {
+      lastQuestionPageRef.current = currentPage;
+      const question = getQuestionForPage(currentPage);
+      showSmallBubbleWithText(question, { farewell: false });
 
-      const visited = [];
-      try {
-        const stored = localStorage.getItem(BUDDY_STORAGE_KEYS.VISITED_PAGES);
-        if (stored) {
-          visited.push(...JSON.parse(stored));
-        }
-      } catch {}
-
-      const hasVisited = visited.includes(currentPage);
-
-      if (!hasVisited && !isOpen) {
-        addVisitedPage(currentPage);
-
-        // Kleine Verzögerung, damit der Seitenwechsel visuell abgeschlossen ist,
-        // bevor die Frage-Blase erscheint.
-        const questionTimer = setTimeout(() => {
-          const question = getQuestionForPage(currentPage);
-          showSmallBubbleWithText(question, { farewell: false });
-
-          if (buddyVoiceEnabled) {
-            speakWithFallback(question, {
-              voiceEnabled: buddyVoiceEnabled,
-              lang: 'de-DE',
-              rate: 1.0,
-            }).catch(() => {
-              speakWithBrowserTTS(question, { lang: 'de-DE', rate: 1.0 }).catch(() => {
-                /* TTS ist optional */
-              });
-            });
-          }
-        }, 800);
-
-        return () => {
-          clearTimeout(questionTimer);
-        };
+      if (buddyVoiceEnabled) {
+        speakWithFallback(question, {
+          voiceEnabled: buddyVoiceEnabled,
+          lang: 'de-DE',
+          rate: 1.0,
+        }).catch(() => {
+          speakWithBrowserTTS(question, { lang: 'de-DE', rate: 1.0 }).catch(() => {
+            /* TTS ist optional */
+          });
+        });
       }
-    } catch {}
-  }, [currentPage, isOpen, isHidden, buddyVoiceEnabled, addVisitedPage, cleanupVisitedPages]);
+    }, 800);
+
+    return () => {
+      clearTimeout(questionTimer);
+    };
+  }, [currentPage, isOpen, isHidden, buddyVoiceEnabled, showSmallBubbleWithText]);
 
   // Positions-Persistenz erfolgt gedrosselt zentral in useBuddyStorage.
 
@@ -463,33 +481,6 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
     showWidget();
     setIsOpen(true);
   }, [showWidget]);
-
-  // Small bubble with auto-close & optional farewell
-  const showSmallBubbleWithText = useCallback((text, { farewell = true } = {}) => {
-    setSmallBubbleText(text);
-    setShowSmallBubble(true);
-
-    if (smallBubbleTimerRef.current) clearTimeout(smallBubbleTimerRef.current);
-    if (userActivityTimerRef.current) clearTimeout(userActivityTimerRef.current);
-
-    // Frage-Blasen (farewell: false) blenden nach Ablauf einfach aus, ohne die
-    // Abschieds-Nachricht – sie sollen zum Antippen einladen, nicht abwiegeln.
-    if (!farewell) {
-      smallBubbleTimerRef.current = setTimeout(() => {
-        setShowSmallBubble(false);
-      }, BUDDY_TIMEOUTS.SMALL_BUBBLE);
-      return;
-    }
-
-    userActivityTimerRef.current = setTimeout(() => {
-      const farewellMsg = getRandomFarewellMessage();
-      setSmallBubbleText(farewellMsg);
-
-      smallBubbleTimerRef.current = setTimeout(() => {
-        setShowSmallBubble(false);
-      }, 2000);
-    }, BUDDY_TIMEOUTS.SMALL_BUBBLE);
-  }, []);
 
   // Klick/Tap auf die kleine Frage-Blase öffnet den vollen Chat.
   const handleSmallBubbleClick = useCallback(() => {
