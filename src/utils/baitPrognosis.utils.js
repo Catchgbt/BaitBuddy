@@ -325,7 +325,9 @@ function generateExplanation(targetFish, season, waterTemp, waterType, successRa
     explanation += `Bei ${waterTemp}°C ist das Wasser zu warm — nutze leichtere, schneller freisetzbare Zutaten. `;
   }
 
-  explanation += `Wichtige Faktoren: ${factors
+  // Kopie sortieren: `factors` wird als result.factors auch vom Radar-Chart
+  // genutzt — ein In-Place-.sort() würde dessen Anzeige-Reihenfolge umstellen.
+  explanation += `Wichtige Faktoren: ${[...factors]
     .sort((a, b) => b.raw - a.raw)
     .slice(0, 2)
     .map(f => `${f.emoji} ${f.name} (${f.score}%)`)

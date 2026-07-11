@@ -104,11 +104,14 @@ export async function getUnsyncdOfflinePhotos() {
     return new Promise((resolve, reject) => {
       const transaction = db.transaction([STORE_NAME], 'readonly');
       const store = transaction.objectStore(STORE_NAME);
-      const index = store.index('synced');
-      const request = index.getAll(false);
+      // Nicht über den 'synced'-Index abfragen: `synced` wird als Boolean
+      // gespeichert, und Booleans sind keine gültigen IndexedDB-Schlüssel — solche
+      // Datensätze landen gar nicht im Index, `index.getAll(false)` lieferte daher
+      // immer []. Alle laden und in JS filtern (wie getOfflinePhotoStats).
+      const request = store.getAll();
 
       request.onsuccess = () => {
-        resolve(request.result);
+        resolve((request.result || []).filter((p) => !p.synced));
       };
 
       request.onerror = () => {
@@ -306,11 +309,12 @@ export async function cleanupSyncedPhotos() {
 
     const transaction = db.transaction([STORE_NAME], 'readwrite');
     const store = transaction.objectStore(STORE_NAME);
-    const index = store.index('synced');
-    const request = index.getAll(true);
+    // Boolean-Werte stehen nicht im 'synced'-Index (siehe getUnsyncdOfflinePhotos);
+    // daher alle Datensätze laden und die bereits gesyncten in JS herausfiltern.
+    const request = store.getAll();
 
     request.onsuccess = () => {
-      const synced = request.result;
+      const synced = (request.result || []).filter((p) => p.synced);
       for (const photo of synced) {
         store.delete(photo.id);
       }

@@ -10,15 +10,16 @@ const DefaultFallback = () => (
 );
 
 export default function ProtectedRoute({ fallback = <DefaultFallback />, unauthenticatedElement }) {
-  const { isAuthenticated, isLoadingAuth, authChecked, authError, checkUserAuth } = useAuth();
+  const { isAuthenticated, isLoadingAuth, authError, checkAppState } = useAuth();
 
   useEffect(() => {
-    if (!authChecked && !isLoadingAuth) {
-      checkUserAuth();
+    if (!isLoadingAuth && !isAuthenticated) {
+      checkAppState?.();
     }
-  }, [authChecked, isLoadingAuth, checkUserAuth]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  if (isLoadingAuth || !authChecked) {
+  if (isLoadingAuth) {
     return fallback;
   }
 

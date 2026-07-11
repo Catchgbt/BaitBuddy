@@ -154,7 +154,19 @@ export async function executeBuddyAction(action, context, options = {}) {
     if (action.type === 'open_url') {
       const p = action.params || {};
       if (!p.url) return { success: false, message: null };
-      window.open(p.url, '_blank');
+      // Die URL stammt aus einer KI-generierten Aktion und ist damit potenziell
+      // per Prompt-Injection beeinflussbar. Nur http/https zulassen (kein
+      // javascript:/data:) und mit noopener,noreferrer öffnen (Reverse-Tabnabbing).
+      let safeUrl;
+      try {
+        safeUrl = new URL(p.url, window.location.origin);
+      } catch {
+        return { success: false, message: null };
+      }
+      if (safeUrl.protocol !== 'http:' && safeUrl.protocol !== 'https:') {
+        return { success: false, message: null };
+      }
+      window.open(safeUrl.href, '_blank', 'noopener,noreferrer');
       return { success: true, message: null };
     }
 

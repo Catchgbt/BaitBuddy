@@ -4,7 +4,11 @@
 class SolunarService {
   constructor() {
     // Referenz-Neumondlich: 6. Januar 2000 18:14 UTC
-    this.referenceNewMoon = new Date(2000, 0, 6, 18, 14, 0);
+    // Date.UTC statt lokalem Konstruktor: getMoonPhase() vergleicht absolute
+    // getTime()-Differenzen — mit `new Date(2000, 0, 6, ...)` (Lokalzeit) hinge
+    // der Referenz-Zeitpunkt sonst von der Zeitzone der Maschine ab und lieferte
+    // je nach Gerät eine andere Mondphase.
+    this.referenceNewMoon = new Date(Date.UTC(2000, 0, 6, 18, 14, 0));
     this.lunarCycle = 29.530588861; // Tage
     this.sideralDay = 1.00273790935; // Sideraler Tag in Sonnentagen
   }

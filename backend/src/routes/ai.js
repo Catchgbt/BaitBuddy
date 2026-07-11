@@ -123,8 +123,15 @@ router.post('/ai/chat', requireAuth, async (req, res) => {
       })(),
       (async () => {
         if (!(wantsWeather && userLocation?.latitude)) return null;
+        // Koordinaten hart als Zahlen validieren, bevor sie in die Upstream-URL
+        // interpoliert werden — sonst könnte ein String wie "52.5&extra=1" fremde
+        // Query-Parameter einschleusen.
+        const lat = Number(userLocation.latitude);
+        const lon = Number(userLocation.longitude);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon) ||
+            lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
         const w = await fetchWithTimeout(
-          `https://api.open-meteo.com/v1/forecast?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&current=temperature_2m,wind_speed_10m,weather_code&timezone=auto`,
+          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,weather_code&timezone=auto`,
           {}, WEATHER_TIMEOUT_MS
         ).then(r => r.json()).catch(() => null);
         if (!w?.current) return null;
