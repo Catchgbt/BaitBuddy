@@ -160,6 +160,40 @@ describe('POST /api/ai/tts', () => {
       .send({ text: 'Hallo' });
     expect(res.status).toBe(502);
   });
+
+  it('faellt bei 402 (Library-Voice im Free-Plan) auf die Premade-Voice zurueck', async () => {
+    process.env.ELEVENLABS_API_KEY = 'test-eleven-key';
+    const origVoice = process.env.ELEVENLABS_VOICE_ID;
+    process.env.ELEVENLABS_VOICE_ID = 'library-voice-xyz';
+    try {
+      const fetchMock = vi.fn()
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 402,
+          text: async () => '{"detail":{"code":"paid_plan_required"}}',
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          arrayBuffer: async () => new TextEncoder().encode('MP3DATA').buffer,
+        });
+      vi.stubGlobal('fetch', fetchMock);
+
+      const res = await request(app)
+        .post('/api/ai/tts')
+        .set('Authorization', 'Bearer tok')
+        .send({ text: 'Hallo' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.audioBase64).toBe(Buffer.from('MP3DATA').toString('base64'));
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(String(fetchMock.mock.calls[0][0])).toContain('library-voice-xyz');
+      expect(String(fetchMock.mock.calls[1][0])).toContain('onwK4e9ZLuTAKqWW03F9');
+    } finally {
+      if (origVoice === undefined) delete process.env.ELEVENLABS_VOICE_ID;
+      else process.env.ELEVENLABS_VOICE_ID = origVoice;
+    }
+  });
 });
 
 describe('POST /api/ai/realtime-session', () => {
@@ -192,5 +226,27 @@ describe('POST /api/ai/realtime-session', () => {
       .set('Authorization', 'Bearer tok')
       .send({});
     expect(res.status).toBe(502);
+  });
+
+  it('mintet ein Ephemeral-Token ueber den GA-Endpunkt /v1/realtime/client_secrets', async () => {
+    process.env.OPENAI_API_KEY = 'test-openai-key';
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ value: 'ek_test_123', expires_at: 1234567890, session: {} }),
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const res = await request(app)
+      .post('/api/ai/realtime-session')
+      .set('Authorization', 'Bearer tok')
+      .send({});
+
+    expect(res.status).toBe(200);
+    // Client-Vertrag bleibt stabil: client_secret.value traegt das Token.
+    expect(res.body.client_secret.value).toBe('ek_test_123');
+    expect(String(fetchMock.mock.calls[0][0])).toBe('https://api.openai.com/v1/realtime/client_secrets');
+    const sentBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sentBody.session.type).toBe('realtime');
+    expect(sentBody.session.model).toBeTruthy();
   });
 });

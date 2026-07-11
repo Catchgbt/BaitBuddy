@@ -59,9 +59,10 @@ router.patch('/dashboard-account-notes/:id', requireAuth, async (req, res) => {
     .eq('id', req.params.id)
     .eq('user_id', req.user.id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) return sendDbError(res, error);
+  if (!data) return res.status(404).json({ error: 'Notiz nicht gefunden' });
   return res.json(data);
 });
 

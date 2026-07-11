@@ -1,6 +1,26 @@
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { RedisStore } from 'rate-limit-redis';
 import Redis from 'ioredis';
+
+// Vercel terminiert die Verbindung am Edge-Proxy: ohne 'trust proxy' ist
+// req.ip immer die interne Proxy-Adresse — damit zaehlten ALLE Nutzer in
+// denselben Limit-Topf (20 KI-Requests/Minute global statt pro Nutzer) und
+// express-rate-limit loggte pro Request zwei ValidationErrors
+// (ERR_ERL_UNEXPECTED_X_FORWARDED_FOR / ERR_ERL_FORWARDED_HEADER). Die echte
+// Client-IP kommt aus den von Vercel gesetzten, vertrauenswuerdigen Headern;
+// ipKeyGenerator normalisiert IPv6-Adressen auf ihr Subnetz.
+function clientIp(req) {
+  const fwd = req.headers['x-vercel-forwarded-for']
+    || req.headers['x-real-ip']
+    || req.headers['x-forwarded-for'];
+  if (typeof fwd === 'string' && fwd.length > 0) {
+    const first = fwd.split(',')[0].trim();
+    if (first) return first;
+  }
+  return req.ip || 'unknown';
+}
+
+export const rateLimitKeyGenerator = (req) => ipKeyGenerator(clientIp(req));
 
 // Instanzuebergreifendes Rate-Limiting auf Vercel Serverless.
 // Der Standard-MemoryStore von express-rate-limit zaehlt PRO Lambda-Instanz —
@@ -44,6 +64,7 @@ export const aiRateLimiter = rateLimit({
   limit: 20,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  keyGenerator: rateLimitKeyGenerator,
   store: createRateLimitStore(),
   message: { error: 'Zu viele KI-Anfragen — bitte kurz warten' },
 });
@@ -54,6 +75,7 @@ export const authRateLimiter = rateLimit({
   limit: 30,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  keyGenerator: rateLimitKeyGenerator,
   store: createRateLimitStore(),
   message: { error: 'Zu viele Anmeldeversuche — bitte später erneut versuchen' },
 });

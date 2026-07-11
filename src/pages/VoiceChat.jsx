@@ -71,9 +71,13 @@ export default function VoiceChat() {
         assistantBufRef.current = '';
         setPhase(PHASE.SPEAKING);
         break;
+      // GA-Eventnamen ('response.output_audio_transcript.*') und Beta-Namen
+      // ('response.audio_transcript.*') parallel behandeln.
+      case 'response.output_audio_transcript.delta':
       case 'response.audio_transcript.delta':
         if (evt.delta) assistantBufRef.current += evt.delta;
         break;
+      case 'response.output_audio_transcript.done':
       case 'response.audio_transcript.done':
       case 'response.done': {
         const text = (evt.transcript || assistantBufRef.current || '').trim();
@@ -195,7 +199,7 @@ export default function VoiceChat() {
       // 1) Kurzlebiges Token vom eigenen Backend holen (echter Key bleibt serverseitig)
       const session = await functions.invoke('realtimeSession');
       const ephemeralKey = session?.client_secret?.value;
-      const model = session?.model || 'gpt-4o-realtime-preview-2024-12-17';
+      const model = session?.model || 'gpt-realtime';
       if (!ephemeralKey) {
         throw new Error(session?.error || 'Kein Voice-Token erhalten. Ist OPENAI_API_KEY gesetzt?');
       }
@@ -234,13 +238,14 @@ export default function VoiceChat() {
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      const resp = await fetch(`https://api.openai.com/v1/realtime?model=${encodeURIComponent(model)}`, {
+      // GA-API: SDP-Austausch laeuft ueber /v1/realtime/calls (der alte
+      // Beta-Pfad /v1/realtime wurde zusammen mit /v1/realtime/sessions entfernt).
+      const resp = await fetch(`https://api.openai.com/v1/realtime/calls?model=${encodeURIComponent(model)}`, {
         method: 'POST',
         body: offer.sdp,
         headers: {
           Authorization: `Bearer ${ephemeralKey}`,
           'Content-Type': 'application/sdp',
-          'OpenAI-Beta': 'realtime=v1',
         },
       });
       if (!resp.ok) throw new Error('OpenAI-Verbindung fehlgeschlagen (' + resp.status + ')');

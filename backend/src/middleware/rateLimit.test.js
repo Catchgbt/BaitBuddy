@@ -63,3 +63,50 @@ describe('Rate-Limiter-Middleware', () => {
     expect(typeof mod.authRateLimiter).toBe('function');
   });
 });
+
+describe('rateLimitKeyGenerator', () => {
+  // Auf Vercel ist req.ip die interne Proxy-Adresse — der Key muss aus den
+  // vertrauenswuerdigen Client-IP-Headern kommen, sonst teilen sich alle
+  // Nutzer denselben Limit-Zaehler.
+  it('bevorzugt x-vercel-forwarded-for vor anderen Headern und req.ip', async () => {
+    const { rateLimitKeyGenerator } = await import('./rateLimit.js');
+    const key = rateLimitKeyGenerator({
+      headers: {
+        'x-vercel-forwarded-for': '203.0.113.7',
+        'x-real-ip': '198.51.100.1',
+        'x-forwarded-for': '192.0.2.1, 10.0.0.1',
+      },
+      ip: '10.0.0.2',
+    });
+    expect(key).toBe('203.0.113.7');
+  });
+
+  it('nimmt bei x-forwarded-for den ersten (Client-)Eintrag', async () => {
+    const { rateLimitKeyGenerator } = await import('./rateLimit.js');
+    const key = rateLimitKeyGenerator({
+      headers: { 'x-forwarded-for': '192.0.2.1, 10.0.0.1' },
+      ip: '10.0.0.2',
+    });
+    expect(key).toBe('192.0.2.1');
+  });
+
+  it('faellt ohne Header auf req.ip zurueck', async () => {
+    const { rateLimitKeyGenerator } = await import('./rateLimit.js');
+    expect(rateLimitKeyGenerator({ headers: {}, ip: '10.1.2.3' })).toBe('10.1.2.3');
+  });
+
+  it('normalisiert IPv6-Adressen auf ihr Subnetz (ipKeyGenerator)', async () => {
+    const { rateLimitKeyGenerator } = await import('./rateLimit.js');
+    const a = rateLimitKeyGenerator({
+      headers: { 'x-vercel-forwarded-for': '2001:db8:0:1:aaaa::1' },
+      ip: undefined,
+    });
+    const b = rateLimitKeyGenerator({
+      headers: { 'x-vercel-forwarded-for': '2001:db8:0:1:bbbb::2' },
+      ip: undefined,
+    });
+    // Gleiches /56-Subnetz ⇒ gleicher Key; vollstaendige Adresse taucht nicht auf.
+    expect(a).toBe(b);
+    expect(a).toContain('/');
+  });
+});

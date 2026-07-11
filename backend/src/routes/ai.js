@@ -408,11 +408,13 @@ router.post('/ai/tts', requireAuth, async (req, res) => {
     return res.status(501).json({ error: 'ELEVENLABS_API_KEY not configured' });
   }
 
-  // Deutsche Stimme — "Daniel" ist eine natürliche deutsche Stimme
-  const voiceId = process.env.ELEVENLABS_VOICE_ID || 'onwK4e9ZLuTAKqWW03F9';
+  // Deutsche Stimme — "Daniel" ist eine natürliche deutsche Premade-Voice,
+  // die auch im ElevenLabs-Free-Plan per API nutzbar ist.
+  const DEFAULT_VOICE_ID = 'onwK4e9ZLuTAKqWW03F9';
+  const voiceId = process.env.ELEVENLABS_VOICE_ID || DEFAULT_VOICE_ID;
 
-  try {
-    const response = await fetchWithTimeout(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+  const callElevenLabs = (voice) =>
+    fetchWithTimeout(`https://api.elevenlabs.io/v1/text-to-speech/${voice}`, {
       method: 'POST',
       headers: {
         'xi-api-key': apiKey,
@@ -430,6 +432,18 @@ router.post('/ai/tts', requireAuth, async (req, res) => {
         }
       })
     });
+
+  try {
+    let response = await callElevenLabs(voiceId);
+
+    // Library-Voices sind im Free-Plan per API gesperrt (402 paid_plan_required,
+    // teils 403). Statt komplett ohne Audio zu antworten, einmalig mit der
+    // Premade-Standardstimme wiederholen.
+    if (!response.ok && (response.status === 402 || response.status === 403) && voiceId !== DEFAULT_VOICE_ID) {
+      const errText = await response.text().catch(() => '');
+      console.error('ElevenLabs voice rejected:', response.status, errText, '- Fallback auf Premade-Voice');
+      response = await callElevenLabs(DEFAULT_VOICE_ID);
+    }
 
     if (!response.ok) {
       const errText = await response.text().catch(() => 'Unknown error');
@@ -549,7 +563,7 @@ router.post('/ai/realtime-session', requireAuth, async (req, res) => {
     });
   }
 
-  const model = process.env.OPENAI_REALTIME_MODEL || 'gpt-4o-realtime-preview-2024-12-17';
+  const model = process.env.OPENAI_REALTIME_MODEL || 'gpt-realtime';
   const voice = process.env.OPENAI_REALTIME_VOICE || 'verse';
 
   try {
@@ -590,28 +604,38 @@ router.post('/ai/realtime-session', requireAuth, async (req, res) => {
       + `Erinnere an Schonzeiten und Events, falls relevant. `
       + `Sei motivierend und positiv – Angeln soll Spaß machen!` + ctx;
 
-    const r = await fetchWithTimeout('https://api.openai.com/v1/realtime/sessions', {
+    // GA-API: der Beta-Endpunkt /v1/realtime/sessions wurde von OpenAI entfernt
+    // (Antwort war "Invalid URL"). Ephemeral-Tokens kommen jetzt von
+    // /v1/realtime/client_secrets mit Session-Konfiguration im neuen Format.
+    const r = await fetchWithTimeout('https://api.openai.com/v1/realtime/client_secrets', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'OpenAI-Beta': 'realtime=v1'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model,
-        voice,
-        modalities: ['audio', 'text'],
-        instructions,
-        input_audio_transcription: { model: 'whisper-1' },
-        turn_detection: { type: 'server_vad', threshold: 0.5, prefix_padding_ms: 300, silence_duration_ms: 600, create_response: true }
+        expires_after: { anchor: 'created_at', seconds: 600 },
+        session: {
+          type: 'realtime',
+          model,
+          instructions,
+          audio: {
+            input: {
+              transcription: { model: 'whisper-1' },
+              turn_detection: { type: 'server_vad', threshold: 0.5, prefix_padding_ms: 300, silence_duration_ms: 600, create_response: true }
+            },
+            output: { voice }
+          }
+        }
       })
     });
     const data = await r.json();
-    if (!r.ok) {
+    if (!r.ok || !data?.value) {
       console.error('[Realtime Session Error]', data?.error || data);
       return res.status(502).json({ error: data?.error?.message || 'OpenAI Realtime Fehler' });
     }
-    return res.json({ ok: true, client_secret: data.client_secret, model, voice });
+    // Antwortform fuer den Client stabil halten: { client_secret: { value } }
+    return res.json({ ok: true, client_secret: { value: data.value, expires_at: data.expires_at }, model, voice });
   } catch (e) {
     console.error('[Realtime Session Error]', e.message);
     return sendDbError(res, e);

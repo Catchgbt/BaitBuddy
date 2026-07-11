@@ -358,7 +358,14 @@ export default function QuickCatchDialog() {
   const saveDraft = () => {
     triggerHaptic('light');
     playSound('click');
-    const drafts = JSON.parse(localStorage.getItem("fishmaster_drafts") || "[]");
+    // Korrupter localStorage-Eintrag darf das Speichern nicht crashen
+    let drafts;
+    try {
+      drafts = JSON.parse(localStorage.getItem("fishmaster_drafts") || "[]");
+      if (!Array.isArray(drafts)) drafts = [];
+    } catch {
+      drafts = [];
+    }
     drafts.push({ ...form, saved_at: new Date().toISOString() });
     localStorage.setItem("fishmaster_drafts", JSON.stringify(drafts));
     toast.success("Als Entwurf gespeichert (offline verfügbar)");
