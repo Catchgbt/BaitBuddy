@@ -35,6 +35,10 @@ function KiBuddyBetaInner() {
   const waveRef = useRef(null);
   const timeoutRef = useRef(null);
   const retryRef = useRef(0);
+  // Bricht einen laufenden /api/ai/chat-Request beim Unmount ab, damit nach dem
+  // Verlassen der Seite keine Antwort mehr verarbeitet wird (zweite Verteidigungs-
+  // linie neben isMountedRef). Wird pro ask()-Aufruf neu gesetzt.
+  const abortRef = useRef(null);
   // Läuft ein fortlaufendes Gespräch? Als Ref, damit die TTS-Callbacks (die in
   // einer alten Closure hängen) immer den aktuellen Wert sehen.
   const conversationActiveRef = useRef(false);
@@ -73,6 +77,10 @@ function KiBuddyBetaInner() {
   }, [messages]);
 
   function startWave() {
+    // Vorheriges Intervall zuerst löschen, damit sich bei schneller Abfolge
+    // (z. B. mehrere TTS-Antworten hintereinander) keine verwaisten Intervalle
+    // stapeln, die die waveRef überschreiben und nicht mehr gestoppt werden.
+    clearInterval(waveRef.current);
     waveRef.current = setInterval(() => {
       setWaveBars([...Array(5)].map(() => Math.random() * 18 + 4));
     }, 120);
@@ -80,6 +88,7 @@ function KiBuddyBetaInner() {
 
   function stopWave() {
     clearInterval(waveRef.current);
+    waveRef.current = null;
     setWaveBars([4, 4, 4, 4, 4]);
   }
 
@@ -137,6 +146,12 @@ function KiBuddyBetaInner() {
 
   async function ask(q, isRetry = false) {
     setStatus("thinking");
+    // Vorherigen laufenden Request abbrechen und für diesen Turn einen frischen
+    // Controller anlegen; das Unmount-Cleanup abortet über diese Ref.
+    if (!isRetry) {
+      abortRef.current?.abort();
+      abortRef.current = new AbortController();
+    }
     try {
       // Historie aus der Ref bauen — der auslösende User-Turn wurde bereits über
       // appendMessages angehängt und ist hier enthalten (kein erneutes Pushen).
@@ -147,7 +162,7 @@ function KiBuddyBetaInner() {
       const res = await catchgbtChat({
         messages: chatMessages,
         context: "ki_buddy_beta"
-      });
+      }, { signal: abortRef.current?.signal });
 
       if (!isMountedRef.current) return;
 
@@ -165,6 +180,10 @@ function KiBuddyBetaInner() {
       }
     } catch (error) {
       if (!isMountedRef.current) return;
+
+      // Abgebrochener Request (neuer Turn oder Unmount): keine Fehler-/Offline-
+      // Behandlung, der neue Aufruf übernimmt bzw. die Seite ist verlassen.
+      if (error?.name === "AbortError") return;
 
       // Bei Verbindungsfehlern: Versuche offline Antwort zu finden
       const offlineAnswer = findOfflineBuddyAnswer(q);
@@ -309,6 +328,8 @@ function KiBuddyBetaInner() {
       clearTimeout(timeoutRef.current);
       conversationActiveRef.current = false;
       clearInterval(waveRef.current);
+      waveRef.current = null;
+      try { abortRef.current?.abort(); } catch {}
       try { recRef.current?.stop(); } catch {}
       recRef.current = null;
       try { stopVoice(); } catch {}

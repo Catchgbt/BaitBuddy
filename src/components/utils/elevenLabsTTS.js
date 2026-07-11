@@ -5,6 +5,10 @@
 
 import { functions } from "@/api/frontendClient";
 
+// Modul-globaler Singleton: Es spielt bewusst immer nur EINE Stimme gleichzeitig.
+// Konsequenz: Gleichzeitiges TTS aus Jule (KiBuddyBeta) und dem schwebenden Widget
+// teilt sich diese eine Wiedergabe – ein neuer speak-Aufruf bricht den vorherigen ab
+// (cancelElevenLabs). Das ist gewolltes Verhalten und kein Bug bei paralleler Nutzung.
 let currentAudio = null;
 let currentUrl = null;
 
@@ -158,8 +162,20 @@ export async function speakWithFallback(text, options = {}) {
       },
     });
     return new Promise((resolve) => {
-      audio.onended = resolve;
-      audio.onerror = resolve;
+      // speakWithElevenLabs setzt bereits onended/onerror-Handler, die die
+      // Blob-URL via URL.revokeObjectURL freigeben. Diese Handler NICHT
+      // überschreiben (sonst Memory-Leak) – stattdessen wrappen: Original-
+      // Cleanup zuerst ausführen, dann das Promise auflösen.
+      const originalOnEnded = audio.onended;
+      const originalOnError = audio.onerror;
+      audio.onended = (e) => {
+        originalOnEnded?.call(audio, e);
+        resolve();
+      };
+      audio.onerror = (e) => {
+        originalOnError?.call(audio, e);
+        resolve();
+      };
     });
   } catch {
     const { speakWithBrowserTTS } = await import('./browserTTS');

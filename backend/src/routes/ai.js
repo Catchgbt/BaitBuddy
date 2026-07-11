@@ -11,6 +11,14 @@ import { fetchWithTimeout } from '../lib/fetchWithTimeout.js';
 // Wetterdienst nie die KI-Antwort blockiert.
 const WEATHER_TIMEOUT_MS = 8000;
 
+// Obergrenzen gegen überlange Eingaben: schützt vor Token-Kosten-Explosion und
+// Prompt-Injection über riesige Freitext-Felder. Werte großzügig, damit echte
+// Nutzung nie abgeschnitten wird.
+const MAX_CHAT_CONTENT_CHARS = 4000;   // pro Chat-Nachricht
+const MAX_CHAT_MESSAGES = 50;          // Anzahl Chat-Nachrichten
+const MAX_CATCH_DATA_CHARS = 4000;     // serialisierte catch_data
+const MAX_CONTEXT_CHARS = 1000;        // freie Kontext-/Perioden-Strings
+
 const router = Router();
 
 // Liest den Groq-Key aus mehreren möglichen Variablennamen.
@@ -33,7 +41,10 @@ router.get('/health', (req, res) => {
   });
 });
 
-router.get('/ai/test', async (req, res) => {
+// requireAuth: /ai/test ruft echtes invokeLLM auf und würde ohne Auth
+// unauthentifizierte Groq-Kosten erlauben. Für einen kostenlosen Health-Ping
+// ohne LLM-Call gibt es /health bzw. /api/health.
+router.get('/ai/test', requireAuth, async (req, res) => {
   try {
     if (!getGroqKey()) {
       // Nur serverseitig loggen, welche Env-Variablen-NAMEN in Frage kaemen —
@@ -56,7 +67,22 @@ router.post('/ai/chat', requireAuth, async (req, res) => {
     const { messages = [], userLocation = null } = req.body;
     const userEmail = req.user.email;
 
-    const lastMsg = [...messages].reverse().find(m => m.role === 'user')?.content || '';
+    // Eingabe hart validieren: Ein Nicht-Array führte zuvor beim Spread
+    // [...messages] zu einem 500er statt einer sauberen 400. Zusätzlich pro
+    // Nachricht Länge kappen und Anzahl begrenzen (Kosten-/Injection-Schutz).
+    if (!Array.isArray(messages)) {
+      return res.status(400).json({ error: 'messages muss ein Array sein' });
+    }
+    const safeMessages = messages
+      .filter(m => m && typeof m.content === 'string')
+      .slice(-MAX_CHAT_MESSAGES)
+      .map(m => ({
+        role: m.role === 'assistant' ? 'assistant' : 'user',
+        content: m.content.slice(0, MAX_CHAT_CONTENT_CHARS).trim(),
+      }))
+      .filter(m => m.content.length > 0);
+
+    const lastMsg = [...safeMessages].reverse().find(m => m.role === 'user')?.content || '';
     const wantsCatches = /fang|fänge|gefangen|fangbuch|logbuch/i.test(lastMsg);
     const wantsRules = /schonzeit|mindestmaß|erlaubt|verboten/i.test(lastMsg);
     const wantsSpots = /spot|angelplatz|wo angel/i.test(lastMsg);
@@ -129,7 +155,7 @@ Verfügbare Aktionen:
 
 Regeln: Aktions-Block nur wenn Nutzer wirklich eine Aktion will. Zuerst kurze Bestätigung, dann Block. Block wird dem Nutzer nicht angezeigt. Nutze fuer "page" exakt einen der erlaubten Werte.${context}`;
 
-    const history = messages.slice(-6).map(m =>
+    const history = safeMessages.slice(-6).map(m =>
       `${m.role === 'user' ? 'Nutzer' : 'BaitBuddy'}: ${m.content}`
     ).join('\n');
 
@@ -149,8 +175,11 @@ Regeln: Aktions-Block nur wenn Nutzer wirklich eine Aktion will. Zuerst kurze Be
 
     return res.json({ ok: true, reply: cleanReply, message: cleanReply, action });
   } catch (e) {
-    console.error('[AI Chat Error]', e.message, e.stack);
-    const details = e.message.includes('GROQ_API_KEY') ? 'API-Schlüssel nicht konfiguriert' : 'KI-Service Fehler';
+    // Gegen Nicht-Error-Throws absichern: e.message könnte undefined sein und
+    // .includes() würde dann selbst werfen (verschluckter Fehler → 500 ohne Log).
+    const msg = e && typeof e.message === 'string' ? e.message : String(e);
+    console.error('[AI Chat Error]', msg, e?.stack);
+    const details = msg.includes('GROQ_API_KEY') ? 'API-Schlüssel nicht konfiguriert' : 'KI-Service Fehler';
     return res.status(500).json({ error: details, details });
   }
 });
@@ -158,8 +187,22 @@ Regeln: Aktions-Block nur wenn Nutzer wirklich eine Aktion will. Zuerst kurze Be
 router.post('/ai/analyze-catch', requireAuth, async (req, res) => {
   try {
     const { image_base64, file_url } = req.body;
-    const imageBase64 = image_base64 || file_url;
+    let imageBase64 = image_base64 || file_url;
     if (!imageBase64) return res.status(400).json({ error: 'image_base64 required' });
+
+    // Wenn eine URL übergeben wird (Supabase-Storage), gegen SSRF absichern und
+    // serverseitig zu Base64 laden — analog zu /analyze-photo. Ohne diese Prüfung
+    // würde der Server jede vom Client genannte URL abrufen.
+    if (typeof imageBase64 === 'string' && imageBase64.startsWith('http')) {
+      if (!isAllowedFetchUrl(imageBase64)) {
+        return res.status(400).json({ error: 'Bild-URL muss aus dem eigenen Supabase-Storage stammen' });
+      }
+      const imgRes = await fetchWithTimeout(imageBase64, {}, WEATHER_TIMEOUT_MS);
+      if (!imgRes.ok) return res.status(400).json({ error: 'Bild konnte nicht heruntergeladen werden' });
+      const buffer = await imgRes.arrayBuffer();
+      imageBase64 = Buffer.from(buffer).toString('base64');
+    }
+
     const analysis = await invokeLLM({
       prompt: 'Analysiere dieses Foto. Erkenne die Fischart, schätze Länge und Gewicht. Gib Tipps. Antworte auf Deutsch.',
       imageBase64
@@ -224,7 +267,14 @@ Regeln:
 router.post('/ai/evaluate-catch', requireAuth, async (req, res) => {
   try {
     const { catch_data, context } = req.body;
-    const reply = await invokeLLM({ prompt: `Bewerte diesen Fang: ${JSON.stringify(catch_data)}. Kontext: ${context || ''}. Antworte auf Deutsch.` });
+    if (catch_data == null) {
+      return res.status(400).json({ error: 'catch_data erforderlich' });
+    }
+    // Serialisierung und Kontext vor der Prompt-Interpolation begrenzen
+    // (Token-Kosten- und Prompt-Injection-Schutz).
+    const catchStr = JSON.stringify(catch_data).slice(0, MAX_CATCH_DATA_CHARS);
+    const contextStr = (typeof context === 'string' ? context : '').slice(0, MAX_CONTEXT_CHARS);
+    const reply = await invokeLLM({ prompt: `Bewerte diesen Fang: ${catchStr}. Kontext: ${contextStr}. Antworte auf Deutsch.` });
     return res.json({ ok: true, evaluation: reply });
   } catch (e) {
     return sendDbError(res, e);
@@ -234,8 +284,10 @@ router.post('/ai/evaluate-catch', requireAuth, async (req, res) => {
 router.post('/ai/generate-catch-report', requireAuth, async (req, res) => {
   try {
     const { period } = req.body;
+    // Freitext-Periode validieren und begrenzen, bevor sie in den Prompt fließt.
+    const safePeriod = (typeof period === 'string' ? period : '').slice(0, MAX_CONTEXT_CHARS).trim() || 'letzte 30 Tage';
     const { data: catches } = await supabase.from('catches').select('*').eq('created_by', req.user.email).order('catch_time', { ascending: false }).limit(50);
-    const reply = await invokeLLM({ prompt: `Erstelle einen Fangbericht für den Zeitraum ${period || 'letzte 30 Tage'} basierend auf diesen Fängen: ${JSON.stringify(catches?.slice(0, 20))}. Antworte auf Deutsch.` });
+    const reply = await invokeLLM({ prompt: `Erstelle einen Fangbericht für den Zeitraum ${safePeriod} basierend auf diesen Fängen: ${JSON.stringify(catches?.slice(0, 20))}. Antworte auf Deutsch.` });
     return res.json({ ok: true, report: reply });
   } catch (e) {
     return sendDbError(res, e);

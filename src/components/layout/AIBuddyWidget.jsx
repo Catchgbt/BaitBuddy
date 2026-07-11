@@ -5,7 +5,7 @@ import { getTipForPage, getQuestionForPage, getPageNameFromPathname } from '@/li
 import { getRandomFarewellMessage } from '@/lib/buddyJokes';
 import { useAuth } from '@/lib/AuthContext';
 import { ai } from '@/api/frontendClient';
-import { speakWithFallback } from '@/components/utils/elevenLabsTTS';
+import { speakWithFallback, cancelElevenLabs } from '@/components/utils/elevenLabsTTS';
 import { speakWithBrowserTTS } from '@/components/utils/browserTTS';
 import { findOfflineBuddyAnswer, getOfflineBuddyFallback } from '@/lib/offlineBuddyQuestions';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
@@ -143,6 +143,9 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
   const smallBubbleTimerRef = useRef(null);
   const userActivityTimerRef = useRef(null);
   const isLoadingRef = useRef(false);
+  // Guard gegen State-Updates nach dem Unmount (z. B. Antwort trifft ein, nachdem
+  // der Nutzer weg-navigiert hat) und Anker für den TTS-Abbruch im Cleanup.
+  const isMountedRef = useRef(true);
 
   const dragStateRef = useRef({
     active: false,
@@ -400,6 +403,10 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
       try {
         const response = await ai.chat(history, getStoredLocation());
 
+        // Nach dem await: Wurde das Widget zwischenzeitlich unmountet, keine
+        // Nachrichten/TTS mehr verarbeiten.
+        if (!isMountedRef.current) return;
+
         const botMessage = response.reply || response.message || '';
         if (botMessage) {
           setMessages((prev) => [...prev, { role: 'assistant', content: botMessage }]);
@@ -410,6 +417,8 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
           navigate,
           userLocation: getStoredLocation(),
         });
+
+        if (!isMountedRef.current) return;
 
         const actionNote = actionResult?.message;
         if (actionNote) {
@@ -491,11 +500,15 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
     setIsOpen(true);
   }, [showWidget]);
 
-  // Cleanup timers
+  // Cleanup timers + laufende Sprachausgabe beim Unmount stoppen, damit Jule
+  // nach dem Weg-Navigieren nicht weiterredet.
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
+      isMountedRef.current = false;
       if (smallBubbleTimerRef.current) clearTimeout(smallBubbleTimerRef.current);
       if (userActivityTimerRef.current) clearTimeout(userActivityTimerRef.current);
+      try { cancelElevenLabs(); } catch { /* ignore */ }
     };
   }, []);
 

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { catchgbtChat } from '@/functions/catchgbtChat';
-import { speakWithFallback } from '@/components/utils/elevenLabsTTS';
+import { speakWithFallback, cancelElevenLabs } from '@/components/utils/elevenLabsTTS';
 import { useChatMessages } from '@/hooks/useChatMessages';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 
@@ -20,6 +20,8 @@ export default function MiniKiBuddy() {
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [userLocation, setUserLocation] = useState(null);
   const messagesEndRef = useRef(null);
+  // Guard gegen State-Updates nach dem Unmount und Anker für den TTS-Abbruch.
+  const isMountedRef = useRef(true);
 
   const {
     isListening,
@@ -80,6 +82,8 @@ export default function MiniKiBuddy() {
           userLocation: userLocation || null,
         });
 
+        if (!isMountedRef.current) return;
+
         const response = res?.reply || res?.message || 'Ich konnte keine Antwort generieren.';
         setMessages((prev) => [...prev, { role: 'assistant', content: response }]);
 
@@ -92,6 +96,7 @@ export default function MiniKiBuddy() {
         }
       } catch (error) {
         console.error('Chat error:', error);
+        if (!isMountedRef.current) return;
         setMessages((prev) => [
           ...prev,
           {
@@ -100,7 +105,7 @@ export default function MiniKiBuddy() {
           },
         ]);
       } finally {
-        setIsLoading(false);
+        if (isMountedRef.current) setIsLoading(false);
       }
     },
     [messages, setMessages, input, isLoading, voiceEnabled, userLocation]
@@ -121,42 +126,15 @@ export default function MiniKiBuddy() {
     }
   };
 
-  const handleExampleQuestion = async (question) => {
-    const newMessages = [...messages, { role: 'user', content: question }];
-    setMessages(newMessages);
-    setInput('');
-    setIsLoading(true);
-
-    try {
-      const res = await catchgbtChat({
-        messages: newMessages,
-        context: 'dashboard',
-        userLocation: userLocation || null,
-      });
-
-      const response = res?.reply || res?.message || 'Ich konnte keine Antwort generieren.';
-      setMessages((prev) => [...prev, { role: 'assistant', content: response }]);
-
-      if (voiceEnabled && response) {
-        await speakWithFallback(response, {
-          voiceEnabled: true,
-          lang: 'de-DE',
-          rate: 1.0,
-        });
-      }
-    } catch (error) {
-      console.error('Chat error:', error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: 'Entschuldigung, bitte erneut versuchen.',
-        },
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Laufende Sprachausgabe beim Unmount stoppen, damit der Buddy nach dem
+  // Verlassen des Dashboards nicht weiterredet.
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      try { cancelElevenLabs(); } catch { /* ignore */ }
+    };
+  }, []);
 
   return (
     <div className="flex flex-col bg-gray-800/30 rounded-xl border border-gray-700/50 overflow-hidden" style={{ height: '24rem' }}>
@@ -219,7 +197,7 @@ export default function MiniKiBuddy() {
           {EXAMPLE_QUESTIONS.map((q, i) => (
             <button
               key={i}
-              onClick={() => handleExampleQuestion(q)}
+              onClick={() => handleSendMessage(q)}
               className="text-xs px-3 py-1.5 rounded-full bg-gray-700/60 border border-gray-600/50 text-gray-300 hover:bg-cyan-700/40 hover:border-cyan-500/50 hover:text-white transition-colors"
             >
               {q}
