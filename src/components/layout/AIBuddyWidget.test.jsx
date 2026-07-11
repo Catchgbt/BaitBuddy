@@ -95,6 +95,11 @@ describe('AIBuddyWidget – Chat-Verhalten', () => {
   });
 
   it('öffnet den Chat bei einem Tap und lässt ihn durch Geister-Mausevents NICHT wieder zufallen', async () => {
+    // Seite als bereits besucht markieren, damit das Widget nicht automatisch
+    // aufklappt — sonst würde der Tap den bereits offenen Chat wieder schließen
+    // und der Test wäre timing-abhängig (flaky).
+    localStorage.setItem('buddy-visited-pages', JSON.stringify(['dashboard']));
+
     const { container } = renderWidget();
 
     // Der Avatar-Wrapper trägt die Drag-/Klick-Handler (cursor-grab).
