@@ -104,11 +104,9 @@ describe('AIBuddyWidget – Chat-Verhalten', () => {
   });
 
   it('öffnet den Chat bei einem Tap und lässt ihn durch Geister-Mausevents NICHT wieder zufallen', async () => {
-    // Seite als bereits besucht markieren, damit das Widget nicht automatisch
-    // aufklappt — sonst würde der Tap den bereits offenen Chat wieder schließen
-    // und der Test wäre timing-abhängig (flaky).
-    localStorage.setItem('buddy-visited-pages', JSON.stringify(['dashboard']));
-
+    // Der Tap erfolgt sofort nach dem Rendern — die Frage-Blase (800 ms
+    // Verzögerung) kommt dem Test nicht in die Quere, weil der offene Chat
+    // sie unterdrückt.
     const { container } = renderWidget();
 
     // Der Avatar-Wrapper trägt die Drag-/Klick-Handler (cursor-grab).
@@ -129,8 +127,7 @@ describe('AIBuddyWidget – Chat-Verhalten', () => {
     expect(screen.getByLabelText('Chat-Eingabefeld')).toBeInTheDocument();
   });
 
-  it('meldet sich beim ersten Öffnen einer Seite mit einer seitenspezifischen Frage in der kleinen Blase', async () => {
-    // Weather ist noch nicht besucht -> Jule stellt die Weather-Frage.
+  it('meldet sich beim Öffnen einer Seite mit einer seitenspezifischen Frage in der kleinen Blase', async () => {
     renderWidget(['/Weather']);
 
     const bubble = await screen.findByLabelText('Chat mit Jule öffnen', {}, { timeout: 3000 });
@@ -138,6 +135,17 @@ describe('AIBuddyWidget – Chat-Verhalten', () => {
 
     // Der volle Chat ist dabei noch NICHT offen.
     expect(screen.queryByLabelText('Chat-Eingabefeld')).not.toBeInTheDocument();
+  });
+
+  it('stellt die Frage auch auf Seiten, die früher schon besucht wurden', async () => {
+    // Altbestand aus der früheren "nur beim ersten Besuch"-Logik darf die
+    // Blase nicht mehr unterdrücken.
+    localStorage.setItem('buddy-visited-pages', JSON.stringify(['Weather']));
+
+    renderWidget(['/Weather']);
+
+    const bubble = await screen.findByLabelText('Chat mit Jule öffnen', {}, { timeout: 3000 });
+    expect(bubble).toHaveTextContent('Soll ich dir sagen, ob das Wetter heute zum Angeln passt?');
   });
 
   it('öffnet den vollen Chat, wenn man auf die kleine Frage-Blase tippt', async () => {

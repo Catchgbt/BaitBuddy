@@ -39,7 +39,7 @@ export default function AIBuddyWidgetStub() {
   // Kompatibilitäts-Mausklick den frisch geöffneten Chat sofort wieder schließen.
   const lastTouchRef = useRef(0);
 
-  // Seitenspezifische Frage-Blase: Meldet sich beim ersten Besuch einer Seite,
+  // Seitenspezifische Frage-Blase: Meldet sich bei jedem Öffnen einer Seite,
   // solange nur der Stub gemountet ist. Ohne diese Logik hier erschiene die
   // Frage nie, denn das volle Widget (das sie ebenfalls kann) wird erst nach
   // dem ersten Klick geladen.
@@ -47,6 +47,9 @@ export default function AIBuddyWidgetStub() {
   const [showBubble, setShowBubble] = useState(false);
   const bubbleTimerRef = useRef(null);
   const hideTimerRef = useRef(null);
+  // Merkt sich, für welche Seite die Frage zuletzt gezeigt wurde: verhindert,
+  // dass Effekt-Neuläufe ohne Seitenwechsel dieselbe Blase erneut aufpoppen.
+  const lastQuestionPageRef = useRef(null);
 
   const currentPage = getPageNameFromPathname(location.pathname);
 
@@ -65,30 +68,18 @@ export default function AIBuddyWidgetStub() {
 
     try {
       if (localStorage.getItem(BUDDY_STORAGE_KEYS.WIDGET_HIDDEN) === 'true') return undefined;
-
-      const visited = JSON.parse(
-        localStorage.getItem(BUDDY_STORAGE_KEYS.VISITED_PAGES) || '[]'
-      );
-      if (visited.includes(currentPage)) return undefined;
     } catch {
       return undefined;
     }
 
-    // Kleine Verzögerung, damit der Seitenwechsel visuell abgeschlossen ist,
-    // bevor die Frage-Blase erscheint. Die Seite wird erst hier als besucht
-    // markiert (nicht schon im Effekt-Body), damit der doppelte Effekt-Lauf
-    // in React.StrictMode die Blase nicht verschluckt.
-    bubbleTimerRef.current = setTimeout(() => {
-      try {
-        const visited = JSON.parse(
-          localStorage.getItem(BUDDY_STORAGE_KEYS.VISITED_PAGES) || '[]'
-        );
-        if (!visited.includes(currentPage)) {
-          visited.push(currentPage);
-          localStorage.setItem(BUDDY_STORAGE_KEYS.VISITED_PAGES, JSON.stringify(visited));
-        }
-      } catch {}
+    if (lastQuestionPageRef.current === currentPage) return undefined;
 
+    // Kleine Verzögerung, damit der Seitenwechsel visuell abgeschlossen ist,
+    // bevor die Frage-Blase erscheint. Die Seite wird erst im Timer als
+    // "gezeigt" markiert (nicht schon im Effekt-Body), damit der doppelte
+    // Effekt-Lauf in React.StrictMode die Blase nicht verschluckt.
+    bubbleTimerRef.current = setTimeout(() => {
+      lastQuestionPageRef.current = currentPage;
       const question = getQuestionForPage(currentPage);
       setBubbleText(question);
       setShowBubble(true);
