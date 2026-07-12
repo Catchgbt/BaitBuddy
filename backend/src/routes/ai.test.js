@@ -129,6 +129,10 @@ describe('POST /api/ai/chat', () => {
     expect(prompt).toContain('GUMMIFISCH');
     expect(prompt).toContain('UNTERWASSER-KÖDERBOX');
     expect(prompt).toContain('KNOTEN');
+    // Gesprächsstil (variierende Rückfragen) und App-Funktionswissen.
+    expect(prompt).toContain('GESPRÄCHSSTIL & RÜCKFRAGEN');
+    expect(prompt).toContain('DEINE APP-FUNKTIONEN');
+    expect(prompt).toContain('Fangbuch');
   });
 
   it('kappt überlange Nachrichten-Contents vor dem Prompt-Aufbau', async () => {
@@ -323,5 +327,10 @@ describe('POST /api/ai/realtime-session', () => {
     expect(instructions).toContain('niemals nur auf Tutorials');
     expect(instructions).toContain('GUMMIFISCH');
     expect(instructions).toContain('UNTERWASSER-KÖDERBOX');
+    // Gesprächsstil und App-Funktionswissen — plus die Klarstellung, dass der
+    // Voice-Buddy selbst keine App-Aktionen ausführen kann.
+    expect(instructions).toContain('GESPRÄCHSSTIL & RÜCKFRAGEN');
+    expect(instructions).toContain('DEINE APP-FUNKTIONEN');
+    expect(instructions).toContain('KEINE App-Aktionen');
   });
 });

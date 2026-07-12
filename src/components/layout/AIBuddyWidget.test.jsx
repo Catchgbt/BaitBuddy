@@ -26,10 +26,11 @@ vi.mock('@/lib/offlineBuddyQuestions', () => ({
 }));
 vi.mock('@/api/frontendClient', () => ({
   ai: { chat: vi.fn() },
+  events: { getActiveEvent: vi.fn(), leaderboard: vi.fn() },
 }));
 
 import AIBuddyWidget from './AIBuddyWidget';
-import { ai } from '@/api/frontendClient';
+import { ai, events } from '@/api/frontendClient';
 import { speakWithFallback } from '@/components/utils/elevenLabsTTS';
 
 function renderWidget(initialEntries = ['/dashboard']) {
@@ -59,6 +60,10 @@ describe('AIBuddyWidget – Chat-Verhalten', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
+    // Start-Begrüßung explizit als "schon gelaufen" markieren, damit diese
+    // Tests das Seiten-Frage-Verhalten isoliert prüfen (die Begrüßung ersetzt
+    // sonst die erste Frage-Blase; sie hat unten ihren eigenen describe-Block).
+    sessionStorage.setItem('bb_buddy_greeted', '1');
     // jsdom implementiert scrollIntoView nicht.
     Element.prototype.scrollIntoView = vi.fn();
   });
@@ -155,5 +160,54 @@ describe('AIBuddyWidget – Chat-Verhalten', () => {
     fireEvent.click(bubble);
 
     expect(await screen.findByLabelText('Chat-Eingabefeld')).toBeInTheDocument();
+  });
+});
+
+describe('AIBuddyWidget – Start-Begrüßung', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+    vi.clearAllMocks();
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+
+  afterEach(() => {
+    cleanup();
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+
+  it('begrüßt beim ersten Mount per Blase und Audio — auch wenn der Event-Status nicht ladbar ist', async () => {
+    events.getActiveEvent.mockRejectedValue(new Error('offline'));
+
+    renderWidget(['/Weather']);
+
+    const bubble = await screen.findByLabelText('Chat mit dem KI-Buddy öffnen', {}, { timeout: 3000 });
+    // Die Begrüßung ersetzt die Seiten-Frage der ersten Seite.
+    expect(bubble).not.toHaveTextContent('Soll ich dir sagen, ob das Wetter heute zum Angeln passt?');
+    expect(bubble.textContent.length).toBeGreaterThan(20);
+    // Voice ist per Default aktiv — die Begrüßung wird gesprochen.
+    await waitFor(() => expect(speakWithFallback).toHaveBeenCalled());
+  });
+
+  it('baut das aktive Event in die Begrüßung ein', async () => {
+    events.getActiveEvent.mockResolvedValue({
+      active_event: { id: 'ev1', name: 'Hecht-Cup', days_left: 4 },
+    });
+    events.leaderboard.mockResolvedValue([]);
+
+    renderWidget(['/Weather']);
+
+    const bubble = await screen.findByLabelText('Chat mit dem KI-Buddy öffnen', {}, { timeout: 3000 });
+    expect(bubble).toHaveTextContent('Hecht-Cup');
+  });
+
+  it('begrüßt pro Sitzung nur einmal — danach kommt wieder die Seiten-Frage', async () => {
+    sessionStorage.setItem('bb_buddy_greeted', '1');
+
+    renderWidget(['/Weather']);
+
+    const bubble = await screen.findByLabelText('Chat mit dem KI-Buddy öffnen', {}, { timeout: 3000 });
+    expect(bubble).toHaveTextContent('Soll ich dir sagen, ob das Wetter heute zum Angeln passt?');
   });
 });
