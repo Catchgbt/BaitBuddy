@@ -147,6 +147,10 @@ Der **KI-Buddy** ist zentrales Feature mit oberster Priorität. Muss reibungslos
 > Sideloaden als auch das signierte Release-**AAB** — der AAB-Signierschritt
 > läuft nur, wenn das `KEYSTORE_BASE64`-Secret gesetzt ist. Der frühere
 > zweite Workflow (`build-apk.yml`) wurde konsolidiert und entfernt.
+> `versionCode`/`versionName` werden beim manuellen `workflow_dispatch` als
+> Inputs übergeben (nicht mehr hartkodiert); bei Tag-Builds greifen die im
+> Workflow hinterlegten Fallback-Werte. Der `version_code` muss höher sein
+> als der zuletzt in der Play Console hochgeladene.
 
 ---
 
