@@ -2,6 +2,15 @@ name: Build Android
 
 on:
   workflow_dispatch:
+    inputs:
+      version_code:
+        description: 'Android versionCode (muss hoeher sein als der zuletzt zu Play hochgeladene)'
+        required: false
+        default: '27'
+      version_name:
+        description: 'Android versionName'
+        required: false
+        default: '2.117898.0'
   push:
     tags:
       - 'v*'
@@ -78,8 +87,10 @@ jobs:
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
 
-      # Signierte Release-.aab fuer den Play Store
-      - name: Build Release AAB (signed, versionCode 26)
+      # Signierte Release-.aab fuer den Play Store. versionCode/versionName kommen
+      # beim manuellen Dispatch aus den Workflow-Inputs; bei Tag-Builds (push auf
+      # v*) greifen die Fallback-Werte, da dort keine Inputs existieren.
+      - name: Build Release AAB (signed)
         if: ${{ env.KEYSTORE_BASE64 != '' }}
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
@@ -88,8 +99,8 @@ jobs:
             -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
             -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
             -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }} \
-            -Pandroid.injected.version.code=26 \
-            -Pandroid.injected.version.name=2.117897.0
+            -Pandroid.injected.version.code=${{ github.event.inputs.version_code || '27' }} \
+            -Pandroid.injected.version.name=${{ github.event.inputs.version_name || '2.117898.0' }}
         env:
           ANDROID_HOME: ${{ env.ANDROID_SDK_ROOT }}
 
