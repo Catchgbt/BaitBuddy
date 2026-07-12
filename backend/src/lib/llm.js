@@ -61,7 +61,9 @@ export async function invokeLLM({ prompt, imageBase64 = null }) {
     messages.push({ role: 'user', content: prompt });
   }
 
-  const requestBody = JSON.stringify({ model, messages, max_tokens: 1024 });
+  // 2048 statt 1024: Schritt-für-Schritt-Anleitungen des KI-Buddys (Montage,
+  // Köderführung) brauchen mehr Platz und dürfen nicht mitten im Schritt enden.
+  const requestBody = JSON.stringify({ model, messages, max_tokens: 2048 });
   let lastErr = null;
 
   for (let attempt = 0; attempt <= MAX_LLM_RETRIES; attempt++) {

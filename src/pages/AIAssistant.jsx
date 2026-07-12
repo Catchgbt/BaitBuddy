@@ -192,18 +192,13 @@ Registriere dich kostenlos, um personalisierte KI-Antworten basierend auf deinem
         await new Promise(resolve => setTimeout(resolve, 800)); // kurze Verzögerung simulieren
         responseContent = getRandomDemoResponse(questionText) + '\n\n---\n*Dies ist eine Demo-Antwort. Registriere dich kostenlos fuer echte KI-Antworten!*';
       } else {
+        // Die Frage geht unverändert an /api/ai/chat — dort steuert der zentrale
+        // System-Prompt (inkl. Praxis-Wissensbasis und Anleitungs-Regeln aus
+        // backend/src/lib/buddyKnowledge.js) Ton und Ausführlichkeit. Ein
+        // zweiter, konkurrierender Rollen-Prompt an dieser Stelle würde die
+        // zentralen Regeln nur verwässern.
         const response = await integrations.Core.InvokeLLM({
-          prompt: `Du bist ein erfahrener Angel-Experte und hilfst Anglern mit präzisen, praktischen Ratschlägen.
-
-Frage des Anglers: ${questionText}
-
-Gib eine detaillierte, hilfreiche Antwort mit konkreten Tipps. Strukturiere deine Antwort klar mit:
-- Kurze, direkte Antwort zuerst
-- Dann detaillierte Erklärung
-- Konkrete Empfehlungen
-- Praktische Tipps
-
-Verwende Emojis sparsam aber gezielt für bessere Lesbarkeit.`,
+          prompt: questionText,
           add_context_from_internet: false
         });
         // InvokeLLM gibt ein Objekt mit 'reply' oder 'message' zurück

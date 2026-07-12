@@ -112,6 +112,25 @@ describe('POST /api/ai/chat', () => {
     expect(llmMock.invokeLLM).not.toHaveBeenCalled();
   });
 
+  it('baut Praxis-Wissensbasis und Anleitungs-Regeln in den System-Prompt ein', async () => {
+    let prompt = '';
+    llmMock.invokeLLM = vi.fn(async (args) => { prompt = args.prompt; return 'ok'; });
+
+    const res = await request(app)
+      .post('/api/ai/chat')
+      .set('Authorization', 'Bearer tok')
+      .send({ messages: [{ role: 'user', content: 'Wie benutze ich den Gummifisch im Wasser?' }] });
+
+    expect(res.status).toBe(200);
+    // Anleitungs-Regeln: nie auf Tutorials abschieben, selbst erklären.
+    expect(prompt).toContain('ANLEITUNGS-REGELN');
+    expect(prompt).toContain('ERKLÄRST DU ES IMMER SELBST');
+    // Wissensbasis: konkrete Praxis-Themen müssen im Prompt stehen.
+    expect(prompt).toContain('GUMMIFISCH');
+    expect(prompt).toContain('UNTERWASSER-KÖDERBOX');
+    expect(prompt).toContain('KNOTEN');
+  });
+
   it('kappt überlange Nachrichten-Contents vor dem Prompt-Aufbau', async () => {
     let prompt = '';
     llmMock.invokeLLM = vi.fn(async (args) => { prompt = args.prompt; return 'ok'; });
@@ -282,5 +301,27 @@ describe('POST /api/ai/realtime-session', () => {
     const sentBody = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(sentBody.session.type).toBe('realtime');
     expect(sentBody.session.model).toBeTruthy();
+  });
+
+  it('gibt der Voice-Session Anleitungs-Regeln und Praxis-Wissensbasis mit', async () => {
+    process.env.OPENAI_API_KEY = 'test-openai-key';
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ value: 'ek_test_123', expires_at: 1234567890, session: {} }),
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const res = await request(app)
+      .post('/api/ai/realtime-session')
+      .set('Authorization', 'Bearer tok')
+      .send({});
+
+    expect(res.status).toBe(200);
+    const sentBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+    const instructions = sentBody.session.instructions;
+    expect(instructions).toContain('ANLEITUNGS-REGELN');
+    expect(instructions).toContain('niemals nur auf Tutorials');
+    expect(instructions).toContain('GUMMIFISCH');
+    expect(instructions).toContain('UNTERWASSER-KÖDERBOX');
   });
 });
