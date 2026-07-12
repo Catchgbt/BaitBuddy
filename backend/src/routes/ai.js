@@ -21,6 +21,80 @@ const MAX_CONTEXT_CHARS = 1000;        // freie Kontext-/Perioden-Strings
 
 const router = Router();
 
+// Extrahiert einen Aktions-Block aus der LLM-Antwort und liefert die für den
+// Nutzer sichtbare Antwort ohne den Block zurück.
+//
+// Der Idealfall ist der markierte Block <<ACTION>>{...}<<END>>. Das LLM hält
+// sich aber nicht immer daran und hängt die rohe Action-JSON ohne Marker ans
+// Antwort-Ende (z. B. `... {"type":"navigate","params":{"page":"karte"}}`).
+// Diese nackte JSON darf dem Nutzer NIEMALS als Text angezeigt werden, deshalb
+// erkennen wir sie als Fallback über Brace-Matching und entfernen sie ebenfalls.
+function extractAction(reply) {
+  const markerMatch = reply.match(/<<ACTION>>(.*?)<<END>>/s);
+  if (markerMatch) {
+    let action = null;
+    try {
+      action = JSON.parse(markerMatch[1]);
+    } catch (error) {
+      console.error('Fehler beim Parsen der KI-Action:', error);
+    }
+    return { action, cleanReply: reply.replace(/<<ACTION>>.*?<<END>>/s, '').trim() };
+  }
+
+  // Fallback: nackte Action-JSON am Antwort-Ende. Wir suchen das letzte
+  // `{"type"` und lesen das balancierte JSON-Objekt (unter Beachtung von
+  // Strings/Escapes) bis zur passenden schließenden Klammer.
+  const typeIdx = reply.lastIndexOf('{"type"');
+  const looseIdx = typeIdx === -1 ? reply.search(/\{\s*"type"\s*:/) : typeIdx;
+  if (looseIdx !== -1) {
+    const end = matchBalancedBrace(reply, looseIdx);
+    if (end !== -1) {
+      const candidate = reply.slice(looseIdx, end + 1);
+      try {
+        const parsed = JSON.parse(candidate);
+        if (parsed && typeof parsed.type === 'string') {
+          return { action: parsed, cleanReply: reply.slice(0, looseIdx).trim() };
+        }
+      } catch {
+        // Kein gültiges JSON — dann nichts entfernen, Antwort unverändert lassen.
+      }
+    }
+  }
+
+  return { action: null, cleanReply: reply.trim() };
+}
+
+// Findet zur öffnenden Klammer bei startIdx die passende schließende Klammer,
+// String-Literale (inkl. Escapes) werden übersprungen. Liefert -1, wenn kein
+// balanciertes Objekt gefunden wird.
+function matchBalancedBrace(str, startIdx) {
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = startIdx; i < str.length; i++) {
+    const ch = str[i];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (ch === '\\') {
+        escaped = true;
+      } else if (ch === '"') {
+        inString = false;
+      }
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+    } else if (ch === '{') {
+      depth++;
+    } else if (ch === '}') {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
+}
+
 // Liest den Groq-Key aus mehreren möglichen Variablennamen.
 function getGroqKey() {
   const key = process.env.GROQ_API_KEY || process.env.GROG_API_KEY || process.env.GROK_API_KEY || null;
@@ -168,17 +242,7 @@ Regeln: Aktions-Block nur wenn Nutzer wirklich eine Aktion will. Zuerst kurze Be
 
     const reply = await invokeLLM({ prompt: `${systemPrompt}\n\n${history}\n\nAntworte:` });
 
-    let action = null;
-    const actionMatch = reply.match(/<<ACTION>>(.*?)<<END>>/s);
-    if (actionMatch) {
-      try {
-        action = JSON.parse(actionMatch[1]);
-      } catch (error) {
-        console.error('Fehler beim Parsen der KI-Action:', error);
-        action = null;
-      }
-    }
-    const cleanReply = reply.replace(/<<ACTION>>.*?<<END>>/s, '').trim();
+    const { action, cleanReply } = extractAction(reply);
 
     return res.json({ ok: true, reply: cleanReply, message: cleanReply, action });
   } catch (e) {

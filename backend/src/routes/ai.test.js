@@ -45,6 +45,40 @@ describe('POST /api/ai/chat', () => {
     expect(res.body.action).toEqual({ type: 'navigate', params: { page: 'karte' } });
   });
 
+  it('entfernt nackte Action-JSON ohne Marker aus der sichtbaren Antwort', async () => {
+    llmMock.invokeLLM = vi.fn().mockResolvedValue(
+      'Ich bringe uns mal in die Karte und schaue, welche Optionen es gibt. {"type":"navigate","params":{"page":"karte"}}'
+    );
+    const res = await request(app)
+      .post('/api/ai/chat')
+      .set('Authorization', 'Bearer tok')
+      .send({ messages: [{ role: 'user', content: 'Zeig mir Angelshops' }] });
+
+    expect(res.status).toBe(200);
+    expect(res.body.reply).toBe('Ich bringe uns mal in die Karte und schaue, welche Optionen es gibt.');
+    expect(res.body.reply).not.toContain('{"type"');
+    expect(res.body.reply).not.toContain('navigate');
+    expect(res.body.action).toEqual({ type: 'navigate', params: { page: 'karte' } });
+  });
+
+  it('entfernt nackte Action-JSON mit verschachtelten params', async () => {
+    llmMock.invokeLLM = vi.fn().mockResolvedValue(
+      'Trage ich ein. {"type":"log_catch","params":{"species":"Hecht","notes":"schön {dick}"}}'
+    );
+    const res = await request(app)
+      .post('/api/ai/chat')
+      .set('Authorization', 'Bearer tok')
+      .send({ messages: [{ role: 'user', content: 'Hecht 80cm' }] });
+
+    expect(res.status).toBe(200);
+    expect(res.body.reply).toBe('Trage ich ein.');
+    expect(res.body.reply).not.toContain('{"type"');
+    expect(res.body.action).toEqual({
+      type: 'log_catch',
+      params: { species: 'Hecht', notes: 'schön {dick}' },
+    });
+  });
+
   it('gibt action=null zurück, wenn kein Aktions-Block vorhanden ist', async () => {
     llmMock.invokeLLM = vi.fn().mockResolvedValue('Petri Heil, wie war dein letzter Ansitz?');
     const res = await request(app)
