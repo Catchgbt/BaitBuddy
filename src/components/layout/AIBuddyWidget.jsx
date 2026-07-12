@@ -3,8 +3,9 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import BuddyAvatar from '@/components/ai/BuddyAvatar';
 import { getTipForPage, getQuestionForPage, getPageNameFromPathname } from '@/lib/buddyTips';
 import { getRandomFarewellMessage } from '@/lib/buddyJokes';
+import { buildGreeting, GREETED_SESSION_KEY } from '@/lib/buddyGreetings';
 import { useAuth } from '@/lib/AuthContext';
-import { ai } from '@/api/frontendClient';
+import { ai, events } from '@/api/frontendClient';
 import { speakWithFallback, cancelElevenLabs } from '@/components/utils/elevenLabsTTS';
 import { speakWithBrowserTTS } from '@/components/utils/browserTTS';
 import { findOfflineBuddyAnswer, getOfflineBuddyFallback } from '@/lib/offlineBuddyQuestions';
@@ -228,6 +229,62 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
 
   const currentPage = getPageNameFromPathname(location.pathname);
   const tip = getTipForPage(currentPage);
+
+  // Start-Begrüßung: Einmal pro App-Sitzung meldet sich der KI-Buddy mit einer
+  // immer anderen Begrüßung (Tageszeit, Stimmung, Event-Status) per Sprechblase
+  // und — falls Voice aktiv — per Audio. Sie ersetzt auf der Startseite die
+  // seitenspezifische Frage-Blase; dieser Effekt MUSS deshalb vor dem
+  // Page-Tracking-Effekt deklariert bleiben (setzt lastQuestionPageRef synchron).
+  const greetingStartedRef = useRef(false);
+  useEffect(() => {
+    if (isHidden || isOpen || greetingStartedRef.current) return undefined;
+    try {
+      if (sessionStorage.getItem(GREETED_SESSION_KEY) === '1') return undefined;
+    } catch { /* sessionStorage optional */ }
+    greetingStartedRef.current = true;
+    try {
+      sessionStorage.setItem(GREETED_SESSION_KEY, '1');
+    } catch { /* sessionStorage optional */ }
+    lastQuestionPageRef.current = currentPage;
+
+    let cancelled = false;
+    (async () => {
+      // Event-Status best effort: aktives Event und eigene Platzierung fließen
+      // in die Begrüßung ein; Fehler (offline, Gast) lassen sie einfach weg.
+      let activeEvent = null;
+      let rank = null;
+      try {
+        const res = await events.getActiveEvent();
+        activeEvent = res?.active_event || null;
+        if (activeEvent?.id && user?.email) {
+          const board = await events.leaderboard(activeEvent.id);
+          if (Array.isArray(board)) {
+            const idx = board.findIndex((p) => p.user_id === user.email);
+            if (idx >= 0) rank = idx + 1;
+          }
+        }
+      } catch { /* Event-Status ist optional für die Begrüßung */ }
+
+      if (cancelled || !isMountedRef.current) return;
+      const greeting = buildGreeting({ event: activeEvent, rank });
+      showSmallBubbleWithText(greeting, { farewell: false });
+      if (buddyVoiceEnabled) {
+        speakWithFallback(greeting, {
+          voiceEnabled: buddyVoiceEnabled,
+          lang: 'de-DE',
+          rate: 1.0,
+        }).catch(() => {
+          speakWithBrowserTTS(greeting, { lang: 'de-DE', rate: 1.0 }).catch(() => {
+            /* TTS ist optional */
+          });
+        });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isHidden, isOpen, currentPage, buddyVoiceEnabled, showSmallBubbleWithText, user]);
 
   // Auto-Scroll bei neuen Nachrichten wird zentral in useChatMessages erledigt.
 

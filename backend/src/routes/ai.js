@@ -2,7 +2,13 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
 import { invokeLLM } from '../lib/llm.js';
-import { FISHING_KNOWLEDGE, PRACTICAL_GUIDE_RULES, PRACTICAL_GUIDE_RULES_VOICE } from '../lib/buddyKnowledge.js';
+import {
+  FISHING_KNOWLEDGE,
+  PRACTICAL_GUIDE_RULES,
+  PRACTICAL_GUIDE_RULES_VOICE,
+  CONVERSATION_STYLE,
+  APP_FEATURE_KNOWLEDGE,
+} from '../lib/buddyKnowledge.js';
 import { isInClosedSeason } from '../lib/closedSeason.js';
 import { isAllowedFetchUrl } from '../lib/urlSafety.js';
 import { sendDbError } from '../lib/errorResponse.js';
@@ -227,6 +233,10 @@ DEINE PERSÖNLICHKEIT:
 - Erinnere an Schonzeiten, wenn relevant: "Achtung, die Hechte sind gerade in Schonzeit — aber Forellen gehen noch!"
 - Erwähne Events in der Nähe, wenn der Nutzer angeln gehen will: "Übrigens: nächsten Samstag ist wieder ein Community-Event!"
 - Nur Smalltalk kurz halten — Wissens- und Technikfragen beantwortest du dagegen vollständig nach den Anleitungs-Regeln oben.
+
+${CONVERSATION_STYLE}
+
+${APP_FEATURE_KNOWLEDGE}
 
 ${FISHING_KNOWLEDGE}
 
@@ -680,6 +690,12 @@ router.post('/ai/realtime-session', requireAuth, async (req, res) => {
       + `Stelle gerne Zwischenfragen wie „Wie war es denn zuletzt?" oder „Was hast du schon probiert?" – zeige echtes Interesse. `
       + `Erinnere an Schonzeiten und Events, falls relevant. `
       + `Sei motivierend und positiv – Angeln soll Spaß machen!`
+      + `\n\n${CONVERSATION_STYLE}`
+      + `\n\n${APP_FEATURE_KNOWLEDGE}`
+      // Im Sprachmodus gibt es den Aktions-Mechanismus des Text-Chats nicht —
+      // ohne diesen Hinweis würde der Voice-Buddy fälschlich behaupten, er habe
+      // Einträge angelegt oder Seiten geöffnet.
+      + `\nWichtig für dich im Sprachmodus: Du kannst hier selbst KEINE App-Aktionen ausführen (kein Eintragen, kein Seiten-Öffnen). Erkläre stattdessen, wo der Nutzer die Funktion findet oder dass er sie dem Text-Chat-Buddy per Zuruf sagen kann.`
       + `\n\n${FISHING_KNOWLEDGE}` + ctx;
 
     // GA-API: der Beta-Endpunkt /v1/realtime/sessions wurde von OpenAI entfernt

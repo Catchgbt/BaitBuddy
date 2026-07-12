@@ -3,7 +3,11 @@ import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { BUDDY_AVATAR_SIZE, BUDDY_TIMEOUTS, BUDDY_STORAGE_KEYS } from '@/lib/buddyStorageKeys';
 import { getQuestionForPage, getPageNameFromPathname } from '@/lib/buddyTips';
+import { buildGreeting, GREETED_SESSION_KEY } from '@/lib/buddyGreetings';
 import { speakWithBrowserTTS } from '@/components/utils/browserTTS';
+import { speakWithFallback } from '@/components/utils/elevenLabsTTS';
+import { useAuth } from '@/lib/AuthContext';
+import { events } from '@/api/frontendClient';
 import BuddyAvatar from '@/components/ai/BuddyAvatar';
 
 const AVATAR_SIZE = BUDDY_AVATAR_SIZE;
@@ -31,6 +35,7 @@ function getDefaultPos() {
 
 export default function AIBuddyWidgetStub() {
   const location = useLocation();
+  const { user } = useAuth();
   const [widgetLoaded, setWidgetLoaded] = useState(false);
 
   // Zeitstempel des letzten Taps auf den Stub-Avatar. Wird an das nachgeladene
@@ -75,19 +80,60 @@ export default function AIBuddyWidgetStub() {
     if (lastQuestionPageRef.current === currentPage) return undefined;
 
     // Kleine Verzögerung, damit der Seitenwechsel visuell abgeschlossen ist,
-    // bevor die Frage-Blase erscheint. Die Seite wird erst im Timer als
-    // "gezeigt" markiert (nicht schon im Effekt-Body), damit der doppelte
-    // Effekt-Lauf in React.StrictMode die Blase nicht verschluckt.
-    bubbleTimerRef.current = setTimeout(() => {
+    // bevor die Blase erscheint. Die Seite wird erst im Timer als "gezeigt"
+    // markiert (nicht schon im Effekt-Body), damit der doppelte Effekt-Lauf in
+    // React.StrictMode die Blase nicht verschluckt.
+    //
+    // Beim allerersten Mal pro App-Sitzung zeigt die Blase statt der
+    // Seiten-Frage die Start-Begrüßung (Tageszeit, Stimmung, Event-Status) und
+    // spricht sie — jede Sitzung anders. Danach übernimmt wieder die Frage.
+    let cancelled = false;
+    bubbleTimerRef.current = setTimeout(async () => {
       lastQuestionPageRef.current = currentPage;
-      const question = getQuestionForPage(currentPage);
-      setBubbleText(question);
+
+      let isGreeting = false;
+      try {
+        isGreeting = sessionStorage.getItem(GREETED_SESSION_KEY) !== '1';
+        if (isGreeting) sessionStorage.setItem(GREETED_SESSION_KEY, '1');
+      } catch { /* sessionStorage optional */ }
+
+      let text;
+      if (isGreeting) {
+        // Event-Status best effort: aktives Event und eigene Platzierung
+        // fließen in die Begrüßung ein; Fehler (offline, Gast) lassen sie weg.
+        let activeEvent = null;
+        let rank = null;
+        try {
+          const res = await events.getActiveEvent();
+          activeEvent = res?.active_event || null;
+          if (activeEvent?.id && user?.email) {
+            const board = await events.leaderboard(activeEvent.id);
+            if (Array.isArray(board)) {
+              const idx = board.findIndex((p) => p.user_id === user.email);
+              if (idx >= 0) rank = idx + 1;
+            }
+          }
+        } catch { /* Event-Status ist optional für die Begrüßung */ }
+        if (cancelled) return;
+        text = buildGreeting({ event: activeEvent, rank });
+      } else {
+        text = getQuestionForPage(currentPage);
+      }
+
+      setBubbleText(text);
       setShowBubble(true);
 
       try {
         if (localStorage.getItem(BUDDY_STORAGE_KEYS.VOICE_ENABLED) !== 'false') {
-          speakWithBrowserTTS(question, { lang: 'de-DE', rate: 1.0 }).catch(() => {
-            /* TTS ist optional */
+          // Begrüßung mit der ElevenLabs-Stimme (Fallback Browser-TTS), die
+          // Seiten-Fragen wie bisher leichtgewichtig per Browser-TTS.
+          const speakPromise = isGreeting
+            ? speakWithFallback(text, { voiceEnabled: true, lang: 'de-DE', rate: 1.0 })
+            : speakWithBrowserTTS(text, { lang: 'de-DE', rate: 1.0 });
+          speakPromise.catch(() => {
+            speakWithBrowserTTS(text, { lang: 'de-DE', rate: 1.0 }).catch(() => {
+              /* TTS ist optional */
+            });
           });
         }
       } catch {}
@@ -98,10 +144,11 @@ export default function AIBuddyWidgetStub() {
     }, 800);
 
     return () => {
+      cancelled = true;
       if (bubbleTimerRef.current) clearTimeout(bubbleTimerRef.current);
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     };
-  }, [currentPage, widgetLoaded]);
+  }, [currentPage, widgetLoaded, user]);
 
   if (!widgetLoaded) {
     return (

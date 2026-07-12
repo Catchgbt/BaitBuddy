@@ -5,6 +5,7 @@ import { useElevenLabsVoice } from "@/hooks/useElevenLabsVoice";
 import { useEventActivityTracking } from "@/hooks/useEventActivityTracking";
 import { events } from "@/api/frontendClient";
 import { findOfflineBuddyAnswer, getOfflineBuddyFallback } from "@/lib/offlineBuddyQuestions";
+import { buildGreeting } from "@/lib/buddyGreetings";
 
 import PremiumGuard from "@/components/premium/PremiumGuard";
 import BuddyAvatar from "@/components/ai/BuddyAvatar";
@@ -20,7 +21,9 @@ export default function KiBuddyBeta() {
 function KiBuddyBetaInner() {
   useFeatureTracking("ai_buddy");
   const { trackAIChat } = useEventActivityTracking();
-  const [messages, setMessages] = useState([{ role: "system", text: "Hallo! Ich bin dein KI-Buddy für alles rund ums Angeln. Stelle mir eine Frage!" }]);
+  // Begrüßung variiert bei jedem Öffnen (Tageszeit, Stimmung, gelegentlich ein
+  // Funktions-Tipp) statt eines immer gleichen statischen Textes.
+  const [messages, setMessages] = useState(() => [{ role: "system", text: buildGreeting({}) }]);
   const [input, setInput] = useState("");
   const [status, setStatus] = useState("");
   const [tonAn, setTonAn] = useState(true);

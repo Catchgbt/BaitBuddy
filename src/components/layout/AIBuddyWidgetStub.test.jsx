@@ -26,9 +26,12 @@ vi.mock('@/lib/offlineBuddyQuestions', () => ({
 }));
 vi.mock('@/api/frontendClient', () => ({
   ai: { chat: vi.fn() },
+  events: { getActiveEvent: vi.fn(), leaderboard: vi.fn() },
 }));
 
 import AIBuddyWidgetStub from './AIBuddyWidgetStub';
+import { events } from '@/api/frontendClient';
+import { speakWithFallback } from '@/components/utils/elevenLabsTTS';
 
 function NavigateButton({ to }) {
   const navigate = useNavigate();
@@ -59,6 +62,10 @@ describe('AIBuddyWidgetStub – erster Klick öffnet den Chat', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
+    // Start-Begrüßung explizit als "schon gelaufen" markieren: Diese Tests
+    // prüfen das Seiten-Frage-Verhalten isoliert (die Begrüßung ersetzt sonst
+    // die erste Blase; sie hat unten ihren eigenen describe-Block).
+    sessionStorage.setItem('bb_buddy_greeted', '1');
     Element.prototype.scrollIntoView = vi.fn();
   });
 
@@ -143,6 +150,61 @@ describe('AIBuddyWidgetStub – erster Klick öffnet den Chat', () => {
 
     const bubble = await screen.findByLabelText('Chat mit dem KI-Buddy öffnen', {}, { timeout: 3000 });
     expect(bubble).toHaveTextContent('Soll ich dir sagen, ob das Wetter heute zum Angeln passt?');
+
+    fireEvent.click(screen.getByText('navigiere-/Map'));
+
+    await screen.findByText(
+      'Möchtest du hier einen neuen Angel-Spot eintragen?',
+      {},
+      { timeout: 3000 }
+    );
+  });
+});
+
+describe('AIBuddyWidgetStub – Start-Begrüßung beim App-Start', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+    vi.clearAllMocks();
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+
+  afterEach(() => {
+    cleanup();
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+
+  it('begrüßt beim App-Start per Blase und Audio statt der Seiten-Frage — auch offline', async () => {
+    events.getActiveEvent.mockRejectedValue(new Error('offline'));
+
+    renderStub(['/Weather']);
+
+    const bubble = await screen.findByLabelText('Chat mit dem KI-Buddy öffnen', {}, { timeout: 3000 });
+    expect(bubble).not.toHaveTextContent('Soll ich dir sagen, ob das Wetter heute zum Angeln passt?');
+    expect(bubble.textContent.length).toBeGreaterThan(20);
+    // Voice ist per Default aktiv — die Begrüßung wird mit der ElevenLabs-Stimme gesprochen.
+    expect(speakWithFallback).toHaveBeenCalled();
+  });
+
+  it('baut das aktive Event in die Begrüßung ein', async () => {
+    events.getActiveEvent.mockResolvedValue({
+      active_event: { id: 'ev1', name: 'Hecht-Cup', days_left: 4 },
+    });
+    events.leaderboard.mockResolvedValue([]);
+
+    renderStub(['/Weather']);
+
+    const bubble = await screen.findByLabelText('Chat mit dem KI-Buddy öffnen', {}, { timeout: 3000 });
+    expect(bubble).toHaveTextContent('Hecht-Cup');
+  });
+
+  it('begrüßt pro Sitzung nur einmal — beim Seitenwechsel kommt wieder die Seiten-Frage', async () => {
+    events.getActiveEvent.mockResolvedValue({ active_event: null });
+
+    renderStub(['/Weather'], { withNavTo: '/Map' });
+
+    await screen.findByLabelText('Chat mit dem KI-Buddy öffnen', {}, { timeout: 3000 });
 
     fireEvent.click(screen.getByText('navigiere-/Map'));
 
