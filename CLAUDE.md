@@ -79,6 +79,7 @@ Der **KI-Buddy** ist zentrales Feature mit oberster Priorität. Muss reibungslos
   - `src/components/ai/`, `src/components/chatbot/`, `src/components/home/MiniKiBuddy*.jsx`
   - Hooks: `useChatMessages`, `useSpeechRecognition`, `useElevenLabsVoice`
 - **Backend**: `backend/src/routes/ai.js` (`POST /api/ai/chat` u. a.) mit `backend/src/lib/llm.js` für die LLM-Anbindung. (Es gibt **kein** `api/routes/kibuddy.js`.)
+- **Wissensbasis**: `backend/src/lib/buddyKnowledge.js` — zentrale Praxis-Wissensbasis (Köderführung, Montagen, Unterwasser-Köderbox, Knoten, Drill, Saisonwissen) plus verbindliche Anleitungs-Regeln: Bei „Wie benutze/montiere/führe ich X?"-Fragen erklärt der Buddy **immer selbst Schritt für Schritt** (Montage → Einsatz im Wasser → Führung → Bisserkennung → typische Fehler) und verweist **nie** nur auf Tutorials. Eingebunden in `POST /api/ai/chat` (System-Prompt) und `POST /api/ai/realtime-session` (Voice-Instructions). Wissens-Erweiterungen gehören in dieses Modul, nicht in einzelne Routen-Prompts.
 - **Datenbank**: Supabase-Tabellen (`catches`, `spots`, `rule_entries` …) liefern den Kontext; Chat-Historie wird clientseitig gehalten.
 - **LLM**: **Groq (Llama)** über natives `fetch` in `backend/src/lib/llm.js` — Text (`llama-3.3-70b-versatile`) und Vision. Der Aufruf erfolgt serverseitig, nie direkt vom Frontend. (Das `@anthropic-ai/sdk`-Paket ist als Root-Dependency vorhanden, wird im Backend aber nicht genutzt.)
 

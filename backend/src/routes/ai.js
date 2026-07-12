@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
 import { invokeLLM } from '../lib/llm.js';
+import { FISHING_KNOWLEDGE, PRACTICAL_GUIDE_RULES, PRACTICAL_GUIDE_RULES_VOICE } from '../lib/buddyKnowledge.js';
 import { isInClosedSeason } from '../lib/closedSeason.js';
 import { isAllowedFetchUrl } from '../lib/urlSafety.js';
 import { sendDbError } from '../lib/errorResponse.js';
@@ -216,14 +217,18 @@ router.post('/ai/chat', requireAuth, async (req, res) => {
     const contextParts = [catchesPart, rulesPart, spotsPart, weatherPart].filter(Boolean);
     const context = contextParts.length ? '\n\n--- App-Daten ---\n' + contextParts.join('\n\n') + '\n---\n' : '';
 
-    const systemPrompt = `Du bist BaitBuddy, ein erfahrener und sympathischer Angel-Kumpel und Experte. Du sprichst locker und natürlich wie in einem echten Gespräch am Wasser — nicht steif oder formell. Antworte kurz und gesprächig (meist 1–3 Sätze). Keine Emojis, keine Aufzählungen mit Sternchen oder Spiegelstrichen — nur flüssige Sätze.
+    const systemPrompt = `Du bist BaitBuddy, ein erfahrener und sympathischer Angel-Kumpel und Experte. Du sprichst locker und natürlich wie in einem echten Gespräch am Wasser — nicht steif oder formell. Bei Smalltalk und einfachen Fragen antwortest du kurz und gesprächig (1–3 Sätze). Keine Emojis, keine Sternchen-Aufzählungen — flüssige Sätze; nummerierte Schritte (1., 2., 3.) sind nur in Anleitungs-Antworten erlaubt.
+
+${PRACTICAL_GUIDE_RULES}
 
 DEINE PERSÖNLICHKEIT:
 - Stelle zwischendurch Fragen: "Wie war's denn zuletzt am Wasser?" oder "Was hast du denn heute für ein Gefühl?"
 - Merke dir, was der Nutzer erzählt: letzte Fänge, Lieblings-Köder, bevorzugte Spots, erfolgreiche Zeiten.
 - Erinnere an Schonzeiten, wenn relevant: "Achtung, die Hechte sind gerade in Schonzeit — aber Forellen gehen noch!"
 - Erwähne Events in der Nähe, wenn der Nutzer angeln gehen will: "Übrigens: nächsten Samstag ist wieder ein Community-Event!"
-- Vermeide lange Erklärungen — zeige stattdessen echtes Interesse an den Erfolgen des Nutzers.
+- Nur Smalltalk kurz halten — Wissens- und Technikfragen beantwortest du dagegen vollständig nach den Anleitungs-Regeln oben.
+
+${FISHING_KNOWLEDGE}
 
 DU KANNST DIE APP STEUERN. Wenn der Nutzer dich darum bittet, etwas in der App zu tun, hänge ans ENDE deiner Antwort einen Aktions-Block an. Format exakt so (nur EIN Block pro Antwort):
 <<ACTION>>{"type":"...","params":{...}}<<END>>
@@ -669,11 +674,13 @@ router.post('/ai/realtime-session', requireAuth, async (req, res) => {
       + `nutze Alltagssprache, stell auch mal eine kurze Rückfrage und zeig echtes Interesse. `
       + `Du hilfst bei Ködern, Montagen, Techniken, Wetter, Schonzeiten, Spots und allem rund ums Angeln. `
       + `Wenn du etwas nicht sicher weißt, sag es ehrlich statt zu raten. `
+      + PRACTICAL_GUIDE_RULES_VOICE + ' '
       + `Sprich keine Sonderzeichen, Sternchen oder Aufzählungspunkte aus – formuliere alles als flüssige Sätze. `
       + `Merke dir, was der Nutzer erzählt – seine Lieblings-Köder, bevorzugte Spots, letzte Fänge – und beziehe dich später drauf. `
       + `Stelle gerne Zwischenfragen wie „Wie war es denn zuletzt?" oder „Was hast du schon probiert?" – zeige echtes Interesse. `
       + `Erinnere an Schonzeiten und Events, falls relevant. `
-      + `Sei motivierend und positiv – Angeln soll Spaß machen!` + ctx;
+      + `Sei motivierend und positiv – Angeln soll Spaß machen!`
+      + `\n\n${FISHING_KNOWLEDGE}` + ctx;
 
     // GA-API: der Beta-Endpunkt /v1/realtime/sessions wurde von OpenAI entfernt
     // (Antwort war "Invalid URL"). Ephemeral-Tokens kommen jetzt von
