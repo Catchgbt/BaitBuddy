@@ -1,5 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { buildGreeting, getTimeSlot, FEATURE_TIPS } from './buddyGreetings.js';
+import {
+  buildGreeting,
+  getTimeSlot,
+  FEATURE_TIPS,
+  shouldGreet,
+  markGreeted,
+  getVariedPageBubble,
+  GREETING_COOLDOWN_MS,
+} from './buddyGreetings.js';
 
 describe('getTimeSlot', () => {
   it('ordnet Stunden den richtigen Tageszeiten zu', () => {
@@ -69,5 +77,48 @@ describe('buildGreeting', () => {
     } finally {
       Storage.prototype.getItem = original;
     }
+  });
+});
+
+describe('shouldGreet / markGreeted (Cooldown)', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('begrüßt beim allerersten Mal (kein Zeitstempel)', () => {
+    expect(shouldGreet()).toBe(true);
+  });
+
+  it('begrüßt direkt nach markGreeted nicht erneut', () => {
+    const now = 1_000_000_000_000;
+    markGreeted(now);
+    expect(shouldGreet(now + 1000)).toBe(false);
+  });
+
+  it('begrüßt nach Ablauf des Cooldowns wieder (App später erneut geöffnet)', () => {
+    const now = 1_000_000_000_000;
+    markGreeted(now);
+    expect(shouldGreet(now + GREETING_COOLDOWN_MS + 1)).toBe(true);
+  });
+});
+
+describe('getVariedPageBubble', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('zeigt bei niedrigem Roll die Seitenfrage', () => {
+    expect(getVariedPageBubble('SEITENFRAGE', 0)).toBe('SEITENFRAGE');
+  });
+
+  it('zeigt bei mittlerem Roll eine variierende Buddy-Frage (nicht die Seitenfrage)', () => {
+    const text = getVariedPageBubble('SEITENFRAGE', 0.6);
+    expect(text).not.toBe('SEITENFRAGE');
+    expect(text.length).toBeGreaterThan(5);
+  });
+
+  it('zeigt bei hohem Roll einen Funktions-Tipp', () => {
+    const text = getVariedPageBubble('SEITENFRAGE', 0.9);
+    expect(FEATURE_TIPS).toContain(text);
   });
 });

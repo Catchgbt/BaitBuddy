@@ -3,7 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import BuddyAvatar from '@/components/ai/BuddyAvatar';
 import { getTipForPage, getQuestionForPage, getPageNameFromPathname } from '@/lib/buddyTips';
 import { getRandomFarewellMessage } from '@/lib/buddyJokes';
-import { buildGreeting, GREETED_SESSION_KEY } from '@/lib/buddyGreetings';
+import { buildGreeting, shouldGreet, markGreeted } from '@/lib/buddyGreetings';
+import { runWhenAudioReady } from '@/lib/audioUnlock';
 import { useAuth } from '@/lib/AuthContext';
 import { ai, events } from '@/api/frontendClient';
 import { speakWithFallback, cancelElevenLabs } from '@/components/utils/elevenLabsTTS';
@@ -238,13 +239,13 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
   const greetingStartedRef = useRef(false);
   useEffect(() => {
     if (isHidden || isOpen || greetingStartedRef.current) return undefined;
-    try {
-      if (sessionStorage.getItem(GREETED_SESSION_KEY) === '1') return undefined;
-    } catch { /* sessionStorage optional */ }
+    // shouldGreet() prüft den Zeitstempel-Cooldown (localStorage). Meist hat der
+    // Stub direkt beim App-Start schon begrüßt und markGreeted() gesetzt — dann
+    // begrüßt das volle Widget nicht doppelt. Nur wenn das Widget ohne Stub-
+    // Begrüßung mountet (oder der Cooldown abgelaufen ist), greift es.
+    if (!shouldGreet()) return undefined;
     greetingStartedRef.current = true;
-    try {
-      sessionStorage.setItem(GREETED_SESSION_KEY, '1');
-    } catch { /* sessionStorage optional */ }
+    markGreeted();
     lastQuestionPageRef.current = currentPage;
 
     let cancelled = false;
@@ -269,13 +270,17 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
       const greeting = buildGreeting({ event: activeEvent, rank });
       showSmallBubbleWithText(greeting, { farewell: false });
       if (buddyVoiceEnabled) {
-        speakWithFallback(greeting, {
-          voiceEnabled: buddyVoiceEnabled,
-          lang: 'de-DE',
-          rate: 1.0,
-        }).catch(() => {
-          speakWithBrowserTTS(greeting, { lang: 'de-DE', rate: 1.0 }).catch(() => {
-            /* TTS ist optional */
+        // Audio erst abspielen, wenn es erlaubt ist (Autoplay-Policy) — beim
+        // ersten Antippen wird es nachgeholt.
+        runWhenAudioReady(() => {
+          speakWithFallback(greeting, {
+            voiceEnabled: buddyVoiceEnabled,
+            lang: 'de-DE',
+            rate: 1.0,
+          }).catch(() => {
+            speakWithBrowserTTS(greeting, { lang: 'de-DE', rate: 1.0 }).catch(() => {
+              /* TTS ist optional */
+            });
           });
         });
       }
