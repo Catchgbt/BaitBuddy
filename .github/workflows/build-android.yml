@@ -89,7 +89,10 @@ jobs:
 
       # Signierte Release-.aab fuer den Play Store. versionCode/versionName kommen
       # beim manuellen Dispatch aus den Workflow-Inputs; bei Tag-Builds (push)
-      # greifen die Fallback-Werte.
+      # greifen die Defaults aus android/app/build.gradle. Wichtig: appVersionCode/
+      # appVersionName sind echte Gradle-Properties, die build.gradle auswertet —
+      # die frueheren android.injected.version.*-Properties wurden vom AGP ignoriert
+      # (das AAB hatte dadurch immer versionCode 1).
       - name: Build Release AAB (signed)
         if: ${{ env.KEYSTORE_BASE64 != '' }}
         run: |
@@ -99,8 +102,8 @@ jobs:
             -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
             -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
             -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }} \
-            -Pandroid.injected.version.code=${{ github.event.inputs.version_code || '27' }} \
-            -Pandroid.injected.version.name=${{ github.event.inputs.version_name || '2.117898.0' }}
+            -PappVersionCode=${{ github.event.inputs.version_code || '27' }} \
+            -PappVersionName=${{ github.event.inputs.version_name || '2.117898.0' }}
         env:
           ANDROID_HOME: ${{ env.ANDROID_SDK_ROOT }}
 

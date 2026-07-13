@@ -150,9 +150,12 @@ Der **KI-Buddy** ist zentrales Feature mit oberster Priorität. Muss reibungslos
 > läuft nur, wenn das `KEYSTORE_BASE64`-Secret gesetzt ist. Der frühere
 > zweite Workflow (`build-apk.yml`) wurde konsolidiert und entfernt.
 > `versionCode`/`versionName` werden beim manuellen `workflow_dispatch` als
-> Inputs übergeben (nicht mehr hartkodiert); bei Tag-Builds greifen die im
-> Workflow hinterlegten Fallback-Werte. Der `version_code` muss höher sein
-> als der zuletzt in der Play Console hochgeladene.
+> Inputs übergeben und via Gradle-Properties `appVersionCode`/`appVersionName`
+> in `android/app/build.gradle` ausgewertet (die `android.injected.version.*`-
+> Properties wirken beim `bundleRelease` nicht). Ohne Property greifen die
+> Defaults in `build.gradle`, die der Play-Store-Versionierung folgen. Der
+> `version_code` muss höher sein als der zuletzt in der Play Console
+> hochgeladene.
 
 ---
 
