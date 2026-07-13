@@ -42,8 +42,15 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 
-app.get('/health', (req, res) => res.json({ ok: true, app: 'BaitBuddy', version: '1.0.0' }));
-app.get('/api/health', (req, res) => res.json({ ok: true, app: 'BaitBuddy', version: '1.0.0' }));
+// Findet den OpenAI-Key tolerant (OPENAI_API_KEY, Openai_key, …) — nur zur
+// Diagnose, ob Voice serverseitig konfiguriert ist. Gibt KEINEN Wert preis.
+function hasOpenAIKey() {
+  return !!(process.env.OPENAI_API_KEY
+    || Object.entries(process.env).find(([k, v]) => /open.?_?ai/i.test(k) && /key|token|secret/i.test(k) && v)?.[1]);
+}
+const healthPayload = () => ({ ok: true, app: 'BaitBuddy', version: '1.0.0', voice: hasOpenAIKey() });
+app.get('/health', (req, res) => res.json(healthPayload()));
+app.get('/api/health', (req, res) => res.json(healthPayload()));
 
 // Rate-Limiting per Pfad-Präfix (in Tests via NODE_ENV=test übersprungen, damit
 // wiederholte Requests im selben Testlauf nicht in die Limits laufen). Scoped
