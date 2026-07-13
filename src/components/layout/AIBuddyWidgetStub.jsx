@@ -3,9 +3,10 @@ import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { BUDDY_AVATAR_SIZE, BUDDY_TIMEOUTS, BUDDY_STORAGE_KEYS } from '@/lib/buddyStorageKeys';
 import { getQuestionForPage, getPageNameFromPathname } from '@/lib/buddyTips';
-import { buildGreeting, GREETED_SESSION_KEY } from '@/lib/buddyGreetings';
+import { buildGreeting, getVariedPageBubble, shouldGreet, markGreeted } from '@/lib/buddyGreetings';
 import { speakWithBrowserTTS } from '@/components/utils/browserTTS';
 import { speakWithFallback } from '@/components/utils/elevenLabsTTS';
+import { runWhenAudioReady } from '@/lib/audioUnlock';
 import { useAuth } from '@/lib/AuthContext';
 import { events } from '@/api/frontendClient';
 import BuddyAvatar from '@/components/ai/BuddyAvatar';
@@ -68,87 +69,122 @@ export default function AIBuddyWidgetStub() {
     setWidgetLoaded(true);
   }, []);
 
-  useEffect(() => {
-    if (widgetLoaded) return undefined;
-
+  // Voice-Setting-Check (localStorage). Fehlertolerant: Default ist „an".
+  const voiceEnabled = useCallback(() => {
     try {
-      if (localStorage.getItem(BUDDY_STORAGE_KEYS.WIDGET_HIDDEN) === 'true') return undefined;
+      return localStorage.getItem(BUDDY_STORAGE_KEYS.VOICE_ENABLED) !== 'false';
     } catch {
-      return undefined;
+      return true;
+    }
+  }, []);
+
+  // Spricht einen Text — aber erst, wenn Audio erlaubt ist. Beim App-Start hat
+  // der Nutzer die Seite noch nicht berührt; die Autoplay-Policy blockiert dann
+  // jede Wiedergabe. runWhenAudioReady stellt die Ausgabe zurück, bis der Nutzer
+  // das erste Mal tippt, und spielt sie dann nach. Begrüßungen nutzen die
+  // ElevenLabs-Stimme (Fallback Browser-TTS), Seiten-Fragen den leichten
+  // Browser-TTS.
+  const speakBubble = useCallback((text, { greeting }) => {
+    if (!text || !voiceEnabled()) return;
+    runWhenAudioReady(() => {
+      const speakPromise = greeting
+        ? speakWithFallback(text, { voiceEnabled: true, lang: 'de-DE', rate: 1.0 })
+        : speakWithBrowserTTS(text, { lang: 'de-DE', rate: 1.0 });
+      speakPromise?.catch?.(() => {
+        speakWithBrowserTTS(text, { lang: 'de-DE', rate: 1.0 }).catch(() => {
+          /* TTS ist optional */
+        });
+      });
+    });
+  }, [voiceEnabled]);
+
+  // Zeigt die Blase (Begrüßung oder Seiten-Frage) und spricht sie. Zentrale
+  // Stelle für Seitenwechsel UND Foreground-Resume. `cancelledRef` bricht ab,
+  // wenn zwischenzeitlich das Widget geladen oder neu präsentiert wurde.
+  const presentBubble = useCallback(async (cancelledRef) => {
+    try {
+      if (localStorage.getItem(BUDDY_STORAGE_KEYS.WIDGET_HIDDEN) === 'true') return;
+    } catch {
+      return;
     }
 
+    const greeting = shouldGreet();
+    let text;
+
+    if (greeting) {
+      markGreeted();
+      // Event-Status best effort: aktives Event und eigene Platzierung fließen
+      // in die Begrüßung ein; Fehler (offline, Gast) lassen sie einfach weg.
+      let activeEvent = null;
+      let rank = null;
+      try {
+        const res = await events.getActiveEvent();
+        activeEvent = res?.active_event || null;
+        if (activeEvent?.id && user?.email) {
+          const board = await events.leaderboard(activeEvent.id);
+          if (Array.isArray(board)) {
+            const idx = board.findIndex((p) => p.user_id === user.email);
+            if (idx >= 0) rank = idx + 1;
+          }
+        }
+      } catch { /* Event-Status ist optional für die Begrüßung */ }
+      if (cancelledRef?.cancelled) return;
+      text = buildGreeting({ event: activeEvent, rank });
+    } else {
+      // Nach der Begrüßung variiert die Seiten-Blase (Seitenfrage / Buddy-Frage
+      // / Funktions-Tipp), damit sie sich nicht eintönig anfühlt.
+      text = getVariedPageBubble(getQuestionForPage(currentPage));
+    }
+
+    setBubbleText(text);
+    setShowBubble(true);
+    speakBubble(text, { greeting });
+
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = setTimeout(() => {
+      setShowBubble(false);
+    }, BUDDY_TIMEOUTS.SMALL_BUBBLE);
+  }, [currentPage, user, speakBubble]);
+
+  // Seitenwechsel: nach kurzer Verzögerung (Übergang abgeschlossen) Blase zeigen.
+  useEffect(() => {
+    if (widgetLoaded) return undefined;
     if (lastQuestionPageRef.current === currentPage) return undefined;
 
-    // Kleine Verzögerung, damit der Seitenwechsel visuell abgeschlossen ist,
-    // bevor die Blase erscheint. Die Seite wird erst im Timer als "gezeigt"
-    // markiert (nicht schon im Effekt-Body), damit der doppelte Effekt-Lauf in
-    // React.StrictMode die Blase nicht verschluckt.
-    //
-    // Beim allerersten Mal pro App-Sitzung zeigt die Blase statt der
-    // Seiten-Frage die Start-Begrüßung (Tageszeit, Stimmung, Event-Status) und
-    // spricht sie — jede Sitzung anders. Danach übernimmt wieder die Frage.
-    let cancelled = false;
-    bubbleTimerRef.current = setTimeout(async () => {
+    const cancelledRef = { cancelled: false };
+    bubbleTimerRef.current = setTimeout(() => {
       lastQuestionPageRef.current = currentPage;
-
-      let isGreeting = false;
-      try {
-        isGreeting = sessionStorage.getItem(GREETED_SESSION_KEY) !== '1';
-        if (isGreeting) sessionStorage.setItem(GREETED_SESSION_KEY, '1');
-      } catch { /* sessionStorage optional */ }
-
-      let text;
-      if (isGreeting) {
-        // Event-Status best effort: aktives Event und eigene Platzierung
-        // fließen in die Begrüßung ein; Fehler (offline, Gast) lassen sie weg.
-        let activeEvent = null;
-        let rank = null;
-        try {
-          const res = await events.getActiveEvent();
-          activeEvent = res?.active_event || null;
-          if (activeEvent?.id && user?.email) {
-            const board = await events.leaderboard(activeEvent.id);
-            if (Array.isArray(board)) {
-              const idx = board.findIndex((p) => p.user_id === user.email);
-              if (idx >= 0) rank = idx + 1;
-            }
-          }
-        } catch { /* Event-Status ist optional für die Begrüßung */ }
-        if (cancelled) return;
-        text = buildGreeting({ event: activeEvent, rank });
-      } else {
-        text = getQuestionForPage(currentPage);
-      }
-
-      setBubbleText(text);
-      setShowBubble(true);
-
-      try {
-        if (localStorage.getItem(BUDDY_STORAGE_KEYS.VOICE_ENABLED) !== 'false') {
-          // Begrüßung mit der ElevenLabs-Stimme (Fallback Browser-TTS), die
-          // Seiten-Fragen wie bisher leichtgewichtig per Browser-TTS.
-          const speakPromise = isGreeting
-            ? speakWithFallback(text, { voiceEnabled: true, lang: 'de-DE', rate: 1.0 })
-            : speakWithBrowserTTS(text, { lang: 'de-DE', rate: 1.0 });
-          speakPromise.catch(() => {
-            speakWithBrowserTTS(text, { lang: 'de-DE', rate: 1.0 }).catch(() => {
-              /* TTS ist optional */
-            });
-          });
-        }
-      } catch {}
-
-      hideTimerRef.current = setTimeout(() => {
-        setShowBubble(false);
-      }, BUDDY_TIMEOUTS.SMALL_BUBBLE);
+      presentBubble(cancelledRef);
     }, 800);
 
     return () => {
-      cancelled = true;
+      cancelledRef.cancelled = true;
       if (bubbleTimerRef.current) clearTimeout(bubbleTimerRef.current);
-      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     };
-  }, [currentPage, widgetLoaded, user]);
+  }, [currentPage, widgetLoaded, presentBubble]);
+
+  // Foreground-Resume: Kommt die App aus dem Hintergrund zurück (im
+  // Capacitor-WebView ein visibilitychange, KEIN Neuladen), begrüßt der Buddy
+  // erneut — sofern der Cooldown abgelaufen ist. So klappt „jedes Mal begrüßen"
+  // auch dort, wo die Sitzung das Wiederöffnen überlebt.
+  useEffect(() => {
+    if (widgetLoaded) return undefined;
+
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (!shouldGreet()) return;
+      const cancelledRef = { cancelled: false };
+      presentBubble(cancelledRef);
+    };
+
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [widgetLoaded, presentBubble]);
+
+  // Cleanup der Hide-Timer beim Unmount.
+  useEffect(() => () => {
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+  }, []);
 
   if (!widgetLoaded) {
     return (

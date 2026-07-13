@@ -32,6 +32,16 @@ vi.mock('@/api/frontendClient', () => ({
 import AIBuddyWidget from './AIBuddyWidget';
 import { ai, events } from '@/api/frontendClient';
 import { speakWithFallback } from '@/components/utils/elevenLabsTTS';
+import { LAST_GREETING_KEY } from '@/lib/buddyGreetings';
+import { __resetAudioUnlock } from '@/lib/audioUnlock';
+
+function suppressGreeting() {
+  localStorage.setItem(LAST_GREETING_KEY, String(Date.now()));
+}
+
+function unlockAudio() {
+  fireEvent.click(document.body);
+}
 
 function renderWidget(initialEntries = ['/dashboard']) {
   return render(
@@ -59,11 +69,12 @@ async function sendMessage(text) {
 describe('AIBuddyWidget – Chat-Verhalten', () => {
   beforeEach(() => {
     localStorage.clear();
+    __resetAudioUnlock();
     vi.clearAllMocks();
-    // Start-Begrüßung explizit als "schon gelaufen" markieren, damit diese
-    // Tests das Seiten-Frage-Verhalten isoliert prüfen (die Begrüßung ersetzt
-    // sonst die erste Frage-Blase; sie hat unten ihren eigenen describe-Block).
-    sessionStorage.setItem('bb_buddy_greeted', '1');
+    // Start-Begrüßung als "schon gelaufen" markieren (Cooldown aktiv), damit
+    // diese Tests das Seiten-Frage-Verhalten isoliert prüfen (die Begrüßung
+    // ersetzt sonst die erste Frage-Blase; sie hat ihren eigenen describe-Block).
+    suppressGreeting();
     // jsdom implementiert scrollIntoView nicht.
     Element.prototype.scrollIntoView = vi.fn();
   });
@@ -166,7 +177,7 @@ describe('AIBuddyWidget – Chat-Verhalten', () => {
 describe('AIBuddyWidget – Start-Begrüßung', () => {
   beforeEach(() => {
     localStorage.clear();
-    sessionStorage.clear();
+    __resetAudioUnlock();
     vi.clearAllMocks();
     Element.prototype.scrollIntoView = vi.fn();
   });
@@ -174,10 +185,9 @@ describe('AIBuddyWidget – Start-Begrüßung', () => {
   afterEach(() => {
     cleanup();
     localStorage.clear();
-    sessionStorage.clear();
   });
 
-  it('begrüßt beim ersten Mount per Blase und Audio — auch wenn der Event-Status nicht ladbar ist', async () => {
+  it('begrüßt beim ersten Mount per Blase, Audio kommt beim ersten Antippen — auch ohne Event-Status', async () => {
     events.getActiveEvent.mockRejectedValue(new Error('offline'));
 
     renderWidget(['/Weather']);
@@ -186,7 +196,10 @@ describe('AIBuddyWidget – Start-Begrüßung', () => {
     // Die Begrüßung ersetzt die Seiten-Frage der ersten Seite.
     expect(bubble).not.toHaveTextContent('Soll ich dir sagen, ob das Wetter heute zum Angeln passt?');
     expect(bubble.textContent.length).toBeGreaterThan(20);
-    // Voice ist per Default aktiv — die Begrüßung wird gesprochen.
+    // Autoplay-Policy: ohne Geste wird das Audio zurückgestellt.
+    expect(speakWithFallback).not.toHaveBeenCalled();
+    // Erste Geste holt die gesprochene Begrüßung nach.
+    unlockAudio();
     await waitFor(() => expect(speakWithFallback).toHaveBeenCalled());
   });
 
@@ -202,8 +215,8 @@ describe('AIBuddyWidget – Start-Begrüßung', () => {
     expect(bubble).toHaveTextContent('Hecht-Cup');
   });
 
-  it('begrüßt pro Sitzung nur einmal — danach kommt wieder die Seiten-Frage', async () => {
-    sessionStorage.setItem('bb_buddy_greeted', '1');
+  it('begrüßt innerhalb des Cooldowns nicht erneut — dann kommt die Seiten-Frage', async () => {
+    suppressGreeting();
 
     renderWidget(['/Weather']);
 

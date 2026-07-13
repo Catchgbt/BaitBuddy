@@ -12,12 +12,51 @@
 
 const HISTORY_KEY = 'bb_buddy_greeting_history';
 
-// sessionStorage-Flag: pro App-Sitzung genau eine Start-Begrüßung. Beim
-// nächsten App-Start (neue Sitzung) begrüßt der Buddy wieder — jedes Mal anders.
-// Zentral exportiert, weil Stub und volles Widget dasselbe Flag teilen müssen.
-export const GREETED_SESSION_KEY = 'bb_buddy_greeted';
+// Zeitstempel der letzten Begrüßung (localStorage). Ersetzt das frühere
+// sessionStorage-Flag: Im Capacitor-WebView überlebt eine Sitzung das
+// Wiederöffnen der App (Resume statt Neuladen), sodass ein reines Session-Flag
+// nur EINMAL begrüßt hätte. Mit Zeitstempel + Cooldown begrüßt der Buddy bei
+// jedem echten Wiederkommen erneut, ohne bei schnellem Weg-/Zurückwechseln zu
+// spammen.
+export const LAST_GREETING_KEY = 'bb_buddy_last_greeting';
+
+// Nach so langer Foreground-Abwesenheit gilt ein Wiederkommen als „App erneut
+// geöffnet" und der Buddy begrüßt erneut. 15 Minuten: kurzer Blick auf eine
+// andere App löst keine neue Begrüßung aus, ein späteres Zurückkehren schon.
+export const GREETING_COOLDOWN_MS = 15 * 60 * 1000;
 
 const memoryHistory = {};
+
+let memoryLastGreeting = 0;
+
+function readLastGreeting() {
+  try {
+    const raw = localStorage.getItem(LAST_GREETING_KEY);
+    const ts = raw ? Number(raw) : 0;
+    return Number.isFinite(ts) ? ts : 0;
+  } catch {
+    return memoryLastGreeting;
+  }
+}
+
+/**
+ * Soll der Buddy jetzt (neu) begrüßen? True beim allerersten Mal und immer,
+ * wenn die letzte Begrüßung länger als der Cooldown zurückliegt.
+ * @param {number} [now]
+ */
+export function shouldGreet(now = Date.now()) {
+  return now - readLastGreeting() > GREETING_COOLDOWN_MS;
+}
+
+/** Merkt sich den Zeitpunkt der aktuellen Begrüßung. */
+export function markGreeted(now = Date.now()) {
+  memoryLastGreeting = now;
+  try {
+    localStorage.setItem(LAST_GREETING_KEY, String(now));
+  } catch {
+    /* localStorage optional (Private Mode) — In-Memory reicht */
+  }
+}
 
 function readHistory() {
   try {
@@ -167,4 +206,30 @@ export function buildGreeting({ hour = new Date().getHours(), event = null, rank
   if (includeTip) parts.push(pickVaried('feature_tip', FEATURE_TIPS));
 
   return parts.join(' ');
+}
+
+// Abwechslungsreiche, stimmungsvolle Rückfragen für die Seiten-Blase — damit
+// der Buddy nicht auf jeder Seite immer denselben festen Satz zeigt.
+const VARIED_QUESTIONS = [
+  'Sag mal, wie war dein letzter Ansitz — lief was zusammen?',
+  'Was hast du heute vor am Wasser?',
+  'Neugierig: Welcher Köder ist gerade dein Geheimtipp?',
+  'Erzähl — hast du schon einen Lieblingsspot für diese Jahreszeit?',
+  'Hast du heute ein gutes Gefühl? Manchmal reicht das ja schon.',
+  'Woran arbeitest du gerade — Technik, neuer Spot oder einfach entspannen?',
+  'Wenn du eine Sache über deinen letzten Fang wüsstest — was wäre es?',
+];
+
+/**
+ * Liefert den Text für die Seiten-Blase (nach dem Start, wenn nicht begrüßt
+ * wird). Rotiert bewusst zwischen der seitenspezifischen Frage, einer
+ * variierenden Buddy-Frage und einem Funktions-Tipp, damit sich die Blase nicht
+ * eintönig anfühlt.
+ * @param {string} pageQuestion seitenspezifische Frage (getQuestionForPage)
+ * @param {number} [roll] 0..1, testbar; Default zufällig
+ */
+export function getVariedPageBubble(pageQuestion, roll = Math.random()) {
+  if (roll < 0.5 && pageQuestion) return pageQuestion;
+  if (roll < 0.8) return pickVaried('varied_question', VARIED_QUESTIONS);
+  return pickVaried('feature_tip', FEATURE_TIPS);
 }

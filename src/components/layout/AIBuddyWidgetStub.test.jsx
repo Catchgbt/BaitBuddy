@@ -32,6 +32,19 @@ vi.mock('@/api/frontendClient', () => ({
 import AIBuddyWidgetStub from './AIBuddyWidgetStub';
 import { events } from '@/api/frontendClient';
 import { speakWithFallback } from '@/components/utils/elevenLabsTTS';
+import { LAST_GREETING_KEY } from '@/lib/buddyGreetings';
+import { __resetAudioUnlock } from '@/lib/audioUnlock';
+
+// Begrüßung unterdrücken = so tun, als sei gerade begrüßt worden (Cooldown aktiv).
+function suppressGreeting() {
+  localStorage.setItem(LAST_GREETING_KEY, String(Date.now()));
+}
+
+// Audio-Autoplay entsperren: eine Nutzer-Geste simulieren (Klick auf body,
+// wird vom window-Capture-Listener in audioUnlock erfasst).
+function unlockAudio() {
+  fireEvent.click(document.body);
+}
 
 function NavigateButton({ to }) {
   const navigate = useNavigate();
@@ -61,17 +74,22 @@ function tapAvatar() {
 describe('AIBuddyWidgetStub – erster Klick öffnet den Chat', () => {
   beforeEach(() => {
     localStorage.clear();
+    __resetAudioUnlock();
     vi.clearAllMocks();
-    // Start-Begrüßung explizit als "schon gelaufen" markieren: Diese Tests
-    // prüfen das Seiten-Frage-Verhalten isoliert (die Begrüßung ersetzt sonst
-    // die erste Blase; sie hat unten ihren eigenen describe-Block).
-    sessionStorage.setItem('bb_buddy_greeted', '1');
+    // Start-Begrüßung als "schon gelaufen" markieren: Diese Tests prüfen das
+    // Seiten-Frage-Verhalten isoliert (die Begrüßung ersetzt sonst die erste
+    // Blase; sie hat unten ihren eigenen describe-Block).
+    suppressGreeting();
+    // Rotierende Seiten-Blase deterministisch auf die Seitenfrage festnageln
+    // (roll < 0.5 → getQuestionForPage).
+    vi.spyOn(Math, 'random').mockReturnValue(0);
     Element.prototype.scrollIntoView = vi.fn();
   });
 
   afterEach(() => {
     cleanup();
     localStorage.clear();
+    vi.restoreAllMocks();
   });
 
   it('öffnet den vollen Chat schon beim ERSTEN Tap auf den Avatar (nicht erst beim zweiten)', async () => {
@@ -164,18 +182,21 @@ describe('AIBuddyWidgetStub – erster Klick öffnet den Chat', () => {
 describe('AIBuddyWidgetStub – Start-Begrüßung beim App-Start', () => {
   beforeEach(() => {
     localStorage.clear();
-    sessionStorage.clear();
+    __resetAudioUnlock();
     vi.clearAllMocks();
+    // Nach der Begrüßung rotiert die Seiten-Blase — deterministisch auf die
+    // Seitenfrage festnageln (roll < 0.5).
+    vi.spyOn(Math, 'random').mockReturnValue(0);
     Element.prototype.scrollIntoView = vi.fn();
   });
 
   afterEach(() => {
     cleanup();
     localStorage.clear();
-    sessionStorage.clear();
+    vi.restoreAllMocks();
   });
 
-  it('begrüßt beim App-Start per Blase und Audio statt der Seiten-Frage — auch offline', async () => {
+  it('begrüßt beim App-Start per Blase, das Audio kommt beim ersten Antippen — auch offline', async () => {
     events.getActiveEvent.mockRejectedValue(new Error('offline'));
 
     renderStub(['/Weather']);
@@ -183,7 +204,13 @@ describe('AIBuddyWidgetStub – Start-Begrüßung beim App-Start', () => {
     const bubble = await screen.findByLabelText('Chat mit dem KI-Buddy öffnen', {}, { timeout: 3000 });
     expect(bubble).not.toHaveTextContent('Soll ich dir sagen, ob das Wetter heute zum Angeln passt?');
     expect(bubble.textContent.length).toBeGreaterThan(20);
-    // Voice ist per Default aktiv — die Begrüßung wird mit der ElevenLabs-Stimme gesprochen.
+
+    // Autoplay-Policy: Ohne Nutzer-Geste wird das Audio zurückgestellt, nicht
+    // sofort abgespielt.
+    expect(speakWithFallback).not.toHaveBeenCalled();
+
+    // Erste Geste (Tap) entsperrt und holt die gesprochene Begrüßung nach.
+    unlockAudio();
     expect(speakWithFallback).toHaveBeenCalled();
   });
 
@@ -199,7 +226,7 @@ describe('AIBuddyWidgetStub – Start-Begrüßung beim App-Start', () => {
     expect(bubble).toHaveTextContent('Hecht-Cup');
   });
 
-  it('begrüßt pro Sitzung nur einmal — beim Seitenwechsel kommt wieder die Seiten-Frage', async () => {
+  it('begrüßt nicht erneut innerhalb des Cooldowns — beim Seitenwechsel kommt die Seiten-Frage', async () => {
     events.getActiveEvent.mockResolvedValue({ active_event: null });
 
     renderStub(['/Weather'], { withNavTo: '/Map' });
