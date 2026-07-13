@@ -11,6 +11,7 @@ import {
 } from '../lib/buddyKnowledge.js';
 import { isInClosedSeason } from '../lib/closedSeason.js';
 import { isAllowedFetchUrl } from '../lib/urlSafety.js';
+import { resolvePlan, planRank, PLAN_RANK } from '../lib/planResolver.js';
 import { sendDbError } from '../lib/errorResponse.js';
 import { fetchWithTimeout } from '../lib/fetchWithTimeout.js';
 
@@ -483,8 +484,16 @@ Antworte AUSSCHLIESSLICH mit einem gültigen JSON-Objekt in exakt diesem Format,
   }
 });
 
+// Männliche Standardstimme — "Daniel" ist eine natürliche deutsche
+// Premade-Voice, die auch im ElevenLabs-Free-Plan per API nutzbar ist.
+const DEFAULT_VOICE_ID = 'onwK4e9ZLuTAKqWW03F9';
+// Weibliche Stimme (nur Ultimate) — "Matilda" ist eine warme, natürliche
+// Premade-Voice; über eleven_multilingual_v2 spricht sie sauberes Deutsch und
+// ist wie Daniel im Free-Plan per API nutzbar.
+const FEMALE_VOICE_ID = 'XrExE9yKIg1WjnnlVkGX';
+
 router.post('/ai/tts', requireAuth, async (req, res) => {
-  const { text } = req.body;
+  const { text, voice } = req.body;
   if (!text || text.trim().length === 0) {
     return res.status(400).json({ error: 'Text is required' });
   }
@@ -494,10 +503,19 @@ router.post('/ai/tts', requireAuth, async (req, res) => {
     return res.status(501).json({ error: 'ELEVENLABS_API_KEY not configured' });
   }
 
-  // Deutsche Stimme — "Daniel" ist eine natürliche deutsche Premade-Voice,
-  // die auch im ElevenLabs-Free-Plan per API nutzbar ist.
-  const DEFAULT_VOICE_ID = 'onwK4e9ZLuTAKqWW03F9';
-  const voiceId = process.env.ELEVENLABS_VOICE_ID || DEFAULT_VOICE_ID;
+  // Stimmen-Wahl: 'female' ist ein Ultimate-Feature (Plan-ID 'elite' bzw.
+  // Friends-Level). Das Gate MUSS serverseitig sitzen — die Auswahl in den
+  // Einstellungen ist nur Komfort; ohne ausreichenden Plan wird still auf die
+  // Standardstimme zurückgefallen statt die Sprachausgabe zu blockieren.
+  let voiceUsed = voice === 'female' ? 'female' : 'male';
+  if (voiceUsed === 'female') {
+    const { effectiveId } = resolvePlan(req.user);
+    if (planRank(effectiveId) < PLAN_RANK.elite) voiceUsed = 'male';
+  }
+
+  const voiceId = voiceUsed === 'female'
+    ? (process.env.ELEVENLABS_VOICE_ID_FEMALE || FEMALE_VOICE_ID)
+    : (process.env.ELEVENLABS_VOICE_ID || DEFAULT_VOICE_ID);
 
   const callElevenLabs = (voice) =>
     fetchWithTimeout(`https://api.elevenlabs.io/v1/text-to-speech/${voice}`, {
@@ -539,7 +557,7 @@ router.post('/ai/tts', requireAuth, async (req, res) => {
 
     const audioBuffer = Buffer.from(await response.arrayBuffer());
     const base64Audio = audioBuffer.toString('base64');
-    return res.json({ audioBase64: base64Audio, contentType: 'audio/mpeg' });
+    return res.json({ audioBase64: base64Audio, contentType: 'audio/mpeg', voice_used: voiceUsed });
   } catch (e) {
     console.error('TTS error:', e);
     return sendDbError(res, e);

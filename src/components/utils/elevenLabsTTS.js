@@ -4,6 +4,7 @@
 // Diese Helfer dekodieren das Base64-Audio und spielen es ab.
 
 import { functions } from "@/api/frontendClient";
+import { getPreferredTtsVoice } from "@/lib/ttsVoice";
 
 // Modul-globaler Singleton: Es spielt bewusst immer nur EINE Stimme gleichzeitig.
 // Konsequenz: Gleichzeitiges TTS aus dem KI-Buddy (KiBuddyBeta) und dem schwebenden Widget
@@ -45,7 +46,9 @@ export async function speakWithElevenLabs(text, callbacks = {}) {
 
   cancelElevenLabs();
 
-  const response = await functions.invoke("textToSpeech", { text });
+  // Die in den Einstellungen gewählte Stimme mitsenden; das Backend prüft den
+  // Plan (weibliche Stimme nur ab Ultimate) und fällt sonst auf Standard zurück.
+  const response = await functions.invoke("textToSpeech", { text, voice: getPreferredTtsVoice() });
 
   // frontendClient liefert das geparste JSON direkt (kein axios-Wrapper).
   // Unterstütze zur Sicherheit auch ein response.data-Nesting.
