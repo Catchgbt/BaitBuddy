@@ -803,6 +803,24 @@ router.post('/events/activities/track', requireAuth, async (req, res) => {
       return res.status(403).json({ error: 'User ist nicht Teilnehmer des Events' });
     }
 
+    // Anti-Farming: jede Aktivitaet zaehlt pro Event und User nur ein einziges
+    // Mal. Verhindert beliebiges Hochfarmen von Punkten durch wiederholtes
+    // Auslosen derselben Aktivitaet.
+    const { count: alreadyCounted } = await supabase
+      .from('event_submissions')
+      .select('*', { count: 'exact', head: true })
+      .eq('event_id', eventId)
+      .eq('user_id', req.user.email)
+      .eq('species', `[${activityType}]`);
+
+    if (alreadyCounted && alreadyCounted > 0) {
+      return res.json({
+        ok: true,
+        awarded: false,
+        message: 'Aktivitaet wurde fuer dieses Event bereits gezaehlt'
+      });
+    }
+
     // Addiere Punkte
     const result = await addActivityPoints(req.user.email, eventId, activityType, supabase);
 
