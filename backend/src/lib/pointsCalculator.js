@@ -50,12 +50,59 @@ export const PLACEMENT_REWARDS = {
   }
 };
 
+export async function recalcParticipantTotals(eventId, userId, supabase) {
+  // total_points wird aus der Summe aller Einreichungen abgeleitet (Source of
+  // Truth). Das ist idempotent und vermeidet Lost-Updates bei parallelen
+  // Einreichungen/Aktivitaeten (im Gegensatz zu Read-Modify-Write auf
+  // total_points).
+  const { data: subs } = await supabase
+    .from('event_submissions')
+    .select('calculated_points')
+    .eq('event_id', eventId)
+    .eq('user_id', userId);
+
+  const total = (subs || []).reduce(
+    (sum, s) => sum + (parseFloat(s.calculated_points) || 0),
+    0
+  );
+  const totals = {
+    total_points: Math.round(total * 100) / 100,
+    submission_count: subs ? subs.length : 0
+  };
+
+  const { data: participant } = await supabase
+    .from('event_participants')
+    .select('id')
+    .eq('event_id', eventId)
+    .eq('user_id', userId)
+    .single();
+
+  if (participant) {
+    await supabase
+      .from('event_participants')
+      .update(totals)
+      .eq('event_id', eventId)
+      .eq('user_id', userId);
+  } else {
+    await supabase
+      .from('event_participants')
+      .insert({
+        event_id: eventId,
+        user_id: userId,
+        joined_at: new Date().toISOString(),
+        ...totals
+      });
+  }
+
+  return totals;
+}
+
 export async function addActivityPoints(userId, eventId, activityType, supabase) {
   const points = ACTIVITY_POINTS[activityType] || 0;
   if (points === 0) return { ok: false, message: 'Unknown activity type' };
 
   try {
-    const { data: submission, error: submissionError } = await supabase
+    const { error: submissionError } = await supabase
       .from('event_submissions')
       .insert({
         event_id: eventId,
@@ -65,35 +112,11 @@ export async function addActivityPoints(userId, eventId, activityType, supabase)
         points_breakdown: { activity: activityType, base: points },
         verified: true,
         submitted_at: new Date().toISOString()
-      })
-      .select()
-      .single();
+      });
 
     if (submissionError) throw submissionError;
 
-    const { data: participant } = await supabase
-      .from('event_participants')
-      .select('total_points')
-      .eq('event_id', eventId)
-      .eq('user_id', userId)
-      .single();
-
-    if (participant) {
-      const { count: submissionCount } = await supabase
-        .from('event_submissions')
-        .select('*', { count: 'exact', head: true })
-        .eq('event_id', eventId)
-        .eq('user_id', userId);
-
-      await supabase
-        .from('event_participants')
-        .update({
-          total_points: (parseFloat(participant.total_points) || 0) + points,
-          submission_count: submissionCount || 0
-        })
-        .eq('event_id', eventId)
-        .eq('user_id', userId);
-    }
+    await recalcParticipantTotals(eventId, userId, supabase);
 
     return { ok: true, points, activity: activityType };
   } catch (error) {

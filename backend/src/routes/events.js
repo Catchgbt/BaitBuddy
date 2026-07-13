@@ -8,6 +8,7 @@ import {
   aggregateMonthlyLeaderboard,
   autoActivateRewards,
   addActivityPoints,
+  recalcParticipantTotals,
   ACTIVITY_POINTS
 } from '../lib/pointsCalculator.js';
 
@@ -298,24 +299,10 @@ router.post('/events/:id/submit', requireAuth, async (req, res) => {
 
     if (submissionError) return sendDbError(res, submissionError);
 
-    // 3. Aktualisiere event_participants totale Punkte
-    const { data: participant } = await supabase
-      .from('event_participants')
-      .select('total_points, submission_count')
-      .eq('event_id', req.params.id)
-      .eq('user_id', req.user.email)
-      .single();
-
-    if (participant) {
-      await supabase
-        .from('event_participants')
-        .update({
-          total_points: (parseFloat(participant.total_points) || 0) + pointsResult.total,
-          submission_count: (participant.submission_count || 0) + 1
-        })
-        .eq('event_id', req.params.id)
-        .eq('user_id', req.user.email);
-    }
+    // 3. Teilnehmer-Summen aus den Einreichungen neu berechnen. Legt den
+    //    Teilnehmer bei Bedarf an, sodass die Punkte nie verloren gehen, und
+    //    vermeidet Lost-Updates bei parallelen Einreichungen.
+    await recalcParticipantTotals(req.params.id, req.user.email, supabase);
 
     return res.status(201).json(submission);
   } catch (error) {
@@ -430,14 +417,20 @@ router.post('/events/invitations/:id/accept', requireAuth, async (req, res) => {
       .eq('id', req.params.id)
       .single();
 
-    // 3. Füge User als Teilnehmer hinzu
+    // 3. Füge User als Teilnehmer hinzu (Duplikate ignorieren)
     if (invitation) {
-      await supabase
+      const { error: participantError } = await supabase
         .from('event_participants')
         .insert({
           event_id: invitation.event_id,
-          user_id: req.user.email
+          user_id: req.user.email,
+          joined_at: new Date().toISOString()
         });
+
+      // 23505 = bereits Teilnehmer, das ist kein Fehler
+      if (participantError && participantError.code !== '23505') {
+        return res.status(500).json({ error: participantError.message });
+      }
     }
 
     return res.json({ ok: true });
