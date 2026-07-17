@@ -427,7 +427,14 @@ function LandingPageContent() {
             try {
                 const alreadySeen = localStorage.getItem('catchgbt_event_popup_seen');
                 if (!alreadySeen) {
-                    const evs = await entities.AppEvent.filter({ is_active: true });
+                    // Der Event-Popup-Check ist reine Kosmetik — er darf den
+                    // Login/Registrierungs-Abschluss nie aufhalten. Ohne Deckel
+                    // hing der Button bis zum 30s-Request-Timeout auf
+                    // "Bitte warten...", wenn /api/events langsam war.
+                    const evs = await Promise.race([
+                        entities.AppEvent.filter({ is_active: true }),
+                        new Promise((resolve) => setTimeout(() => resolve([]), 3000)),
+                    ]);
                     if (evs && evs.length > 0) {
                         const ev = evs[0];
                         const now = new Date();
@@ -1065,30 +1072,6 @@ function LandingPageContent() {
                     </motion.p>
                 </motion.div>
 
-                <motion.button
-                    onClick={() => {
-                        if (confirm('Notruf 112 waehlen?')) {
-                            window.location.href = 'tel:112';
-                        }
-                    }}
-                    animate={{
-                        scale: [1, 1.12, 1],
-                        boxShadow: [
-                            '0 0 25px rgba(239, 68, 68, 0.7)',
-                            '0 0 50px rgba(239, 68, 68, 0.9)',
-                            '0 0 25px rgba(239, 68, 68, 0.7)'
-                        ]
-                    }}
-                    transition={{
-                        duration: 1.2,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                    }}
-                    className="w-20 h-20 rounded-full bg-gradient-to-br from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 text-white font-bold text-2xl transform transition-all hover:scale-110 flex items-center justify-center"
-                    title="Notruf 112"
-                >
-                    SOS
-                </motion.button>
             </div>
 
             {isAuthenticated && (

@@ -72,17 +72,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = (shouldRedirect = true) => {
+  const logout = async (shouldRedirect = true) => {
     setUser(null);
     setIsAuthenticated(false);
     auth.setToken(null);
     auth.setRefreshToken?.(null);
     auth.clearCachedUser?.();
     // Falls die Session ueber OAuth/Passwort-Reset lief, haelt der Browser-
-    // Supabase-Client sonst eine eigene, weiter auto-refreshende Session am
-    // Leben, die der neue onAuthStateChange-Listener oben nach einem Logout
-    // sonst wieder als bb_token zurueckschreiben wuerde.
-    supabase.auth.signOut().catch(() => {});
+    // Supabase-Client sonst eine eigene, persistierte Session am Leben, die
+    // der onAuthStateChange-Listener oben nach dem Logout wieder als bb_token
+    // zurueckschreiben wuerde. Auf signOut WARTEN (mit Zeitdeckel), sonst
+    // bricht der sofortige Redirect den Request ab, bevor die lokale Session
+    // geraeumt ist — der Logout wirkte dann nur bis zum naechsten Reload.
+    try {
+      await Promise.race([
+        supabase.auth.signOut(),
+        new Promise((resolve) => setTimeout(resolve, 2000)),
+      ]);
+    } catch { /* Netzwerkfehler beim signOut blockiert den Logout nicht */ }
     if (shouldRedirect && typeof window !== 'undefined') {
       window.location.href = '/';
     }

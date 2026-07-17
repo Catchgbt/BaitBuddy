@@ -30,7 +30,7 @@ const PAGE_ALIASES = {
 
   wetter: "Weather", weather: "Weather",
   warnung: "WeatherAlerts", warnungen: "WeatherAlerts",
-  unwetter: "WeatherAlerts", sos: "WeatherAlerts", wetterwarnung: "WeatherAlerts",
+  unwetter: "WeatherAlerts", wetterwarnung: "WeatherAlerts",
 
   community: "Community", forum: "Community", feed: "Community",
 

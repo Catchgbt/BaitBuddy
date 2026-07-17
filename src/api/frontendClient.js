@@ -416,6 +416,22 @@ export const auth = {
     api.setToken(null);
     api.setRefreshToken(null);
     clearCachedUser();
+    // Auch die lokal persistierte Browser-Supabase-Session (OAuth/Passwort-
+    // Reset, localStorage-Key "sb-<ref>-auth-token") entfernen. Sonst stellt
+    // der Supabase-Client sie beim nächsten Laden wieder her und der
+    // onAuthStateChange-Listener in AuthContext schreibt sie als bb_token
+    // zurück — der Logout wäre damit wirkungslos. Synchrones Entfernen der
+    // Storage-Keys ist hier robuster als ein asynchroner signOut()-Call, den
+    // der unmittelbar folgende Redirect abbrechen würde.
+    try {
+      if (typeof localStorage !== 'undefined') {
+        for (const key of Object.keys(localStorage)) {
+          if (key.startsWith('sb-') && key.includes('-auth-token')) {
+            localStorage.removeItem(key);
+          }
+        }
+      }
+    } catch { /* Storage-Zugriff kann im WebView fehlschlagen — unkritisch */ }
     if (typeof window !== 'undefined') {
       window.location.href = redirectUrl || '/';
     }

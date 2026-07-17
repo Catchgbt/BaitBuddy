@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useOptimisticMutation } from '@/lib/useOptimisticMutation';
 import { functions } from '@/api/frontendClient';
+import { auth } from '@/api/auth';
 
 export default function DeleteAccountSection() {
   const [step, setStep] = useState('idle');
@@ -25,7 +26,10 @@ export default function DeleteAccountSection() {
     onSuccess: () => {
       setStep('success');
       setTimeout(() => {
-        window.location.href = '/';
+        // Konto existiert nicht mehr — lokale Session (bb_token/bb_refresh,
+        // Profil-Cache, Supabase-Session) räumen und zur Login-Seite leiten,
+        // statt nur zu redirecten und die toten Tokens liegen zu lassen.
+        auth.logout('/');
       }, 3000);
     },
     onError: (err) => {
