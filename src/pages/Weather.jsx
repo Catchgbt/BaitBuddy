@@ -27,6 +27,7 @@ function WeatherInner() {
   const { currentLocation, requestGpsLocation, loading: locationLoading } = useLocation();
   const { trackWeatherCheck } = useEventActivityTracking();
   const [weatherData, setWeatherData] = useState(null);
+  const [weatherError, setWeatherError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [aiTips, setAiTips] = useState(null);
   const [loadingTips, setLoadingTips] = useState(false);
@@ -56,22 +57,29 @@ function WeatherInner() {
 
   const loadWeatherData = async (lat, lon) => {
     setLoading(true);
+    setWeatherError(null);
     try {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,cloud_cover,pressure_msl,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility,dew_point_2m&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,cloud_cover,visibility,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,uv_index_max&timezone=auto`;
-      const res = await fetch(url);
+      // Hartes 15s-Timeout: ohne Signal konnte der Fetch (z. B. Funkloch am
+      // Wasser) minutenlang haengen und die Seite blieb im Lade-Spinner.
+      const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
       const data = await res.json();
-      
+
       if (data.error) {
         throw new Error(data.reason || "Wetterdaten konnten nicht geladen werden");
       }
-      
+
       setWeatherData(data);
       toast.success("Wetterdaten geladen", {
         duration: 2000
       });
     } catch (error) {
+      const message = error?.name === 'TimeoutError' || error?.name === 'AbortError'
+        ? 'Zeitüberschreitung beim Laden der Wetterdaten. Bitte Verbindung prüfen und erneut versuchen.'
+        : (error.message || 'Wetterdaten konnten nicht geladen werden');
+      setWeatherError(message);
       toast.error("Wetterdaten konnten nicht geladen werden", {
-        description: error.message,
+        description: message,
         duration: 4000
       });
     }
@@ -268,6 +276,33 @@ Sei konkret, praktisch und detailliert!`;
             <p className="text-xs text-gray-500 text-center">
               Du kannst auch auf der Karten-Seite einen Spot auswählen, um das Wetter für diesen Ort anzuzeigen.
             </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Laden fehlgeschlagen: Fehlermeldung mit Retry statt endlosem Spinner
+  // (vorher blieb die Seite bei einem Fetch-Fehler dauerhaft im Ladezustand,
+  // weil weatherData nie gesetzt wurde).
+  if (!loading && !locationLoading && !weatherData && weatherError) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4 pb-32">
+        <Card className="glass-morphism border-red-500/30 bg-red-500/5 max-w-md">
+          <CardHeader>
+            <CardTitle className="text-red-400 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5" />
+              Wetterdaten nicht verfügbar
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-gray-300">{weatherError}</p>
+            <Button
+              onClick={() => currentLocation && loadWeatherData(currentLocation.lat, currentLocation.lon)}
+              className="w-full bg-emerald-600 hover:bg-emerald-700"
+            >
+              Erneut versuchen
+            </Button>
           </CardContent>
         </Card>
       </div>

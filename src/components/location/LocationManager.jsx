@@ -31,12 +31,19 @@ export function LocationProvider({ children }) {
 
     try {
       const position = await new Promise((resolve, reject) => {
+        // Harter JS-Fallback zusaetzlich zur nativen timeout-Option: In
+        // manchen Browsern/WebViews laeuft der native Timeout NICHT, solange
+        // der Berechtigungsdialog offen ist bzw. die Berechtigung in einem
+        // unklaren Zustand haengt — die Standortsuche lud dann endlos.
+        const fallbackTimer = setTimeout(() => {
+          reject({ code: 3, message: 'GPS-Timeout (Fallback nach 15s)' });
+        }, 15000);
         navigator.geolocation.getCurrentPosition(
-          resolve,
-          reject,
-          { 
-            enableHighAccuracy: true, 
-            timeout: 15000, 
+          (pos) => { clearTimeout(fallbackTimer); resolve(pos); },
+          (err) => { clearTimeout(fallbackTimer); reject(err); },
+          {
+            enableHighAccuracy: true,
+            timeout: 15000,
             maximumAge: 0
           }
         );

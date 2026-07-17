@@ -23,7 +23,6 @@ import {
   Mic,
   ScrollText,
   Sparkles,
-  LifeBuoy,
 } from "lucide-react";
 import { useNavigationContext } from "@/lib/NavigationContext";
 import { trackFeatureClick } from "@/components/utils/tracker";
@@ -48,7 +47,6 @@ const tabs = [
   { name: "Shop", path: "Shop", icon: ShoppingBag },
   { name: "Voice", path: "VoiceControl", icon: Mic },
   { name: "Premium", path: "PremiumPlans", icon: Crown },
-  { name: "SOS", path: "WeatherAlerts", icon: LifeBuoy },
   { name: "Profil", path: "Profile", icon: User },
   { name: "Settings", path: "Settings", icon: Settings },
 ];
