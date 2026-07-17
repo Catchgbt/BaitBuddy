@@ -24,6 +24,7 @@ import {
 
 const AVATAR_SIZE = BUDDY_AVATAR_SIZE;
 const DRAG_THRESHOLD = BUDDY_TIMEOUTS.DRAG_THRESHOLD;
+const DRAG_THRESHOLD_TOUCH = BUDDY_TIMEOUTS.DRAG_THRESHOLD_TOUCH;
 
 function clampPos(x, y) {
   if (typeof window === 'undefined') return { x, y };
@@ -429,7 +430,7 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
 
     const dx = Math.abs(touch.clientX - ds.startX);
     const dy = Math.abs(touch.clientY - ds.startY);
-    if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) {
+    if (dx > DRAG_THRESHOLD_TOUCH || dy > DRAG_THRESHOLD_TOUCH) {
       ds.moved = true;
     }
 
@@ -495,8 +496,13 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
               lang: 'de-DE',
               rate: 1.0,
             });
-          } catch {
-            await speakWithBrowserTTS(speakText, { lang: 'de-DE', rate: 1.0 });
+          } catch (err) {
+            console.error('speakWithFallback failed, trying browser TTS:', err);
+            try {
+              await speakWithBrowserTTS(speakText, { lang: 'de-DE', rate: 1.0 });
+            } catch (e2) {
+              console.warn('Both TTS methods failed:', e2);
+            }
           }
         }
       } catch (err) {
@@ -544,9 +550,12 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
 
   // Bubble controls
   const handleCloseBubble = useCallback(() => {
+    if (isListening) {
+      stopListening();
+    }
     setIsOpen(false);
     hideWidget();
-  }, [hideWidget]);
+  }, [hideWidget, isListening, stopListening]);
 
   const handleShowBubble = useCallback(() => {
     showWidget();
