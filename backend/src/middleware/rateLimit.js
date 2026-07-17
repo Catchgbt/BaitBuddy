@@ -58,15 +58,29 @@ export function createRateLimitStore() {
   });
 }
 
-// Teure KI/TTS-Endpunkte (Groq/OpenAI/ElevenLabs — echte Kosten pro Aufruf).
+// KI-Chat/Analyse-Endpunkte (Groq LLM — echte Kosten pro Aufruf).
+// Getrennt von TTS, damit Sprachausgabe das Chat-Budget nicht aufbraucht.
 export const aiRateLimiter = rateLimit({
   windowMs: 60 * 1000,
-  limit: 20,
+  limit: 30,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   keyGenerator: rateLimitKeyGenerator,
   store: createRateLimitStore(),
   message: { error: 'Zu viele KI-Anfragen — bitte kurz warten' },
+});
+
+// TTS-Endpunkt (ElevenLabs) — eigener Limiter, da jede Chat-Nachricht mit Voice
+// automatisch einen TTS-Call ausloest und sonst das gemeinsame Budget doppelt
+// belastet wird.
+export const ttsRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 30,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  keyGenerator: rateLimitKeyGenerator,
+  store: createRateLimitStore(),
+  message: { error: 'Zu viele Sprachanfragen — bitte kurz warten' },
 });
 
 // Auth-Endpunkte (Login/Register/Refresh) gegen Brute-Force/Credential-Stuffing.
