@@ -3,6 +3,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
 import { verifyGooglePlayPurchase, verifyStripePayment } from '../lib/purchaseVerification.js';
 import { sendDbError } from '../lib/errorResponse.js';
+import { resolvePlan, PLAN_RANK } from '../lib/planResolver.js';
 
 const router = Router();
 
@@ -15,27 +16,8 @@ const router = Router();
 const GOOGLE_PLAY_VERIFICATION_CONFIGURED = !!process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON;
 const STRIPE_PAYMENT_VERIFICATION_CONFIGURED = !!process.env.STRIPE_SECRET_KEY;
 
-// Ermittelt den effektiven Plan aus den User-Metadaten. Ist ein Ablaufdatum
-// gesetzt und überschritten (z.B. nach dem 24h-Trial für neue Nutzer), gilt der
-// Nutzer wieder als 'free' — wichtig, weil das Frontend-Gating nur die Plan-ID
-// prüft, nicht is_active.
-function resolvePlan(user) {
-  const meta = user?.user_metadata || {};
-  const rawPlanId = meta.premium_plan_id || 'free';
-  const expiresAt = meta.premium_expires_at || null;
-  const isTrial = meta.premium_trial === true;
-
-  let isActive = rawPlanId !== 'free';
-  let remainingHours = null;
-  if (expiresAt) {
-    const msLeft = new Date(expiresAt) - new Date();
-    remainingHours = Math.ceil(msLeft / 3600000);
-    isActive = isActive && msLeft > 0;
-  }
-
-  const effectiveId = isActive ? rawPlanId : 'free';
-  return { effectiveId, isActive, expiresAt, remainingHours, isTrial };
-}
+// resolvePlan/PLAN_RANK kommen zentral aus lib/planResolver.js — auch der
+// TTS-Endpunkt (Ultimate-Stimme) nutzt dieselbe Auflösung.
 
 router.get('/premium/status', requireAuth, async (req, res) => {
   const { effectiveId, isActive, expiresAt, remainingHours, isTrial } = resolvePlan(req.user);
@@ -71,9 +53,6 @@ const PRODUCTS = [
 router.get('/premium/products', async (req, res) => {
   return res.json(PRODUCTS);
 });
-
-// Rangfolge der Plaene, niedrig -> hoch. 'free' ist implizit Rang 0.
-const PLAN_RANK = { free: 0, basic: 1, pro: 2, elite: 3 };
 
 // Mindest-Plan je Feature-Key, abgeleitet aus den Produktbeschreibungen oben
 // (fangbuch/spots/wetter = Basic; ki_assistent/community = Pro; offline/

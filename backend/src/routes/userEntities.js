@@ -83,13 +83,16 @@ function registerEntity(path, table, allowedFields, { publicRead = false, readOn
     return res.json(data);
   });
 
-  // UPDATE (nur eigene)
+  // UPDATE (nur eigene). maybeSingle statt single: ein Update auf eine fremde
+  // oder geloeschte ID trifft 0 Zeilen — mit single() wurde daraus ein 500er
+  // ("Cannot coerce the result to a single JSON object") statt eines 404.
   router.patch(`${path}/:id`, requireAuth, async (req, res) => {
     const { data, error } = await supabase.from(table)
       .update(pack(req.body))
       .eq('id', req.params.id).eq('user_id', req.user.id)
-      .select().single();
+      .select().maybeSingle();
     if (error) return sendDbError(res, error);
+    if (!data) return res.status(404).json({ error: 'Nicht gefunden' });
     return res.json(data);
   });
 

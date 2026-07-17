@@ -47,172 +47,171 @@ export default function Dashboard() {
       let authFailed = false;
       let spotsFailed = false;
 
-      let currentUser = null;
-      try {
-        currentUser = await auth.me();
-      } catch (authError) {
-        console.error('Dashboard: Authentifizierung fehlgeschlagen:', authError);
-        authFailed = true;
-      }
+      // Phase 1: Kritische Daten parallel laden (Auth + Spots)
+      const [currentUser, spots] = await Promise.all([
+        auth.me().catch(authError => {
+          console.error('Dashboard: Authentifizierung fehlgeschlagen:', authError);
+          authFailed = true;
+          return null;
+        }),
+        (async () => {
+          try {
+            const data = await Spot.list('', 100);
+            return Array.isArray(data) ? data : [];
+          } catch (spotError) {
+            console.warn('Dashboard: Spots konnten nicht geladen werden:', spotError);
+            spotsFailed = true;
+            // Fallback zu gecachten Spots
+            try {
+              const cachedSpots = await getOfflineData('spots');
+              return Array.isArray(cachedSpots) ? cachedSpots : [];
+            } catch (cacheError) {
+              console.warn('Dashboard: Gecachte Spots nicht verfügbar:', cacheError);
+              return [];
+            }
+          }
+        })()
+      ]);
+
       if (isMountedRef.current && currentUser) {
         setUser(currentUser);
-      }
-
-      let spots = [];
-      try {
-        spots = await Spot.list('', 100);
-        if (!Array.isArray(spots)) spots = [];
-      } catch (spotError) {
-        console.warn('Dashboard: Spots konnten nicht geladen werden:', spotError);
-        spotsFailed = true;
-        spots = [];
       }
 
       if (isMountedRef.current) {
         setLoadError(authFailed && spotsFailed);
       }
 
-      // Cache Spots wenn online
+      // Cache Spots im Hintergrund (nicht blockierend)
       if (spots.length > 0 && navigator.onLine) {
-        await cacheEntityData('spots', spots).catch(() => {});
-      } else if (spots.length === 0) {
-        // Fallback zu gecachten Spots wenn offline
-        try {
-          const cachedSpots = await getOfflineData('spots');
-          if (Array.isArray(cachedSpots) && cachedSpots.length > 0) {
-            spots = cachedSpots;
-          }
-        } catch (cacheError) {
-          console.warn('Dashboard: Gecachte Spots konnten nicht geladen werden:', cacheError);
-        }
+        cacheEntityData('spots', spots).catch(() => {});
       }
 
-      let userLocation = null;
-      const savedLocation = localStorage.getItem("fm_current_location");
+      // Phase 2: Wetter & Geolocation parallel in Hintergrund (non-blocking)
+      const loadWeatherAndLocation = async () => {
+        let userLocation = null;
+        const savedLocation = localStorage.getItem("fm_current_location");
 
-      if (savedLocation) {
-        try {
-          const location = JSON.parse(savedLocation);
-          if (location && location.lat != null && location.lon != null) {
-            userLocation = { lat: location.lat, lon: location.lon };
+        // Nutze gespeicherte Location wenn vorhanden
+        if (savedLocation) {
+          try {
+            const location = JSON.parse(savedLocation);
+            if (location && location.lat != null && location.lon != null) {
+              userLocation = { lat: location.lat, lon: location.lon };
+            }
+          } catch (parseError) {
+            console.warn('Dashboard: Standort ungültig:', parseError);
           }
-        } catch (parseError) {
-          console.warn('Dashboard: gespeicherter Standort ist ungültig:', parseError);
         }
-      }
 
-      // Versuche frische Geolokation nur wenn keine gespeicherte vorhanden
-      if (!userLocation && navigator.geolocation) {
-        try {
-          await new Promise((resolve) => {
-            const timeoutId = setTimeout(() => resolve(), 5000);
+        // Frische Geolocation nur wenn keine gespeichert (max 2s Timeout)
+        if (!userLocation && navigator.geolocation) {
+          userLocation = await new Promise((resolve) => {
+            const timeoutId = setTimeout(() => resolve(null), 2000);
             navigator.geolocation.getCurrentPosition(
               (position) => {
                 clearTimeout(timeoutId);
-                userLocation = {
+                const loc = {
                   lat: position.coords.latitude,
                   lon: position.coords.longitude
                 };
                 try {
-                  localStorage.setItem("fm_current_location", JSON.stringify(userLocation));
+                  localStorage.setItem("fm_current_location", JSON.stringify(loc));
                 } catch (e) {
-                  console.warn('Dashboard: Standort konnte nicht gespeichert werden:', e);
+                  console.warn('Dashboard: Standort speichern fehlgeschlagen:', e);
                 }
-                resolve();
+                resolve(loc);
               },
               () => {
                 clearTimeout(timeoutId);
-                resolve();
+                resolve(null);
               },
-              { timeout: 5000, maximumAge: 300000 }
+              { timeout: 2000, maximumAge: 300000 }
             );
           });
-        } catch (error) {
-          console.warn('Dashboard: Geolocation Fehler:', error);
         }
-      }
 
-      if (userLocation) {
-        let weatherData = null;
+        // Lade Wetter wenn Standort verfügbar
+        if (userLocation) {
+          let weatherData = null;
 
-        // Versuche gecachtes Wetter zu laden
-        if (!navigator.onLine) {
-          try {
-            const cachedWeather = await getCachedWeather(userLocation.lat, userLocation.lon);
-            if (cachedWeather) {
-              weatherData = cachedWeather;
-            }
-          } catch (error) {
-            console.warn('Dashboard: Gecachte Wetterdaten konnten nicht geladen werden:', error);
-          }
-        } else {
-          // Hole frische Daten online
-          try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-            const weatherPromise = fetch(
-              `https://api.open-meteo.com/v1/forecast?latitude=${userLocation.lat}&longitude=${userLocation.lon}&current=temperature_2m,wind_speed_10m,weather_code&timezone=auto`,
-              { signal: controller.signal }
-            ).then(res => res.json()).finally(() => clearTimeout(timeoutId));
-
-            weatherData = await weatherPromise.catch(() => null);
-
-            // Cache frische Wetterdaten
-            if (weatherData && weatherData.current) {
-              await cacheWeatherData(userLocation.lat, userLocation.lon, weatherData.current).catch(() => {});
-            } else if (weatherData && weatherData.temperature_2m !== undefined) {
-              await cacheWeatherData(userLocation.lat, userLocation.lon, weatherData).catch(() => {});
-            }
-          } catch (error) {
-            console.warn('Dashboard: Frische Wetterdaten konnten nicht geladen werden:', error);
-            // Fallback zu gecachten Daten
+          if (!navigator.onLine) {
+            // Offline: Gecachtes Wetter
             try {
-              const cachedWeather = await getCachedWeather(userLocation.lat, userLocation.lon);
-              if (cachedWeather) {
-                weatherData = cachedWeather;
+              weatherData = await getCachedWeather(userLocation.lat, userLocation.lon);
+            } catch (error) {
+              console.warn('Dashboard: Gecachtes Wetter nicht verfügbar:', error);
+            }
+          } else {
+            // Online: Frisches Wetter mit 5s Timeout
+            try {
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+              const response = await fetch(
+                `https://api.open-meteo.com/v1/forecast?latitude=${userLocation.lat}&longitude=${userLocation.lon}&current=temperature_2m,wind_speed_10m,weather_code&timezone=auto`,
+                { signal: controller.signal }
+              );
+              clearTimeout(timeoutId);
+
+              weatherData = response.ok ? await response.json() : null;
+
+              // Cache async
+              if (weatherData) {
+                const current = weatherData.current || weatherData;
+                cacheWeatherData(userLocation.lat, userLocation.lon, current).catch(() => {});
               }
-            } catch (e) {
-              console.warn('Dashboard: Gecachte Wetterdaten als Fallback nicht verfügbar:', e);
+            } catch (error) {
+              console.warn('Dashboard: Wetter laden fehlgeschlagen:', error);
+              // Fallback zu gecachtem Wetter
+              try {
+                weatherData = await getCachedWeather(userLocation.lat, userLocation.lon);
+              } catch (e) {
+                console.warn('Dashboard: Gecachtes Wetter Fallback fehlgeschlagen:', e);
+              }
             }
           }
-        }
 
-        if (isMountedRef.current) {
-          if (weatherData && weatherData.current) {
-            setWeather(weatherData.current);
-          } else if (weatherData && weatherData.temperature_2m !== undefined) {
-            setWeather(weatherData);
-          }
-        }
-
-        if (spots.length > 0) {
-          const spotsWithDist = [];
-
-          spots.forEach(spot => {
-            if (spot.latitude != null && spot.longitude != null) {
-              const R = 6371;
-              const dLat = (spot.latitude - userLocation.lat) * Math.PI / 180;
-              const dLon = (spot.longitude - userLocation.lon) * Math.PI / 180;
-              const a =
-                Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(userLocation.lat * Math.PI / 180) * Math.cos(spot.latitude * Math.PI / 180) *
-                Math.sin(dLon/2) * Math.sin(dLon/2);
-              const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-              const dist = R * c;
-              spotsWithDist.push({ ...spot, distance: dist });
+          if (isMountedRef.current) {
+            if (weatherData && weatherData.current) {
+              setWeather(weatherData.current);
+            } else if (weatherData && weatherData.temperature_2m !== undefined) {
+              setWeather(weatherData);
             }
-          });
-
-          spotsWithDist.sort((a, b) => a.distance - b.distance);
-          const topTwo = spotsWithDist.slice(0, 2);
-          if (topTwo.length > 0 && isMountedRef.current) {
-            setNearestSpots(topTwo);
           }
+
+          // Berechne nächste Spots mit Standort
+          if (spots.length > 0) {
+            const spotsWithDist = spots
+              .filter(spot => spot.latitude != null && spot.longitude != null)
+              .map(spot => {
+                const R = 6371;
+                const dLat = (spot.latitude - userLocation.lat) * Math.PI / 180;
+                const dLon = (spot.longitude - userLocation.lon) * Math.PI / 180;
+                const a =
+                  Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(userLocation.lat * Math.PI / 180) * Math.cos(spot.latitude * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                return { ...spot, distance: R * c };
+              })
+              .sort((a, b) => a.distance - b.distance)
+              .slice(0, 2);
+
+            if (spotsWithDist.length > 0 && isMountedRef.current) {
+              setNearestSpots(spotsWithDist);
+            }
+          }
+        } else if (spots.length > 0 && isMountedRef.current) {
+          // Fallback ohne Standort
+          setNearestSpots(spots.slice(0, 2));
         }
-      } else if (spots.length > 0 && isMountedRef.current) {
-        setNearestSpots(spots.slice(0, 2));
-      }
+      };
+
+      // Starte Wetter/Location im Hintergrund (nicht warten)
+      loadWeatherAndLocation().catch(error => {
+        console.warn('Dashboard: Background loading fehlgeschlagen:', error);
+      });
+
     } catch (error) {
       console.error('Dashboard: Daten konnten nicht geladen werden:', error);
       if (isMountedRef.current) {

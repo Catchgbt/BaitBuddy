@@ -239,10 +239,15 @@ class TideService {
 
     const hoursToNext = tideState.timeToNext.hours;
     const minutesToNext = tideState.timeToNext.minutes;
+    // Gesamtzeit statt separatem Stunden-/Minuten-Vergleich: `hoursToNext <= 1 &&
+    // minutesToNext <= 30` stufte sonst 0h45m als "nicht optimal", 1h20m aber als
+    // "optimal" ein (die Minuten-Komponente wird unabhängig von den Stunden geprüft).
+    const totalMinutes = tideState.timeToNext.totalMinutes ??
+      (hoursToNext * 60 + minutesToNext);
 
-    if (hoursToNext <= 1 && minutesToNext <= 30) {
+    if (totalMinutes <= 90) {
       return `Optimal! ${tideState.nextEvent} in ${hoursToNext}h ${minutesToNext}m - beste Fangzeit`;
-    } else if (hoursToNext <= 3) {
+    } else if (totalMinutes <= 180) {
       return `Gut. ${tideState.nextEvent} in ${hoursToNext}h ${minutesToNext}m`;
     } else {
       return `Noch ${hoursToNext}h ${minutesToNext}m bis ${tideState.nextEvent}`;

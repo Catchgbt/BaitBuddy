@@ -95,18 +95,35 @@ export async function syncOfflineCatches() {
   let synced = 0;
   let failed = 0;
   const errors = [];
+  const syncedIds = new Set();
 
   for (const catchData of queue) {
     try {
       const { __id, __created, __synced, ...realData } = catchData;
       const result = await entities.Catch.create(realData);
       console.log(`Fang ${__id} synchronisiert:`, result.id);
-      removeFromOfflineCatchQueue(__id);
+      syncedIds.add(__id);
       synced++;
     } catch (e) {
       console.error(`Fehler beim Sync von ${catchData.__id}:`, e);
       errors.push({ id: catchData.__id, error: e.message });
       failed++;
+    }
+  }
+
+  // Queue nur EINMAL am Ende neu schreiben, statt pro Item die gesamte Queue neu
+  // zu lesen und zu serialisieren (das war O(n²)). Frisch re-lesen, damit während
+  // des Syncs offline hinzugekommene Fänge nicht verloren gehen.
+  if (syncedIds.size > 0) {
+    try {
+      const remaining = getOfflineCatchQueue().filter(c => !syncedIds.has(c.__id));
+      if (remaining.length > 0) {
+        localStorage.setItem(QUEUE_KEYS.catches, JSON.stringify(remaining));
+      } else {
+        localStorage.removeItem(QUEUE_KEYS.catches);
+      }
+    } catch (e) {
+      console.error('Fehler beim Aktualisieren der Offline-Queue nach Sync:', e);
     }
   }
 

@@ -107,15 +107,23 @@ class ApiClient {
     return this._refreshPromise;
   }
 
-  async request(method, path, body, _retried = false) {
+  async request(method, path, body, options = {}) {
+    // `options` erlaubt ein optionales `signal` (z. B. AbortController aus einer
+    // Komponente, die den laufenden Request beim Unmount abbrechen will). Das
+    // interne 30s-Timeout bleibt immer aktiv und wird mit dem externen Signal
+    // kombiniert. `_retried` verhindert Endlos-Refresh-Schleifen bei 401.
+    const { signal: externalSignal, _retried = false } = options;
     const token = this.getToken();
+    const timeoutSignal = AbortSignal.timeout(30000); // 30s timeout
     const opts = {
       method,
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      signal: AbortSignal.timeout(30000), // 30s timeout
+      signal: externalSignal
+        ? AbortSignal.any([timeoutSignal, externalSignal])
+        : timeoutSignal,
     };
     if (body !== undefined) opts.body = JSON.stringify(body);
     const res = await fetch(`${API_URL}${path}`, opts);
@@ -126,7 +134,7 @@ class ApiClient {
       const noRetry = ['/api/auth/login', '/api/auth/register', '/api/auth/refresh'];
       if (res.status === 401 && !_retried && !noRetry.some(p => path.startsWith(p)) && this.getRefreshToken()) {
         const refreshed = await this._refreshSession();
-        if (refreshed) return this.request(method, path, body, true);
+        if (refreshed) return this.request(method, path, body, { signal: externalSignal, _retried: true });
       }
       const err = /** @type {Error & { status?: number, data?: any }} */ (
         new Error(data.error || `HTTP ${res.status}`)
@@ -138,10 +146,10 @@ class ApiClient {
     return data;
   }
 
-  get(path)         { return this.request('GET', path); }
-  post(path, body)  { return this.request('POST', path, body); }
-  patch(path, body) { return this.request('PATCH', path, body); }
-  del(path)         { return this.request('DELETE', path); }
+  get(path, options)         { return this.request('GET', path, undefined, options); }
+  post(path, body, options)  { return this.request('POST', path, body, options); }
+  patch(path, body, options) { return this.request('PATCH', path, body, options); }
+  del(path, options)         { return this.request('DELETE', path, undefined, options); }
 }
 
 export const api = new ApiClient();

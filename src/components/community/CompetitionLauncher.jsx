@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { functions } from "@/api/frontendClient";
+import { events } from "@/api/frontendClient";
 
 const TEMPLATES = [
   {
@@ -62,24 +62,15 @@ export default function CompetitionLauncher({ currentUser, onStarted }) {
     try {
       console.log('Starting competition with templateId:', templateId);
 
-      const res = await functions.invoke('startCommunityCompetition', {
-        template_id: templateId
-      });
+      const res = await events.startCompetition(templateId);
 
       console.log('Competition start response:', res);
 
-      if (res?.data?.error) {
-        throw new Error(res.data.error);
+      if (res?.error) {
+        throw new Error(res.error);
       }
 
-      const data = res?.data || res;
-      if (data?.created) {
-        toast.success('Wettbewerb gestartet. Du bist als Teilnehmer dabei.');
-      } else if (data?.joined) {
-        toast.success('Du bist dem laufenden Wettbewerb beigetreten.');
-      } else {
-        toast.success('Wettbewerb aktiviert.');
-      }
+      toast.success('Wettbewerb erfolgreich gestartet! Du bist jetzt Teilnehmer.');
 
       if (onStarted) await onStarted();
     } catch (error) {

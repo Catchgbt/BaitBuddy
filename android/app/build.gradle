@@ -23,8 +23,10 @@ android {
         applicationId "app.baitbuddy.mobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0.0"
+        // Defaults folgen der bestehenden Play-Store-Versionierung; überschreibbar
+        // via -PappVersionCode / -PappVersionName (CI-Workflow build-android.yml)
+        versionCode (project.hasProperty('appVersionCode') ? project.property('appVersionCode').toInteger() : 27)
+        versionName (project.hasProperty('appVersionName') ? project.property('appVersionName').toString() : "2.117898.0")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

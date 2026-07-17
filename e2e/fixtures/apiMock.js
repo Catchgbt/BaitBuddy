@@ -37,7 +37,11 @@ export async function installApiMocks(page, { authenticated = false } = {}) {
     route.fulfill({ status: 200, contentType: 'text/css', body: '' })
   );
 
-  await page.route('**/api/**', async (route) => {
+  // Nur echte Backend-Aufrufe (Pfad beginnt mit /api/) abfangen. Das fruehere
+  // Glob '**/api/**' matchte auch Vite-Modul-URLs wie /src/api/frontendClient.js
+  // und beantwortete sie mit JSON — die App lud dann gar nicht (weisse Seite),
+  // was die Crawl-Assertions nicht bemerkten.
+  await page.route((url) => url.pathname.startsWith('/api/'), async (route) => {
     const request = route.request();
     const url = new URL(request.url());
     const path = url.pathname;

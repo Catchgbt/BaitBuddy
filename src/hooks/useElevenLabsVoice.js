@@ -28,6 +28,12 @@ export function useElevenLabsVoice() {
     setIsLoading(true);
     setError(null);
 
+    // Optimistisch VOR dem await setzen: Bei sofort endendem/fehlerndem Audio
+    // feuern onEnd/onError (setIsSpeaking(false)) synchron aus audio.play(),
+    // also noch während wir im await hängen. Würde setIsSpeaking(true) erst
+    // danach laufen, bliebe der State fälschlich auf true hängen (Race).
+    setIsSpeaking(true);
+
     try {
       const audio = await speakWithElevenLabs(text, {
         onEnd: () => {
@@ -42,7 +48,6 @@ export function useElevenLabsVoice() {
       });
       audioRef.current = audio;
       setIsLoading(false);
-      setIsSpeaking(true);
       return true;
     } catch (err) {
       setIsLoading(false);

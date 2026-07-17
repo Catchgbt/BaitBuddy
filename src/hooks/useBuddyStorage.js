@@ -1,21 +1,27 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { BUDDY_DRAG_DEBOUNCE, BUDDY_AVATAR_SIZE } from '@/lib/buddyStorageKeys';
 
 const STORAGE_KEYS = {
   WIDGET_POSITION: 'buddy-widget-pos',
-  VISITED_PAGES: 'buddy-visited-pages',
   WIDGET_HIDDEN: 'buddy-widget-hidden',
   VOICE_ENABLED: 'buddy-voice-enabled',
   USER_LOCATION: 'userLocation',
 };
-
-const MAX_VISITED_PAGES = 100;
 
 export function useBuddyStorage() {
   const [widgetPos, setWidgetPos] = useState(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEYS.WIDGET_POSITION);
       if (stored) {
-        return JSON.parse(stored);
+        // Gespeicherte Position auf den aktuellen Viewport clampen — sie kann
+        // von einem groesseren Screen (Rotation, anderes Geraet) stammen und
+        // laege sonst ausserhalb des sichtbaren Bereichs.
+        const parsed = JSON.parse(stored);
+        if (typeof window === 'undefined') return parsed;
+        return {
+          x: Math.max(0, Math.min(parsed?.x || 0, window.innerWidth - BUDDY_AVATAR_SIZE)),
+          y: Math.max(0, Math.min(parsed?.y || 0, window.innerHeight - BUDDY_AVATAR_SIZE)),
+        };
       }
     } catch {}
     return null;
@@ -47,12 +53,27 @@ export function useBuddyStorage() {
     return null;
   });
 
+  // Positions-Persistenz gedrosselt: setWidgetPos feuert pro Drag-Frame, ein
+  // synchroner localStorage-Write je Frame würde das Ziehen ruckeln lassen.
+  // Deshalb wird der Schreibvorgang zentral hier gebündelt (einziger Pfad).
+  const posPersistTimerRef = useRef(null);
   useEffect(() => {
-    try {
-      if (widgetPos) {
-        localStorage.setItem(STORAGE_KEYS.WIDGET_POSITION, JSON.stringify(widgetPos));
+    if (posPersistTimerRef.current) {
+      clearTimeout(posPersistTimerRef.current);
+    }
+    posPersistTimerRef.current = setTimeout(() => {
+      try {
+        if (widgetPos) {
+          localStorage.setItem(STORAGE_KEYS.WIDGET_POSITION, JSON.stringify(widgetPos));
+        }
+      } catch {}
+    }, BUDDY_DRAG_DEBOUNCE);
+
+    return () => {
+      if (posPersistTimerRef.current) {
+        clearTimeout(posPersistTimerRef.current);
       }
-    } catch {}
+    };
   }, [widgetPos]);
 
   useEffect(() => {
@@ -81,36 +102,6 @@ export function useBuddyStorage() {
     setWidgetPos(pos);
   }, []);
 
-  const getVisitedPages = useCallback(() => {
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEYS.VISITED_PAGES) || '[]');
-    } catch {
-      return [];
-    }
-  }, []);
-
-  const addVisitedPage = useCallback((page) => {
-    try {
-      const visited = getVisitedPages();
-      if (!visited.includes(page)) {
-        visited.push(page);
-        localStorage.setItem(STORAGE_KEYS.VISITED_PAGES, JSON.stringify(visited));
-      }
-    } catch {}
-  }, [getVisitedPages]);
-
-  const cleanupVisitedPages = useCallback(() => {
-    try {
-      const visited = getVisitedPages();
-      if (visited.length > MAX_VISITED_PAGES) {
-        const trimmed = visited.slice(-MAX_VISITED_PAGES);
-        localStorage.setItem(STORAGE_KEYS.VISITED_PAGES, JSON.stringify(trimmed));
-      }
-    } catch (e) {
-      localStorage.removeItem(STORAGE_KEYS.VISITED_PAGES);
-    }
-  }, [getVisitedPages]);
-
   const hideWidget = useCallback(() => {
     setIsWidgetHidden(true);
   }, []);
@@ -138,9 +129,6 @@ export function useBuddyStorage() {
     showWidget,
     isVoiceEnabled,
     toggleVoice,
-    getVisitedPages,
-    addVisitedPage,
-    cleanupVisitedPages,
     userLocation,
     getLocation,
     setLocation: setLocationValue,

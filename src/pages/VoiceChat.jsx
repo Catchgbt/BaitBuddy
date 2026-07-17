@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, PhoneOff, Phone, X, Loader2 } from 'lucide-react';
 import { functions } from '@/api/frontendClient';
 import { speakWithFallback, cancelElevenLabs } from '@/components/utils/elevenLabsTTS';
-import JuleAvatar from '@/components/ai/JuleAvatar';
+import BuddyAvatar from '@/components/ai/BuddyAvatar';
 import { createPageUrl } from '@/utils';
 import { toast } from 'sonner';
 
@@ -71,9 +71,13 @@ export default function VoiceChat() {
         assistantBufRef.current = '';
         setPhase(PHASE.SPEAKING);
         break;
+      // GA-Eventnamen ('response.output_audio_transcript.*') und Beta-Namen
+      // ('response.audio_transcript.*') parallel behandeln.
+      case 'response.output_audio_transcript.delta':
       case 'response.audio_transcript.delta':
         if (evt.delta) assistantBufRef.current += evt.delta;
         break;
+      case 'response.output_audio_transcript.done':
       case 'response.audio_transcript.done':
       case 'response.done': {
         const text = (evt.transcript || assistantBufRef.current || '').trim();
@@ -182,7 +186,7 @@ export default function VoiceChat() {
     if (transcriptRef.current.length) {
       startFallbackRecognition();
     } else {
-      const greeting = 'Hi, ich bin Jule, deine Angel-Expertin. Was möchtest du wissen?';
+      const greeting = 'Hi, ich bin dein KI-Buddy für alles rund ums Angeln. Was möchtest du wissen?';
       setTranscript([{ role: 'assistant', text: greeting }]);
       speakFallbackAndListen(greeting);
     }
@@ -195,7 +199,7 @@ export default function VoiceChat() {
       // 1) Kurzlebiges Token vom eigenen Backend holen (echter Key bleibt serverseitig)
       const session = await functions.invoke('realtimeSession');
       const ephemeralKey = session?.client_secret?.value;
-      const model = session?.model || 'gpt-4o-realtime-preview-2024-12-17';
+      const model = session?.model || 'gpt-realtime';
       if (!ephemeralKey) {
         throw new Error(session?.error || 'Kein Voice-Token erhalten. Ist OPENAI_API_KEY gesetzt?');
       }
@@ -234,13 +238,14 @@ export default function VoiceChat() {
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      const resp = await fetch(`https://api.openai.com/v1/realtime?model=${encodeURIComponent(model)}`, {
+      // GA-API: SDP-Austausch laeuft ueber /v1/realtime/calls (der alte
+      // Beta-Pfad /v1/realtime wurde zusammen mit /v1/realtime/sessions entfernt).
+      const resp = await fetch(`https://api.openai.com/v1/realtime/calls?model=${encodeURIComponent(model)}`, {
         method: 'POST',
         body: offer.sdp,
         headers: {
           Authorization: `Bearer ${ephemeralKey}`,
           'Content-Type': 'application/sdp',
-          'OpenAI-Beta': 'realtime=v1',
         },
       });
       if (!resp.ok) throw new Error('OpenAI-Verbindung fehlgeschlagen (' + resp.status + ')');
@@ -289,8 +294,8 @@ export default function VoiceChat() {
     [PHASE.IDLE]: 'Tippe auf Gespräch starten und unterhalte dich wie am Telefon.',
     [PHASE.CONNECTING]: 'Verbinde…',
     [PHASE.LISTENING]: muted ? 'Mikrofon stumm' : 'Ich höre zu…',
-    [PHASE.THINKING]: 'Jule überlegt…',
-    [PHASE.SPEAKING]: 'Jule spricht…',
+    [PHASE.THINKING]: 'KI-Buddy überlegt…',
+    [PHASE.SPEAKING]: 'KI-Buddy spricht…',
     [PHASE.ERROR]: errorMsg,
   }[phase];
 
@@ -299,7 +304,7 @@ export default function VoiceChat() {
       <div className="flex items-center justify-between p-4 border-b border-gray-800 sticky top-0 z-10 backdrop-blur-xl bg-gray-950/80">
         <div>
           <h1 className="text-lg font-bold text-white">Live-Gespräch</h1>
-          <p className="text-xs text-gray-500">Echtzeit-Sprache mit Jule</p>
+          <p className="text-xs text-gray-500">Echtzeit-Sprache mit deinem KI-Buddy</p>
         </div>
         <button
           onClick={() => { hangUp(); navigate(createPageUrl('AIAssistant')); }}
@@ -343,7 +348,7 @@ export default function VoiceChat() {
                 <Loader2 size={42} className="text-white animate-spin" />
               </div>
             ) : (
-              <JuleAvatar speaking={phase === PHASE.SPEAKING} listening={phase === PHASE.LISTENING} showHints={false} size={128} />
+              <BuddyAvatar speaking={phase === PHASE.SPEAKING} listening={phase === PHASE.LISTENING} showHints={false} size={128} />
             )}
           </motion.div>
         </div>

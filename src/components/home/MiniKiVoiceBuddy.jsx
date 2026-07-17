@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import BuddyAvatar from "@/components/ai/BuddyAvatar";
 import { catchgbtChat } from "@/functions/catchgbtChat";
 import { useNavigate } from "react-router-dom";
 import { speakWithFallback, cancelElevenLabs } from "@/components/utils/elevenLabsTTS";
@@ -19,7 +20,7 @@ function parseAction(text) {
 export default function MiniKiVoiceBuddy() {
   const navigate = useNavigate();
   const [messages, setMessages] = useState([
-    { role: "system", text: "Hallo! Ich bin Buddy. Ich kann Faenge eintragen, Community-Posts erstellen, Seiten oeffnen und Daten vorlesen." }
+    { role: "system", text: "Hallo! Ich bin dein KI-Buddy. Ich kann Faenge eintragen, Community-Posts erstellen, Seiten oeffnen und Daten vorlesen." }
   ]);
   const [input, setInput] = useState("");
   const [status, setStatus] = useState("");
@@ -208,7 +209,7 @@ export default function MiniKiVoiceBuddy() {
 
   const statusLabels = {
     listening: "Ich hoere zu...",
-    speaking: "Buddy spricht...",
+    speaking: "KI-Buddy spricht...",
     thinking: "Denke nach...",
     "": "Tippe oder aktiviere das Mikrofon"
   };
@@ -266,16 +267,16 @@ export default function MiniKiVoiceBuddy() {
 
       {/* Avatar row */}
       <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", background: "#0a1624", borderTop: "1px solid #111e2e", borderBottom: "1px solid #111e2e" }}>
-        <div style={{ width: 52, height: 52, borderRadius: 14, overflow: "hidden", flexShrink: 0, boxShadow: avatarGlow, transition: "box-shadow 0.3s" }}>
-          <img
-            src="https://media.base44.com/images/public/68bb3d3b9f83dc1f55ef532b/5dfd72037_1778092195086.png"
-            alt="BaitBuddy"
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-          />
-        </div>
+        <BuddyAvatar
+          speaking={status === "speaking"}
+          listening={status === "listening"}
+          showHints={false}
+          size={52}
+          style={{ borderRadius: 14, overflow: "hidden", flexShrink: 0, boxShadow: avatarGlow, transition: "box-shadow 0.3s" }}
+        />
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 15, fontWeight: 600, color: "#e0f0ff" }}>Buddy</div>
-          <div style={{ fontSize: 12, color: "#556677", marginTop: 2 }}>Deine KI-Angelexpertin</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: "#e0f0ff" }}>KI-Buddy</div>
+          <div style={{ fontSize: 12, color: "#556677", marginTop: 2 }}>Dein Angel-Buddy</div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 3, height: 24, opacity: status === "speaking" ? 1 : 0, transition: "opacity 0.3s" }}>
           {waveBars.map((h, i) => (

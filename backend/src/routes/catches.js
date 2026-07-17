@@ -39,14 +39,34 @@ router.get('/catches', requireAuth, async (req, res) => {
 });
 
 router.get('/catches/stats/summary', requireAuth, async (req, res) => {
-  const { data, error } = await supabase
-    .from('catches').select('species, length_cm, weight_kg, catch_time')
-    .eq('created_by', req.user.email);
-  if (error) return sendDbError(res, error);
+  const email = req.user.email;
+  // Aggregation der DB überlassen statt alle Zeilen ins Backend zu laden:
+  // - total via HEAD-Count (überträgt keine Zeilen)
+  // - biggest via serverseitigem ORDER BY length_cm DESC LIMIT 1
+  // - species: nur die eine Spalte laden und in JS deduplizieren (Supabase-REST
+  //   kann kein DISTINCT ohne RPC; eine Spalte bleibt aber schlank)
+  // Alle drei Abfragen laufen parallel.
+  const [countRes, biggestRes, speciesRes] = await Promise.all([
+    supabase.from('catches').select('*', { count: 'exact', head: true }).eq('created_by', email),
+    supabase.from('catches')
+      .select('species, length_cm, weight_kg, catch_time')
+      .eq('created_by', email)
+      .order('length_cm', { ascending: false, nullsFirst: false })
+      .limit(1),
+    supabase.from('catches').select('species').eq('created_by', email),
+  ]);
+
+  if (countRes.error) return sendDbError(res, countRes.error);
+  if (biggestRes.error) return sendDbError(res, biggestRes.error);
+  if (speciesRes.error) return sendDbError(res, speciesRes.error);
+
+  const biggest = (biggestRes.data && biggestRes.data[0]) || null;
+  const species = [...new Set((speciesRes.data || []).map(c => c.species).filter(Boolean))];
+
   return res.json({
-    total: data.length,
-    species: [...new Set(data.map(c => c.species).filter(Boolean))],
-    biggest: data.reduce((max, c) => c.length_cm > (max?.length_cm || 0) ? c : max, null),
+    total: countRes.count ?? (countRes.data?.length ?? 0),
+    species,
+    biggest,
   });
 });
 

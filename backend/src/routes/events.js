@@ -8,6 +8,7 @@ import {
   aggregateMonthlyLeaderboard,
   autoActivateRewards,
   addActivityPoints,
+  recalcParticipantTotals,
   ACTIVITY_POINTS
 } from '../lib/pointsCalculator.js';
 
@@ -166,10 +167,24 @@ router.patch('/events/:id', requireAuth, async (req, res) => {
       return res.status(403).json({ error: 'Keine Berechtigung' });
     }
 
+    // Nur echte Spalten der events-Tabelle uebernehmen. Das Frontend schickt
+    // teils zusaetzliche Felder (z. B. 'participants'), die Postgrest sonst mit
+    // "Could not find the 'participants' column" ablehnt; created_by/id bleiben
+    // ebenfalls unveraenderbar.
+    const EVENT_UPDATE_FIELDS = [
+      'name', 'description', 'start_date', 'end_date', 'template_id',
+      'event_type', 'scoring_method', 'target_species', 'prize_description',
+      'status', 'is_active',
+    ];
+    const patch = {};
+    for (const k of EVENT_UPDATE_FIELDS) {
+      if (k in req.body) patch[k] = req.body[k];
+    }
+
     const { data, error } = await supabase
       .from('events')
       .update({
-        ...req.body,
+        ...patch,
         updated_at: new Date().toISOString()
       })
       .eq('id', req.params.id)
@@ -284,24 +299,10 @@ router.post('/events/:id/submit', requireAuth, async (req, res) => {
 
     if (submissionError) return sendDbError(res, submissionError);
 
-    // 3. Aktualisiere event_participants totale Punkte
-    const { data: participant } = await supabase
-      .from('event_participants')
-      .select('total_points, submission_count')
-      .eq('event_id', req.params.id)
-      .eq('user_id', req.user.email)
-      .single();
-
-    if (participant) {
-      await supabase
-        .from('event_participants')
-        .update({
-          total_points: (parseFloat(participant.total_points) || 0) + pointsResult.total,
-          submission_count: (participant.submission_count || 0) + 1
-        })
-        .eq('event_id', req.params.id)
-        .eq('user_id', req.user.email);
-    }
+    // 3. Teilnehmer-Summen aus den Einreichungen neu berechnen. Legt den
+    //    Teilnehmer bei Bedarf an, sodass die Punkte nie verloren gehen, und
+    //    vermeidet Lost-Updates bei parallelen Einreichungen.
+    await recalcParticipantTotals(req.params.id, req.user.email, supabase);
 
     return res.status(201).json(submission);
   } catch (error) {
@@ -416,14 +417,20 @@ router.post('/events/invitations/:id/accept', requireAuth, async (req, res) => {
       .eq('id', req.params.id)
       .single();
 
-    // 3. Füge User als Teilnehmer hinzu
+    // 3. Füge User als Teilnehmer hinzu (Duplikate ignorieren)
     if (invitation) {
-      await supabase
+      const { error: participantError } = await supabase
         .from('event_participants')
         .insert({
           event_id: invitation.event_id,
-          user_id: req.user.email
+          user_id: req.user.email,
+          joined_at: new Date().toISOString()
         });
+
+      // 23505 = bereits Teilnehmer, das ist kein Fehler
+      if (participantError && participantError.code !== '23505') {
+        return res.status(500).json({ error: participantError.message });
+      }
     }
 
     return res.json({ ok: true });
@@ -787,6 +794,24 @@ router.post('/events/activities/track', requireAuth, async (req, res) => {
 
     if (!participant) {
       return res.status(403).json({ error: 'User ist nicht Teilnehmer des Events' });
+    }
+
+    // Anti-Farming: jede Aktivitaet zaehlt pro Event und User nur ein einziges
+    // Mal. Verhindert beliebiges Hochfarmen von Punkten durch wiederholtes
+    // Auslosen derselben Aktivitaet.
+    const { count: alreadyCounted } = await supabase
+      .from('event_submissions')
+      .select('*', { count: 'exact', head: true })
+      .eq('event_id', eventId)
+      .eq('user_id', req.user.email)
+      .eq('species', `[${activityType}]`);
+
+    if (alreadyCounted && alreadyCounted > 0) {
+      return res.json({
+        ok: true,
+        awarded: false,
+        message: 'Aktivitaet wurde fuer dieses Event bereits gezaehlt'
+      });
     }
 
     // Addiere Punkte

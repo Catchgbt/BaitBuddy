@@ -17,7 +17,6 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { ThemeProvider } from '@/lib/ThemeContext';
 import SplashIntro from '@/components/intro/SplashIntro';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-import { migrateOfflineStorage } from '@/lib/StorageMigration';
 import ErrorBoundary from '@/lib/ErrorBoundary';
 import { initAutoSync } from '@/components/utils/offlineSync';
 import { initNetworkStatus } from '@/utils/networkStatus';
@@ -133,13 +132,10 @@ const AnimatedRoutes = () => {
 
 
 function App() {
-  // Initialize network status, storage migration and offline sync on app startup
+  // Initialize network status and offline sync on app startup
   useEffect(() => {
     initNetworkStatus().catch(err => {
       console.error('[App] Network status init failed:', err);
-    });
-    migrateOfflineStorage().catch(err => {
-      console.error('[App] Storage migration failed:', err);
     });
     initAutoSync();
     // Alle Seiten-Chunks im Hintergrund vorladen, damit sie offline verfügbar

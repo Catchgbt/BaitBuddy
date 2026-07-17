@@ -150,14 +150,15 @@ export default function ProfilePage() {
 
   const saveProfileMutation = useOptimisticMutation({
     mutationFn: async (data) => {
-      await auth.updateMe(data);
-      return data;
+      const updatedUser = await auth.updateMe(data);
+      return updatedUser;
     },
     optimisticUpdate: (oldUser, newData) => ({
       ...oldUser,
       ...newData
     }),
-    onSuccess: () => {
+    onSuccess: (updatedUser) => {
+      setUser(updatedUser);
       setIsEditing(false);
       toast.success('Profil erfolgreich aktualisiert!');
     },

@@ -1,4 +1,9 @@
 import 'dotenv/config';
+// Leitet in async-Route-Handlern geworfene Rejections an die Error-Middleware
+// weiter. Express 4 tut das nicht von selbst — ohne dies würde ein geworfener
+// Fehler (z.B. Netzwerk-/Timeout aus Supabase oder fetch) zu einer unbehandelten
+// Rejection und der Request bliebe bis zum Plattform-Timeout hängen.
+import 'express-async-errors';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -37,14 +42,22 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 
-app.get('/health', (req, res) => res.json({ ok: true, app: 'BaitBuddy', version: '1.0.0' }));
-app.get('/api/health', (req, res) => res.json({ ok: true, app: 'BaitBuddy', version: '1.0.0' }));
+// Findet den OpenAI-Key tolerant (OPENAI_API_KEY, Openai_key, …) — nur zur
+// Diagnose, ob Voice serverseitig konfiguriert ist. Gibt KEINEN Wert preis.
+function hasOpenAIKey() {
+  return !!(process.env.OPENAI_API_KEY
+    || Object.entries(process.env).find(([k, v]) => /open.?_?ai/i.test(k) && /key|token|secret/i.test(k) && v)?.[1]);
+}
+const healthPayload = () => ({ ok: true, app: 'BaitBuddy', version: '1.0.0', voice: hasOpenAIKey() });
+app.get('/health', (req, res) => res.json(healthPayload()));
+app.get('/api/health', (req, res) => res.json(healthPayload()));
 
 // Rate-Limiting per Pfad-Präfix (in Tests via NODE_ENV=test übersprungen, damit
 // wiederholte Requests im selben Testlauf nicht in die Limits laufen). Scoped
-// auf teure/sensible Pfade — /api/health und /api/ai/test bleiben unlimitiert.
-// /api/analyze-photo zählt zu den KI-Kosten, liegt aber nicht unter /api/ai,
-// daher separat.
+// auf teure/sensible Pfade: Das /api/ai-Präfix deckt ALLE KI-Routen ab, inkl.
+// /api/ai/test (auth-pflichtig + limitiert). Nur /health und /api/health sind
+// unlimitiert (kein LLM-Call). /api/analyze-photo zählt zu den KI-Kosten,
+// liegt aber nicht unter /api/ai, daher separat verdrahtet.
 if (process.env.NODE_ENV !== 'test') {
   app.use('/api/ai', aiRateLimiter);
   app.use('/api/analyze-photo', aiRateLimiter);
@@ -75,7 +88,13 @@ app.use('/api', functionsRoutes);
 
 app.use((req, res) => res.status(404).json({ error: `Not found: ${req.method} ${req.path}` }));
 app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
   console.error('Unhandled error:', err);
+  // Upstream-Timeouts (Groq, OpenAI, ElevenLabs, open-meteo, GoTrue) sauber als
+  // Gateway-Timeout melden statt als generischen 500.
+  if (err?.timeout || err?.name === 'FetchTimeoutError' || err?.name === 'AbortError') {
+    return res.status(504).json({ error: 'Zeitüberschreitung beim externen Dienst — bitte erneut versuchen' });
+  }
   res.status(500).json({ error: 'Interner Fehler' });
 });
 
