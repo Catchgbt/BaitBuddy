@@ -60,6 +60,7 @@ describe('Rate-Limiter-Middleware', () => {
   it('exportiert konfigurierte Middleware fuer KI- und Auth-Endpunkte', async () => {
     const mod = await import('./rateLimit.js');
     expect(typeof mod.aiRateLimiter).toBe('function');
+    expect(typeof mod.ttsRateLimiter).toBe('function');
     expect(typeof mod.authRateLimiter).toBe('function');
   });
 });

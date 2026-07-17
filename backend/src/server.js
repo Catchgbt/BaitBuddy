@@ -26,7 +26,7 @@ import bathymetryRoutes from './routes/bathymetry.js';
 import backupRoutes from './routes/backups.js';
 import notesRoutes from './routes/notes.js';
 import functionsRoutes from './routes/functions.js';
-import { aiRateLimiter, authRateLimiter } from './middleware/rateLimit.js';
+import { aiRateLimiter, ttsRateLimiter, authRateLimiter } from './middleware/rateLimit.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -59,6 +59,7 @@ app.get('/api/health', (req, res) => res.json(healthPayload()));
 // unlimitiert (kein LLM-Call). /api/analyze-photo zählt zu den KI-Kosten,
 // liegt aber nicht unter /api/ai, daher separat verdrahtet.
 if (process.env.NODE_ENV !== 'test') {
+  app.use('/api/ai/tts', ttsRateLimiter);
   app.use('/api/ai', aiRateLimiter);
   app.use('/api/analyze-photo', aiRateLimiter);
   app.use('/api/auth/login', authRateLimiter);

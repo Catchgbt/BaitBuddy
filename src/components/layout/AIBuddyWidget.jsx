@@ -507,22 +507,34 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
         }
       } catch (err) {
         console.error('Chat error:', err);
-        // Kein hartes Sackgassen-Fehlerbild: der KI-Buddy antwortet aus dem
-        // vorgefertigten Offline-Wissen weiter, damit sie nie stumm bleibt.
-        const offlineReply = findOfflineBuddyAnswer(text) || getOfflineBuddyFallback();
-        setMessages((prev) => [...prev, { role: 'assistant', content: offlineReply }]);
-        setIsTalking(true);
-        if (buddyVoiceEnabled) {
-          try {
-            await speakWithFallback(offlineReply, {
-              voiceEnabled: buddyVoiceEnabled,
-              lang: 'de-DE',
-              rate: 1.0,
-            });
-          } catch {
+
+        if (!isMountedRef.current) return;
+
+        const status = err?.status;
+        if (status === 429) {
+          const retryMsg = 'Moment, ich brauche kurz eine Pause. Versuch es gleich nochmal.';
+          setChatError(retryMsg);
+          setMessages((prev) => [...prev, { role: 'assistant', content: retryMsg }]);
+        } else if (status != null) {
+          const serverMsg = 'Da ist gerade etwas schiefgelaufen. Versuch es gleich nochmal.';
+          setChatError(serverMsg);
+          setMessages((prev) => [...prev, { role: 'assistant', content: serverMsg }]);
+        } else {
+          const offlineReply = findOfflineBuddyAnswer(text) || getOfflineBuddyFallback();
+          setMessages((prev) => [...prev, { role: 'assistant', content: offlineReply }]);
+          setIsTalking(true);
+          if (buddyVoiceEnabled) {
             try {
-              await speakWithBrowserTTS(offlineReply, { lang: 'de-DE', rate: 1.0 });
-            } catch { /* TTS ist optional */ }
+              await speakWithFallback(offlineReply, {
+                voiceEnabled: buddyVoiceEnabled,
+                lang: 'de-DE',
+                rate: 1.0,
+              });
+            } catch {
+              try {
+                await speakWithBrowserTTS(offlineReply, { lang: 'de-DE', rate: 1.0 });
+              } catch { /* TTS ist optional */ }
+            }
           }
         }
       } finally {
