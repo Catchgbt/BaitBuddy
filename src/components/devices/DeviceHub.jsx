@@ -3,10 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Bluetooth, 
-  Camera, 
-  Waves, 
+import {
+  Bluetooth,
+  Camera,
+  Waves,
   Thermometer,
   Scale,
   Watch,
@@ -17,10 +17,18 @@ import {
   CheckCircle2,
   Heart,
   Play,
-  Square
+  Square,
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { auth } from "@/api/auth";
+import {
+  withTimeout,
+  retryWithBackoff,
+  CONNECT_TIMEOUT_MS,
+  RECONNECT_MAX_ATTEMPTS,
+} from '@/lib/bleConnection';
 
 // HR Service Constants
 const HR_SERVICE = '0000180d-0000-1000-8000-00805f9b34fb';
@@ -386,19 +394,42 @@ export default function DeviceHub() {
   const videoRef = useRef(null);
   const bleInspectorRef = useRef({ device: null, server: null, characteristic: null });
   const sessionTimerRef = useRef(null);
+  // Laufzeit-Handles je Gerät (nicht in State, da nicht renderrelevant und um
+  // Stale-Closures im gattserverdisconnected-Listener zu vermeiden):
+  // key -> { bleDevice, server, chars: [], manualDisconnect: bool, cancelReconnect: fn|null }
+  const deviceRuntimeRef = useRef({});
+  // Refs spiegeln den HR-Session-Zustand, damit die im Listener registrierten
+  // Callbacks (recordHrSample) immer den aktuellen Wert sehen.
+  const hrSessionActiveRef = useRef(false);
+  const hrSessionIdRef = useRef(null);
+  const mountedRef = useRef(true);
 
   const [logs, setLogs] = useState([]);
   const [telemetry, setTelemetry] = useState({ depth_m: null, temp_c: null });
   const [heartRate, setHeartRate] = useState(null);
-  const [connectedDevices, setConnectedDevices] = useState(new Set());
+  // key -> 'connecting' | 'connected' | 'reconnecting'. Fehlt der Key: getrennt.
+  const [deviceStatus, setDeviceStatus] = useState({});
   const [cameraActive, setCameraActive] = useState(false);
-  
+
   // HR Session State
   const [hrSessionActive, setHrSessionActive] = useState(false);
   const [hrSessionId, setHrSessionId] = useState(null);
   const [hrSessionStart, setHrSessionStart] = useState(null);
   const [hrSessionElapsed, setHrSessionElapsed] = useState('00:00');
   const [hrSamples, setHrSamples] = useState([]);
+
+  const setStatusFor = (key, status) => {
+    setDeviceStatus((prev) => {
+      if (status === null) {
+        if (!(key in prev)) return prev;
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      }
+      if (prev[key] === status) return prev;
+      return { ...prev, [key]: status };
+    });
+  };
   
   // BLE Inspector State
   const [bleInspectorOpen, setBleInspectorOpen] = useState(false);
@@ -413,6 +444,52 @@ export default function DeviceHub() {
     if (canvasRef.current && !echogramRef.current) {
       echogramRef.current = new EchogramRenderer(canvasRef.current);
     }
+  }, []);
+
+  // HR-Session-Zustand in Refs spiegeln (Stale-Closure-Schutz für Listener).
+  useEffect(() => {
+    hrSessionActiveRef.current = hrSessionActive;
+  }, [hrSessionActive]);
+  useEffect(() => {
+    hrSessionIdRef.current = hrSessionId;
+  }, [hrSessionId]);
+
+  // Vollständiges Aufräumen beim Verlassen der Seite: BLE-Handles trennen,
+  // laufende Reconnects abbrechen und Kamera-Stream stoppen. Sonst bleiben
+  // GATT-Verbindungen und der Kamera-Zugriff im Hintergrund aktiv.
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+
+      Object.values(deviceRuntimeRef.current).forEach((runtime) => {
+        runtime.manualDisconnect = true;
+        if (runtime.cancelReconnect) runtime.cancelReconnect();
+        try {
+          for (const { characteristic, handleValue } of runtime.chars || []) {
+            characteristic.removeEventListener('characteristicvaluechanged', handleValue);
+          }
+          if (runtime.bleDevice?.gatt?.connected) {
+            runtime.bleDevice.gatt.disconnect();
+          }
+        } catch { /* Handle bereits ungültig */ }
+      });
+      deviceRuntimeRef.current = {};
+
+      try {
+        if (bleInspectorRef.current.characteristic) {
+          bleInspectorRef.current.characteristic.stopNotifications().catch(() => {});
+        }
+        if (bleInspectorRef.current.device?.gatt?.connected) {
+          bleInspectorRef.current.device.gatt.disconnect();
+        }
+      } catch { /* Inspector-Handle bereits ungültig */ }
+
+      const stream = videoRef.current?.srcObject;
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+      }
+    };
   }, []);
 
   // HR Session Timer
@@ -500,17 +577,117 @@ export default function DeviceHub() {
   };
 
   const recordHrSample = (bpm) => {
-    if (hrSessionActive) {
+    // Refs statt State: dieser Callback läuft aus einem beim Verbinden
+    // registrierten BLE-Listener und würde sonst veraltete Werte sehen.
+    if (hrSessionActiveRef.current) {
       const sample = {
         ts: Date.now(),
         bpm,
-        session_id: hrSessionId
+        session_id: hrSessionIdRef.current
       };
       setHrSamples(prev => [...prev, sample]);
     }
   };
 
-  // BLE Device Connection
+  // Abonniert alle konfigurierten Notify-Characteristics eines Geräts und gibt
+  // die Characteristic-Handles zurück (für sauberes Stoppen beim Trennen).
+  // Wird sowohl beim Erstverbinden als auch nach jedem Reconnect aufgerufen.
+  const subscribeNotifications = async (server, device) => {
+    const chars = [];
+    for (const notifyConfig of device.notify) {
+      const service = await server.getPrimaryService(notifyConfig.service);
+      const characteristic = await service.getCharacteristic(notifyConfig.char);
+
+      const handleValue = (event) => {
+        const dataView = event.target.value;
+        const parsed = parseBLE(dataView, device.parser);
+
+        addLog(`${device.label}: ${JSON.stringify(parsed)}`, 'success');
+
+        if (device.parser === 'heartRate' && parsed.bpm) {
+          setHeartRate(parsed.bpm);
+          recordHrSample(parsed.bpm);
+        }
+
+        if (device.parser === 'sonarSimple' && echogramRef.current) {
+          const depth_m = parsed.depth_m ?? null;
+          const temp_c = parsed.temp_c ?? null;
+          const intensities = synthesizeIntensities(echogramRef.current.height, depth_m);
+          const telemetryData = echogramRef.current.pushPing({ intensities, depth_m, temp_c });
+          setTelemetry(telemetryData);
+        }
+      };
+
+      characteristic.addEventListener('characteristicvaluechanged', handleValue);
+      await characteristic.startNotifications();
+      chars.push({ characteristic, handleValue });
+    }
+    return chars;
+  };
+
+  // Räumt HR-spezifischen Zustand auf, wenn ein HR-Gerät endgültig getrennt wird.
+  const cleanupHeartRate = (device) => {
+    if (device.parser === 'heartRate') {
+      setHeartRate(null);
+      if (hrSessionActiveRef.current) {
+        stopHrSession();
+      }
+    }
+  };
+
+  // Automatische Wiederverbindung nach unerwartetem Abbruch. Nutzt das bereits
+  // vorhandene Geräte-Handle (kein erneuter requestDevice-Dialog nötig) und
+  // versucht es mit Exponential-Backoff. Bricht ab bei manuellem Trennen/Unmount.
+  const reconnectDevice = async (device) => {
+    const runtime = deviceRuntimeRef.current[device.key];
+    if (!runtime || !runtime.bleDevice) return;
+
+    let cancelled = false;
+    runtime.cancelReconnect = () => { cancelled = true; };
+    const shouldCancel = () => cancelled || runtime.manualDisconnect || !mountedRef.current;
+
+    setStatusFor(device.key, 'reconnecting');
+    addLog(`${device.label}: Verbindung verloren - versuche Wiederverbindung...`, 'warn');
+
+    try {
+      await retryWithBackoff(
+        async (attempt) => {
+          addLog(`${device.label}: Reconnect-Versuch ${attempt}/${RECONNECT_MAX_ATTEMPTS}`, 'info');
+          const server = await withTimeout(
+            runtime.bleDevice.gatt.connect(),
+            CONNECT_TIMEOUT_MS,
+            `Reconnect zu ${device.label}`
+          );
+          runtime.server = server;
+          runtime.chars = await subscribeNotifications(server, device);
+        },
+        {
+          maxAttempts: RECONNECT_MAX_ATTEMPTS,
+          shouldCancel,
+          onRetry: (attempt, delay) => {
+            addLog(`${device.label}: nächster Versuch in ${Math.round(delay / 1000)}s`, 'info');
+          },
+        }
+      );
+
+      if (shouldCancel()) return;
+      setStatusFor(device.key, 'connected');
+      toast.success(`${device.label} wieder verbunden`);
+      addLog(`${device.label} reconnected (BLE)`, 'success');
+    } catch (error) {
+      if (error.message === 'cancelled' || shouldCancel()) {
+        return; // manuell/Unmount abgebrochen - keine Fehlermeldung
+      }
+      setStatusFor(device.key, null);
+      cleanupHeartRate(device);
+      toast.error(`${device.label}: Wiederverbindung fehlgeschlagen`);
+      addLog(`${device.label}: reconnect aufgegeben (${error.message})`, 'error');
+    } finally {
+      runtime.cancelReconnect = null;
+    }
+  };
+
+  // BLE Device Connection (Erstverbindung inkl. Geräteauswahl-Dialog)
   const connectBLEDevice = async (device) => {
     if (!navigator.bluetooth) {
       toast.error('Web Bluetooth wird nicht unterstuetzt');
@@ -518,75 +695,103 @@ export default function DeviceHub() {
       return;
     }
 
+    // Doppel-Klick-/Mehrfach-Verbindungs-Schutz.
+    const currentStatus = deviceStatus[device.key];
+    if (currentStatus === 'connecting' || currentStatus === 'connected' || currentStatus === 'reconnecting') {
+      return;
+    }
+
+    setStatusFor(device.key, 'connecting');
+
     try {
-      const requestOptions = device.acceptAll 
-        ? { acceptAllDevices: true, optionalServices: device.optionalServices || [] }
-        : { filters: [{ namePrefix: device.namePrefix }], optionalServices: device.optionalServices || [] };
+      let runtime = deviceRuntimeRef.current[device.key];
+      let bleDevice = runtime?.bleDevice;
 
-      const bleDevice = await navigator.bluetooth.requestDevice(requestOptions);
+      if (!bleDevice) {
+        const requestOptions = device.acceptAll
+          ? { acceptAllDevices: true, optionalServices: device.optionalServices || [] }
+          : { filters: [{ namePrefix: device.namePrefix }], optionalServices: device.optionalServices || [] };
 
-      bleDevice.addEventListener('gattserverdisconnected', () => {
-        addLog(`${device.label} disconnected`, 'warn');
-        setConnectedDevices(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(device.key);
-          return newSet;
-        });
-        
-        if (device.parser === 'heartRate') {
-          setHeartRate(null);
-          if (hrSessionActive) {
-            stopHrSession();
+        // requestDevice muss innerhalb der Nutzergeste laufen (kein Timeout-Wrap,
+        // da der native Auswahl-Dialog beliebig lange offen bleiben darf).
+        bleDevice = await navigator.bluetooth.requestDevice(requestOptions);
+
+        runtime = { bleDevice, server: null, chars: [], manualDisconnect: false, cancelReconnect: null };
+        deviceRuntimeRef.current[device.key] = runtime;
+
+        // Listener nur einmal je Geräte-Handle registrieren.
+        bleDevice.addEventListener('gattserverdisconnected', () => {
+          const rt = deviceRuntimeRef.current[device.key];
+          if (!rt) return;
+          rt.chars = [];
+          if (rt.manualDisconnect || !mountedRef.current) {
+            return; // gewolltes Trennen - kein Reconnect
           }
-        }
-      });
+          reconnectDevice(device);
+        });
+      }
 
-      const server = await bleDevice.gatt.connect();
+      runtime.manualDisconnect = false;
+
+      const server = await withTimeout(
+        bleDevice.gatt.connect(),
+        CONNECT_TIMEOUT_MS,
+        `Verbindung zu ${device.label}`
+      );
+      runtime.server = server;
 
       if (device.notify && device.notify.length > 0) {
-        for (const notifyConfig of device.notify) {
-          const service = await server.getPrimaryService(notifyConfig.service);
-          const characteristic = await service.getCharacteristic(notifyConfig.char);
-          
-          await characteristic.startNotifications();
-          
-          characteristic.addEventListener('characteristicvaluechanged', (event) => {
-            const dataView = event.target.value;
-            const parsed = parseBLE(dataView, device.parser);
-            
-            addLog(`${device.label}: ${JSON.stringify(parsed)}`, 'success');
-
-            if (device.parser === 'heartRate' && parsed.bpm) {
-              setHeartRate(parsed.bpm);
-              recordHrSample(parsed.bpm);
-            }
-
-            if (device.parser === 'sonarSimple') {
-              const depth_m = parsed.depth_m ?? null;
-              const temp_c = parsed.temp_c ?? null;
-              const intensities = synthesizeIntensities(echogramRef.current.height, depth_m);
-              
-              const telemetryData = echogramRef.current.pushPing({ 
-                intensities, 
-                depth_m, 
-                temp_c 
-              });
-              setTelemetry(telemetryData);
-            }
-          });
-        }
-
-        setConnectedDevices(prev => new Set(prev).add(device.key));
+        runtime.chars = await subscribeNotifications(server, device);
+        setStatusFor(device.key, 'connected');
         toast.success(`${device.label} verbunden`);
         addLog(`${device.label} connected (BLE)`, 'success');
       } else {
+        // Kein Notify-Profil hinterlegt - Verbindung wieder lösen, da hier nichts
+        // gestreamt werden kann; der Nutzer soll den BLE-Inspector verwenden.
+        try { bleDevice.gatt.disconnect(); } catch { /* bereits getrennt */ }
+        runtime.manualDisconnect = true;
+        setStatusFor(device.key, null);
         toast.warning(`${device.label}: Keine UUIDs konfiguriert. Nutze BLE-Inspector.`);
         addLog(`${device.label}: keine UUIDs gesetzt - nutze BLE-Inspector`, 'warn');
       }
     } catch (error) {
-      toast.error(`Verbindung fehlgeschlagen: ${error.message}`);
-      addLog(`BLE connection error: ${error.message}`, 'error');
+      setStatusFor(device.key, null);
+      if (error?.name === 'NotFoundError') {
+        // Nutzer hat den Geräteauswahl-Dialog abgebrochen - keine Fehlermeldung.
+        addLog(`${device.label}: Geräteauswahl abgebrochen`, 'info');
+      } else {
+        toast.error(`Verbindung fehlgeschlagen: ${error.message}`);
+        addLog(`BLE connection error: ${error.message}`, 'error');
+      }
     }
+  };
+
+  // Manuelles Trennen eines Geräts (unterdrückt Auto-Reconnect).
+  const disconnectBLEDevice = (device) => {
+    const runtime = deviceRuntimeRef.current[device.key];
+    if (!runtime) {
+      setStatusFor(device.key, null);
+      return;
+    }
+    runtime.manualDisconnect = true;
+    if (runtime.cancelReconnect) runtime.cancelReconnect();
+
+    try {
+      for (const { characteristic, handleValue } of runtime.chars || []) {
+        characteristic.removeEventListener('characteristicvaluechanged', handleValue);
+      }
+      if (runtime.bleDevice?.gatt?.connected) {
+        runtime.bleDevice.gatt.disconnect();
+      }
+    } catch (error) {
+      addLog(`${device.label}: Fehler beim Trennen (${error.message})`, 'error');
+    }
+
+    runtime.chars = [];
+    setStatusFor(device.key, null);
+    cleanupHeartRate(device);
+    toast.info(`${device.label} getrennt`);
+    addLog(`${device.label} disconnected (manuell)`, 'warn');
   };
 
   // BLE Inspector
@@ -843,7 +1048,10 @@ export default function DeviceHub() {
               <div className="grid grid-cols-1 gap-2 max-h-96 overflow-y-auto">
                 {filteredDevices.map(device => {
                   const Icon = device.icon;
-                  const isConnected = connectedDevices.has(device.key);
+                  const status = deviceStatus[device.key];
+                  const isConnected = status === 'connected';
+                  const isConnecting = status === 'connecting';
+                  const isReconnecting = status === 'reconnecting';
                   const hasConfig = device.notify && device.notify.length > 0;
 
                   return (
@@ -861,12 +1069,43 @@ export default function DeviceHub() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {isConnected ? (
-                          <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
-                            <CheckCircle2 className="w-3 h-3 mr-1" />
-                            Verbunden
-                          </Badge>
-                        ) : (
+                        {isConnected && (
+                          <>
+                            <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                              <CheckCircle2 className="w-3 h-3 mr-1" />
+                              Verbunden
+                            </Badge>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => disconnectBLEDevice(device)}
+                            >
+                              Trennen
+                            </Button>
+                          </>
+                        )}
+                        {isReconnecting && (
+                          <>
+                            <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">
+                              <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                              Reconnect
+                            </Badge>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => disconnectBLEDevice(device)}
+                            >
+                              Abbrechen
+                            </Button>
+                          </>
+                        )}
+                        {isConnecting && (
+                          <Button size="sm" disabled className="bg-cyan-600">
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Verbindet...
+                          </Button>
+                        )}
+                        {!status && (
                           <Button
                             size="sm"
                             onClick={() => connectBLEDevice(device)}
