@@ -482,21 +482,34 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
         if (!isMountedRef.current) return;
 
         const status = err?.status;
-        if (status === 429) {
-          const retryMsg = 'Moment, ich brauche kurz eine Pause. Versuch es gleich nochmal.';
-          setChatError(retryMsg);
-          setMessages((prev) => [...prev, { role: 'assistant', content: retryMsg }]);
-        } else if (status != null) {
-          const serverMsg = 'Da ist gerade etwas schiefgelaufen. Versuch es gleich nochmal.';
-          setChatError(serverMsg);
-          setMessages((prev) => [...prev, { role: 'assistant', content: serverMsg }]);
-        } else {
-          const offlineReply = findOfflineBuddyAnswer(text) || getOfflineBuddyFallback();
-          setMessages((prev) => [...prev, { role: 'assistant', content: offlineReply }]);
-          setIsTalking(true);
-          if (buddyVoiceEnabled) {
-            await speakWithFallback(offlineReply, { voiceEnabled: buddyVoiceEnabled, rate: 1.0 });
+        // Der Server sendet manchmal aussagekräftige Fehlermeldungen als `error`, `reply` oder `message` in der Response
+        const serverErrorMsg = err?.data?.error || err?.data?.reply || err?.data?.message;
+
+        // Priorität: Server-Nachricht > Status-spezifische Nachricht > Offline-Fallback
+        let botMessage = serverErrorMsg;
+        let isOfflineError = false;
+
+        if (!botMessage) {
+          if (status === 429) {
+            botMessage = 'Moment, ich brauche kurz eine Pause. Versuch es gleich nochmal.';
+          } else if (status != null) {
+            botMessage = 'Da ist gerade etwas schiefgelaufen. Versuch es gleich nochmal.';
+          } else {
+            // Reiner Netzwerkfehler (status == null)
+            botMessage = findOfflineBuddyAnswer(text) || getOfflineBuddyFallback();
+            isOfflineError = true;
           }
+        }
+
+        // Nur echte HTTP-Fehler (mit Status) in den roten Alert, nicht Offline-Fallbacks
+        if (status != null && !isOfflineError) {
+          setChatError(botMessage);
+        }
+
+        setMessages((prev) => [...prev, { role: 'assistant', content: botMessage }]);
+
+        if (botMessage && status == null && buddyVoiceEnabled) {
+          await speakWithFallback(botMessage, { voiceEnabled: buddyVoiceEnabled, rate: 1.0 });
         }
       } finally {
         isLoadingRef.current = false;

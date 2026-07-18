@@ -117,12 +117,26 @@ function getGroqKey() {
 
 router.get('/health', (req, res) => {
   const key = getGroqKey();
+  const keyInfo = key
+    ? `✓ Groq API Key gesetzt (${key.slice(0, 10)}...)`
+    : '✗ Groq API Key FEHLT - KI-Chat funktioniert nicht!';
+
   res.json({
-    ok: true,
-    api_key_set: !!key,
-    provider: 'Groq (Llama)',
-    node_env: process.env.NODE_ENV,
-    timestamp: new Date().toISOString()
+    ok: !!key,
+    status: key ? 'healthy' : 'degraded',
+    ai_service: {
+      provider: 'Groq (Llama)',
+      api_key_configured: !!key,
+      api_key_info: keyInfo,
+      text_model: 'llama-3.3-70b-versatile',
+      vision_model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+    },
+    server: {
+      node_env: process.env.NODE_ENV,
+      timestamp: new Date().toISOString(),
+      uptime_seconds: process.uptime?.() || 0,
+    },
+    recommendation: key ? 'Alles OK' : 'Admin: Setze GROQ_API_KEY in Vercel-Umgebungsvariablen'
   });
 });
 
@@ -271,8 +285,29 @@ Regeln: Aktions-Block nur wenn Nutzer wirklich eine Aktion will. Zuerst kurze Be
     // .includes() würde dann selbst werfen (verschluckter Fehler → 500 ohne Log).
     const msg = e && typeof e.message === 'string' ? e.message : String(e);
     console.error('[AI Chat Error]', msg, e?.stack);
-    const details = msg.includes('GROQ_API_KEY') ? 'API-Schlüssel nicht konfiguriert' : 'KI-Service Fehler';
-    return res.status(500).json({ error: details, details });
+
+    // User-sichtbare Fehlermeldung: wird als Bot-Antwort angezeigt (für bessere UX)
+    let userMessage = 'Entschuldige, ich habe gerade Verbindungsprobleme. Versuch es gleich nochmal!';
+    let httpStatus = 500;
+
+    if (msg.includes('GROQ_API_KEY')) {
+      userMessage = 'Meine KI-Services sind gerade nicht konfiguriert (fehlender API-Schlüssel). Der Admin muss das fixen.';
+      httpStatus = 503;
+      console.warn('[AI] GROQ_API_KEY nicht gesetzt');
+    } else if (msg.includes('429') || msg.includes('rate limit') || msg.includes('Rate limit')) {
+      userMessage = 'Ich bin gerade überlastet. Versuch es in ein paar Sekunden nochmal!';
+      httpStatus = 429;
+    } else if (msg.includes('timeout') || msg.includes('Timeout')) {
+      userMessage = 'Die Anfrage hat zu lange gedauert. Versuch es nochmal!';
+      httpStatus = 504;
+    }
+
+    return res.status(httpStatus).json({
+      ok: false,
+      error: userMessage,
+      reply: userMessage,
+      message: userMessage
+    });
   }
 });
 

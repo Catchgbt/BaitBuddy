@@ -89,10 +89,23 @@ export async function invokeLLM({ prompt, imageBase64 = null }) {
 
     if (!res.ok) {
       const body = await res.text().catch(() => '');
-      const err = new Error(`Groq API Fehler ${res.status}: ${body.slice(0, 300)}`);
+      let errorMsg = body.slice(0, 300);
+
+      // Bessere Fehlerdiagnose für häufige Probleme
+      if (res.status === 401 || res.status === 403) {
+        errorMsg = `Groq-Auth-Fehler ${res.status}: Ungültiger oder fehlender API-Key. Bitte GROQ_API_KEY überprüfen.`;
+        console.error('[LLM]', errorMsg);
+      } else if (res.status === 429) {
+        errorMsg = `Groq Rate-Limit (429): Zu viele Anfragen. Versuch später erneut.`;
+      } else {
+        errorMsg = `Groq API Fehler ${res.status}: ${errorMsg}`;
+      }
+
+      const err = new Error(errorMsg);
       // Nur transiente Status erneut versuchen; 4xx (außer 429) sofort werfen.
       if (RETRYABLE_STATUS.has(res.status) && attempt < MAX_LLM_RETRIES) {
         lastErr = err;
+        console.warn(`[LLM] Versuch ${attempt + 1}/${MAX_LLM_RETRIES} nach ${res.status}...`);
         await sleep(backoffDelay(attempt));
         continue;
       }
