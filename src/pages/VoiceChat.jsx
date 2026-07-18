@@ -59,7 +59,6 @@ export default function VoiceChat() {
     try { recognitionRef.current?.stop(); } catch { /* noop */ }
     recognitionRef.current = null;
     cancelElevenLabs();
-    try { window.speechSynthesis?.cancel(); } catch { /* noop */ }
   }, [cleanup]);
 
   const handleEvent = useCallback((evt) => {
@@ -276,7 +275,6 @@ export default function VoiceChat() {
     fallbackActiveRef.current = false;
     stopFallbackRecognition();
     cancelElevenLabs();
-    try { window.speechSynthesis?.cancel(); } catch { /* noop */ }
     cleanup();
     setFallbackMode(false);
     setPhase(PHASE.IDLE);

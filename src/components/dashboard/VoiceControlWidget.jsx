@@ -118,7 +118,6 @@ export default function VoiceControlWidget() {
     isSpeakingRef.current = false;
     try { recognitionRef.current?.stop(); } catch {}
     cancelElevenLabs();
-    if (window.speechSynthesis) window.speechSynthesis.cancel();
     setVoiceState('off');
     setTranscript('');
     toast.info('Voice Control beendet');

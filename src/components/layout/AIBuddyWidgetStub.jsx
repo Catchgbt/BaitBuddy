@@ -4,7 +4,6 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { BUDDY_AVATAR_SIZE, BUDDY_TIMEOUTS, BUDDY_STORAGE_KEYS } from '@/lib/buddyStorageKeys';
 import { getQuestionForPage, getPageNameFromPathname } from '@/lib/buddyTips';
 import { buildGreeting, getVariedPageBubble, shouldGreet, markGreeted } from '@/lib/buddyGreetings';
-import { speakWithBrowserTTS } from '@/components/utils/browserTTS';
 import { speakWithFallback } from '@/components/utils/elevenLabsTTS';
 import { runWhenAudioReady } from '@/lib/audioUnlock';
 import { useAuth } from '@/lib/AuthContext';
@@ -81,20 +80,12 @@ export default function AIBuddyWidgetStub() {
   // Spricht einen Text — aber erst, wenn Audio erlaubt ist. Beim App-Start hat
   // der Nutzer die Seite noch nicht berührt; die Autoplay-Policy blockiert dann
   // jede Wiedergabe. runWhenAudioReady stellt die Ausgabe zurück, bis der Nutzer
-  // das erste Mal tippt, und spielt sie dann nach. Begrüßungen nutzen die
-  // ElevenLabs-Stimme (Fallback Browser-TTS), Seiten-Fragen den leichten
-  // Browser-TTS.
-  const speakBubble = useCallback((text, { greeting }) => {
+  // das erste Mal tippt, und spielt sie dann nach. Gesprochen wird ausschließlich
+  // die natürliche ElevenLabs-Stimme; bei Fehlern bleibt die Blase stumm.
+  const speakBubble = useCallback((text) => {
     if (!text || !voiceEnabled()) return;
     runWhenAudioReady(() => {
-      const speakPromise = greeting
-        ? speakWithFallback(text, { voiceEnabled: true, lang: 'de-DE', rate: 1.0 })
-        : speakWithBrowserTTS(text, { lang: 'de-DE', rate: 1.0 });
-      speakPromise?.catch?.(() => {
-        speakWithBrowserTTS(text, { lang: 'de-DE', rate: 1.0 }).catch(() => {
-          /* TTS ist optional */
-        });
-      });
+      speakWithFallback(text, { voiceEnabled: true, rate: 1.0 });
     });
   }, [voiceEnabled]);
 
@@ -138,7 +129,7 @@ export default function AIBuddyWidgetStub() {
 
     setBubbleText(text);
     setShowBubble(true);
-    speakBubble(text, { greeting });
+    speakBubble(text);
 
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     hideTimerRef.current = setTimeout(() => {

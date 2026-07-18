@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { X, Mic, Camera, Waves, ChevronRight, ChevronLeft, Zap, Loader2 } from 'lucide-react';
+import { X, Mic, Camera, Waves, ChevronRight, ChevronLeft, Zap, Loader2, Cable } from 'lucide-react';
 import { toast } from 'sonner';
-import { speakWithElevenLabs, cancelElevenLabs } from '@/components/utils/elevenLabsTTS';
-import { speakWithBrowserTTS, cancelBrowserTTS } from '@/components/utils/browserTTS';
+import { speakWithFallback, cancelElevenLabs } from '@/components/utils/elevenLabsTTS';
 import { functions } from '@/api/frontendClient';
 
 // Tabs, die ein Live-Kamerabild brauchen. Der Kamera-Stream wird nur solange
@@ -503,16 +502,9 @@ const VoiceOverlay = ({ isOpen, onClose, currentPageName }) => {
 
       setTimeout(() => {
         if (!isMountedRef.current) return;
-        speakWithElevenLabs(greeting, {
-          onEnd: afterSpeech,
-          onError: afterSpeech,
-        }).catch(() => {
-          speakWithBrowserTTS(greeting, {
-            lang: 'de-DE',
-            onEnd: afterSpeech,
-            onError: afterSpeech,
-          });
-        });
+        // Nur die natürliche ElevenLabs-Stimme; bei Fehlern bleibt es still
+        // und der Orb geht zurück in den Ruhezustand.
+        speakWithFallback(greeting, { voiceEnabled: true, rate: 1.0 }).finally(afterSpeech);
       }, 500);
     }
   }, [isOpen, activeTab, hasInitialGreeting, chatHistory.length]);
@@ -568,19 +560,10 @@ const VoiceOverlay = ({ isOpen, onClose, currentPageName }) => {
         setOrbState('idle');
         setIsListening(false);
       };
-      try {
-        await speakWithElevenLabs(aiResponse, {
-          onEnd: afterSpeech,
-          onError: afterSpeech,
-        });
-      } catch (ttsError) {
-        console.warn('[VoiceOverlay] ElevenLabs fehlgeschlagen, Browser-TTS:', ttsError?.message);
-        await speakWithBrowserTTS(aiResponse, {
-          lang: 'de-DE',
-          onEnd: afterSpeech,
-          onError: afterSpeech,
-        });
-      }
+      // speakWithFallback löst auf, wenn die Wiedergabe beendet ist, und bleibt
+      // bei Fehlern still (kein Roboterstimmen-Fallback mehr).
+      await speakWithFallback(aiResponse, { voiceEnabled: true, rate: 1.0 });
+      afterSpeech();
     } catch (error) {
       console.error('Chat error:', error);
       if (!isMountedRef.current) return;
@@ -635,10 +618,21 @@ const VoiceOverlay = ({ isOpen, onClose, currentPageName }) => {
 
     recognition.onend = () => {
       if (recognitionRef.current === recognition) recognitionRef.current = null;
+      // Endet die Erkennung ohne finales Ergebnis (Stille, Abbruch), darf der
+      // Zustand nicht auf „Hört zu" hängen bleiben.
+      setIsListening(false);
+      setOrbState((prev) => (prev === 'listening' ? 'idle' : prev));
     };
 
-    recognition.start();
-    recognitionRef.current = recognition;
+    try {
+      recognition.start();
+      recognitionRef.current = recognition;
+    } catch (e) {
+      // start() wirft z. B. bei bereits laufender Erkennung (InvalidStateError).
+      console.warn('[VoiceOverlay] Spracherkennung konnte nicht starten:', e?.message);
+      setIsListening(false);
+      setOrbState('idle');
+    }
   };
 
   const handleAnalyze = useCallback(() => {
@@ -658,7 +652,9 @@ const VoiceOverlay = ({ isOpen, onClose, currentPageName }) => {
     { id: 'bite', label: 'Biss', icon: Zap },
     { id: 'camera', label: 'Kamera', icon: Camera },
     { id: 'ar', label: 'AR', icon: Waves },
-    { id: 'knot', label: 'Knoten', icon: null },
+    // Ohne Icon wäre der Tab-Button unsichtbar (die Tab-Leiste rendert nur
+    // das Icon) — der Knoten-Bereich wäre gar nicht erreichbar.
+    { id: 'knot', label: 'Knoten', icon: Cable },
   ];
 
   // Reset greeting flag wenn Overlay geschlossen wird + Ressourcen freigeben.
@@ -670,7 +666,6 @@ const VoiceOverlay = ({ isOpen, onClose, currentPageName }) => {
       setIsListening(false);
       setOrbState('idle');
       cancelElevenLabs();
-      cancelBrowserTTS();
     }
   }, [isOpen, stopRecognition, stopCamera]);
 
@@ -682,7 +677,6 @@ const VoiceOverlay = ({ isOpen, onClose, currentPageName }) => {
       stopRecognition();
       stopCamera();
       cancelElevenLabs();
-      cancelBrowserTTS();
     };
   }, [stopRecognition, stopCamera]);
 

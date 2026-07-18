@@ -9,7 +9,7 @@ import { useEventActivityTracking } from "@/hooks/useEventActivityTracking";
 import WeatherAlertsSettings from "@/components/settings/WeatherAlertsSettings";
 import WeatherWarnings from "@/components/weather/WeatherWarnings";
 import { toast } from "sonner";
-import { backendTextToSpeech } from "@/functions/backendTextToSpeech";
+import { speakWithFallback, cancelElevenLabs } from "@/components/utils/elevenLabsTTS";
 import { MapPin, AlertCircle, Thermometer, Wind, Droplets, Eye, Gauge, Cloud, Loader2 } from "lucide-react";
 
 import PremiumGuard from "@/components/premium/PremiumGuard";
@@ -147,54 +147,21 @@ Sei konkret, praktisch und detailliert!`;
         .replace(/\s+/g, ' ')
         .trim();
 
-      // backendTextToSpeech liefert das geparste /ai/tts-JSON
-      // { audioBase64, contentType } — kein axios-Response mit .headers/.data.
-      // Liegt ElevenLabs-Audio vor, wird es abgespielt; sonst (oder bei Fehler,
-      // z. B. fehlender ELEVENLABS_API_KEY) Fallback auf die Browser-Sprachausgabe.
-      let audioBase64 = null;
-      try {
-        const response = await backendTextToSpeech({ text: cleanText });
-        audioBase64 = response?.audioBase64 || null;
-      } catch {
-        audioBase64 = null;
-      }
-
-      if (audioBase64) {
-        const bytes = Uint8Array.from(atob(audioBase64), c => c.charCodeAt(0));
-        const blob = new Blob([bytes], { type: 'audio/mpeg' });
-        const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
-
-        audio.onended = () => {
-          URL.revokeObjectURL(url);
-          setIsReadingAloud(false);
-        };
-        audio.onerror = () => {
-          URL.revokeObjectURL(url);
-          setIsReadingAloud(false);
-          toast.error("Abspielen fehlgeschlagen");
-        };
-
-        await audio.play();
-      } else {
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.lang = 'de-DE';
-        utterance.rate = 1.0;
-        utterance.pitch = 1;
-        utterance.volume = 0.8;
-        utterance.onend = () => setIsReadingAloud(false);
-        utterance.onerror = () => {
-          setIsReadingAloud(false);
-          toast.error("Vorlesen fehlgeschlagen");
-        };
-        window.speechSynthesis.speak(utterance);
-      }
-
-    } catch (error) {
+      // Vorlesen ausschließlich mit der natürlichen ElevenLabs-Stimme
+      // (zentrale Utility inkl. gewählter Stimme aus den Einstellungen);
+      // bei Fehlern bleibt es still — kein Browser-Roboterstimmen-Fallback.
+      await speakWithFallback(cleanText, { voiceEnabled: true, rate: 1.0 });
+      setIsReadingAloud(false);
+    } catch {
       toast.error("Vorlesen fehlgeschlagen");
       setIsReadingAloud(false);
     }
   };
+
+  // Beim Verlassen der Seite eine laufende Sprachausgabe stoppen.
+  useEffect(() => {
+    return () => cancelElevenLabs();
+  }, []);
 
   const getWeatherDescription = (code) => {
     if ([0, 1].includes(code)) return "Sonnig & klar";
