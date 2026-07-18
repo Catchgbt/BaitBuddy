@@ -8,6 +8,8 @@ import {
   PRACTICAL_GUIDE_RULES_VOICE,
   CONVERSATION_STYLE,
   APP_FEATURE_KNOWLEDGE,
+  FISHING_FAQ,
+  FISHING_FAQ_CONTEXT,
 } from '../lib/buddyKnowledge.js';
 import { isInClosedSeason } from '../lib/closedSeason.js';
 import { isAllowedFetchUrl } from '../lib/urlSafety.js';
@@ -241,6 +243,8 @@ ${CONVERSATION_STYLE}
 ${APP_FEATURE_KNOWLEDGE}
 
 ${FISHING_KNOWLEDGE}
+
+${FISHING_FAQ_CONTEXT}
 
 DU KANNST DIE APP STEUERN. Wenn der Nutzer dich darum bittet, etwas in der App zu tun, hänge ans ENDE deiner Antwort einen Aktions-Block an. Format exakt so (nur EIN Block pro Antwort):
 <<ACTION>>{"type":"...","params":{...}}<<END>>
@@ -691,7 +695,8 @@ router.post('/ai/realtime-session', requireAuth, async (req, res) => {
       // ohne diesen Hinweis würde der Voice-Buddy fälschlich behaupten, er habe
       // Einträge angelegt oder Seiten geöffnet.
       + `\nWichtig für dich im Sprachmodus: Du kannst hier selbst KEINE App-Aktionen ausführen (kein Eintragen, kein Seiten-Öffnen). Erkläre stattdessen, wo der Nutzer die Funktion findet oder dass er sie dem Text-Chat-Buddy per Zuruf sagen kann.`
-      + `\n\n${FISHING_KNOWLEDGE}` + ctx;
+      + `\n\n${FISHING_KNOWLEDGE}`
+      + `\n\n${FISHING_FAQ_CONTEXT}` + ctx;
 
     // GA-API: der Beta-Endpunkt /v1/realtime/sessions wurde von OpenAI entfernt
     // (Antwort war "Invalid URL"). Ephemeral-Tokens kommen jetzt von
