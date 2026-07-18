@@ -34,6 +34,7 @@ export default function Sidebar({ isOpen, setIsOpen, currentPageName, user, load
     { name: "KI Voice Control", path: "VoiceControl", key: "nav.ai_voice" },
     { name: "Satelliten-Analyse", path: "WaterAnalysis", key: "nav.water_analysis" },
     { name: "KI-Köder-Mischer", path: "BaitMixer", key: "nav.bait_mixer" },
+    { name: "3D-Köderführung", path: "Koeder3D", key: "nav.lure3d" },
   ];
 
   const moreItems = [

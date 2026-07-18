@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 import { integrations, events } from "@/api/frontendClient";
 import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
@@ -19,7 +21,9 @@ import {
   Heart,
   Zap,
   BookOpen,
-  Download
+  Download,
+  Rotate3d,
+  ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
 import { useHaptic } from "@/components/utils/HapticFeedback";
@@ -412,6 +416,21 @@ Exportiert: ${exportData.exportDate}
               48 vordefinierte Premium-Rezepte • Favoriten • Export • Vollständig optimiert
             </p>
           </div>
+
+          {/* Einstieg in die 3D-Köderanimation */}
+          <Link
+            to={createPageUrl("Koeder3D")}
+            className="flex items-center gap-3 rounded-xl border border-cyan-800/60 bg-cyan-950/30 p-4 transition-colors hover:border-cyan-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+          >
+            <Rotate3d className="h-8 w-8 shrink-0 text-cyan-400" aria-hidden="true" />
+            <span className="flex-1 text-left">
+              <span className="block font-semibold text-white">Köderführung in 3D ansehen</span>
+              <span className="block text-sm text-gray-400">
+                Wobbler, Gummifisch, Spinner, Blinker und Oberflächenköder mit echtem Laufverhalten
+              </span>
+            </span>
+            <ChevronRight className="h-5 w-5 shrink-0 text-gray-500" aria-hidden="true" />
+          </Link>
 
           {/* Tabs */}
           <div className="flex gap-2 overflow-x-auto pb-2 border-b border-gray-800">

@@ -98,6 +98,22 @@ Der **KI-Buddy** ist zentrales Feature mit oberster Priorität. Muss reibungslos
 
 ---
 
+## 🎣 3D-Köderanimation (Seite `Koeder3D`)
+
+Zeigt Kunstköder (Wobbler, Gummifisch am Jigkopf, Spinner, Blinker, Popper/Stickbait) als 3D-Animation mit echtem Laufverhalten (Jiggen, Faulenzen, Stop-and-Go, Twitchen, Walk the Dog).
+
+- **Architektur**: `src/pages/Koeder3D.jsx` (Route manuell in `App.jsx` registriert, CatchStats-Muster) + Modul `src/components/lures3d/`:
+  - `LureScene.jsx` — einzige React↔three.js-Brücke (Renderer, PMREM-Environment, RAF-Loop, Dispose, `webglcontextlost`-Rebuild, RAF-Pause bei `visibilitychange`)
+  - `lureModels.js` — **prozedurale** Modelle aus three.js-Grundgeometrien + Canvas-Texturen. Bewusste Entscheidung: **keine GLB/GLTF-Assets** (APK-Gewicht, Offline-Fähigkeit, Lizenzfreiheit); Realismus über `MeshPhysicalMaterial` (Clearcoat/Metalness) + `RoomEnvironment`-Lighting + ACES-Tone-Mapping
+  - `lureAnimator.js` — parametrisches Bewegungsmodell, reine Mathematik ohne three.js-Import (unit-testbar ohne WebGL)
+  - `underwaterEnvironment.js` — Wasseroberfläche, Grund, Schwebeteilchen; „Laufband"-Modell (Köder bleibt am Ursprung, Umgebung scrollt)
+- **Daten**: `src/data/lureGuide.data.js` — Technik-Texte (fachlich konsistent zu `buddyKnowledge.js`, bewusst nicht von dort importiert) + Animations-Parameter pro Führungsstil
+- **Geteilt**: `src/lib/three/SimpleOrbitControls.js` (aus `ARWater3D.jsx` extrahiert, `minDistance` konfigurierbar) — bei Änderungen beide Nutzer (AR-Seite + Koeder3D) testen
+- **Performance-Regeln**: pixelRatio-Cap (2, bei `deviceMemory <= 2` → 1.5), 256px-Canvas-Texturen, keine Shadow-Maps (Kontaktschatten als Gradient-Plane), kein `transmission`-Material, vollständiges Dispose bei Köderwechsel und Unmount
+- **Buddy-Anbindung**: Eintrag in `APP_FEATURE_KNOWLEDGE`; Voice-Navigation über `voicePages.js` (Aliase u. a. `köderanimation`, `laufverhalten`)
+
+---
+
 ## 📱 Device-Features (Pflicht)
 
 | Feature | Anforderung |
