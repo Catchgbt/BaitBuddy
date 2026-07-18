@@ -7,12 +7,6 @@ import { fetchWithTimeout } from './fetchWithTimeout.js';
 // 4. Google Cloud Text-to-Speech
 // 5. Claude API (stabiler Fallback)
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
-const GOOGLE_CLOUD_API_KEY = process.env.GOOGLE_CLOUD_API_KEY;
-const CLAUDE_API_KEY = process.env.ANTHROPIC_API_KEY;
-
 export async function getTTSAudio(text, voiceId = 'default') {
   const providers = [
     { name: 'groq', fn: () => groqTTS(text) },
@@ -43,23 +37,28 @@ export async function getTTSAudio(text, voiceId = 'default') {
   throw new Error('Kein TTS-Provider verfügbar');
 }
 
+// Lies API-Keys dynamisch aus process.env (nicht bei Import-Zeit)
+// damit Tests diese manipulieren können
 function isProviderAvailable(name) {
   switch (name) {
-    case 'groq': return !!GROQ_API_KEY;
-    case 'openai': return !!OPENAI_API_KEY;
-    case 'elevenlabs': return !!ELEVENLABS_API_KEY;
-    case 'google': return !!GOOGLE_CLOUD_API_KEY;
-    case 'claude': return !!CLAUDE_API_KEY;
+    case 'groq': return !!process.env.GROQ_API_KEY;
+    case 'openai': return !!process.env.OPENAI_API_KEY;
+    case 'elevenlabs': return !!process.env.ELEVENLABS_API_KEY;
+    case 'google': return !!process.env.GOOGLE_CLOUD_API_KEY;
+    case 'claude': return !!process.env.ANTHROPIC_API_KEY;
     default: return false;
   }
 }
 
 async function groqTTS(text) {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) throw new Error('GROQ_API_KEY not configured');
+
   // Groq TTS über Groq API (neue Voice-Funktion)
   const response = await fetchWithTimeout('https://api.groq.com/tts/v1/speech', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${GROQ_API_KEY}`,
+      'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -81,11 +80,14 @@ async function groqTTS(text) {
 }
 
 async function openaiTTS(text) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error('OPENAI_API_KEY not configured');
+
   // OpenAI TTS API
   const response = await fetchWithTimeout('https://api.openai.com/v1/audio/speech', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -107,15 +109,22 @@ async function openaiTTS(text) {
 }
 
 async function elevenlabsTTS(text, voiceId) {
-  // ElevenLabs mit Fallback-Stimmen
-  const voiceIdToUse = voiceId || process.env.ELEVENLABS_VOICE_ID || 'onwK4e9ZLuTAKqWW03F9';
+  const apiKey = process.env.ELEVENLABS_API_KEY;
+  if (!apiKey) throw new Error('ELEVENLABS_API_KEY not configured');
 
-  const response = await fetchWithTimeout(
-    `https://api.elevenlabs.io/v1/text-to-speech/${voiceIdToUse}`,
+  // Default Premade-Stimmen (kostenlos im Free-Plan)
+  const DEFAULT_VOICE_ID = 'onwK4e9ZLuTAKqWW03F9'; // Daniel (männlich)
+  const FEMALE_VOICE_ID = 'XrExE9yKIg1WjnnlVkGX'; // Matilda (weiblich, Ultimate-Feature)
+
+  // Wähle die Stimme aus; default auf Premade-Voice für Free-Plan-Kompatibilität
+  let voiceIdToUse = voiceId || process.env.ELEVENLABS_VOICE_ID || DEFAULT_VOICE_ID;
+
+  const callElevenLabs = async (vid) => fetchWithTimeout(
+    `https://api.elevenlabs.io/v1/text-to-speech/${vid}`,
     {
       method: 'POST',
       headers: {
-        'xi-api-key': ELEVENLABS_API_KEY,
+        'xi-api-key': apiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -132,6 +141,15 @@ async function elevenlabsTTS(text, voiceId) {
     }
   );
 
+  let response = await callElevenLabs(voiceIdToUse);
+
+  // Fallback: Library-Voices sind im Free-Plan per API gesperrt (402/403).
+  // Retry mit Premade-Voice statt komplett zu scheitern.
+  if (!response.ok && (response.status === 402 || response.status === 403) && voiceIdToUse !== DEFAULT_VOICE_ID) {
+    console.warn(`[ElevenLabs] Voice ${voiceIdToUse} rejected (${response.status}) — Fallback auf Default`);
+    response = await callElevenLabs(DEFAULT_VOICE_ID);
+  }
+
   if (!response.ok) {
     throw new Error(`ElevenLabs error: ${response.status}`);
   }
@@ -142,9 +160,12 @@ async function elevenlabsTTS(text, voiceId) {
 }
 
 async function googleCloudTTS(text) {
+  const apiKey = process.env.GOOGLE_CLOUD_API_KEY;
+  if (!apiKey) throw new Error('GOOGLE_CLOUD_API_KEY not configured');
+
   // Google Cloud Text-to-Speech
   const response = await fetchWithTimeout(
-    `https://texttospeech.googleapis.com/v1/text:synthesize?key=${GOOGLE_CLOUD_API_KEY}`,
+    `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`,
     {
       method: 'POST',
       headers: {

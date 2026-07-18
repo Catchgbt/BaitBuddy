@@ -178,11 +178,23 @@ describe('POST /api/ai/analyze-catch (SSRF-Schutz)', () => {
 });
 
 describe('POST /api/ai/tts', () => {
-  const origKey = process.env.ELEVENLABS_API_KEY;
+  const origElevenLabsKey = process.env.ELEVENLABS_API_KEY;
+  const origGroqKey = process.env.GROQ_API_KEY;
+  const origOpenAiKey = process.env.OPENAI_API_KEY;
+
+  beforeEach(() => {
+    // Testet nur ElevenLabs — andere Provider deaktivieren, um Tests einfach zu halten
+    delete process.env.GROQ_API_KEY;
+    delete process.env.OPENAI_API_KEY;
+  });
 
   afterEach(() => {
-    if (origKey === undefined) delete process.env.ELEVENLABS_API_KEY;
-    else process.env.ELEVENLABS_API_KEY = origKey;
+    if (origElevenLabsKey === undefined) delete process.env.ELEVENLABS_API_KEY;
+    else process.env.ELEVENLABS_API_KEY = origElevenLabsKey;
+    if (origGroqKey === undefined) delete process.env.GROQ_API_KEY;
+    else process.env.GROQ_API_KEY = origGroqKey;
+    if (origOpenAiKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = origOpenAiKey;
     vi.unstubAllGlobals();
   });
 
@@ -194,13 +206,14 @@ describe('POST /api/ai/tts', () => {
     expect(res.status).toBe(400);
   });
 
-  it('gibt 501 zurück, wenn kein ElevenLabs-Key konfiguriert ist', async () => {
+  it('gibt 502 zurück, wenn kein TTS-Provider konfiguriert ist', async () => {
     delete process.env.ELEVENLABS_API_KEY;
+    // Alle Provider sind in beforeEach deaktiviert
     const res = await request(app)
       .post('/api/ai/tts')
       .set('Authorization', 'Bearer tok')
       .send({ text: 'Hallo' });
-    expect(res.status).toBe(501);
+    expect(res.status).toBe(502);
   });
 
   it('gibt 502 zurück, wenn der ElevenLabs-Upstream fehlschlägt', async () => {
