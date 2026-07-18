@@ -37,9 +37,10 @@ export function cancelElevenLabs() {
  *
  * @param {string} text
  * @param {{ onEnd?: () => void, onError?: (e:any) => void }} [callbacks]
+ * @param {{ rate?: number }} [options] rate = Wiedergabegeschwindigkeit (0.5–2.0)
  * @returns {Promise<HTMLAudioElement>}
  */
-export async function speakWithElevenLabs(text, callbacks = {}) {
+export async function speakWithElevenLabs(text, callbacks = {}, options = {}) {
   if (!text || typeof text !== "string" || text.trim().length === 0) {
     throw new Error("Kein Text für TTS");
   }
@@ -72,6 +73,14 @@ export async function speakWithElevenLabs(text, callbacks = {}) {
 
   const audio = new Audio(url);
   currentAudio = audio;
+
+  // Die in den Audio-Einstellungen gewählte Sprechgeschwindigkeit gilt auch
+  // für die ElevenLabs-Wiedergabe — vorher wirkte sie nur auf die Browser-
+  // TTS-Fallback-Stimme, wodurch sich beide Pfade unterschiedlich anhörten.
+  const rate = Number(options.rate);
+  if (Number.isFinite(rate) && rate >= 0.5 && rate <= 2.0 && rate !== 1.0) {
+    audio.playbackRate = rate;
+  }
 
   audio.onended = () => {
     if (currentUrl === url) {
@@ -163,7 +172,7 @@ export async function speakWithFallback(text, options = {}) {
       onError: () => {
         throw new Error('ElevenLabs fallback');
       },
-    });
+    }, { rate });
     return new Promise((resolve) => {
       // speakWithElevenLabs setzt bereits onended/onerror-Handler, die die
       // Blob-URL via URL.revokeObjectURL freigeben. Diese Handler NICHT

@@ -26,7 +26,7 @@ const VOICE_SAMPLE_TEXT = 'Hallo, ich bin dein KI-Buddy. Petri Heil und ab ans W
 
 export default function VoiceSettings() {
   const navigate = useNavigate();
-  const { planLevel } = usePlan();
+  const { planLevel, loading: planLoading } = usePlan();
   const hasUltimate = planLevel >= getPlanLevel('elite');
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [speechSpeed, setSpeechSpeed] = useState(1.0);
@@ -36,16 +36,22 @@ export default function VoiceSettings() {
 
   // Fällt der Plan weg (z.B. Ultimate abgelaufen), Auswahl auf Standard
   // zurücksetzen — das Backend würde ohnehin auf die Standardstimme wechseln,
-  // die Anzeige soll dann nicht Gegenteiliges behaupten.
+  // die Anzeige soll dann nicht Gegenteiliges behaupten. WICHTIG: Solange der
+  // Plan noch lädt, ist planLevel vorübergehend 'free' — in dieser Phase darf
+  // die gespeicherte weibliche Stimme eines Ultimate-Nutzers NICHT gelöscht
+  // werden, sonst verliert er seine Auswahl bei jedem Öffnen der Seite.
   useEffect(() => {
+    if (planLoading) return;
     if (!hasUltimate && selectedVoice === 'female') {
       setSelectedVoice('male');
       setPreferredTtsVoice('male');
     }
-  }, [hasUltimate, selectedVoice]);
+  }, [planLoading, hasUltimate, selectedVoice]);
 
+  // Während der Plan lädt, nicht sperren — das verbindliche Gate sitzt
+  // serverseitig; nach dem Laden korrigiert der Effekt oben die Auswahl.
   const selectVoice = (voice) => {
-    if (voice.requiresUltimate && !hasUltimate) {
+    if (voice.requiresUltimate && !hasUltimate && !planLoading) {
       toast.error('Die weibliche Stimme gibt es nur mit dem Ultimate-Plan.');
       return;
     }
@@ -167,7 +173,7 @@ export default function VoiceSettings() {
           <Label className="text-gray-300">KI-Buddy-Stimme</Label>
           <div className="space-y-2" role="radiogroup" aria-label="KI-Buddy-Stimme auswählen">
             {VOICES.map((voice) => {
-              const locked = voice.requiresUltimate && !hasUltimate;
+              const locked = voice.requiresUltimate && !hasUltimate && !planLoading;
               const active = selectedVoice === voice.id;
               return (
                 <button

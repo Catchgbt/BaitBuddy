@@ -110,8 +110,17 @@ router.get('/auth/me', requireAuth, (req, res) => {
 // Aktualisiert die User-Metadaten (Credits, Profil, Profilbild, Theme, Referral …).
 // Wird vom Frontend über auth.updateMe / auth.updateMyUserData genutzt. Die neuen
 // Werte werden mit den bestehenden Metadaten gemerged, statt sie zu überschreiben.
-// Whitelist: nur diese Felder dürfen vom Frontend gesetzt werden. Premium-Felder sind geschützt!
-const METADATA_WHITELIST = ['full_name', 'profile_image_url', 'bio', 'theme', 'referral_code', 'avatar_url', 'profile_complete'];
+// Whitelist: nur diese Felder dürfen vom Frontend gesetzt werden. Premium-/
+// Guthaben-Felder (premium_plan_id, premium_expires_at, credits, …) sind
+// geschützt und werden ausschließlich serverseitig gesetzt. 'settings' trägt
+// die App-Einstellungen (Theme, Sprache, Audio, Ticker …) — ohne dieses Feld
+// gingen alle Einstellungs-Speicherungen still verloren und jeder Browser
+// zeigte seinen eigenen lokalen Stand.
+const METADATA_WHITELIST = [
+  'full_name', 'nickname', 'profile_image_url', 'profile_picture_url', 'bio',
+  'theme', 'settings', 'referral_code', 'avatar_url', 'profile_complete',
+  'first_open_at', 'feature_usage', 'feature_ratings', 'quiz_points', 'quiz_runs',
+];
 router.patch('/auth/me', requireAuth, async (req, res) => {
   const current = req.user.user_metadata || {};
   const sanitized = {};
@@ -123,6 +132,13 @@ router.patch('/auth/me', requireAuth, async (req, res) => {
   }
 
   const merged = { ...current, ...sanitized };
+  // 'settings' tief mergen: einzelne Bereiche (Sprache, Theme, Audio) schicken
+  // teils nur ihre eigenen Keys — ein flaches Ersetzen würde die übrigen
+  // Einstellungen des Nutzers verwerfen.
+  if (sanitized.settings && typeof sanitized.settings === 'object' && !Array.isArray(sanitized.settings)
+    && current.settings && typeof current.settings === 'object' && !Array.isArray(current.settings)) {
+    merged.settings = { ...current.settings, ...sanitized.settings };
+  }
   const { data, error } = await supabase.auth.admin.updateUserById(req.user.id, {
     user_metadata: merged,
   });
