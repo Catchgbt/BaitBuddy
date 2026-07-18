@@ -14,6 +14,7 @@ import { isAllowedFetchUrl } from '../lib/urlSafety.js';
 import { resolvePlan, planRank, PLAN_RANK } from '../lib/planResolver.js';
 import { sendDbError } from '../lib/errorResponse.js';
 import { fetchWithTimeout } from '../lib/fetchWithTimeout.js';
+import { getTTSAudio } from '../lib/multiProviderTTS.js';
 
 // open-meteo ist optional/schnell — kurzes Timeout, damit ein hängender
 // Wetterdienst nie die KI-Antwort blockiert.
@@ -498,11 +499,6 @@ router.post('/ai/tts', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'Text is required' });
   }
 
-  const apiKey = process.env.ELEVENLABS_API_KEY;
-  if (!apiKey) {
-    return res.status(501).json({ error: 'ELEVENLABS_API_KEY not configured' });
-  }
-
   // Stimmen-Wahl: 'female' ist ein Ultimate-Feature (Plan-ID 'elite' bzw.
   // Friends-Level). Das Gate MUSS serverseitig sitzen — die Auswahl in den
   // Einstellungen ist nur Komfort; ohne ausreichenden Plan wird still auf die
@@ -517,50 +513,12 @@ router.post('/ai/tts', requireAuth, async (req, res) => {
     ? (process.env.ELEVENLABS_VOICE_ID_FEMALE || FEMALE_VOICE_ID)
     : (process.env.ELEVENLABS_VOICE_ID || DEFAULT_VOICE_ID);
 
-  const callElevenLabs = (voice) =>
-    fetchWithTimeout(`https://api.elevenlabs.io/v1/text-to-speech/${voice}`, {
-      method: 'POST',
-      headers: {
-        'xi-api-key': apiKey,
-        'Content-Type': 'application/json',
-        'Accept': 'audio/mpeg'
-      },
-      body: JSON.stringify({
-        text: text.slice(0, 2000),
-        model_id: 'eleven_multilingual_v2',
-        voice_settings: {
-          stability: 0.5,
-          similarity_boost: 0.75,
-          style: 0.3,
-          use_speaker_boost: true
-        }
-      })
-    });
-
   try {
-    let response = await callElevenLabs(voiceId);
-
-    // Library-Voices sind im Free-Plan per API gesperrt (402 paid_plan_required,
-    // teils 403). Statt komplett ohne Audio zu antworten, einmalig mit der
-    // Premade-Standardstimme wiederholen.
-    if (!response.ok && (response.status === 402 || response.status === 403) && voiceId !== DEFAULT_VOICE_ID) {
-      const errText = await response.text().catch(() => '');
-      console.error('ElevenLabs voice rejected:', response.status, errText, '- Fallback auf Premade-Voice');
-      response = await callElevenLabs(DEFAULT_VOICE_ID);
-    }
-
-    if (!response.ok) {
-      const errText = await response.text().catch(() => 'Unknown error');
-      console.error('ElevenLabs error:', response.status, errText);
-      return res.status(502).json({ error: 'TTS service error' });
-    }
-
-    const audioBuffer = Buffer.from(await response.arrayBuffer());
-    const base64Audio = audioBuffer.toString('base64');
-    return res.json({ audioBase64: base64Audio, contentType: 'audio/mpeg', voice_used: voiceUsed });
+    const result = await getTTSAudio(text, voiceId);
+    return res.json({ ...result, voice_used: voiceUsed });
   } catch (e) {
-    console.error('TTS error:', e);
-    return sendDbError(res, e);
+    console.error('TTS error (all providers failed):', e.message);
+    return res.status(502).json({ error: 'TTS service error - keine Provider verfügbar' });
   }
 });
 
