@@ -2,7 +2,6 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { usePlan } from '@/components/premium/PlanContext';
 import { planMeetsRequirement } from '@/components/premium/planHierarchy';
 import { speakWithElevenLabs, cancelElevenLabs } from '@/components/utils/elevenLabsTTS';
-import { speakWithBrowserTTS, cancelBrowserTTS, isBrowserTTSAvailable } from '@/components/utils/browserTTS';
 
 export function useAITTS() {
   const { plan } = usePlan();
@@ -10,45 +9,33 @@ export function useAITTS() {
   const audioRef = useRef(null);
 
   const planId = plan?.id || 'free';
-  // ElevenLabs ist der Standard-Sprachausgabe-Pfad. Browser-TTS dient nur noch
-  // als Fallback, wenn ElevenLabs nicht verfügbar ist (z. B. API-Key fehlt).
   const isPremiumVoice = planMeetsRequirement(planId, 'elite');
 
   const stop = useCallback(() => {
     cancelElevenLabs();
     audioRef.current = null;
-    cancelBrowserTTS();
     setIsSpeaking(false);
   }, []);
 
+  // Einziger Sprach-Pfad ist die natürliche ElevenLabs-Stimme. Schlägt sie
+  // fehl (offline, kein API-Key), bleibt die Ausgabe still — bewusst kein
+  // Rückfall auf die Browser-Roboterstimme.
   const speak = useCallback(async (text) => {
     if (!text || typeof text !== 'string') return;
     stop();
 
-    // Primär: ElevenLabs (für alle Pläne)
     try {
       setIsSpeaking(true);
       const audio = await speakWithElevenLabs(text, {
         onEnd: () => setIsSpeaking(false),
         onError: () => setIsSpeaking(false),
       });
-      audioRef.current = audio;
-      return;
+      // null = von einem neueren speak/stop abgelöst — der steuert den State.
+      if (audio) audioRef.current = audio;
     } catch (err) {
-      console.warn('[useAITTS] ElevenLabs fehlgeschlagen, fallback Browser-TTS:', err?.message);
-      // Fallthrough zu Browser-TTS
-    }
-
-    // Fallback: Browser-TTS
-    if (!isBrowserTTSAvailable()) {
+      console.warn('[useAITTS] ElevenLabs nicht verfügbar, Ausgabe bleibt still:', err?.message);
       setIsSpeaking(false);
-      return;
     }
-    setIsSpeaking(true);
-    await speakWithBrowserTTS(text, {
-      onEnd: () => setIsSpeaking(false),
-      onError: () => setIsSpeaking(false),
-    });
   }, [stop]);
 
   useEffect(() => {

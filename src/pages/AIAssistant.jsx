@@ -11,6 +11,7 @@ import ReactMarkdown from "react-markdown";
 import { getPersonalizedGreeting } from "@/components/utils/greetings";
 import { Volume2, Phone } from "lucide-react";
 import { getRandomDemoResponse } from "@/components/utils/guestMode";
+import { speakWithFallback, cancelElevenLabs } from "@/components/utils/elevenLabsTTS";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
@@ -45,54 +46,33 @@ function AIAssistantInner() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Vorlesen ausschließlich mit der natürlichen ElevenLabs-Stimme; bei
+  // Fehlern bleibt es still (kein Rückfall auf die Browser-Roboterstimme).
   const handleSpeak = async (text) => {
+    if (!text || typeof text !== 'string') return;
+
+    const cleanText = text
+      .replace(/[\u{1F600}-\u{1F64F}]/gu, '')
+      .replace(/[\u{1F300}-\u{1F5FF}]/gu, '')
+      .replace(/[\u{1F680}-\u{1F6FF}]/gu, '')
+      .replace(/[\*#_~`]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!cleanText) return;
+
+    setIsSpeaking(true);
     try {
-      if (!text || typeof text !== 'string') return;
-      
-      setIsSpeaking(true);
-      
-      const cleanText = text
-        .replace(/[\u{1F600}-\u{1F64F}]/gu, '')
-        .replace(/[\u{1F300}-\u{1F5FF}]/gu, '')
-        .replace(/[\u{1F680}-\u{1F6FF}]/gu, '')
-        .replace(/[\*#_~`]/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-      
-      if (!cleanText) {
-        setIsSpeaking(false);
-        return;
-      }
-
-      if (typeof window !== 'undefined' && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-        
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.lang = 'de-DE';
-        utterance.rate = 1.0;
-        utterance.pitch = 1;
-        utterance.volume = 1.0;
-
-        const voices = window.speechSynthesis.getVoices();
-        const germanVoice = voices.find(voice => voice.lang.startsWith('de'));
-        if (germanVoice) utterance.voice = germanVoice;
-
-        utterance.onend = () => {
-          setIsSpeaking(false);
-        };
-        utterance.onerror = () => {
-          setIsSpeaking(false);
-          toast.error('Vorlesen fehlgeschlagen');
-        };
-
-        window.speechSynthesis.speak(utterance);
-      }
-    } catch (error) {
-      console.error('TTS Error:', error);
+      await speakWithFallback(cleanText, { voiceEnabled: true, rate: 1.0 });
+    } finally {
       setIsSpeaking(false);
-      toast.error('Vorlesen fehlgeschlagen');
     }
   };
+
+  // Beim Verlassen der Seite eine laufende Sprachausgabe stoppen.
+  useEffect(() => {
+    return () => cancelElevenLabs();
+  }, []);
 
   const [isGuest, setIsGuest] = useState(false);
 

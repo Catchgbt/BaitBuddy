@@ -17,6 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { resolvePage } from "@/lib/voicePages";
 import { isInClosedSeason as isInClosedSeasonShared } from "@/lib/closedSeason";
+import { speakWithFallback, cancelElevenLabs } from "@/components/utils/elevenLabsTTS";
 
 function parseActionFromReply(text) {
   if (!text) return { clean: text, action: null };
@@ -121,110 +122,15 @@ const WAKE_WORD = 'hey buddy';
 const WAKE_WORD_VARIANTS = ['hey buddy', 'hei buddy', 'hey budy', 'hey baddy', 'heybuddy', 'hey body', 'hallo buddy'];
 const LANGUAGE = 'de-DE';
 
-// Browser-Stimmen vorab cachen (getVoices() ist beim ersten Aufruf häufig leer)
-let cachedVoices = [];
-function loadVoices() {
-  if (typeof window === 'undefined' || !window.speechSynthesis) return;
-  const v = window.speechSynthesis.getVoices();
-  if (v && v.length) cachedVoices = v;
-}
-if (typeof window !== 'undefined' && window.speechSynthesis) {
-  loadVoices();
-  if (window.speechSynthesis.onvoiceschanged !== undefined) {
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-  }
-}
-
 // Konversations-Session ID (pro App-Sitzung)
 const SESSION_ID = `voice_${Date.now()}`;
 
-// TTS Helper - mit Browser und Gemini Fallback
-async function speakWithBrowserFirst(text, { rate = 1, pitch = 1 } = {}) {
-  if (!text || text.trim().length === 0) return Promise.resolve();
-  
-  try {
-    return await speakBrowser(text, rate, pitch);
-  } catch (error) {
-    console.error('[TTS] Browser TTS failed:', error);
-    // Kein Gemini Fallback - Browser ist zuverlässiger
-    return Promise.resolve();
-  }
-}
-
-function speakBrowser(text, rate = 1, pitch = 1) {
-  if (!('speechSynthesis' in window)) {
-    return Promise.resolve();
-  }
-  if (!text || text.trim().length === 0) return Promise.resolve();
-  
-  return new Promise((resolve) => {
-    try {
-      // Nutze deutsche Stimme wenn verfügbar (gecachte Liste, sonst frisch laden)
-      const voices = cachedVoices.length ? cachedVoices : window.speechSynthesis.getVoices();
-      const germanVoice = voices.find(v => v.lang && v.lang.startsWith('de'));
-      
-      // Cancel pending speech
-      window.speechSynthesis.cancel();
-      
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = LANGUAGE;
-      if (germanVoice) utter.voice = germanVoice;
-      utter.rate = Math.max(0.5, Math.min(2, rate));
-      utter.pitch = Math.max(0.5, Math.min(2, pitch));
-      utter.volume = 1;
-      
-      let hasEnded = false;
-      // Sicherheits-Timeout proportional zur Textlänge (Sprechrate ~12 Zeichen/s),
-      // damit lange Antworten nicht vorzeitig als beendet gelten.
-      const safetyMs = Math.min(180000, Math.max(15000, text.length * 120));
-      const timeout = setTimeout(() => {
-        if (!hasEnded) {
-          hasEnded = true;
-          resolve();
-        }
-      }, safetyMs);
-      
-      utter.onend = () => {
-        if (!hasEnded) {
-          hasEnded = true;
-          clearTimeout(timeout);
-          resolve();
-        }
-      };
-      
-      utter.onerror = (event) => {
-        if (!hasEnded) {
-          hasEnded = true;
-          clearTimeout(timeout);
-          console.error('[TTS] Speech error:', event.error);
-          resolve();
-        }
-      };
-
-      window.speechSynthesis.speak(utter);
-
-      // Chrome-Workaround: speechSynthesis stoppt nach ~15 Sekunden. Alle 8s
-      // pause()/resume() hält lange Antworten am Laufen.
-      const keepAlive = setInterval(() => {
-        if (!window.speechSynthesis.speaking) {
-          clearInterval(keepAlive);
-          return;
-        }
-        window.speechSynthesis.pause();
-        window.speechSynthesis.resume();
-      }, 8000);
-      const clearKeepAlive = () => clearInterval(keepAlive);
-      utter.addEventListener('end', clearKeepAlive);
-      utter.addEventListener('error', clearKeepAlive);
-    } catch (error) {
-      console.error('[TTS] Exception:', error);
-      resolve();
-    }
-  });
-}
-
-async function speak(text, options = {}) {
-  return speakWithBrowserFirst(text, options);
+// TTS: ausschließlich die natürliche ElevenLabs-Stimme (zentrale Utility,
+// Backend /api/ai/tts). Löst auf, wenn die Wiedergabe endet; bei Fehlern
+// bleibt es still — kein Rückfall auf die Browser-Roboterstimme.
+async function speak(text, { rate = 1 } = {}) {
+  if (!text || text.trim().length === 0) return;
+  await speakWithFallback(text, { voiceEnabled: true, rate });
 }
 
 // Wetterdaten von Open-Meteo abrufen
@@ -974,7 +880,7 @@ function VoiceBuddy() {
     setStatus('idle');
     isWaitingForCommandRef.current = false;
     setTranscript('');
-    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    cancelElevenLabs();
     toast.info('Voice Control beendet');
   };
 

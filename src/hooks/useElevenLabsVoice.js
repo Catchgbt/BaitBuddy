@@ -46,8 +46,11 @@ export function useElevenLabsVoice() {
           options.onError?.(err);
         },
       });
-      audioRef.current = audio;
       setIsLoading(false);
+      // null = während des Requests von einem neueren speak/stop abgelöst —
+      // der neuere Aufruf steuert den State, hier nichts mehr anfassen.
+      if (!audio) return true;
+      audioRef.current = audio;
       return true;
     } catch (err) {
       setIsLoading(false);
@@ -68,7 +71,11 @@ export function useElevenLabsVoice() {
 
   const resume = useCallback(() => {
     if (audioRef.current) {
-      audioRef.current.play();
+      // play() kann rejecten (z. B. Autoplay-Policy nach Tab-Wechsel) —
+      // unbehandelt würde das als Unhandled Rejection im Log landen.
+      audioRef.current.play().catch(() => {
+        setIsSpeaking(false);
+      });
       setIsSpeaking(true);
     }
   }, []);

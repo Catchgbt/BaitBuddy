@@ -2,8 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Volume2, VolumeX, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/api/auth";
-import { speakWithElevenLabs, cancelElevenLabs } from "@/components/utils/elevenLabsTTS";
-import { speakWithBrowserTTS } from "@/components/utils/browserTTS";
+import { speakWithFallback, cancelElevenLabs } from "@/components/utils/elevenLabsTTS";
 
 export default function BuddyOutput({ text, autoPlay = true }) {
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -18,8 +17,8 @@ export default function BuddyOutput({ text, autoPlay = true }) {
       let user = null;
       try {
         user = await auth.me();
-      } catch (e) {
-        console.log("BuddyOutput: User not authenticated");
+      } catch {
+        // Gastmodus: Standard-Einstellungen verwenden
       }
 
       if (user?.settings?.audio_enabled === false) {
@@ -29,17 +28,9 @@ export default function BuddyOutput({ text, autoPlay = true }) {
 
       const speechRate = user?.settings?.speech_speed || 1.0;
 
-      try {
-        await new Promise((resolve, reject) => {
-          speakWithElevenLabs(text, {
-            onEnd: resolve,
-            onError: reject,
-          }).catch(reject);
-        });
-      } catch (backendError) {
-        console.warn("BuddyOutput: ElevenLabs failed, using browser fallback:", backendError?.message);
-        await speakWithBrowserTTS(text, { lang: 'de-DE', rate: speechRate });
-      }
+      // Nur die natürliche ElevenLabs-Stimme; speakWithFallback löst auf,
+      // wenn die Wiedergabe endet, und bleibt bei Fehlern still.
+      await speakWithFallback(text, { voiceEnabled: true, rate: speechRate });
     } catch (error) {
       console.error("BuddyOutput: Speech error:", error);
     } finally {
@@ -60,9 +51,6 @@ export default function BuddyOutput({ text, autoPlay = true }) {
     setIsMuted(!isMuted);
     if (isSpeaking) {
       cancelElevenLabs();
-      if (typeof window !== "undefined" && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-      }
       setIsSpeaking(false);
     }
   };
@@ -78,7 +66,7 @@ export default function BuddyOutput({ text, autoPlay = true }) {
       >
         {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
       </Button>
-      
+
       {isSpeaking && (
         <div className="flex items-center gap-2 text-sm text-gray-400">
           <Loader2 className="w-4 h-4 animate-spin" />

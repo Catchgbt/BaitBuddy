@@ -8,7 +8,6 @@ import { runWhenAudioReady } from '@/lib/audioUnlock';
 import { useAuth } from '@/lib/AuthContext';
 import { ai, events } from '@/api/frontendClient';
 import { speakWithFallback, cancelElevenLabs } from '@/components/utils/elevenLabsTTS';
-import { speakWithBrowserTTS } from '@/components/utils/browserTTS';
 import { findOfflineBuddyAnswer, getOfflineBuddyFallback } from '@/lib/offlineBuddyQuestions';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Mic, Send, X } from 'lucide-react';
@@ -272,17 +271,10 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
       showSmallBubbleWithText(greeting, { farewell: false });
       if (buddyVoiceEnabled) {
         // Audio erst abspielen, wenn es erlaubt ist (Autoplay-Policy) — beim
-        // ersten Antippen wird es nachgeholt.
+        // ersten Antippen wird es nachgeholt. speakWithFallback bleibt bei
+        // Fehlern still (kein Roboterstimmen-Fallback mehr).
         runWhenAudioReady(() => {
-          speakWithFallback(greeting, {
-            voiceEnabled: buddyVoiceEnabled,
-            lang: 'de-DE',
-            rate: 1.0,
-          }).catch(() => {
-            speakWithBrowserTTS(greeting, { lang: 'de-DE', rate: 1.0 }).catch(() => {
-              /* TTS ist optional */
-            });
-          });
+          speakWithFallback(greeting, { voiceEnabled: buddyVoiceEnabled, rate: 1.0 });
         });
       }
     })();
@@ -314,15 +306,7 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
       showSmallBubbleWithText(question, { farewell: false });
 
       if (buddyVoiceEnabled) {
-        speakWithFallback(question, {
-          voiceEnabled: buddyVoiceEnabled,
-          lang: 'de-DE',
-          rate: 1.0,
-        }).catch(() => {
-          speakWithBrowserTTS(question, { lang: 'de-DE', rate: 1.0 }).catch(() => {
-            /* TTS ist optional */
-          });
-        });
+        speakWithFallback(question, { voiceEnabled: buddyVoiceEnabled, rate: 1.0 });
       }
     }, 800);
 
@@ -490,20 +474,7 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
 
         const speakText = actionNote ? `${botMessage} ${actionNote}`.trim() : botMessage;
         if (speakText && buddyVoiceEnabled) {
-          try {
-            await speakWithFallback(speakText, {
-              voiceEnabled: buddyVoiceEnabled,
-              lang: 'de-DE',
-              rate: 1.0,
-            });
-          } catch (err) {
-            console.error('speakWithFallback failed, trying browser TTS:', err);
-            try {
-              await speakWithBrowserTTS(speakText, { lang: 'de-DE', rate: 1.0 });
-            } catch (e2) {
-              console.warn('Both TTS methods failed:', e2);
-            }
-          }
+          await speakWithFallback(speakText, { voiceEnabled: buddyVoiceEnabled, rate: 1.0 });
         }
       } catch (err) {
         console.error('Chat error:', err);
@@ -524,17 +495,7 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
           setMessages((prev) => [...prev, { role: 'assistant', content: offlineReply }]);
           setIsTalking(true);
           if (buddyVoiceEnabled) {
-            try {
-              await speakWithFallback(offlineReply, {
-                voiceEnabled: buddyVoiceEnabled,
-                lang: 'de-DE',
-                rate: 1.0,
-              });
-            } catch {
-              try {
-                await speakWithBrowserTTS(offlineReply, { lang: 'de-DE', rate: 1.0 });
-              } catch { /* TTS ist optional */ }
-            }
+            await speakWithFallback(offlineReply, { voiceEnabled: buddyVoiceEnabled, rate: 1.0 });
           }
         }
       } finally {

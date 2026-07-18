@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
+import { speakWithFallback, cancelElevenLabs } from '@/components/utils/elevenLabsTTS';
 
 const KNOTS = {
   "Palomar": {
@@ -127,16 +128,13 @@ export default function ARKnotenAssistent() {
       if (mpCameraRef.current) mpCameraRef.current.stop();
       if (arAnimIdRef.current) cancelAnimationFrame(arAnimIdRef.current);
       if (recognitionRef.current) recognitionRef.current.stop();
+      cancelElevenLabs();
     };
   }, []);
 
+  // Schritt-Ansagen mit der natürlichen ElevenLabs-Stimme; bei Fehlern still.
   const speakText = (text) => {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'de-DE';
-    u.rate = ttsSpeed;
-    window.speechSynthesis.speak(u);
+    speakWithFallback(text, { voiceEnabled: true, rate: ttsSpeed });
   };
 
   const startCamera = async () => {

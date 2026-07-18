@@ -16,9 +16,7 @@ vi.mock('@/utils/buddyActions', () => ({
 }));
 vi.mock('@/components/utils/elevenLabsTTS', () => ({
   speakWithFallback: vi.fn(async () => {}),
-}));
-vi.mock('@/components/utils/browserTTS', () => ({
-  speakWithBrowserTTS: vi.fn(async () => {}),
+  cancelElevenLabs: vi.fn(),
 }));
 vi.mock('@/lib/offlineBuddyQuestions', () => ({
   findOfflineBuddyAnswer: vi.fn(() => null),

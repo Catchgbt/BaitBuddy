@@ -30,8 +30,6 @@ export default function MiniKiVoiceBuddy() {
   const chatRef = useRef();
   const recRef = useRef(null);
   const waveRef = useRef(null);
-  const synthRef = useRef(typeof window !== "undefined" ? window.speechSynthesis : null);
-  const voicesLoadedRef = useRef(false);
   const speakTimerRef = useRef(null);
   const askingRef = useRef(false);
 
@@ -46,7 +44,6 @@ export default function MiniKiVoiceBuddy() {
         clearInterval(waveRef.current);
         waveRef.current = null;
       }
-      if (synthRef.current) synthRef.current.cancel();
       if (recRef.current) {
         try {
           recRef.current.abort();
@@ -75,7 +72,6 @@ export default function MiniKiVoiceBuddy() {
 
   function stopSpeaking() {
     cancelElevenLabs();
-    synthRef.current?.cancel();
     stopWave();
     setStatus("");
   }
@@ -223,7 +219,7 @@ export default function MiniKiVoiceBuddy() {
           <span style={{ marginLeft: 8, fontSize: 11, color: "#4455aa", fontWeight: 500, background: "#0d1a33", border: "1px solid #1e2f55", borderRadius: 8, padding: "2px 7px" }}>BETA</span>
         </div>
         <button
-          onClick={() => { setTonAn(t => !t); if (tonAn) { cancelElevenLabs(); synthRef.current?.cancel(); } }}
+          onClick={() => { setTonAn(t => !t); if (tonAn) cancelElevenLabs(); }}
           style={{ display: "flex", alignItems: "center", gap: 6, background: tonAn ? "#22d3c8" : "#0d2020", border: "1px solid #22d3c8", borderRadius: 20, padding: "4px 12px", fontSize: 12, color: tonAn ? "#060d1a" : "#22d3c8", fontWeight: 500, cursor: "pointer" }}
         >
           <span style={{ width: 7, height: 7, borderRadius: "50%", background: tonAn ? "#060d1a" : "#22d3c8", display: "inline-block" }} />

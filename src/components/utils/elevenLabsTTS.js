@@ -2,6 +2,12 @@
 // Zentrale ElevenLabs Text-to-Speech Utility.
 // Das Backend (/api/ai/tts) liefert JSON { audioBase64, contentType }.
 // Diese Helfer dekodieren das Base64-Audio und spielen es ab.
+//
+// Es gibt bewusst NUR diesen einen Sprach-Pfad: Die App spricht ausschließlich
+// mit der natürlichen ElevenLabs-Stimme. Die frühere Browser-TTS
+// (speechSynthesis, Roboterstimme) wurde komplett entfernt — schlägt ElevenLabs
+// fehl (offline, kein API-Key, Autoplay blockiert), bleibt die Ausgabe still
+// und der Text steht weiterhin im Chat.
 
 import { functions } from "@/api/frontendClient";
 import { getPreferredTtsVoice } from "@/lib/ttsVoice";
@@ -13,10 +19,18 @@ import { getPreferredTtsVoice } from "@/lib/ttsVoice";
 let currentAudio = null;
 let currentUrl = null;
 
+// Generation-Token gegen überlappende Aufrufe: Startet während des laufenden
+// TTS-Requests ein neuer speak-/cancel-Aufruf, würde die ältere Antwort nach
+// ihrem await trotzdem abgespielt und zwei Stimmen sprächen gleichzeitig.
+// Jeder Aufruf merkt sich seine Generation; nur die neueste darf abspielen.
+let generation = 0;
+
 /**
- * Bricht eine laufende ElevenLabs-Wiedergabe ab.
+ * Bricht eine laufende ElevenLabs-Wiedergabe ab — auch eine, deren
+ * TTS-Request gerade noch läuft (via Generation-Token).
  */
 export function cancelElevenLabs() {
+  generation += 1;
   if (currentAudio) {
     try {
       currentAudio.pause();
@@ -32,13 +46,15 @@ export function cancelElevenLabs() {
 
 /**
  * Holt ElevenLabs-Audio fürs übergebene Text und spielt es ab.
- * Wirft einen Fehler, wenn kein Audio geliefert wird (z. B. API-Key fehlt 501),
- * damit der Aufrufer auf Browser-TTS zurückfallen kann.
+ * Wirft einen Fehler, wenn kein Audio geliefert wird (z. B. API-Key fehlt 501)
+ * oder die Wiedergabe blockiert ist (Autoplay-Policy).
  *
  * @param {string} text
  * @param {{ onEnd?: () => void, onError?: (e:any) => void }} [callbacks]
  * @param {{ rate?: number }} [options] rate = Wiedergabegeschwindigkeit (0.5–2.0)
- * @returns {Promise<HTMLAudioElement>}
+ * @returns {Promise<HTMLAudioElement|null>} null, wenn der Aufruf während des
+ *   Requests von einem neueren speak-/cancel-Aufruf abgelöst wurde (dann wird
+ *   nichts abgespielt und keiner der Callbacks feuert).
  */
 export async function speakWithElevenLabs(text, callbacks = {}, options = {}) {
   if (!text || typeof text !== "string" || text.trim().length === 0) {
@@ -46,10 +62,15 @@ export async function speakWithElevenLabs(text, callbacks = {}, options = {}) {
   }
 
   cancelElevenLabs();
+  const myGeneration = generation;
 
   // Die in den Einstellungen gewählte Stimme mitsenden; das Backend prüft den
   // Plan (weibliche Stimme nur ab Ultimate) und fällt sonst auf Standard zurück.
   const response = await functions.invoke("textToSpeech", { text, voice: getPreferredTtsVoice() });
+
+  // Während des Requests hat ein neuerer speak-/cancel-Aufruf übernommen:
+  // dieses Audio verwerfen statt es parallel zur neuen Stimme abzuspielen.
+  if (myGeneration !== generation) return null;
 
   // frontendClient liefert das geparste JSON direkt (kein axios-Wrapper).
   // Unterstütze zur Sicherheit auch ein response.data-Nesting.
@@ -75,8 +96,7 @@ export async function speakWithElevenLabs(text, callbacks = {}, options = {}) {
   currentAudio = audio;
 
   // Die in den Audio-Einstellungen gewählte Sprechgeschwindigkeit gilt auch
-  // für die ElevenLabs-Wiedergabe — vorher wirkte sie nur auf die Browser-
-  // TTS-Fallback-Stimme, wodurch sich beide Pfade unterschiedlich anhörten.
+  // für die ElevenLabs-Wiedergabe.
   const rate = Number(options.rate);
   if (Number.isFinite(rate) && rate >= 0.5 && rate <= 2.0 && rate !== 1.0) {
     audio.playbackRate = rate;
@@ -100,102 +120,67 @@ export async function speakWithElevenLabs(text, callbacks = {}, options = {}) {
     callbacks.onError?.(e);
   };
 
-  await audio.play();
+  try {
+    await audio.play();
+  } catch (err) {
+    // Wiedergabe blockiert (z. B. Autoplay-Policy): Blob-URL sofort freigeben,
+    // damit kein Leak entsteht, und den Fehler an den Aufrufer durchreichen.
+    if (currentUrl === url) {
+      URL.revokeObjectURL(url);
+      currentUrl = null;
+    }
+    if (currentAudio === audio) currentAudio = null;
+    throw err;
+  }
   return audio;
 }
 
 /**
- * Spielt rohe Audio-Daten (als Uint8Array) ab.
- * Wird für Backend-generierte MP3-Daten verwendet.
- */
-export async function playAudioBlob(audioData, onEnded) {
-  return new Promise((resolve) => {
-    cancelElevenLabs();
-    try {
-      const blob = new Blob([audioData], { type: 'audio/mpeg' });
-      if (blob.size === 0) {
-        resolve();
-        return;
-      }
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      currentAudio = audio;
-      currentUrl = url;
-
-      audio.onended = () => {
-        URL.revokeObjectURL(url);
-        currentAudio = null;
-        currentUrl = null;
-        if (onEnded) onEnded();
-        resolve();
-      };
-
-      audio.onerror = () => {
-        URL.revokeObjectURL(url);
-        currentAudio = null;
-        currentUrl = null;
-        resolve();
-      };
-
-      audio.play().catch(e => {
-        console.warn('Audio playback blocked:', e);
-        URL.revokeObjectURL(url);
-        currentAudio = null;
-        currentUrl = null;
-        resolve();
-      });
-    } catch (error) {
-      console.error('Audio playback error:', error);
-      resolve();
-    }
-  });
-}
-
-/**
- * Zentrale Fallback-Strategie: Versucht ElevenLabs, fällt zu Browser-TTS zurück.
- * Respektiert voiceEnabled-Setting.
+ * Zentrale Sprech-Funktion der App: Spielt den Text mit der natürlichen
+ * ElevenLabs-Stimme ab und löst auf, wenn die Wiedergabe beendet ist.
+ * Es gibt bewusst KEINEN Browser-TTS-Fallback — schlägt die Ausgabe fehl,
+ * löst das Promise still auf, damit Aufrufer (Status-Reset, Gesprächs-Loops)
+ * normal weiterlaufen. Respektiert das voiceEnabled-Setting.
+ *
+ * @param {string} text
+ * @param {{ voiceEnabled?: boolean, rate?: number }} [options]
  */
 export async function speakWithFallback(text, options = {}) {
-  const { voiceEnabled = true, lang = 'de-DE', rate = 1.0, pitch = 1.0 } = options;
+  const { voiceEnabled = true, rate = 1.0 } = options;
 
   if (!text || typeof text !== 'string' || !text.trim()) {
-    return Promise.resolve();
+    return;
   }
 
   if (!voiceEnabled) {
-    return Promise.resolve();
+    return;
   }
 
+  let audio;
   try {
-    const audio = await speakWithElevenLabs(text, {
-      onEnd: () => {},
-      onError: () => {
-        throw new Error('ElevenLabs fallback');
-      },
-    }, { rate });
-    return new Promise((resolve) => {
-      // speakWithElevenLabs setzt bereits onended/onerror-Handler, die die
-      // Blob-URL via URL.revokeObjectURL freigeben. Diese Handler NICHT
-      // überschreiben (sonst Memory-Leak) – stattdessen wrappen: Original-
-      // Cleanup zuerst ausführen, dann das Promise auflösen.
-      const originalOnEnded = audio.onended;
-      const originalOnError = audio.onerror;
-      audio.onended = (e) => {
-        originalOnEnded?.call(audio, e);
-        resolve();
-      };
-      audio.onerror = (e) => {
-        originalOnError?.call(audio, e);
-        resolve();
-      };
-    });
-  } catch {
-    const { speakWithBrowserTTS } = await import('./browserTTS');
-    return speakWithBrowserTTS(text, {
-      lang,
-      rate,
-      pitch,
-      volume: 1.0,
-    });
+    audio = await speakWithElevenLabs(text, {}, { rate });
+  } catch (err) {
+    console.warn('[TTS] ElevenLabs nicht verfügbar, Ausgabe bleibt still:', err?.message);
+    return;
   }
+
+  // Von einem neueren speak-Aufruf abgelöst — der steuert die Wiedergabe.
+  if (!audio) return;
+
+  await new Promise((resolve) => {
+    // speakWithElevenLabs setzt bereits onended/onerror-Handler, die die
+    // Blob-URL via URL.revokeObjectURL freigeben. Diese Handler NICHT
+    // überschreiben (sonst Memory-Leak) – stattdessen wrappen: Original-
+    // Cleanup zuerst ausführen, dann das Promise auflösen.
+    const originalOnEnded = audio.onended;
+    const originalOnError = audio.onerror;
+    audio.onended = (e) => {
+      originalOnEnded?.call(audio, e);
+      resolve();
+    };
+    audio.onerror = (e) => {
+      originalOnError?.call(audio, e);
+      resolve();
+    };
+  });
 }

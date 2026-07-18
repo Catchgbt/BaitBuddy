@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/components/i18n/LanguageContext';
-import { speakWithBrowserTTS, cancelBrowserTTS } from '@/components/utils/browserTTS';
+import { speakWithFallback, cancelElevenLabs } from '@/components/utils/elevenLabsTTS';
 import { tutorialSteps } from './tutorialSteps';
 
 export default function TutorialModal({ isOpen, onClose }) {
@@ -18,7 +18,7 @@ export default function TutorialModal({ isOpen, onClose }) {
 
   const handleNext = () => {
     if (isPlaying) {
-      cancelBrowserTTS();
+      cancelElevenLabs();
       setIsPlaying(false);
       setPlayingStep(null);
     }
@@ -29,7 +29,7 @@ export default function TutorialModal({ isOpen, onClose }) {
 
   const handlePrev = () => {
     if (isPlaying) {
-      cancelBrowserTTS();
+      cancelElevenLabs();
       setIsPlaying(false);
       setPlayingStep(null);
     }
@@ -40,7 +40,7 @@ export default function TutorialModal({ isOpen, onClose }) {
 
   const handlePlayAudio = async (stepIndex) => {
     if (isPlaying) {
-      cancelBrowserTTS();
+      cancelElevenLabs();
       setIsPlaying(false);
       setPlayingStep(null);
       return;
@@ -52,9 +52,10 @@ export default function TutorialModal({ isOpen, onClose }) {
     try {
       const step = steps[stepIndex];
       const text = `${step.title}. ${step.content}`;
-      const lang = language === 'en' ? 'en-US' : 'de-DE';
 
-      await speakWithBrowserTTS(text, { lang });
+      // Natürliche ElevenLabs-Stimme (multilingual, spricht auch Englisch);
+      // löst auf, wenn die Wiedergabe endet, bleibt bei Fehlern still.
+      await speakWithFallback(text, { voiceEnabled: true, rate: 1.0 });
     } catch (error) {
       console.error('[Tutorial TTS] Error:', error);
     } finally {
@@ -114,7 +115,7 @@ export default function TutorialModal({ isOpen, onClose }) {
                   <Link
                     to={createPageUrl(currentStepData.route)}
                     onClick={() => {
-                      cancelBrowserTTS();
+                      cancelElevenLabs();
                       onClose();
                     }}
                     className="inline-flex items-center gap-1.5 text-xs text-cyan-400 hover:text-cyan-300 underline underline-offset-4 decoration-cyan-500/40 mb-2"

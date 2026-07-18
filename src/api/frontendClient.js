@@ -292,9 +292,6 @@ const FUNCTION_MAP = {
   realtimeSession:        (d) => api.post('/api/ai/realtime-session', d || {}),
   getPlanStatus:          ()  => api.get('/api/premium/status'),
   textToSpeech:           (d) => api.post('/api/ai/tts', d),
-  backendTextToSpeech:    (d) => api.post('/api/ai/tts', d),
-  geminiTextToSpeech:     (d) => api.post('/api/ai/tts', d),
-  freeNeuralTTS:          (d) => api.post('/api/ai/tts', d),
   // Foto-Analyse für strukturierte Fang-Daten. Nutzt /analyze-photo (liefert
   // species/length_cm/weight_kg), NICHT /ai/analyze-catch (liefert nur Freitext).
   // Die Antwort wird ins von den Aufrufern (CatchDetailModal, PendingPhotoCard,
