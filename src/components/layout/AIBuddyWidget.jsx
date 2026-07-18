@@ -487,6 +487,7 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
 
         // Priorität: Server-Nachricht > Status-spezifische Nachricht > Offline-Fallback
         let botMessage = serverErrorMsg;
+        let isOfflineError = false;
 
         if (!botMessage) {
           if (status === 429) {
@@ -496,10 +497,15 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
           } else {
             // Reiner Netzwerkfehler (status == null)
             botMessage = findOfflineBuddyAnswer(text) || getOfflineBuddyFallback();
+            isOfflineError = true;
           }
         }
 
-        setChatError(botMessage);
+        // Nur echte HTTP-Fehler (mit Status) in den roten Alert, nicht Offline-Fallbacks
+        if (status != null && !isOfflineError) {
+          setChatError(botMessage);
+        }
+
         setMessages((prev) => [...prev, { role: 'assistant', content: botMessage }]);
 
         if (botMessage && status == null && buddyVoiceEnabled) {
