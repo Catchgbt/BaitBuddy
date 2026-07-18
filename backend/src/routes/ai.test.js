@@ -178,23 +178,28 @@ describe('POST /api/ai/analyze-catch (SSRF-Schutz)', () => {
 });
 
 describe('POST /api/ai/tts', () => {
+  // Alle Provider-Keys, die die Fallback-Kette aktivieren könnten. Diese Tests
+  // isolieren gezielt ElevenLabs, damit die geprüften fetch-Calls deterministisch
+  // sind. Andere Provider werden deaktiviert und danach wiederhergestellt.
+  const OTHER_PROVIDER_ENV = [
+    'GROQ_API_KEY', 'GROQ_TTS_ENABLED', 'OPENAI_API_KEY',
+    'GOOGLE_CLOUD_API_KEY', 'GEMINI_API_KEY',
+  ];
   const origElevenLabsKey = process.env.ELEVENLABS_API_KEY;
-  const origGroqKey = process.env.GROQ_API_KEY;
-  const origOpenAiKey = process.env.OPENAI_API_KEY;
+  const origOther = Object.fromEntries(OTHER_PROVIDER_ENV.map((k) => [k, process.env[k]]));
 
   beforeEach(() => {
-    // Testet nur ElevenLabs — andere Provider deaktivieren, um Tests einfach zu halten
-    delete process.env.GROQ_API_KEY;
-    delete process.env.OPENAI_API_KEY;
+    // Nur ElevenLabs testen — alle anderen Provider aus der Kette nehmen.
+    for (const k of OTHER_PROVIDER_ENV) delete process.env[k];
   });
 
   afterEach(() => {
     if (origElevenLabsKey === undefined) delete process.env.ELEVENLABS_API_KEY;
     else process.env.ELEVENLABS_API_KEY = origElevenLabsKey;
-    if (origGroqKey === undefined) delete process.env.GROQ_API_KEY;
-    else process.env.GROQ_API_KEY = origGroqKey;
-    if (origOpenAiKey === undefined) delete process.env.OPENAI_API_KEY;
-    else process.env.OPENAI_API_KEY = origOpenAiKey;
+    for (const k of OTHER_PROVIDER_ENV) {
+      if (origOther[k] === undefined) delete process.env[k];
+      else process.env[k] = origOther[k];
+    }
     vi.unstubAllGlobals();
   });
 

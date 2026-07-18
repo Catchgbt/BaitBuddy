@@ -1,89 +1,83 @@
 import { fetchWithTimeout } from './fetchWithTimeout.js';
 
-// Multi-Provider TTS mit Fallback-Kette:
-// 1. Groq (beste Qualität, keine Limits in kostenlos)
-// 2. ChatGPT/OpenAI (stabiler, aber kostenpflichtig)
-// 3. ElevenLabs (bewährt, gute Qualität)
-// 4. Google Cloud Text-to-Speech
-// 5. Claude API (stabiler Fallback)
+// Multi-Provider TTS mit automatischer Fallback-Kette.
+//
+// WICHTIG (deutsche App): Die Reihenfolge ist auf natürliche DEUTSCHE Sprache
+// optimiert. Schlägt ein Provider fehl oder ist kein Key gesetzt, wird der
+// nächste probiert. Gibt am Ende keiner Audio zurück, wirft die Funktion —
+// der Aufrufer (Route /api/ai/tts) antwortet dann mit 502 und das Frontend
+// bleibt still (kein Roboterstimmen-Fallback).
+//
+// Standard-Kette (alle sprechen sauberes Deutsch, liefern direkt MP3/WAV):
+//   1. OpenAI  (ChatGPT-Stimme, multilingual, sehr natürlich)
+//   2. ElevenLabs (bewährt, natürlichste deutsche Stimme)
+//   3. Google Cloud TTS (de-DE, stabil)
+//   4. Gemini 2.5 TTS (multilingual inkl. Deutsch, Preview)
+//
+// Groq (PlayAI/Orpheus) unterstützt AKTUELL nur Englisch/Arabisch und ist für
+// die deutsche App ungeeignet. Es ist deshalb per Default AUS und nur über
+// GROQ_TTS_ENABLED=true zuschaltbar (z. B. für englische Inhalte). Claude/
+// Anthropic bietet gar kein TTS und ist daher nicht Teil der Kette.
 
-export async function getTTSAudio(text, voiceId = 'default') {
-  const providers = [
-    { name: 'groq', fn: () => groqTTS(text) },
-    { name: 'openai', fn: () => openaiTTS(text) },
-    { name: 'elevenlabs', fn: () => elevenlabsTTS(text, voiceId) },
-    { name: 'google', fn: () => googleCloudTTS(text) },
-    { name: 'claude', fn: () => claudeTTS(text) },
-  ];
+const TTS_TIMEOUT_MS = 15000;
+
+// Baut die Provider-Kette dynamisch aus den gesetzten Keys.
+function buildProviderChain(text, voiceId) {
+  const chain = [];
+
+  // Groq nur, wenn ausdrücklich freigeschaltet (English-only, siehe oben).
+  if (process.env.GROQ_TTS_ENABLED === 'true' && process.env.GROQ_API_KEY) {
+    chain.push({ name: 'groq', fn: () => groqTTS(text) });
+  }
+  if (process.env.OPENAI_API_KEY) {
+    chain.push({ name: 'openai', fn: () => openaiTTS(text) });
+  }
+  if (process.env.ELEVENLABS_API_KEY) {
+    chain.push({ name: 'elevenlabs', fn: () => elevenlabsTTS(text, voiceId) });
+  }
+  if (process.env.GOOGLE_CLOUD_API_KEY) {
+    chain.push({ name: 'google', fn: () => googleCloudTTS(text) });
+  }
+  if (process.env.GEMINI_API_KEY) {
+    chain.push({ name: 'gemini', fn: () => geminiTTS(text) });
+  }
+
+  return chain;
+}
+
+/**
+ * Holt TTS-Audio über die erste erreichbare Provider-Quelle.
+ * @param {string} text
+ * @param {string} [voiceId] ElevenLabs-Voice-ID (male/female-Gate in der Route)
+ * @returns {Promise<{ audioBase64: string, contentType: string, provider: string }>}
+ */
+export async function getTTSAudio(text, voiceId = null) {
+  const providers = buildProviderChain(text, voiceId);
+
+  if (providers.length === 0) {
+    throw new Error('Kein TTS-Provider konfiguriert');
+  }
 
   for (const provider of providers) {
     try {
-      if (!isProviderAvailable(provider.name)) {
-        console.debug(`[TTS] Provider ${provider.name} nicht konfiguriert, überspringe...`);
-        continue;
-      }
-      console.debug(`[TTS] Versuche Provider: ${provider.name}`);
       const result = await provider.fn();
       if (result && result.audioBase64) {
-        console.debug(`[TTS] Erfolg mit Provider: ${provider.name}`);
         return { ...result, provider: provider.name };
       }
     } catch (err) {
-      console.warn(`[TTS] ${provider.name} fehlgeschlagen:`, err.message);
-      // Weiter zum nächsten Provider
+      console.warn(`[TTS] Provider ${provider.name} fehlgeschlagen:`, err?.message);
+      // Weiter zum nächsten Provider in der Kette.
     }
   }
 
-  throw new Error('Kein TTS-Provider verfügbar');
+  throw new Error('Kein TTS-Provider lieferte Audio');
 }
 
-// Lies API-Keys dynamisch aus process.env (nicht bei Import-Zeit)
-// damit Tests diese manipulieren können
-function isProviderAvailable(name) {
-  switch (name) {
-    case 'groq': return !!process.env.GROQ_API_KEY;
-    case 'openai': return !!process.env.OPENAI_API_KEY;
-    case 'elevenlabs': return !!process.env.ELEVENLABS_API_KEY;
-    case 'google': return !!process.env.GOOGLE_CLOUD_API_KEY;
-    case 'claude': return !!process.env.ANTHROPIC_API_KEY;
-    default: return false;
-  }
-}
-
-async function groqTTS(text) {
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) throw new Error('GROQ_API_KEY not configured');
-
-  // Groq TTS über Groq API (neue Voice-Funktion)
-  const response = await fetchWithTimeout('https://api.groq.com/tts/v1/speech', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'groq-tts-1',
-      input: text.slice(0, 4000),
-      voice: 'nova',
-      response_format: 'mp3',
-    }),
-    timeout: 15000,
-  });
-
-  if (!response.ok) {
-    throw new Error(`Groq TTS error: ${response.status}`);
-  }
-
-  const arrayBuffer = await response.arrayBuffer();
-  const base64Audio = Buffer.from(arrayBuffer).toString('base64');
-  return { audioBase64: base64Audio, contentType: 'audio/mpeg' };
-}
-
+// ── OpenAI (ChatGPT-Stimme) ─────────────────────────────────────────────────
 async function openaiTTS(text) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error('OPENAI_API_KEY not configured');
 
-  // OpenAI TTS API
   const response = await fetchWithTimeout('https://api.openai.com/v1/audio/speech', {
     method: 'POST',
     headers: {
@@ -91,12 +85,12 @@ async function openaiTTS(text) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'tts-1-hd',
-      input: text.slice(0, 4096),
-      voice: 'nova',
-      speed: 1.0,
+      model: 'gpt-4o-mini-tts',
+      input: text.slice(0, 4000),
+      voice: 'alloy',
+      response_format: 'mp3',
     }),
-    timeout: 15000,
+    timeout: TTS_TIMEOUT_MS,
   });
 
   if (!response.ok) {
@@ -104,28 +98,27 @@ async function openaiTTS(text) {
   }
 
   const arrayBuffer = await response.arrayBuffer();
-  const base64Audio = Buffer.from(arrayBuffer).toString('base64');
-  return { audioBase64: base64Audio, contentType: 'audio/mpeg' };
+  return { audioBase64: Buffer.from(arrayBuffer).toString('base64'), contentType: 'audio/mpeg' };
 }
 
+// ── ElevenLabs ──────────────────────────────────────────────────────────────
 async function elevenlabsTTS(text, voiceId) {
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) throw new Error('ELEVENLABS_API_KEY not configured');
 
-  // Default Premade-Stimmen (kostenlos im Free-Plan)
+  // Premade-Stimmen sind auch im Free-Plan per API nutzbar.
   const DEFAULT_VOICE_ID = 'onwK4e9ZLuTAKqWW03F9'; // Daniel (männlich)
-  const FEMALE_VOICE_ID = 'XrExE9yKIg1WjnnlVkGX'; // Matilda (weiblich, Ultimate-Feature)
 
-  // Wähle die Stimme aus; default auf Premade-Voice für Free-Plan-Kompatibilität
-  let voiceIdToUse = voiceId || process.env.ELEVENLABS_VOICE_ID || DEFAULT_VOICE_ID;
+  const voiceIdToUse = voiceId || process.env.ELEVENLABS_VOICE_ID || DEFAULT_VOICE_ID;
 
-  const callElevenLabs = async (vid) => fetchWithTimeout(
+  const callElevenLabs = (vid) => fetchWithTimeout(
     `https://api.elevenlabs.io/v1/text-to-speech/${vid}`,
     {
       method: 'POST',
       headers: {
         'xi-api-key': apiKey,
         'Content-Type': 'application/json',
+        'Accept': 'audio/mpeg',
       },
       body: JSON.stringify({
         text: text.slice(0, 2000),
@@ -137,16 +130,16 @@ async function elevenlabsTTS(text, voiceId) {
           use_speaker_boost: true,
         },
       }),
-      timeout: 15000,
+      timeout: TTS_TIMEOUT_MS,
     }
   );
 
   let response = await callElevenLabs(voiceIdToUse);
 
-  // Fallback: Library-Voices sind im Free-Plan per API gesperrt (402/403).
-  // Retry mit Premade-Voice statt komplett zu scheitern.
+  // Library-Voices sind im Free-Plan gesperrt (402/403) — einmalig mit der
+  // Premade-Standardstimme wiederholen statt ganz ohne Audio zu bleiben.
   if (!response.ok && (response.status === 402 || response.status === 403) && voiceIdToUse !== DEFAULT_VOICE_ID) {
-    console.warn(`[ElevenLabs] Voice ${voiceIdToUse} rejected (${response.status}) — Fallback auf Default`);
+    console.warn(`[ElevenLabs] Voice ${voiceIdToUse} abgelehnt (${response.status}) — Fallback auf Premade-Voice`);
     response = await callElevenLabs(DEFAULT_VOICE_ID);
   }
 
@@ -155,35 +148,25 @@ async function elevenlabsTTS(text, voiceId) {
   }
 
   const arrayBuffer = await response.arrayBuffer();
-  const base64Audio = Buffer.from(arrayBuffer).toString('base64');
-  return { audioBase64: base64Audio, contentType: 'audio/mpeg' };
+  return { audioBase64: Buffer.from(arrayBuffer).toString('base64'), contentType: 'audio/mpeg' };
 }
 
+// ── Google Cloud Text-to-Speech ─────────────────────────────────────────────
 async function googleCloudTTS(text) {
   const apiKey = process.env.GOOGLE_CLOUD_API_KEY;
   if (!apiKey) throw new Error('GOOGLE_CLOUD_API_KEY not configured');
 
-  // Google Cloud Text-to-Speech
   const response = await fetchWithTimeout(
     `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`,
     {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         input: { text: text.slice(0, 5000) },
-        voice: {
-          languageCode: 'de-DE',
-          name: 'de-DE-Standard-B',
-        },
-        audioConfig: {
-          audioEncoding: 'MP3',
-          pitch: 0,
-          speakingRate: 1.0,
-        },
+        voice: { languageCode: 'de-DE', name: 'de-DE-Neural2-B' },
+        audioConfig: { audioEncoding: 'MP3', pitch: 0, speakingRate: 1.0 },
       }),
-      timeout: 15000,
+      timeout: TTS_TIMEOUT_MS,
     }
   );
 
@@ -193,16 +176,108 @@ async function googleCloudTTS(text) {
 
   const data = await response.json();
   if (!data.audioContent) {
-    throw new Error('Google TTS did not return audioContent');
+    throw new Error('Google TTS lieferte kein audioContent');
   }
 
   return { audioBase64: data.audioContent, contentType: 'audio/mpeg' };
 }
 
-async function claudeTTS(text) {
-  // Claude API mit Fallback (Note: Claude selbst hat kein natives TTS,
-  // daher nutzen wir hier einen anderen Dienst als Fallback)
-  // Alternativ: Nutzung von browser-nativen APIs oder Untertitel.
-  // Für jetzt: als letzter Fallback deaktivieren und schweigen
-  throw new Error('Claude native TTS nicht verfügbar');
+// ── Gemini 2.5 TTS ──────────────────────────────────────────────────────────
+// Gemini liefert rohes PCM (L16, 24 kHz, mono, 16-bit). Für die Wiedergabe im
+// Browser-<audio> muss ein WAV-Header davor — das erledigt pcmToWav().
+async function geminiTTS(text) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error('GEMINI_API_KEY not configured');
+
+  const model = process.env.GEMINI_TTS_MODEL || 'gemini-2.5-flash-preview-tts';
+  const response = await fetchWithTimeout(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: text.slice(0, 4000) }] }],
+        generationConfig: {
+          responseModalities: ['AUDIO'],
+          speechConfig: {
+            voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } },
+          },
+        },
+      }),
+      timeout: TTS_TIMEOUT_MS,
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Gemini TTS error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const part = data?.candidates?.[0]?.content?.parts?.find((p) => p.inlineData?.data);
+  const pcmBase64 = part?.inlineData?.data;
+  if (!pcmBase64) {
+    throw new Error('Gemini TTS lieferte kein Audio');
+  }
+
+  // Sample-Rate aus dem MIME-Type lesen (z. B. "audio/L16;rate=24000").
+  const mime = part.inlineData.mimeType || '';
+  const rateMatch = mime.match(/rate=(\d+)/);
+  const sampleRate = rateMatch ? Number(rateMatch[1]) : 24000;
+
+  const pcmBuffer = Buffer.from(pcmBase64, 'base64');
+  const wavBuffer = pcmToWav(pcmBuffer, sampleRate);
+  return { audioBase64: wavBuffer.toString('base64'), contentType: 'audio/wav' };
+}
+
+// Umschließt rohes PCM16-mono-Audio mit einem WAV-Header (44 Byte).
+function pcmToWav(pcmBuffer, sampleRate, channels = 1, bitsPerSample = 16) {
+  const byteRate = (sampleRate * channels * bitsPerSample) / 8;
+  const blockAlign = (channels * bitsPerSample) / 8;
+  const header = Buffer.alloc(44);
+
+  header.write('RIFF', 0);
+  header.writeUInt32LE(36 + pcmBuffer.length, 4);
+  header.write('WAVE', 8);
+  header.write('fmt ', 12);
+  header.writeUInt32LE(16, 16);          // fmt-Chunk-Größe
+  header.writeUInt16LE(1, 20);           // Audio-Format PCM
+  header.writeUInt16LE(channels, 22);
+  header.writeUInt32LE(sampleRate, 24);
+  header.writeUInt32LE(byteRate, 28);
+  header.writeUInt16LE(blockAlign, 32);
+  header.writeUInt16LE(bitsPerSample, 34);
+  header.write('data', 36);
+  header.writeUInt32LE(pcmBuffer.length, 40);
+
+  return Buffer.concat([header, pcmBuffer]);
+}
+
+// ── Groq (PlayAI/Orpheus) — English/Arabic only, opt-in ─────────────────────
+// Nur aktiv, wenn GROQ_TTS_ENABLED=true. Für die deutsche App per Default AUS,
+// weil Groq-TTS aktuell kein Deutsch spricht. OpenAI-kompatibler Endpunkt.
+async function groqTTS(text) {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) throw new Error('GROQ_API_KEY not configured');
+
+  const response = await fetchWithTimeout('https://api.groq.com/openai/v1/audio/speech', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: process.env.GROQ_TTS_MODEL || 'playai-tts',
+      input: text.slice(0, 4000),
+      voice: process.env.GROQ_TTS_VOICE || 'Fritz-PlayAI',
+      response_format: 'mp3',
+    }),
+    timeout: TTS_TIMEOUT_MS,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Groq TTS error: ${response.status}`);
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  return { audioBase64: Buffer.from(arrayBuffer).toString('base64'), contentType: 'audio/mpeg' };
 }
