@@ -12,11 +12,18 @@
     will-change: auto;
   }
   
-  /* Explicitly enable hardware acceleration for animated elements */
+  /* Explicitly enable hardware acceleration for animated elements.
+     Wichtig: .animate-in / .animate-out gehoeren NICHT hierher. Radix-Overlays
+     (Dialog, Popover, Dropdown, Tooltip) tragen im offenen Zustand diese Klassen
+     und zentrieren sich gleichzeitig ueber transform: translate(-50%, -50%). Das
+     hier statisch gesetzte transform: translateZ(0) ueberschreibt diese Zentrier-
+     Transform — im Android-WebView blieb der Dialog dadurch auf left:50% stehen
+     und die rechte Haelfte lief aus dem Bild ("da fehlt die haelfte"). Diese
+     Elemente werden von tailwindcss-animate ohnehin GPU-kompositiert; der
+     zusaetzliche translateZ(0)-Hack ist unnoetig und schaedlich (gleiche Klasse
+     Bug wie beim contain: paint auf [role="region"] weiter unten). */
   [data-animated],
   .transition-all,
-  .animate-in,
-  .animate-out,
   [data-sonner-toast],
   .toast-animated,
   [role="status"],
