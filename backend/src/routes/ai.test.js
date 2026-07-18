@@ -254,11 +254,28 @@ describe('POST /api/analyze-photo (KI-Fischerkennung)', () => {
 });
 
 describe('POST /api/ai/tts', () => {
-  const origKey = process.env.ELEVENLABS_API_KEY;
+  // Alle Provider-Keys, die die Fallback-Kette aktivieren könnten. Diese Tests
+  // isolieren gezielt ElevenLabs, damit die geprüften fetch-Calls deterministisch
+  // sind. Andere Provider werden deaktiviert und danach wiederhergestellt.
+  const OTHER_PROVIDER_ENV = [
+    'GROQ_API_KEY', 'GROQ_TTS_ENABLED', 'OPENAI_API_KEY',
+    'GOOGLE_CLOUD_API_KEY', 'GEMINI_API_KEY',
+  ];
+  const origElevenLabsKey = process.env.ELEVENLABS_API_KEY;
+  const origOther = Object.fromEntries(OTHER_PROVIDER_ENV.map((k) => [k, process.env[k]]));
+
+  beforeEach(() => {
+    // Nur ElevenLabs testen — alle anderen Provider aus der Kette nehmen.
+    for (const k of OTHER_PROVIDER_ENV) delete process.env[k];
+  });
 
   afterEach(() => {
-    if (origKey === undefined) delete process.env.ELEVENLABS_API_KEY;
-    else process.env.ELEVENLABS_API_KEY = origKey;
+    if (origElevenLabsKey === undefined) delete process.env.ELEVENLABS_API_KEY;
+    else process.env.ELEVENLABS_API_KEY = origElevenLabsKey;
+    for (const k of OTHER_PROVIDER_ENV) {
+      if (origOther[k] === undefined) delete process.env[k];
+      else process.env[k] = origOther[k];
+    }
     vi.unstubAllGlobals();
   });
 
@@ -270,13 +287,14 @@ describe('POST /api/ai/tts', () => {
     expect(res.status).toBe(400);
   });
 
-  it('gibt 501 zurück, wenn kein ElevenLabs-Key konfiguriert ist', async () => {
+  it('gibt 502 zurück, wenn kein TTS-Provider konfiguriert ist', async () => {
     delete process.env.ELEVENLABS_API_KEY;
+    // Alle Provider sind in beforeEach deaktiviert
     const res = await request(app)
       .post('/api/ai/tts')
       .set('Authorization', 'Bearer tok')
       .send({ text: 'Hallo' });
-    expect(res.status).toBe(501);
+    expect(res.status).toBe(502);
   });
 
   it('gibt 502 zurück, wenn der ElevenLabs-Upstream fehlschlägt', async () => {
