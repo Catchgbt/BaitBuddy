@@ -6,11 +6,11 @@ on:
       version_code:
         description: 'Android versionCode (muss hoeher sein als der zuletzt in der Play Console hochgeladene)'
         required: false
-        default: '27'
+        default: '28'
       version_name:
         description: 'Android versionName'
         required: false
-        default: '2.117898.0'
+        default: '2.117899.0'
   push:
     tags:
       - 'v*'
@@ -102,8 +102,8 @@ jobs:
             -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
             -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
             -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }} \
-            -PappVersionCode=${{ github.event.inputs.version_code || '27' }} \
-            -PappVersionName=${{ github.event.inputs.version_name || '2.117898.0' }}
+            -PappVersionCode=${{ github.event.inputs.version_code || '28' }} \
+            -PappVersionName=${{ github.event.inputs.version_name || '2.117899.0' }}
         env:
           ANDROID_HOME: ${{ env.ANDROID_SDK_ROOT }}
 
