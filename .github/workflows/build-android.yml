@@ -14,6 +14,11 @@ on:
   push:
     tags:
       - 'v*'
+    # Temporaer: Build auch bei Pushes auf diesen Branch ausloesen, weil
+    # workflow_dispatch und Tag-Push fuer die Integration gesperrt sind (403).
+    # Vor dem Merge in main wieder entfernen.
+    branches:
+      - 'claude/apk-aab-play-store-4jnxbv'
 
 jobs:
   build:
