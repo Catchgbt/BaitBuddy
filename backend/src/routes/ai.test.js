@@ -177,6 +177,82 @@ describe('POST /api/ai/analyze-catch (SSRF-Schutz)', () => {
   });
 });
 
+describe('POST /api/analyze-photo (KI-Fischerkennung)', () => {
+  it('lehnt Zugriff ohne Token ab (401)', async () => {
+    llmMock.invokeLLM = vi.fn();
+    const res = await request(app).post('/api/analyze-photo').send({ image: 'QUJD' });
+    expect(res.status).toBe(401);
+    expect(llmMock.invokeLLM).not.toHaveBeenCalled();
+  });
+
+  it('gibt alle erkannten Merkmale strukturiert zurück', async () => {
+    llmMock.invokeLLM = vi.fn().mockResolvedValue(
+      'Hier das Ergebnis: {"species":"Hecht","species_latin":"Esox lucius","length_cm":78,"weight_kg":4.2,"girth_cm":32,"bait_used":"Gummifisch","sex":"weiblich","estimated_age_years":6,"condition":"kräftig und gut genährt","confidence":0.88}'
+    );
+    const res = await request(app)
+      .post('/api/analyze-photo')
+      .set('Authorization', 'Bearer tok')
+      .send({ image: 'QUJD' });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      ok: true,
+      species: 'Hecht',
+      species_latin: 'Esox lucius',
+      length_cm: 78,
+      weight_kg: 4.2,
+      girth_cm: 32,
+      bait_used: 'Gummifisch',
+      sex: 'weiblich',
+      estimated_age_years: 6,
+      condition: 'kräftig und gut genährt',
+      confidence: 0.88,
+    });
+  });
+
+  it('normalisiert sex und filtert Nicht-Zahlen/"null"-Strings zu null', async () => {
+    llmMock.invokeLLM = vi.fn().mockResolvedValue(
+      '{"species":"Zander","species_latin":"null","length_cm":"unbekannt","weight_kg":null,"bait_used":null,"sex":"male","estimated_age_years":null,"condition":null,"confidence":0.5}'
+    );
+    const res = await request(app)
+      .post('/api/analyze-photo')
+      .set('Authorization', 'Bearer tok')
+      .send({ image: 'QUJD' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.species).toBe('Zander');
+    expect(res.body.species_latin).toBeNull();
+    expect(res.body.length_cm).toBeNull();
+    expect(res.body.weight_kg).toBeNull();
+    expect(res.body.bait_used).toBeNull();
+    expect(res.body.sex).toBe('männlich');
+    expect(res.body.confidence).toBe(0.5);
+  });
+
+  it('liefert ok:true mit null-Feldern, wenn kein JSON erkannt wird', async () => {
+    llmMock.invokeLLM = vi.fn().mockResolvedValue('Ich kann keinen Fisch erkennen.');
+    const res = await request(app)
+      .post('/api/analyze-photo')
+      .set('Authorization', 'Bearer tok')
+      .send({ image: 'QUJD' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+    expect(res.body.species).toBeNull();
+    expect(res.body.confidence).toBeNull();
+  });
+
+  it('verlangt ein Bild (400 ohne image)', async () => {
+    llmMock.invokeLLM = vi.fn();
+    const res = await request(app)
+      .post('/api/analyze-photo')
+      .set('Authorization', 'Bearer tok')
+      .send({});
+    expect(res.status).toBe(400);
+    expect(llmMock.invokeLLM).not.toHaveBeenCalled();
+  });
+});
+
 describe('POST /api/ai/tts', () => {
   const origKey = process.env.ELEVENLABS_API_KEY;
 

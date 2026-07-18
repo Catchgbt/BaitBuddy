@@ -317,15 +317,21 @@ router.post('/analyze-photo', requireAuth, async (req, res) => {
 
     if (!imageBase64) return res.status(400).json({ error: 'image required' });
     const raw = await invokeLLM({
-      prompt: `Analysiere dieses Fisch-Foto so genau wie möglich. Antworte NUR mit einem JSON-Objekt in diesem Format, ohne Erklärungen:
-{"species":"Fischart auf Deutsch","length_cm":Zahl_oder_null,"weight_kg":Zahl_oder_null,"bait_used":"erkannter Köder oder null","confidence":0.0_bis_1.0}
+      prompt: `Analysiere dieses Fisch-Foto so genau wie möglich wie ein erfahrener Angel-Experte. Antworte NUR mit einem JSON-Objekt in genau diesem Format, ohne Erklärungen und ohne Text davor oder danach:
+{"species":"Fischart auf Deutsch","species_latin":"wissenschaftlicher Name oder null","length_cm":Zahl_oder_null,"weight_kg":Zahl_oder_null,"girth_cm":Zahl_oder_null,"bait_used":"erkannter Köder oder null","sex":"männlich|weiblich|unbekannt","estimated_age_years":Zahl_oder_null,"condition":"kurze Zustandsbeschreibung oder null","confidence":0.0_bis_1.0}
 
 Regeln:
-- Schätze die Länge anhand von sichtbaren Referenzobjekten (Hände, Rute, Kescher, Maßband).
-- Berechne das Gewicht basierend auf Art und geschätzter Länge mit typischen Gewichtstabellen.
-- Wenn ein Köder im Maul oder auf dem Bild sichtbar ist, gib ihn an (z.B. "Gummifisch", "Wobbler", "Spinner", "Wurm", "Mais").
+- species: deutsche Fischart (z.B. "Hecht", "Zander", "Karpfen"). species_latin: der lateinische Artname (z.B. "Esox lucius"), sonst null.
+- length_cm: Schätze die Gesamtlänge anhand sichtbarer Referenzobjekte (Hände, Rute, Kescher, Maßband, Waage).
+- weight_kg: Berechne das Gewicht aus Art, geschätzter Länge und ggf. Körperumfang mit typischen Gewichtstabellen.
+- girth_cm: Körperumfang an der dicksten Stelle, falls abschätzbar, sonst null.
+- bait_used: Wenn ein Köder im Maul oder auf dem Bild sichtbar ist, gib ihn an (z.B. "Gummifisch", "Wobbler", "Spinner", "Wurm", "Mais"), sonst null.
+- sex: "männlich" oder "weiblich" nur wenn eindeutige Merkmale sichtbar sind (Laichzeit, Milchner/Rogner), sonst "unbekannt".
+- estimated_age_years: grobe Altersschätzung in Jahren anhand Größe/Art, sonst null.
+- condition: kurzer Satz zum Zustand des Fisches (z.B. "kräftig und gut genährt", "schlank"), sonst null.
 - confidence: Wie sicher bist du bei der Arterkennung? (0.0 = unsicher, 1.0 = sehr sicher)
-- Wenn du keinen Fisch erkennst, nutze null für alle Felder und confidence 0.`,
+- Erfinde keine Werte: Wenn ein Merkmal nicht erkennbar ist, nutze null (bzw. "unbekannt" bei sex).
+- Wenn du keinen Fisch erkennst, nutze null für alle Felder, "unbekannt" bei sex und confidence 0.`,
       imageBase64
     });
     let parsed = {};
@@ -338,13 +344,26 @@ Regeln:
       console.error('Fehler beim Parsen der KI-Analyse:', error);
       parsed = {};
     }
+    const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+    const str = (v) => (typeof v === 'string' && v.trim() && v.trim().toLowerCase() !== 'null' ? v.trim() : null);
+    const sexRaw = str(parsed.sex)?.toLowerCase();
+    const sex = sexRaw === 'männlich' || sexRaw === 'maennlich' || sexRaw === 'male'
+      ? 'männlich'
+      : sexRaw === 'weiblich' || sexRaw === 'female'
+        ? 'weiblich'
+        : null;
     return res.json({
       ok: true,
-      species: typeof parsed.species === 'string' ? parsed.species : null,
-      length_cm: typeof parsed.length_cm === 'number' ? parsed.length_cm : null,
-      weight_kg: typeof parsed.weight_kg === 'number' ? parsed.weight_kg : null,
-      bait_used: typeof parsed.bait_used === 'string' ? parsed.bait_used : null,
-      confidence: typeof parsed.confidence === 'number' ? parsed.confidence : null
+      species: str(parsed.species),
+      species_latin: str(parsed.species_latin),
+      length_cm: num(parsed.length_cm),
+      weight_kg: num(parsed.weight_kg),
+      girth_cm: num(parsed.girth_cm),
+      bait_used: str(parsed.bait_used),
+      sex,
+      estimated_age_years: num(parsed.estimated_age_years),
+      condition: str(parsed.condition),
+      confidence: num(parsed.confidence)
     });
   } catch (e) {
     return sendDbError(res, e);
