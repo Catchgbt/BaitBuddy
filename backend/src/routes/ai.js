@@ -284,7 +284,7 @@ Regeln: Aktions-Block nur wenn Nutzer wirklich eine Aktion will. Zuerst kurze Be
 
     // User-sichtbare Fehlermeldung: wird als Bot-Antwort angezeigt (für bessere UX)
     let userMessage = 'Entschuldige, ich habe gerade Verbindungsprobleme. Versuch es gleich nochmal!';
-    let httpStatus = 502;
+    let httpStatus = 500;
 
     if (msg.includes('GROQ_API_KEY')) {
       userMessage = 'Meine KI-Services sind gerade nicht konfiguriert (fehlender API-Schlüssel). Der Admin muss das fixen.';
