@@ -309,9 +309,14 @@ const FUNCTION_MAP = {
       data: {
         result_data: {
           species_name: r.species || '',
+          species_latin: r.species_latin ?? null,
           length_cm: r.length_cm ?? null,
           weight_kg: r.weight_kg ?? null,
+          girth_cm: r.girth_cm ?? null,
           bait_used: r.bait_used ?? null,
+          sex: r.sex ?? null,
+          estimated_age_years: r.estimated_age_years ?? null,
+          condition: r.condition ?? null,
           confidence: r.confidence ?? null,
         },
         summary: r.species

@@ -24,6 +24,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
 import { toLocalDatetimeInputValue } from "@/lib/utils";
 import SocialMediaShareDialog from "@/components/log/SocialMediaShareDialog";
+import FishRecognitionResult from "@/components/log/FishRecognitionResult";
+import { mergeRecognitionNote } from "@/lib/fishRecognition";
 
 export default function Logbook() {
   useFeatureTracking("catch_log");
@@ -59,6 +61,10 @@ export default function Logbook() {
   // ---- Upload / analysis ----
   const [uploading, setUploading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  // Vollständiges KI-Erkennungsergebnis (Art, Länge, Gewicht, wiss. Name,
+  // Geschlecht, Alter, Zustand …). Wird als Review-Karte gezeigt und erst auf
+  // Nutzeraktion ins Formular übernommen.
+  const [aiResult, setAiResult] = useState(null);
 
   // ---- Community share ----
   const [shareInCommunity, setShareInCommunity] = useState(false);
@@ -137,6 +143,22 @@ export default function Logbook() {
     setWeightKg(""); setBaitUsed(""); setNotes("");
     setCatchTime(toLocalDatetimeInputValue(new Date()));
     setEditingCatch(null);
+    setAiResult(null);
+  }, []);
+
+  // Übernimmt das KI-Erkennungsergebnis ins Formular: Kernfelder (Art, Länge,
+  // Gewicht, Köder) in die Eingabefelder, die Zusatzmerkmale (wiss. Name,
+  // Geschlecht, Alter, Umfang, Zustand, Konfidenz) als KI-Notiz in die Notizen —
+  // ohne bereits vom Nutzer eingetragene Werte zu überschreiben.
+  const applyRecognition = useCallback((data) => {
+    if (!data) return;
+    if (data.species_name) setSpecies((prev) => prev?.trim() ? prev : data.species_name);
+    if (data.length_cm != null) setLengthCm((prev) => prev?.trim() ? prev : String(data.length_cm));
+    if (data.weight_kg != null) setWeightKg((prev) => prev?.trim() ? prev : String(data.weight_kg));
+    if (data.bait_used) setBaitUsed((prev) => prev?.trim() ? prev : data.bait_used);
+    setNotes((prev) => mergeRecognitionNote(prev, data));
+    setAiResult(null);
+    toast.success("KI-Daten ins Fangbuch übernommen");
   }, []);
 
   // ---- Mutations with Optimistic UI (TanStack Query cache) ----
@@ -424,10 +446,7 @@ export default function Logbook() {
                       const data = analysisResult?.data;
                       if (data?.result_data) {
                         const ai = data.result_data;
-                        if (ai.species_name) setSpecies(ai.species_name);
-                        if (ai.length_cm) setLengthCm(String(ai.length_cm));
-                        if (ai.weight_kg) setWeightKg(String(ai.weight_kg));
-                        if (ai.bait_used) setBaitUsed(ai.bait_used);
+                        setAiResult(ai);
                         const parts = [];
                         if (ai.species_name) parts.push(ai.species_name);
                         if (ai.length_cm) parts.push(`${ai.length_cm} cm`);
@@ -435,6 +454,7 @@ export default function Logbook() {
                         const confText = ai.confidence ? ` (${Math.round(ai.confidence * 100)}% sicher)` : '';
                         toast.success(`KI erkannt: ${parts.join(', ')}${confText}`);
                       } else {
+                        setAiResult(null);
                         toast.warning("Foto hochgeladen, aber KI konnte keinen Fisch erkennen");
                       }
                     } catch (error) {
@@ -469,6 +489,15 @@ export default function Logbook() {
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {aiResult && (
+            <div className="mb-6">
+              <FishRecognitionResult
+                data={aiResult}
+                onApply={applyRecognition}
+                onDismiss={() => setAiResult(null)}
+              />
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="catch-photo" className="text-white">Foto hochladen</Label>
