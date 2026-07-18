@@ -51,6 +51,7 @@ export const APP_FEATURE_KNOWLEDGE = `DEINE APP-FUNKTIONEN (BaitBuddy) — erkl�
 - Quiz & Angelschein: Übungsfragen zur Vorbereitung auf die Angelschein-Prüfung — du kannst auch direkt im Chat Prüfungswissen abfragen und erklären.
 - Knoten-Guide: Schritt-für-Schritt-Anleitungen für Angelknoten; du erklärst jeden Knoten zusätzlich selbst im Chat.
 - Köder-Seite & Köder-Mixer: Köder-Übersicht und Rezepte für eigene Ködermischungen basierend auf Zielfisch und Bedingungen.
+- 3D-Köderanimation (Seite Koeder3D): zeigt Wobbler, Gummifisch am Jigkopf, Spinner, Blinker und Oberflächenköder als 3D-Animation mit echtem Laufverhalten — Führungsstile wie Jiggen, Faulenzen, Stop-and-Go, Twitchen und Walk the Dog lassen sich live umschalten, mit Tempo-Regler und frei drehbarer Kamera. Biete sie aktiv an, wenn jemand eine Köderführung erklärt haben will ("Sag einfach: Zeig mir, wie ein Gummifisch läuft" — du öffnest die Seite per Aktion navigate auf Koeder3D).
 - Tutorials: Lernvideos und Anleitungen von Anfänger bis Profi — immer nur ERGÄNZEND zu deiner eigenen Erklärung erwähnen, nie als Ersatz.
 - Sprachsteuerung & Voice-Buddy: Der Nutzer kann komplett per Sprache mit dir reden — als Einzelfrage per Mikrofon oder im fortlaufenden Live-Gespräch.
 - Navigation: Du kannst jede Seite der App öffnen ("Öffne die Karte", "Zeig mein Fangbuch") — per Aktion navigate.

@@ -10,7 +10,7 @@ export const ALLOWED_PAGES = [
   "Community", "Gear", "AIAssistant", "KiBuddyBeta", "TripPlanner",
   "Profile", "Settings", "Rank", "WaterAnalysis",
   "AngelscheinPruefungSchonzeiten", "Quiz", "Licenses", "Events",
-  "BaitMixer", "CatchStats", "ARKnotenAssistent", "Shop", "Premium",
+  "BaitMixer", "Koeder3D", "CatchStats", "ARKnotenAssistent", "Shop", "Premium",
   "PremiumPlans", "Help", "Tutorials", "Devices", "DeviceIntegration",
   "StartFishing", "UsedGear", "BathymetricCrowdsourcing", "VoiceControl",
   "VoiceLecture"
@@ -70,6 +70,11 @@ const PAGE_ALIASES = {
 
   köder: "BaitMixer", koeder: "BaitMixer", bait: "BaitMixer",
   baitmixer: "BaitMixer", ködermixer: "BaitMixer", koedermixer: "BaitMixer",
+
+  koeder3d: "Koeder3D", köder3d: "Koeder3D",
+  köderanimation: "Koeder3D", koederanimation: "Koeder3D",
+  köderführung: "Koeder3D", koederfuehrung: "Koeder3D",
+  laufverhalten: "Koeder3D",
 
   statistik: "CatchStats", statistiken: "CatchStats", stats: "CatchStats",
   catchstats: "CatchStats", fangstatistik: "CatchStats",
