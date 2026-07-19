@@ -806,18 +806,17 @@ function LandingPageContent() {
                     <motion.span
                         animate={{
                             backgroundImage: [
-                                'linear-gradient(90deg, #a855f7, #3b82f6, #06b6d4)',
-                                'linear-gradient(90deg, #3b82f6, #06b6d4, #a855f7)',
-                                'linear-gradient(90deg, #06b6d4, #a855f7, #3b82f6)',
-                                'linear-gradient(90deg, #a855f7, #3b82f6, #06b6d4)'
+                                'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))',
+                                'linear-gradient(90deg, hsl(var(--accent)), hsl(var(--primary)))',
+                                'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))'
                             ]
                         }}
                         transition={{
-                            duration: 4,
+                            duration: 6,
                             repeat: Infinity,
                             ease: "linear"
                         }}
-                        className="text-xl font-bold bg-clip-text text-transparent drop-shadow-[0_0_12px_rgba(255,255,255,0.9)] hover:drop-shadow-[0_0_20px_rgba(255,255,255,1)] transition-all"
+                        className="text-xl font-bold bg-clip-text text-transparent transition-all"
                     >
                         Tutorial
                     </motion.span>
@@ -1016,16 +1015,14 @@ function LandingPageContent() {
                             opacity: 1,
                             scale: 1,
                             backgroundImage: [
-                                'linear-gradient(135deg, #a855f7, #3b82f6, #06b6d4)',
-                                'linear-gradient(135deg, #3b82f6, #06b6d4, #a855f7)',
-                                'linear-gradient(135deg, #06b6d4, #a855f7, #3b82f6)',
-                                'linear-gradient(135deg, #a855f7, #3b82f6, #06b6d4)'
+                                'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))',
+                                'linear-gradient(135deg, hsl(var(--accent)), hsl(var(--primary)))',
+                                'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))'
                             ],
                             boxShadow: [
-                                '0 0 20px rgba(168, 85, 247, 0.8)',
-                                '0 0 40px rgba(59, 130, 246, 1)',
-                                '0 0 40px rgba(6, 182, 212, 1)',
-                                '0 0 20px rgba(168, 85, 247, 0.8)'
+                                '0 0 12px hsl(var(--primary) / 0.35)',
+                                '0 0 18px hsl(var(--primary) / 0.45)',
+                                '0 0 12px hsl(var(--primary) / 0.35)'
                             ]
                         }}
                         transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}

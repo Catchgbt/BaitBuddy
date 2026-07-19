@@ -153,10 +153,9 @@ export default function ReferralInvitePopup() {
             className="absolute inset-0 -z-10"
             animate={{
               background: [
-                "linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #a855f7 100%)",
-                "linear-gradient(135deg, #a855f7 0%, #ec4899 50%, #f59e0b 100%)",
-                "linear-gradient(135deg, #10b981 0%, #06b6d4 50%, #3b82f6 100%)",
-                "linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #a855f7 100%)",
+                "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%)",
+                "linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--primary)) 100%)",
+                "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%)",
               ],
             }}
             transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
