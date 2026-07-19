@@ -12,7 +12,7 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState('natur');
   const [isLoading, setIsLoading] = useState(true);
   const [batteryMode, setBatteryMode] = useState(false);
   const [animationsEnabled, setAnimationsEnabled] = useState(true);
@@ -22,7 +22,7 @@ export const ThemeProvider = ({ children }) => {
       try {
         const user = await auth.me();
         if (user?.settings) {
-          const savedTheme = user.settings.theme || 'dark';
+          const savedTheme = user.settings.theme || 'natur';
           const batteryMode = user.settings.battery_mode || false;
           const animationsEnabled = user.settings.animations_enabled !== false;
 
@@ -31,11 +31,11 @@ export const ThemeProvider = ({ children }) => {
           setAnimationsEnabled(animationsEnabled);
           applyTheme(savedTheme, batteryMode, animationsEnabled);
         } else {
-          applyTheme('dark', false, true);
+          applyTheme('natur', false, true);
         }
       } catch (error) {
         console.error('Fehler beim Laden der Theme-Einstellungen:', error);
-        applyTheme('dark', false, true);
+        applyTheme('natur', false, true);
       } finally {
         setIsLoading(false);
       }
@@ -45,12 +45,16 @@ export const ThemeProvider = ({ children }) => {
   const applyTheme = (selectedTheme, batteryModeActive, animationsActive) => {
     const html = document.documentElement;
 
+    html.classList.remove('light', 'dark', 'natur', 'high-contrast');
+
     if (selectedTheme === 'light') {
-      html.classList.remove('dark');
       html.classList.add('light');
-    } else {
+    } else if (selectedTheme === 'dark') {
       html.classList.add('dark');
-      html.classList.remove('light');
+    } else if (selectedTheme === 'high-contrast') {
+      html.classList.add('high-contrast');
+    } else {
+      html.classList.add('natur');
     }
 
     if (batteryModeActive) {
@@ -68,7 +72,7 @@ export const ThemeProvider = ({ children }) => {
 
   const toggleTheme = async (newTheme = null) => {
     const previousTheme = theme;
-    const selectedTheme = newTheme || (theme === 'dark' ? 'light' : 'dark');
+    const selectedTheme = newTheme;
     setTheme(selectedTheme);
     applyTheme(selectedTheme, batteryMode, animationsEnabled);
 

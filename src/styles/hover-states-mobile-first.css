@@ -42,19 +42,7 @@
     background-color: rgb(var(--accent));
   }
 
-  /* Cyan Accent Hover */
-  .bg-cyan-600:hover:not(:disabled) {
-    background-color: rgb(8, 145, 178);
-  }
-
-  .bg-cyan-700:hover:not(:disabled) {
-    background-color: rgb(6, 100, 126);
-  }
-
-  /* Emerald Accent Hover */
-  .bg-emerald-600:hover:not(:disabled) {
-    background-color: rgb(5, 150, 105);
-  }
+  /* Old hardcoded accent hover states removed — use CSS variables instead */
 
   /* Red/Destructive Hover */
   .bg-red-600:hover:not(:disabled) {
@@ -69,9 +57,9 @@
 
   /* Card Hover */
   .glass-morphism:hover {
-    background-color: rgba(15, 23, 42, 0.8);
-    border-color: rgba(51, 65, 85, 0.5);
-    box-shadow: 0 8px 32px rgba(34, 211, 238, 0.1);
+    background-color: rgb(var(--card) / 0.9);
+    border-color: rgb(var(--border));
+    box-shadow: 0 8px 32px rgb(var(--primary) / 0.08);
   }
 
   /* Interactive Group Hover */
@@ -117,12 +105,12 @@
 
   /* Toast Button Hover */
   [data-sonner-toast] [data-button]:hover {
-    background-color: rgba(34, 211, 238, 0.3) !important;
+    background-color: rgb(var(--primary) / 0.2) !important;
   }
 
   [data-sonner-toast] [data-close-button]:hover {
-    color: rgb(248, 250, 252) !important;
-    background-color: rgba(51, 65, 85, 0.5) !important;
+    color: rgb(var(--foreground)) !important;
+    background-color: rgb(var(--primary) / 0.15) !important;
   }
 }
 
@@ -164,7 +152,7 @@ input[type="submit"]:disabled {
 
 /* Focus Visible - Keyboard Navigation */
 :focus-visible {
-  outline: 2px solid rgb(34, 211, 238);
+  outline: 2px solid hsl(var(--ring));
   outline-offset: 2px;
 }
 
