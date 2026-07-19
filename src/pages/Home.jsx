@@ -13,6 +13,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import TutorialModal from '@/components/tutorial/TutorialModal';
 import DeleteAccountSection from '@/components/settings/DeleteAccountSection';
 import WaterScene from '@/components/home/WaterScene';
+import { buildPublicUrl } from '@/lib/publicUrl';
 
 const features = [
   'KI-Fischidentifikation aus Fotos',
@@ -470,7 +471,7 @@ function LandingPageContent() {
         setLoginLoading(true);
         try {
             const { error } = await supabase.auth.resetPasswordForEmail(loginEmail, {
-                redirectTo: window.location.origin + '/ResetPassword',
+                redirectTo: buildPublicUrl('/ResetPassword'),
             });
             if (error) throw error;
             setLoginInfo('Falls ein Konto mit dieser E-Mail existiert, haben wir dir einen Link zum Zurücksetzen geschickt. Bitte prüfe deinen Posteingang (auch Spam).');
@@ -485,7 +486,7 @@ function LandingPageContent() {
         setLoginError('');
         const { error } = await supabase.auth.signInWithOAuth({
             provider,
-            options: { redirectTo: window.location.origin + '/AuthCallback' },
+            options: { redirectTo: buildPublicUrl('/AuthCallback') },
         });
         if (error) setLoginError('Social Login fehlgeschlagen: ' + error.message);
     };
