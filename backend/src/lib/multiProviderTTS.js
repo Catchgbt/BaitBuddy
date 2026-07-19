@@ -90,8 +90,7 @@ async function openaiTTS(text) {
       voice: 'alloy',
       response_format: 'mp3',
     }),
-    timeout: TTS_TIMEOUT_MS,
-  });
+  }, TTS_TIMEOUT_MS);
 
   if (!response.ok) {
     throw new Error(`OpenAI TTS error: ${response.status}`);
@@ -130,8 +129,8 @@ async function elevenlabsTTS(text, voiceId) {
           use_speaker_boost: true,
         },
       }),
-      timeout: TTS_TIMEOUT_MS,
-    }
+    },
+    TTS_TIMEOUT_MS
   );
 
   let response = await callElevenLabs(voiceIdToUse);
@@ -166,8 +165,8 @@ async function googleCloudTTS(text) {
         voice: { languageCode: 'de-DE', name: 'de-DE-Neural2-B' },
         audioConfig: { audioEncoding: 'MP3', pitch: 0, speakingRate: 1.0 },
       }),
-      timeout: TTS_TIMEOUT_MS,
-    }
+    },
+    TTS_TIMEOUT_MS
   );
 
   if (!response.ok) {
@@ -204,8 +203,8 @@ async function geminiTTS(text) {
           },
         },
       }),
-      timeout: TTS_TIMEOUT_MS,
-    }
+    },
+    TTS_TIMEOUT_MS
   );
 
   if (!response.ok) {
@@ -271,8 +270,7 @@ async function groqTTS(text) {
       voice: process.env.GROQ_TTS_VOICE || 'Fritz-PlayAI',
       response_format: 'mp3',
     }),
-    timeout: TTS_TIMEOUT_MS,
-  });
+  }, TTS_TIMEOUT_MS);
 
   if (!response.ok) {
     throw new Error(`Groq TTS error: ${response.status}`);
