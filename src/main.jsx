@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom/client'
 import App from '@/App.jsx'
 import '@/index.css'
 import '@/globals.css'
+import '@/styles/hover-states-mobile-first.css'
+import '@/styles/gradient-animations-optimized.css'
 import '@/styles/theme-accent-remap.css'
 import { installChunkReloadHandler } from '@/lib/chunkReload'
 
