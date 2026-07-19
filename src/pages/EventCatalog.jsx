@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { notifyAction, actionMessages } from '@/lib/actionNotifications';
 import {
   Trophy,
   Users,
@@ -96,6 +97,8 @@ export default function EventCatalog() {
       });
 
       toast.success('Event erfolgreich erstellt! Du kannst jetzt User einladen.');
+      const msg = actionMessages.eventCreated(customEventData.name);
+      notifyAction(msg.title, msg);
       setShowCreateForm(false);
       setCustomEventData({ name: '', description: '', target_species: '', duration_days: 14 });
       await loadData();

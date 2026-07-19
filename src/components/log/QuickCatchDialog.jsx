@@ -20,6 +20,7 @@ import { toLocalDatetimeInputValue } from "@/lib/utils";
 import { isInClosedSeason } from "@/lib/closedSeason";
 import { createCatchWithOfflineSupport, isOnline } from "@/components/utils/offlineSync";
 import { saveOfflinePhoto, updateOfflinePhotoById } from "@/utils/offlinePhotoStorage";
+import { notifyAction, actionMessages } from "@/lib/actionNotifications";
 
 export default function QuickCatchDialog() {
   const { t } = useLanguage();
@@ -473,6 +474,9 @@ export default function QuickCatchDialog() {
               duration: 4000
             }
           );
+
+          const catchMsg = actionMessages.catchLogged(trimmedSpecies, form.length_cm);
+          notifyAction(catchMsg.title, catchMsg);
 
           analytics.track({
             eventName: "fishing_catch_logged",

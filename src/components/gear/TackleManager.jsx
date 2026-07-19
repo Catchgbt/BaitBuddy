@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Trash2, Edit2, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
+import { notifyAction, actionMessages } from '@/lib/actionNotifications';
 import { motion } from 'framer-motion';
 
 const TACKLE_CATEGORIES = [
@@ -68,6 +69,8 @@ export function TackleManager({ userId }) {
       } else {
         await entities.GearItem.create(payload);
         toast.success('Tackle-Item erstellt');
+        const msg = actionMessages.gearAdded(payload.name);
+        notifyAction(msg.title, msg);
       }
 
       setFormData({

@@ -258,6 +258,18 @@ function LandingPageContent() {
         loadUserName();
         auth.isAuthenticated().then(setIsAuthenticated).catch(() => setIsAuthenticated(false));
 
+        // Referral-Code aus der URL (?ref=CODE) persistieren — beim ersten Login
+        // löst ReferralInvitePopup den Code ein und schaltet die 7-Tage-Belohnung
+        // für den Einladenden frei.
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const ref = params.get('ref');
+            if (ref) {
+                const cleaned = ref.trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 16);
+                if (cleaned) localStorage.setItem('bb_pending_referral_code', cleaned);
+            }
+        } catch { /* Storage optional */ }
+
         const prevBg = document.body.style.backgroundColor;
         const prevHtmlBg = document.documentElement.style.backgroundColor;
         document.body.style.backgroundColor = '#020f1a';

@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, Palette, Zap, Volume2, Shield, FileText } from 'lucide-react';
+import { Settings, Palette, Zap, Volume2, Shield, FileText, BellRing } from 'lucide-react';
 import GeneralSettings from './GeneralSettings';
 import AppearanceSettings from './AppearanceSettings';
 import BatterySettings from './BatterySettings';
 import VoiceSettings from './VoiceSettings';
 import TickerSettings from './TickerSettings';
 import WeatherAlertsSettings from './WeatherAlertsSettings';
+import ActionNotificationSettings from './ActionNotificationSettings';
 import DeleteAccountSection from './DeleteAccountSection';
 import { useTheme } from '@/lib/ThemeContext';
 
@@ -51,6 +52,12 @@ export default function SettingsPageTabbed() {
       label: 'Wetter',
       icon: FileText,
       component: WeatherAlertsSettings
+    },
+    {
+      id: 'notifications',
+      label: 'Benachrichtigungen',
+      icon: BellRing,
+      component: ActionNotificationSettings
     }
   ];
 

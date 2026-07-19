@@ -17,6 +17,7 @@ import { useLocation } from "@/components/location/LocationManager";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
 import TripLiveTicker from "@/components/LiveTrip/TripLiveTicker";
 import TripForm from "@/components/LiveTrip/TripForm";
+import { notifyAction, actionMessages } from "@/lib/actionNotifications";
 
 // spot_info normalisieren (Objekt = neu, String = alte Datensätze).
 function readSpot(spotInfo) {
@@ -127,9 +128,13 @@ function TripPlannerContent() {
       if (planId) {
         await FishingPlan.update(planId, payload);
         toast.success("Trip aktualisiert");
+        const msg = actionMessages.tripUpdated(payload.title);
+        notifyAction(msg.title, msg);
       } else {
         await FishingPlan.create(payload);
         toast.success("Trip gespeichert");
+        const msg = actionMessages.tripCreated(payload.title);
+        notifyAction(msg.title, msg);
         analytics.track({
           eventName: "fishing_plan_created",
           properties: { target_fish: payload.target_fish, has_coords: payload.spot_info?.lat != null },
@@ -166,6 +171,10 @@ function TripPlannerContent() {
         trackTripFinish(activeEventId);
       }
       toast.success(newState ? "Trip aktiviert" : "Trip deaktiviert");
+      const msg = newState
+        ? actionMessages.tripActivated(plan.title)
+        : actionMessages.tripDeactivated(plan.title);
+      notifyAction(msg.title, msg);
     } catch (error) {
       toast.error("Status konnte nicht gespeichert werden");
       await loadPlans();
@@ -180,6 +189,8 @@ function TripPlannerContent() {
       if (selectedPlan?.id === planId) setSelectedPlan(null);
       window.dispatchEvent(new Event("active-trips-updated"));
       toast.success("Trip gelöscht");
+      const msg = actionMessages.tripDeleted();
+      notifyAction(msg.title, msg);
     } catch (error) {
       toast.error("Trip konnte nicht gelöscht werden");
     }
