@@ -29,16 +29,16 @@ const AnimatedOrb = ({ size = 'md', state = 'idle', reducedMotion = false }) => 
   const animate = reducedMotion
     ? {
         boxShadow:
-          state === 'speaking' ? '0 0 40px rgba(34,211,238,0.8)'
-          : state === 'listening' ? '0 0 20px rgba(34,211,238,0.6)'
-          : '0 0 10px rgba(34,211,238,0.3)',
+          state === 'speaking' ? '0 0 24px hsl(var(--primary) / 0.45)'
+          : state === 'listening' ? '0 0 16px hsl(var(--primary) / 0.35)'
+          : '0 0 8px hsl(var(--primary) / 0.2)',
       }
     : {
         scale: state === 'listening' ? [1, 1.1, 1] : 1,
         boxShadow:
-          state === 'speaking' ? ['0 0 20px rgba(34,211,238,0.8)', '0 0 40px rgba(34,211,238,0.8)']
-          : state === 'listening' ? '0 0 20px rgba(34,211,238,0.6)'
-          : '0 0 10px rgba(34,211,238,0.3)',
+          state === 'speaking' ? ['0 0 14px hsl(var(--primary) / 0.4)', '0 0 24px hsl(var(--primary) / 0.45)']
+          : state === 'listening' ? '0 0 16px hsl(var(--primary) / 0.35)'
+          : '0 0 8px hsl(var(--primary) / 0.2)',
       };
 
   return (
@@ -272,7 +272,7 @@ const ARTab = ({ videoRef, cameraError, orbState, reducedMotion }) => (
         <motion.path
           key={i}
           d="M 0 50 Q 25 30 50 50 T 100 50"
-          stroke="rgba(34,211,238,0.4)"
+          stroke="hsl(var(--primary) / 0.4)"
           strokeWidth="2"
           fill="none"
           animate={reducedMotion ? undefined : {

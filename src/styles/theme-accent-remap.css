@@ -3903,3 +3903,4 @@
 /* === Kill decorative neon glow drop-shadows (was: drop-shadow-[0_0_..px_rgba(neon)]) === */
 [class*="drop-shadow-[0_0"]{filter:none!important;}
 [class*="shadow-cyan"],[class*="shadow-emerald"]{--tw-shadow-color:transparent!important;box-shadow:none!important;}
+[class*="shadow-[0_0"][class*="rgba"]{box-shadow:none!important;}

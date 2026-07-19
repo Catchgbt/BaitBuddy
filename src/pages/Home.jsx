@@ -165,9 +165,9 @@ function SideLinks() {
             <motion.span
               animate={{
                 textShadow: [
-                  '0 0 30px rgba(16, 185, 129, 0.9), 0 0 60px rgba(16, 185, 129, 0.6)',
-                  '0 0 50px rgba(34, 211, 238, 0.9), 0 0 80px rgba(34, 211, 238, 0.6)',
-                  '0 0 30px rgba(16, 185, 129, 0.9), 0 0 60px rgba(16, 185, 129, 0.6)'
+                  '0 0 12px hsl(var(--primary) / 0.35)',
+                  '0 0 20px hsl(var(--primary) / 0.45)',
+                  '0 0 12px hsl(var(--primary) / 0.35)'
                 ]
               }}
               transition={{

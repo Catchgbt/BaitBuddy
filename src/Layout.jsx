@@ -507,7 +507,7 @@ function LayoutContent({ children, currentPageName }) {
                 }
 
                 [data-sonner-toast][data-type="success"] {
-                  border-color: rgba(16, 185, 129, 0.5) !important;
+                  border-color: hsl(var(--accent) / 0.5) !important;
                   background: rgba(15, 23, 42, 0.95) !important;
                 }
 
@@ -518,7 +518,7 @@ function LayoutContent({ children, currentPageName }) {
                   top: 0;
                   bottom: 0;
                   width: 4px;
-                  background: linear-gradient(to bottom, #10b981, #059669);
+                  background: linear-gradient(to bottom, hsl(var(--accent)), hsl(var(--accent)));
                   border-radius: 1rem 0 0 1rem;
                 }
 
@@ -555,7 +555,7 @@ function LayoutContent({ children, currentPageName }) {
                 }
 
                 [data-sonner-toast][data-type="info"] {
-                  border-color: rgba(34, 211, 238, 0.5) !important;
+                  border-color: hsl(var(--primary) / 0.5) !important;
                   background: rgba(15, 23, 42, 0.95) !important;
                 }
 
@@ -566,7 +566,7 @@ function LayoutContent({ children, currentPageName }) {
                   top: 0;
                   bottom: 0;
                   width: 4px;
-                  background: linear-gradient(to bottom, #22d3ee, #06b6d4);
+                  background: linear-gradient(to bottom, hsl(var(--primary)), hsl(var(--primary)));
                   border-radius: 1rem 0 0 1rem;
                 }
 
@@ -580,13 +580,13 @@ function LayoutContent({ children, currentPageName }) {
                 }
 
                 [data-sonner-toast] [data-button] {
-                  background: rgba(34, 211, 238, 0.2) !important;
-                  color: rgb(34, 211, 238) !important;
-                  border: 1px solid rgba(34, 211, 238, 0.3) !important;
+                  background: hsl(var(--primary) / 0.2) !important;
+                  color: hsl(var(--primary)) !important;
+                  border: 1px solid hsl(var(--primary) / 0.3) !important;
                 }
 
                 [data-sonner-toast] [data-button]:hover {
-                  background: rgba(34, 211, 238, 0.3) !important;
+                  background: hsl(var(--primary) / 0.3) !important;
                 }
 
                 [data-sonner-toast] [data-close-button] {
@@ -722,7 +722,7 @@ function LayoutContent({ children, currentPageName }) {
                   position: absolute;
                   inset: -2px;
                   border-radius: inherit;
-                  background: linear-gradient(45deg, transparent, rgba(16, 185, 129, 0.3), transparent);
+                  background: linear-gradient(45deg, transparent, hsl(var(--accent) / 0.3), transparent);
                   animation: successGlow 0.6s ease-out;
                   pointer-events: none;
                   z-index: -1;
