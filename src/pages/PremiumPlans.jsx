@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +11,6 @@ import {
   isGooglePlayBillingAvailable,
   restoreGooglePlayPurchases
 } from "@/components/premium/googlePlayBilling";
-import WebCheckoutButton from "@/components/premium/WebCheckoutButton";
 
 export default function PremiumPlans() {
   const [user, setUser] = useState(null);
@@ -27,55 +25,6 @@ export default function PremiumPlans() {
     loadData();
     setBillingAvailable(isGooglePlayBillingAvailable());
   }, []);
-
-  // Rücksprung vom Stripe-Checkout: /PremiumPlans?checkout=success&plan_id=...
-  // &session_id=cs_... — die Aktivierung läuft serverseitig verifiziert über
-  // /api/premium/activate. Params sofort entfernen, damit ein Reload die
-  // Aktivierung nicht erneut anstößt (der Server ist zusätzlich idempotent).
-  useEffect(() => {
-    const checkout = searchParams.get('checkout');
-    if (!checkout) return;
-    const planId = searchParams.get('plan_id');
-    const sessionId = searchParams.get('session_id');
-    setSearchParams({}, { replace: true });
-
-    if (checkout === 'cancelled') {
-      toast.info('Kauf abgebrochen');
-      return;
-    }
-    if (checkout === 'success' && planId && sessionId) {
-      finalizeStripeCheckout(planId, sessionId);
-    }
-  }, []);
-
-  const finalizeStripeCheckout = async (planId, sessionId) => {
-    setProcessingPlan(planId);
-    try {
-      const response = await functions.invoke('activatePlan', {
-        plan_id: planId,
-        transaction_id: sessionId,
-        payment_method: 'stripe'
-      });
-      const data = response?.data ?? response;
-      if (!data?.ok) {
-        throw new Error(data?.error || 'Plan-Aktivierung fehlgeschlagen');
-      }
-      toast.success('Plan aktiviert', {
-        description: 'Deine Zahlung wurde bestätigt. Dein Premium-Plan ist jetzt aktiv.'
-      });
-      await loadData();
-      window.dispatchEvent(new CustomEvent('plan-updated'));
-    } catch (error) {
-      toast.error('Aktivierung fehlgeschlagen', {
-        description: error?.message
-          ? `${error.message} — falls die Zahlung abgebucht wurde, kontaktiere den Support.`
-          : 'Falls die Zahlung abgebucht wurde, kontaktiere den Support.',
-        duration: 10000
-      });
-    } finally {
-      setProcessingPlan(null);
-    }
-  };
 
   const loadData = async () => {
     try {
@@ -338,16 +287,13 @@ export default function PremiumPlans() {
           )}
         </div>
 
-        {!billingAvailable && (
-          <div className="max-w-3xl mx-auto mb-8 p-4 rounded-xl border border-cyan-700/50 bg-cyan-900/20 flex items-start gap-3">
-            <Smartphone className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-cyan-100">
-              <strong className="block mb-1">Bezahlung im Browser</strong>
-              Du kannst Premium-Plaene direkt hier mit Kreditkarte (Visa, Mastercard, Amex), Google Pay oder Apple Pay bezahlen.
-              In der Android-App ist zusaetzlich Google Play Billing verfuegbar.
-            </div>
+        <div className="max-w-3xl mx-auto mb-8 p-4 rounded-xl border border-cyan-700/50 bg-cyan-900/20 flex items-start gap-3">
+          <Smartphone className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-cyan-100">
+            <strong className="block mb-1">Premium-Käufe nur in der Android-App</strong>
+            Lade die BaitBuddy App aus dem Google Play Store, um Premium-Pläne zu kaufen. Die Zahlung läuft sicher über Google Play Billing.
           </div>
-        )}
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {plans.map((plan) => {
@@ -420,8 +366,8 @@ export default function PremiumPlans() {
                       Kostenlos nutzen
                     </Button>
                   ) : (
-                    <div className="space-y-2">
-                      {billingAvailable && (
+                    <>
+                      {billingAvailable ? (
                         <Button
                           onClick={() => handlePlayStorePurchase(plan.id)}
                           disabled={isProcessing}
@@ -439,11 +385,14 @@ export default function PremiumPlans() {
                             </>
                           )}
                         </Button>
+                      ) : (
+                        <div className="p-3 rounded-lg bg-gray-800/50 border border-gray-700 text-center">
+                          <p className="text-sm text-gray-300">
+                            Käufe nur in der<br />Android-App verfügbar
+                          </p>
+                        </div>
                       )}
-                      {!billingAvailable && (
-                        <WebCheckoutButton planId={plan.id} disabled={isProcessing} />
-                      )}
-                    </div>
+                    </>
                   )}
                 </CardContent>
               </Card>
