@@ -140,15 +140,10 @@ export default function Header({
           )}
           
           <motion.div
-            animate={{ 
-              scale: [1, 1.05, 1],
-              boxShadow: [
-                '0 0 0 0 rgba(34, 211, 238, 0)',
-                '0 0 20px 5px rgba(34, 211, 238, 0.4)',
-                '0 0 0 0 rgba(34, 211, 238, 0)'
-              ]
+            animate={{
+              scale: [1, 1.05, 1]
             }}
-            transition={{ 
+            transition={{
               duration: 2,
               repeat: Infinity,
               ease: "easeInOut"
