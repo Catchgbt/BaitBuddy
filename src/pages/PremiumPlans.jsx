@@ -19,7 +19,6 @@ export default function PremiumPlans() {
   const [processingPlan, setProcessingPlan] = useState(null);
   const [billingAvailable, setBillingAvailable] = useState(false);
   const [restoring, setRestoring] = useState(false);
-  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     loadData();
