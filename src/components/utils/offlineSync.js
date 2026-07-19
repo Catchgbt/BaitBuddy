@@ -9,6 +9,7 @@ import {
   getUnsyncdOfflinePhotos,
   markPhotoAsSynced,
   markPhotoSyncError,
+  cleanupSyncedPhotos,
 } from '@/utils/offlinePhotoStorage';
 
 // Re-export for convenience
@@ -245,6 +246,18 @@ export function getOfflineQueueStatus() {
 
 // ─── Offline Photos (IndexedDB) ────────────────────────────────────────────────
 
+// ArrayBuffer → Base64, in Blöcken, damit große Fotos nicht am Argument-Limit
+// von String.fromCharCode (Callstack) scheitern.
+function arrayBufferToBase64(buffer) {
+  const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+  let binary = '';
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(binary);
+}
+
 export async function syncOfflinePhotos() {
   if (!checkIsOnline()) {
     console.log('Offline — Foto-Sync verpasst');
@@ -270,19 +283,34 @@ export async function syncOfflinePhotos() {
 
     for (const photo of photos) {
       try {
-        const blob = new Blob([new Uint8Array(photo.fileData)], {
-          type: photo.mimeType || 'image/jpeg',
-        });
-        const file = new File([blob], photo.fileName, {
-          type: photo.mimeType || 'image/jpeg',
-        });
+        // Upload als Base64-JSON an den existierenden Backend-Endpunkt
+        // /api/files/upload. Der frühere Code schickte ein File-Objekt per
+        // JSON.stringify (wird zu {}) an das nicht existente /api/storage/upload —
+        // der Foto-Sync konnte dadurch nie erfolgreich sein.
+        const file_base64 = arrayBufferToBase64(photo.fileData);
+        // Backend lehnt Dateinamen mit Pfadanteilen ab (Path-Traversal-Schutz).
+        const file_name = String(photo.fileName || `offline_${photo.id}.jpg`).split(/[\\/]/).pop();
 
-        const uploadResult = await api.post('/api/storage/upload', {
-          file,
+        const uploadResult = await api.post('/api/files/upload', {
+          file_base64,
+          file_name,
+          file_type: photo.mimeType || 'image/jpeg',
         });
 
         if (uploadResult?.file_url) {
           await markPhotoAsSynced(photo.id);
+
+          // Wenn das Foto mit einem Fang verlinkt ist, aktualisiere den Fang mit der photo_url
+          if (photo.catchId) {
+            try {
+              await entities.Catch.update(photo.catchId, { photo_url: uploadResult.file_url });
+              console.log(`Catch ${photo.catchId} mit Foto-URL aktualisiert: ${uploadResult.file_url}`);
+            } catch (updateError) {
+              console.warn(`Fehler beim Aktualisieren von Catch ${photo.catchId} mit Foto-URL:`, updateError);
+              // Nicht kritisch — Foto ist hochgeladen, nur die Verlinkung fehlgeschlagen
+            }
+          }
+
           console.log(`Foto ${photo.id} synchronisiert: ${uploadResult.file_url}`);
           synced++;
         } else {
@@ -298,6 +326,9 @@ export async function syncOfflinePhotos() {
 
     if (synced > 0) {
       console.log(`Erfolgreich synchronisiert: ${synced} Fotos`);
+      // Erfolgreich hochgeladene Fotos aus IndexedDB entfernen, damit der
+      // lokale Speicher nicht wächst und die Warteschlangen-Anzeige stimmt.
+      try { await cleanupSyncedPhotos(); } catch { /* Cleanup ist unkritisch */ }
     }
     if (failed > 0) {
       console.warn(`Sync fehlgeschlagen: ${failed} Fotos`);

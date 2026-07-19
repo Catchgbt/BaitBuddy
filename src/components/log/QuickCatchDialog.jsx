@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { toLocalDatetimeInputValue } from "@/lib/utils";
 import { isInClosedSeason } from "@/lib/closedSeason";
 import { createCatchWithOfflineSupport, isOnline } from "@/components/utils/offlineSync";
+import { saveOfflinePhoto, updateOfflinePhotoById } from "@/utils/offlinePhotoStorage";
 
 export default function QuickCatchDialog() {
   const { t } = useLanguage();
@@ -36,6 +37,7 @@ export default function QuickCatchDialog() {
   const [showAiConfirmDialog, setShowAiConfirmDialog] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showBiteDetectorPrompt, setShowBiteDetectorPrompt] = useState(false);
+  const [pendingOfflinePhotoId, setPendingOfflinePhotoId] = useState(null);
 
   const { triggerHaptic } = useHaptic();
   const { playSound } = useSound();
@@ -197,6 +199,7 @@ export default function QuickCatchDialog() {
     setSavedCatchData(null);
     setAiAnalysisData(null);
     setShowAiConfirmDialog(false);
+    setPendingOfflinePhotoId(null);
     setForm({
       species: "",
       spot_id: "",
@@ -438,6 +441,20 @@ export default function QuickCatchDialog() {
       const savedCatch = await createCatchWithOfflineSupport(catchData);
       const wasOffline = !isOnline();
 
+      // If we have a pending offline photo, link it to this catch
+      if (pendingOfflinePhotoId && wasOffline) {
+        try {
+          const catchIdForPhoto = savedCatch?.__id || savedCatch?.id;
+          if (catchIdForPhoto) {
+            await updateOfflinePhotoById(pendingOfflinePhotoId, catchIdForPhoto);
+            console.log(`Offline photo ${pendingOfflinePhotoId} linked to catch ${catchIdForPhoto}`);
+          }
+        } catch (linkError) {
+          console.error('Fehler beim Verlinken des offline Fotos mit dem Fang:', linkError);
+          // Nicht kritisch — Foto wird trotzdem synced, kann aber nicht zurück zum Fang verlinkt werden
+        }
+      }
+
       if (!wasOffline) {
         try {
           const user = await auth.me();
@@ -641,8 +658,26 @@ export default function QuickCatchDialog() {
       playSound('loading');
       const fileName = String(file.name || "fang") + ".jpg";
       const f = new File([blob], fileName, { type: "image/jpeg" });
-      const result = await UploadFile({ file: f });
-      const file_url = result?.file_url;
+      let file_url = null;
+
+      try {
+        const result = await UploadFile({ file: f });
+        file_url = result?.file_url;
+      } catch (uploadError) {
+        // If offline or upload fails, save photo to IndexedDB for later sync
+        if (!isOnline()) {
+          console.log('Offline — Foto wird lokal gespeichert und später synchronisiert');
+          const photoId = await saveOfflinePhoto(blob);
+          setPendingOfflinePhotoId(photoId);
+          toast.info("Foto offline gespeichert. Wird später automatisch hochgeladen.");
+          playSound('notification');
+          setIsAnalyzing(false);
+          return;
+        } else {
+          throw uploadError;
+        }
+      }
+
       if (!file_url) throw new Error("Keine Datei-URL erhalten");
 
       setForm(prev => ({ ...prev, photo_url: file_url }));

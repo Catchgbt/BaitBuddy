@@ -232,6 +232,45 @@ export async function markPhotoSyncError(photoId, error) {
 }
 
 /**
+ * Aktualisiert ein Foto mit einer catch ID (z.B. nach dem Speichern des Fangs)
+ */
+export async function updateOfflinePhotoById(photoId, catchId) {
+  try {
+    await initDB();
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const getRequest = store.get(photoId);
+
+      getRequest.onsuccess = () => {
+        const photo = getRequest.result;
+        if (photo) {
+          photo.catchId = catchId;
+
+          const updateRequest = store.put(photo);
+          updateRequest.onsuccess = () => {
+            resolve(photo);
+          };
+          updateRequest.onerror = () => {
+            reject(updateRequest.error);
+          };
+        } else {
+          reject(new Error('Foto nicht gefunden'));
+        }
+      };
+
+      getRequest.onerror = () => {
+        reject(getRequest.error);
+      };
+    });
+  } catch (e) {
+    console.error('Fehler beim Aktualisieren der Photo ID:', e);
+    throw e;
+  }
+}
+
+/**
  * Löscht ein Foto aus der lokalen Speicherung
  */
 export async function deleteOfflinePhoto(photoId) {

@@ -5,7 +5,7 @@ import { getUnsyncdOfflinePhotos, getOfflinePhotoStats } from '@/utils/offlinePh
 import { syncOfflinePhotos } from '@/components/utils/offlineSync';
 
 export default function OfflinePhotoQueueStatus() {
-  const [stats, setStats] = useState({ total: 0, withErrors: 0 });
+  const [stats, setStats] = useState({ total: 0, unsynced: 0, withErrors: 0 });
   const [syncing, setSyncing] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [photos, setPhotos] = useState([]);
@@ -49,7 +49,9 @@ export default function OfflinePhotoQueueStatus() {
     }
   };
 
-  if (stats.total === 0) {
+  // Nur ungesyncte Fotos zählen — `total` enthält auch bereits synchronisierte,
+  // der Banner bliebe sonst nach erfolgreichem Sync dauerhaft stehen.
+  if (!stats.unsynced) {
     return null;
   }
 
@@ -70,7 +72,7 @@ export default function OfflinePhotoQueueStatus() {
           )}
           <div className="text-sm">
             <div className={stats.withErrors ? 'text-red-300' : 'text-amber-300'}>
-              {stats.total} Foto(s) warten auf Synchronisierung
+              {stats.unsynced} Foto(s) warten auf Synchronisierung
             </div>
             {stats.withErrors > 0 && (
               <div className="text-xs text-red-400">

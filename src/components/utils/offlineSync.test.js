@@ -1,9 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockEntities, mockApi, onlineState } = vi.hoisted(() => ({
+const { mockEntities, mockApi, onlineState, mockPhotoStorage } = vi.hoisted(() => ({
   mockEntities: { Catch: { create: vi.fn() } },
-  mockApi: { getToken: vi.fn(() => 'test-token') },
+  mockApi: { getToken: vi.fn(() => 'test-token'), post: vi.fn() },
   onlineState: { current: true },
+  mockPhotoStorage: {
+    getUnsyncdOfflinePhotos: vi.fn(async () => []),
+    markPhotoAsSynced: vi.fn(async () => {}),
+    markPhotoSyncError: vi.fn(async () => {}),
+    cleanupSyncedPhotos: vi.fn(async () => {}),
+  },
 }));
 
 vi.mock('@/api/frontendClient', () => ({ entities: mockEntities, api: mockApi }));
@@ -11,6 +17,7 @@ vi.mock('@/utils/networkStatus', () => ({
   isOnline: () => onlineState.current,
   onOnlineStatusChange: vi.fn(() => () => {}),
 }));
+vi.mock('@/utils/offlinePhotoStorage', () => mockPhotoStorage);
 
 import {
   addToOfflineCatchQueue,
@@ -18,6 +25,7 @@ import {
   removeFromOfflineCatchQueue,
   clearOfflineCatchQueue,
   syncOfflineCatches,
+  syncOfflinePhotos,
   createCatchWithOfflineSupport,
   initAutoSync,
   stopAutoSync,
@@ -120,6 +128,75 @@ describe('offlineSync – Catch-Queue', () => {
   });
 });
 
+describe('offlineSync – Foto-Sync', () => {
+  const photo = () => ({
+    id: 7,
+    fileName: 'fang.jpg',
+    mimeType: 'image/jpeg',
+    // "abc" als ArrayBuffer — btoa('abc') === 'YWJj'
+    fileData: new Uint8Array([97, 98, 99]).buffer,
+    synced: false,
+  });
+
+  beforeEach(() => {
+    onlineState.current = true;
+    mockApi.getToken.mockReturnValue('test-token');
+    mockApi.post.mockReset();
+    mockPhotoStorage.getUnsyncdOfflinePhotos.mockReset().mockResolvedValue([]);
+    mockPhotoStorage.markPhotoAsSynced.mockClear();
+    mockPhotoStorage.markPhotoSyncError.mockClear();
+    mockPhotoStorage.cleanupSyncedPhotos.mockClear();
+  });
+
+  it('laedt Fotos als Base64 auf /api/files/upload hoch und markiert sie als gesynct', async () => {
+    mockPhotoStorage.getUnsyncdOfflinePhotos.mockResolvedValue([photo()]);
+    mockApi.post.mockResolvedValue({ file_url: 'https://storage/fang.jpg' });
+
+    const result = await syncOfflinePhotos();
+
+    expect(mockApi.post).toHaveBeenCalledWith('/api/files/upload', {
+      file_base64: 'YWJj',
+      file_name: 'fang.jpg',
+      file_type: 'image/jpeg',
+    });
+    expect(mockPhotoStorage.markPhotoAsSynced).toHaveBeenCalledWith(7);
+    expect(mockPhotoStorage.cleanupSyncedPhotos).toHaveBeenCalled();
+    expect(result).toEqual({ synced: 1, failed: 0, errors: [] });
+  });
+
+  it('entfernt Pfadanteile aus dem Dateinamen (Backend-Path-Traversal-Schutz)', async () => {
+    mockPhotoStorage.getUnsyncdOfflinePhotos.mockResolvedValue([
+      { ...photo(), fileName: '../evil/fang.jpg' },
+    ]);
+    mockApi.post.mockResolvedValue({ file_url: 'https://storage/fang.jpg' });
+
+    await syncOfflinePhotos();
+
+    expect(mockApi.post.mock.calls[0][1].file_name).toBe('fang.jpg');
+  });
+
+  it('markiert Fotos mit Fehler, wenn der Upload fehlschlaegt', async () => {
+    mockPhotoStorage.getUnsyncdOfflinePhotos.mockResolvedValue([photo()]);
+    mockApi.post.mockRejectedValue(new Error('HTTP 500'));
+
+    const result = await syncOfflinePhotos();
+
+    expect(mockPhotoStorage.markPhotoAsSynced).not.toHaveBeenCalled();
+    expect(mockPhotoStorage.markPhotoSyncError).toHaveBeenCalledWith(7, 'HTTP 500');
+    expect(result.failed).toBe(1);
+  });
+
+  it('synchronisiert nicht ohne Auth-Token', async () => {
+    mockApi.getToken.mockReturnValue(null);
+    mockPhotoStorage.getUnsyncdOfflinePhotos.mockResolvedValue([photo()]);
+
+    const result = await syncOfflinePhotos();
+
+    expect(mockApi.post).not.toHaveBeenCalled();
+    expect(result).toEqual({ synced: 0, failed: 0, errors: [] });
+  });
+});
+
 describe('offlineSync – initAutoSync / plan-updated', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -140,5 +217,97 @@ describe('offlineSync – initAutoSync / plan-updated', () => {
 
     expect(mockEntities.Catch.create).toHaveBeenCalled();
     stopAutoSync();
+  });
+});
+
+describe('offlineSync – Offline Photo Integration with Catches', () => {
+  beforeEach(() => {
+    onlineState.current = false;
+    mockApi.getToken.mockReturnValue('test-token');
+    mockApi.post.mockReset();
+    mockEntities.Catch.update = vi.fn().mockResolvedValue({});
+    mockPhotoStorage.getUnsyncdOfflinePhotos.mockReset().mockResolvedValue([]);
+  });
+
+  it('verlinkt offline Fangfoto mit Fang und lädt beide hoch', async () => {
+    const photoWithCatchId = {
+      id: 7,
+      fileName: 'fang.jpg',
+      mimeType: 'image/jpeg',
+      fileData: new Uint8Array([97, 98, 99]).buffer,
+      synced: false,
+      catchId: 'offline_12345', // Verlinkt mit Fang
+    };
+
+    mockPhotoStorage.getUnsyncdOfflinePhotos.mockResolvedValue([photoWithCatchId]);
+    mockApi.post.mockResolvedValue({ file_url: 'https://storage/fang.jpg' });
+
+    onlineState.current = true;
+    const result = await syncOfflinePhotos();
+
+    // Foto wird hochgeladen
+    expect(mockApi.post).toHaveBeenCalledWith('/api/files/upload', {
+      file_base64: 'YWJj',
+      file_name: 'fang.jpg',
+      file_type: 'image/jpeg',
+    });
+
+    // Fang wird mit photo_url aktualisiert
+    expect(mockEntities.Catch.update).toHaveBeenCalledWith(
+      'offline_12345',
+      { photo_url: 'https://storage/fang.jpg' }
+    );
+
+    expect(result).toEqual({ synced: 1, failed: 0, errors: [] });
+  });
+
+  it('synct Foto ohne catchId ohne Fang-Update', async () => {
+    const photoWithoutCatchId = {
+      id: 8,
+      fileName: 'fang2.jpg',
+      mimeType: 'image/jpeg',
+      fileData: new Uint8Array([100, 101, 102]).buffer,
+      synced: false,
+      catchId: null, // Nicht mit Fang verlinkt
+    };
+
+    mockPhotoStorage.getUnsyncdOfflinePhotos.mockResolvedValue([photoWithoutCatchId]);
+    mockApi.post.mockResolvedValue({ file_url: 'https://storage/fang2.jpg' });
+
+    onlineState.current = true;
+    await syncOfflinePhotos();
+
+    // Foto wird hochgeladen
+    expect(mockApi.post).toHaveBeenCalled();
+
+    // Aber Fang wird NICHT aktualisiert (kein catchId)
+    expect(mockEntities.Catch.update).not.toHaveBeenCalled();
+  });
+
+  it('markiert Foto mit Fehler auch wenn Fang-Update fehlschlägt', async () => {
+    const photoWithCatchId = {
+      id: 9,
+      fileName: 'fang3.jpg',
+      mimeType: 'image/jpeg',
+      fileData: new Uint8Array([103, 104, 105]).buffer,
+      synced: false,
+      catchId: 'offline_99999',
+    };
+
+    mockPhotoStorage.getUnsyncdOfflinePhotos.mockResolvedValue([photoWithCatchId]);
+    mockApi.post.mockResolvedValue({ file_url: 'https://storage/fang3.jpg' });
+    mockEntities.Catch.update.mockRejectedValue(new Error('Fang nicht gefunden'));
+
+    onlineState.current = true;
+    await syncOfflinePhotos();
+
+    // Foto wird trotzdem als synced markiert (Upload erfolgreich)
+    expect(mockPhotoStorage.markPhotoAsSynced).toHaveBeenCalledWith(9);
+
+    // Versuch, Fang zu aktualisieren, fehlgeschlagen — aber nicht kritisch
+    expect(mockEntities.Catch.update).toHaveBeenCalledWith(
+      'offline_99999',
+      { photo_url: 'https://storage/fang3.jpg' }
+    );
   });
 });
