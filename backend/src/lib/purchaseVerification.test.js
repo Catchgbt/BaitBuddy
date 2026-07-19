@@ -6,7 +6,7 @@ const { googleAuthMock, androidPublisherMock, stripeInstanceMock } = vi.hoisted(
     purchases: { products: { get: vi.fn() } },
   },
   stripeInstanceMock: {
-    checkout: { sessions: { retrieve: vi.fn() } },
+    checkout: { sessions: { retrieve: vi.fn(), create: vi.fn() } },
   },
 }));
 
@@ -23,12 +23,14 @@ vi.mock('stripe', () => ({
 
 let verifyGooglePlayPurchase;
 let verifyStripePayment;
+let createStripeCheckoutSession;
 
 beforeEach(async () => {
   vi.resetModules();
   androidPublisherMock.purchases.products.get.mockReset();
   stripeInstanceMock.checkout.sessions.retrieve.mockReset();
-  ({ verifyGooglePlayPurchase, verifyStripePayment } = await import('./purchaseVerification.js'));
+  stripeInstanceMock.checkout.sessions.create.mockReset();
+  ({ verifyGooglePlayPurchase, verifyStripePayment, createStripeCheckoutSession } = await import('./purchaseVerification.js'));
 });
 
 describe('verifyGooglePlayPurchase', () => {
@@ -107,5 +109,66 @@ describe('verifyStripePayment', () => {
 
     const result = await verifyStripePayment({ sessionId: 'cs_test_1' });
     expect(result.valid).toBe(false);
+  });
+});
+
+describe('createStripeCheckoutSession', () => {
+  const sessionInput = {
+    planId: 'pro',
+    planName: 'Pro',
+    amountCents: 999,
+    userId: 'user-1',
+    userEmail: 'angler@baitbuddy.test',
+    successUrl: 'https://baitbuddy.test/PremiumPlans?checkout=success&plan_id=pro&session_id={CHECKOUT_SESSION_ID}',
+    cancelUrl: 'https://baitbuddy.test/PremiumPlans?checkout=cancelled',
+  };
+
+  it('liefert ok:false, wenn kein Stripe-Secret konfiguriert ist', async () => {
+    delete process.env.STRIPE_SECRET_KEY;
+    const result = await createStripeCheckoutSession(sessionInput);
+    expect(result.ok).toBe(false);
+    expect(result.reason).toMatch(/nicht konfiguriert/);
+  });
+
+  it('erstellt eine Einmalzahlungs-Session mit Nutzer- und Plan-Metadata', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+    stripeInstanceMock.checkout.sessions.create.mockResolvedValue({
+      id: 'cs_test_1',
+      url: 'https://checkout.stripe.com/pay/cs_test_1',
+    });
+
+    const result = await createStripeCheckoutSession(sessionInput);
+
+    expect(result.ok).toBe(true);
+    expect(result.id).toBe('cs_test_1');
+    expect(result.url).toBe('https://checkout.stripe.com/pay/cs_test_1');
+    expect(stripeInstanceMock.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: 'payment',
+        client_reference_id: 'user-1',
+        customer_email: 'angler@baitbuddy.test',
+        metadata: { plan_id: 'pro', user_id: 'user-1' },
+        success_url: sessionInput.successUrl,
+        cancel_url: sessionInput.cancelUrl,
+        line_items: [
+          expect.objectContaining({
+            quantity: 1,
+            price_data: expect.objectContaining({
+              currency: 'eur',
+              unit_amount: 999,
+            }),
+          }),
+        ],
+      })
+    );
+  });
+
+  it('faengt Stripe-API-Fehler ab, statt zu werfen', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+    stripeInstanceMock.checkout.sessions.create.mockRejectedValue(new Error('rate limited'));
+
+    const result = await createStripeCheckoutSession(sessionInput);
+    expect(result.ok).toBe(false);
+    expect(result.reason).toMatch(/rate limited/);
   });
 });
