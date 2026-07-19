@@ -1,9 +1,9 @@
 import React from 'react';
 
-// KI-Buddy – neutraler Avatar des Angel-Assistenten. Bewusst geschlechtsneutral
-// gehalten: ein freundliches Roboter-Gesicht als Inline-SVG (keine Foto-Datei,
-// kein zusätzlicher Netzwerk-Request). Der Zustand wird über einen pulsierenden
-// Leucht-Ring dargestellt:
+// KI-Buddy – freundlicher Fisch-Avatar des Angel-Assistenten. Passt perfekt zur
+// Angel-App und wirkt einladend. Dargestellt als stilisierter Fisch in Inline-SVG
+// (keine Foto-Datei, kein zusätzlicher Netzwerk-Request). Der Zustand wird über
+// einen pulsierenden Leucht-Ring dargestellt:
 //  - idle:      ruhiger, sanfter Grund-Schein
 //  - listening: türkiser Ring pulsiert (hört zu)
 //  - speaking:  goldener Ring pulsiert (spricht)
@@ -65,11 +65,10 @@ export default function BuddyAvatar({
       ? 'buddy-avatar--listening'
       : '';
 
-  // Mund wechselt zwischen ruhigem Lächeln (idle/listening) und offener
-  // Sprech-Form, damit der Zustand auch ohne Farbring erkennbar bleibt.
+  // Mund wechselt zwischen freundlich (idle/listening) und offen (speaking)
   const mouth = speaking
-    ? <ellipse cx="50" cy="57" rx="8" ry="4.5" fill="#3fe0d0" />
-    : <path d="M41 56 Q50 62 59 56" stroke="#3fe0d0" strokeWidth="3.5" strokeLinecap="round" fill="none" />;
+    ? <ellipse cx="50" cy="60" rx="6" ry="5" fill="#ff6b35" />
+    : <path d="M45 58 Q50 62 55 58" stroke="#ff6b35" strokeWidth="2.5" strokeLinecap="round" fill="none" />;
 
   return (
     <div
@@ -80,43 +79,62 @@ export default function BuddyAvatar({
       <svg
         viewBox="0 0 100 100"
         role="img"
-        aria-label="KI-Buddy"
+        aria-label="KI-Buddy Fisch"
         className="buddy-avatar-svg"
         focusable="false"
       >
         <defs>
-          <radialGradient id="buddyBg" cx="50%" cy="35%" r="75%">
-            <stop offset="0%" stopColor="#3b82c4" />
-            <stop offset="100%" stopColor="#123a63" />
+          <radialGradient id="fishBg" cx="50%" cy="35%" r="75%">
+            <stop offset="0%" stopColor="#1e5a8e" />
+            <stop offset="100%" stopColor="#0d2e4a" />
           </radialGradient>
-          <linearGradient id="buddyHead" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#e8f4fc" />
-            <stop offset="100%" stopColor="#b9d9ef" />
+          <linearGradient id="fishBody" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#ff9d3d" />
+            <stop offset="50%" stopColor="#ffb84d" />
+            <stop offset="100%" stopColor="#ff8c3d" />
+          </linearGradient>
+          <linearGradient id="fishBelly" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#ffd966" />
+            <stop offset="100%" stopColor="#ffb84d" />
           </linearGradient>
         </defs>
 
-        <circle cx="50" cy="50" r="50" fill="url(#buddyBg)" />
+        <circle cx="50" cy="50" r="50" fill="url(#fishBg)" />
 
-        {/* Antenne */}
-        <line x1="50" y1="14" x2="50" y2="22" stroke="#7fd4e8" strokeWidth="3" strokeLinecap="round" />
-        <circle cx="50" cy="11" r="4" fill="#3fe0d0" />
+        {/* Fisch-Körper */}
+        <ellipse cx="50" cy="50" rx="28" ry="24" fill="url(#fishBody)" />
 
-        {/* Kopf */}
-        <rect x="22" y="22" width="56" height="52" rx="18" fill="url(#buddyHead)" />
+        {/* Bauch */}
+        <ellipse cx="50" cy="54" rx="22" ry="14" fill="url(#fishBelly)" />
 
-        {/* Seitliche Sensoren */}
-        <rect x="14" y="40" width="6" height="16" rx="3" fill="#7fd4e8" />
-        <rect x="80" y="40" width="6" height="16" rx="3" fill="#7fd4e8" />
+        {/* Schwanzflosse */}
+        <path d="M 22 48 L 8 35 L 10 48 L 8 61 Z" fill="#ff8c3d" />
+        <path d="M 22 48 L 12 42 L 14 48 L 12 54 Z" fill="#ffb84d" opacity="0.7" />
 
-        {/* Gesichts-Panel */}
-        <rect x="30" y="32" width="40" height="34" rx="12" fill="#0e3050" />
+        {/* Rückenflosse */}
+        <path d="M 45 28 L 50 18 L 55 28 Z" fill="#ff8c3d" />
+
+        {/* Bauchflossen */}
+        <ellipse cx="35" cy="62" rx="5" ry="8" fill="#ffb84d" opacity="0.8" transform="rotate(-30 35 62)" />
+        <ellipse cx="65" cy="62" rx="5" ry="8" fill="#ffb84d" opacity="0.8" transform="rotate(30 65 62)" />
+
+        {/* Kiemen-Details */}
+        <path d="M 32 48 Q 28 45 26 48 Q 28 51 32 48" stroke="#ff7c3d" strokeWidth="1.5" fill="none" opacity="0.6" />
+        <path d="M 32 52 Q 28 55 26 52 Q 28 49 32 52" stroke="#ff7c3d" strokeWidth="1.5" fill="none" opacity="0.6" />
 
         {/* Augen */}
-        <circle cx="41" cy="46" r="5" fill="#3fe0d0" />
-        <circle cx="59" cy="46" r="5" fill="#3fe0d0" />
+        <circle cx="42" cy="45" r="4" fill="#1a1a1a" />
+        <circle cx="42" cy="43" r="1.5" fill="#ffffff" opacity="0.8" />
+        <circle cx="58" cy="45" r="4" fill="#1a1a1a" />
+        <circle cx="58" cy="43" r="1.5" fill="#ffffff" opacity="0.8" />
 
         {/* Mund */}
         {mouth}
+
+        {/* Schuppen-Details */}
+        <circle cx="55" cy="48" r="2.5" fill="#ff7c3d" opacity="0.5" />
+        <circle cx="60" cy="50" r="2.5" fill="#ff7c3d" opacity="0.5" />
+        <circle cx="48" cy="52" r="2.5" fill="#ff7c3d" opacity="0.5" />
       </svg>
     </div>
   );
