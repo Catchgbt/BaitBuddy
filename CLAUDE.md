@@ -114,6 +114,31 @@ Zeigt Kunstköder (Wobbler, Gummifisch am Jigkopf, Spinner, Blinker, Popper/Stic
 
 ---
 
+## 🔔 Aktions-Benachrichtigungen (Trip, Fang, Alarm …)
+
+Nach jeder erfolgreichen Mutation zeigt die App eine System-Benachrichtigung
+(Trip erstellt/aktualisiert/aktiviert/gelöscht, Fang gespeichert, Spot
+gespeichert, Wetter-Alarme aktualisiert, Gear ergänzt, Event erstellt).
+Zentraler Helfer: `src/lib/actionNotifications.js` mit:
+
+- `notifyAction(title, { body, tag, url })` — sendet über die Web-`Notification`-
+  API (funktioniert auch im Capacitor-Android-WebView, kein Extra-Plugin nötig).
+- `actionMessages.*` — vorgefertigte, konsistent formulierte Texte pro
+  Aktion (keine dekorativen Emojis, deutsche Sprache).
+- Beim ersten Aufruf wird die OS-Permission einmal angefragt (`ensurePermission`).
+  Ablehnung merken wir uns in `localStorage.bb_action_notifications_prompted`,
+  damit der Nutzer nicht bei jeder Aktion erneut gefragt wird.
+- User-Toggle über `Settings → Benachrichtigungen`
+  (`src/components/settings/ActionNotificationSettings.jsx`), speichert in
+  `localStorage.bb_action_notifications_enabled`.
+- In-Memory-Dedupe pro `tag` (4 s), damit Doppelklicks nicht zwei
+  Notifications erzeugen.
+
+Bewusst KEINE Server-Push-Infrastruktur: die Aktionen laufen lokal, die
+Bestätigung darf lokal bleiben — das erspart FCM/APNS und passt zur
+Vercel-/Supabase-only-Regel. Für zeitversetzte Warnungen (Solunar, Tide,
+Wetter) bleibt `src/services/NotificationService.js` zuständig.
+
 ## 🎁 Freundschafts-Empfehlung (Login-Popup)
 
 Nach dem Einloggen erscheint auf dem Dashboard das `ReferralInvitePopup`

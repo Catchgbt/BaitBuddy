@@ -48,14 +48,16 @@ export default function ReferralInvitePopup() {
     setLoading(true);
     try {
       const data = await functions.invoke("getMyReferral");
-      if (data && data.ok) {
+      if (data && data.ok && data.code) {
         setReferral(data);
+        return data;
       }
     } catch (error) {
       console.debug("Referral-Popup: Code konnte nicht geladen werden", error);
     } finally {
       setLoading(false);
     }
+    return null;
   }, []);
 
   useEffect(() => {
@@ -81,8 +83,13 @@ export default function ReferralInvitePopup() {
 
       if (!shouldShowPopup()) return;
 
-      await loadReferral();
+      const data = await loadReferral();
       if (cancelled) return;
+      // Ohne gültigen Code (offline, Backend down, Mock in E2E) nichts
+      // öffnen — sonst blockiert der Radix-Overlay den restlichen Dashboard-
+      // Content, ohne dem Nutzer echten Mehrwert zu bieten.
+      if (!data?.code) return;
+
       // Kurzer Delay, damit das Dashboard erst montiert ist.
       const t = setTimeout(() => {
         if (!cancelled) {

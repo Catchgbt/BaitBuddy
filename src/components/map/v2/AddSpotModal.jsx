@@ -9,6 +9,7 @@ import { X, MapPin, Save } from "lucide-react";
 import { toast } from "sonner";
 import { useHaptic } from "@/components/utils/HapticFeedback";
 import { useOptimisticMutation } from "@/lib/useOptimisticMutation";
+import { notifyAction, actionMessages } from "@/lib/actionNotifications";
 
 const EMPTY_FORM = { name: "", water_type: "see", notes: "", depth_meters: "", is_favorite: false };
 
@@ -27,6 +28,8 @@ export default function AddSpotModal({ isOpen, onClose, onSave, initialCoords })
       toast.success("Spot erfolgreich gespeichert!", {
         description: `${spotData.name} wurde zur Karte hinzugefuegt`,
       });
+      const msg = actionMessages.spotCreated(spotData.name);
+      notifyAction(msg.title, msg);
       triggerHaptic('success');
       setFormData(EMPTY_FORM);
       onClose();

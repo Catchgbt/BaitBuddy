@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useHaptic } from "@/components/utils/HapticFeedback";
 import { useSound } from "@/components/utils/SoundManager";
+import { notifyAction, actionMessages } from "@/lib/actionNotifications";
 
 export default function WeatherAlertsSettings() {
   const { triggerHaptic } = useHaptic();
@@ -74,7 +75,10 @@ export default function WeatherAlertsSettings() {
         description: "Deine Einstellungen wurden aktualisiert",
         duration: 3000
       });
-      
+
+      const msg = actionMessages.weatherAlertsSaved();
+      notifyAction(msg.title, msg);
+
       playSound('success');
       triggerHaptic('success');
     } catch (error) {
