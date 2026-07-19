@@ -22,6 +22,7 @@ import PageContainer from "@/components/layout/PageContainer";
 import CommunityPostDialog from "@/components/community/CommunityPostDialog";
 import WeatherWarningBanner from "@/components/weather/WeatherWarningBanner";
 import SuspenseWithErrorBoundary from "@/components/utils/SuspenseWithErrorBoundary";
+import ReferralInvitePopup from "@/components/referral/ReferralInvitePopup";
 
 export default function Dashboard() {
   const queryClient = useQueryClient();
@@ -463,6 +464,7 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
 
     return (
     <PageContainer maxWidth="max-w-7xl" enableSwipeRefresh={true} onRefresh={loadData}>
+      <ReferralInvitePopup />
       <div
         ref={statusAnnouncementRef}
         role="status"

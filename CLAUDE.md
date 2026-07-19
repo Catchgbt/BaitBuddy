@@ -114,6 +114,32 @@ Zeigt Kunstköder (Wobbler, Gummifisch am Jigkopf, Spinner, Blinker, Popper/Stic
 
 ---
 
+## 🎁 Freundschafts-Empfehlung (Login-Popup)
+
+Nach dem Einloggen erscheint auf dem Dashboard das `ReferralInvitePopup`
+(`src/components/referral/ReferralInvitePopup.jsx`). Es zeigt den persönlichen
+Einladungslink des Nutzers und bewirbt die Belohnung: **1 Woche Ultimate pro
+erfolgreich eingeladenem Freund**. Das Popup rotiert alle 72h (localStorage
+`bb_referral_popup_last_shown`), damit es nicht bei jedem Login nervt.
+
+- **Referral-Code**: 8-stellig, alphanumerisch, generiert vom Backend beim
+  ersten `GET /api/referrals/me`. Gespiegelt in `user_metadata.referral_code`
+  (fürs Frontend) UND in der Tabelle `user_referral_codes` (Reverse-Lookup —
+  Supabase-JS kann nicht auf `auth.users.user_metadata` filtern).
+- **Einlösen**: `POST /api/referrals/redeem` (`backend/src/routes/referrals.js`).
+  Home.jsx nimmt `?ref=CODE` aus der URL und speichert ihn in
+  `localStorage.bb_pending_referral_code`; das Popup löst ihn nach dem Login
+  einmalig ein. Der eingeladene Nutzer bekommt `referred_by` in seinen
+  Metadaten gesetzt (verhindert Doppel-Einlösung); die `referrals`-Tabelle
+  hat zusätzlich `UNIQUE(referred_user_id)` als strukturelle Absicherung.
+- **Belohnung**: 7 Tage werden an die bestehende Ultimate-Laufzeit angehängt
+  (oder ab jetzt +7 Tage, falls kein aktiver Ultimate-Plan). Ein bereits
+  höherer Plan (`friends`) wird **nicht** herabgestuft. Der Server pflegt
+  `referral_reward_count` in den Metadaten des Referrers.
+- **Migration**: `supabase/migrations/20260719_create_referrals_tables.sql`
+  (Tabellen `user_referral_codes` + `referrals`, RLS: nur Lesen der eigenen
+  Zeilen, Insert/Update ausschließlich vom Backend über die Service-Role).
+
 ## 📱 Device-Features (Pflicht)
 
 | Feature | Anforderung |

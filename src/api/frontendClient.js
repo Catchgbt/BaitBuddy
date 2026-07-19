@@ -355,6 +355,8 @@ const FUNCTION_MAP = {
   verifyPlayIntegrity:    ()  => Promise.resolve({ valid: false }),
   recordWebVitals:        ()  => Promise.resolve({ ok: true }),
   startCommunityCompetition: (d) => api.post('/api/community/competitions/start', { template_id: d?.template_id }),
+  getMyReferral:          ()  => api.get('/api/referrals/me'),
+  redeemReferralCode:     (d) => api.post('/api/referrals/redeem', { code: d?.code }),
 };
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
