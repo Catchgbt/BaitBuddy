@@ -14,6 +14,9 @@ on:
   push:
     tags:
       - 'v*'
+    # Temporaer: Build auch bei Pushes auf diesen Branch ausloesen
+    branches:
+      - 'claude/apk-aab-play-store-4jnxbv'
 
 jobs:
   build:
