@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,11 +21,61 @@ export default function PremiumPlans() {
   const [processingPlan, setProcessingPlan] = useState(null);
   const [billingAvailable, setBillingAvailable] = useState(false);
   const [restoring, setRestoring] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     loadData();
     setBillingAvailable(isGooglePlayBillingAvailable());
   }, []);
+
+  // Rücksprung vom Stripe-Checkout: /PremiumPlans?checkout=success&plan_id=...
+  // &session_id=cs_... — die Aktivierung läuft serverseitig verifiziert über
+  // /api/premium/activate. Params sofort entfernen, damit ein Reload die
+  // Aktivierung nicht erneut anstößt (der Server ist zusätzlich idempotent).
+  useEffect(() => {
+    const checkout = searchParams.get('checkout');
+    if (!checkout) return;
+    const planId = searchParams.get('plan_id');
+    const sessionId = searchParams.get('session_id');
+    setSearchParams({}, { replace: true });
+
+    if (checkout === 'cancelled') {
+      toast.info('Kauf abgebrochen');
+      return;
+    }
+    if (checkout === 'success' && planId && sessionId) {
+      finalizeStripeCheckout(planId, sessionId);
+    }
+  }, []);
+
+  const finalizeStripeCheckout = async (planId, sessionId) => {
+    setProcessingPlan(planId);
+    try {
+      const response = await functions.invoke('activatePlan', {
+        plan_id: planId,
+        transaction_id: sessionId,
+        payment_method: 'stripe'
+      });
+      const data = response?.data ?? response;
+      if (!data?.ok) {
+        throw new Error(data?.error || 'Plan-Aktivierung fehlgeschlagen');
+      }
+      toast.success('Plan aktiviert', {
+        description: 'Deine Zahlung wurde bestätigt. Dein Premium-Plan ist jetzt aktiv.'
+      });
+      await loadData();
+      window.dispatchEvent(new CustomEvent('plan-updated'));
+    } catch (error) {
+      toast.error('Aktivierung fehlgeschlagen', {
+        description: error?.message
+          ? `${error.message} — falls die Zahlung abgebucht wurde, kontaktiere den Support.`
+          : 'Falls die Zahlung abgebucht wurde, kontaktiere den Support.',
+        duration: 10000
+      });
+    } finally {
+      setProcessingPlan(null);
+    }
+  };
 
   const loadData = async () => {
     try {

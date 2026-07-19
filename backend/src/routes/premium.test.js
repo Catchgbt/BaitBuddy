@@ -9,6 +9,7 @@ const { supabaseMock, purchaseVerificationMock } = vi.hoisted(() => ({
   purchaseVerificationMock: {
     verifyGooglePlayPurchase: vi.fn(),
     verifyStripePayment: vi.fn(),
+    createStripeCheckoutSession: vi.fn(),
   },
 }));
 vi.mock('../lib/supabase.js', () => ({
@@ -24,6 +25,7 @@ beforeEach(async () => {
   delete process.env.STRIPE_SECRET_KEY;
   purchaseVerificationMock.verifyGooglePlayPurchase.mockReset();
   purchaseVerificationMock.verifyStripePayment.mockReset();
+  purchaseVerificationMock.createStripeCheckoutSession.mockReset();
   supabaseMock.current = createSupabaseMock({ authUser: TEST_USER });
   ({ default: app } = await import('../server.js'));
 });
@@ -88,6 +90,158 @@ describe('POST /api/premium/activate', () => {
       .send({ plan_id: 'elite', purchase_token: 'gefaelschter-token' });
 
     expect(res.status).toBe(402);
+  });
+});
+
+describe('POST /api/premium/checkout', () => {
+  async function stripeApp() {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+    vi.resetModules();
+    return (await import('../server.js')).default;
+  }
+
+  it('lehnt Checkout ohne konfiguriertes Stripe-Secret ab (501)', async () => {
+    const res = await request(app)
+      .post('/api/premium/checkout')
+      .set('Authorization', 'Bearer test-token')
+      .send({ plan_id: 'pro' });
+
+    expect(res.status).toBe(501);
+  });
+
+  it('lehnt eine unbekannte plan_id ab (400)', async () => {
+    const configuredApp = await stripeApp();
+    const res = await request(configuredApp)
+      .post('/api/premium/checkout')
+      .set('Authorization', 'Bearer test-token')
+      .send({ plan_id: 'mega_deluxe' });
+
+    expect(res.status).toBe(400);
+    expect(purchaseVerificationMock.createStripeCheckoutSession).not.toHaveBeenCalled();
+  });
+
+  it('erstellt eine Checkout-Session mit serverseitigem Preis und liefert die URL', async () => {
+    const configuredApp = await stripeApp();
+    purchaseVerificationMock.createStripeCheckoutSession.mockResolvedValue({
+      ok: true, id: 'cs_test_1', url: 'https://checkout.stripe.com/pay/cs_test_1',
+    });
+
+    const res = await request(configuredApp)
+      .post('/api/premium/checkout')
+      .set('Authorization', 'Bearer test-token')
+      .set('Origin', 'https://baitbuddy.test')
+      .send({ plan_id: 'pro' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.checkout_url).toBe('https://checkout.stripe.com/pay/cs_test_1');
+    expect(purchaseVerificationMock.createStripeCheckoutSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        planId: 'pro',
+        amountCents: 999,
+        userId: 'user-1',
+        successUrl: expect.stringContaining('https://baitbuddy.test/PremiumPlans?checkout=success&plan_id=pro'),
+        cancelUrl: 'https://baitbuddy.test/PremiumPlans?checkout=cancelled',
+      })
+    );
+  });
+
+  it('liefert 502, wenn Stripe die Session nicht erstellen kann', async () => {
+    const configuredApp = await stripeApp();
+    purchaseVerificationMock.createStripeCheckoutSession.mockResolvedValue({
+      ok: false, reason: 'Stripe API Fehler: key invalid',
+    });
+
+    const res = await request(configuredApp)
+      .post('/api/premium/checkout')
+      .set('Authorization', 'Bearer test-token')
+      .send({ plan_id: 'basic' });
+
+    expect(res.status).toBe(502);
+  });
+});
+
+describe('POST /api/premium/activate (Stripe-Härtung)', () => {
+  async function stripeApp(userMetadata = {}) {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+    supabaseMock.current = createSupabaseMock({
+      authUser: { ...TEST_USER, user_metadata: userMetadata },
+    });
+    supabaseMock.current.auth.admin = {
+      updateUserById: vi.fn(async () => ({ data: {}, error: null })),
+    };
+    vi.resetModules();
+    return (await import('../server.js')).default;
+  }
+
+  it('aktiviert einen Plan mit passender, bezahlter Stripe-Session', async () => {
+    const configuredApp = await stripeApp();
+    purchaseVerificationMock.verifyStripePayment.mockResolvedValue({
+      valid: true,
+      raw: { client_reference_id: 'user-1', metadata: { plan_id: 'pro' } },
+    });
+
+    const res = await request(configuredApp)
+      .post('/api/premium/activate')
+      .set('Authorization', 'Bearer test-token')
+      .send({ plan_id: 'pro', transaction_id: 'cs_test_1', payment_method: 'stripe' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.plan_id).toBe('pro');
+    expect(supabaseMock.current.auth.admin.updateUserById).toHaveBeenCalled();
+  });
+
+  it('lehnt eine Session ab, die zu einem anderen Konto gehört (403)', async () => {
+    const configuredApp = await stripeApp();
+    purchaseVerificationMock.verifyStripePayment.mockResolvedValue({
+      valid: true,
+      raw: { client_reference_id: 'anderer-user', metadata: { plan_id: 'pro' } },
+    });
+
+    const res = await request(configuredApp)
+      .post('/api/premium/activate')
+      .set('Authorization', 'Bearer test-token')
+      .send({ plan_id: 'pro', transaction_id: 'cs_test_1' });
+
+    expect(res.status).toBe(403);
+    expect(supabaseMock.current.auth.admin.updateUserById).not.toHaveBeenCalled();
+  });
+
+  it('lehnt eine Session ab, die für einen anderen Plan bezahlt wurde (400)', async () => {
+    const configuredApp = await stripeApp();
+    purchaseVerificationMock.verifyStripePayment.mockResolvedValue({
+      valid: true,
+      raw: { client_reference_id: 'user-1', metadata: { plan_id: 'basic' } },
+    });
+
+    const res = await request(configuredApp)
+      .post('/api/premium/activate')
+      .set('Authorization', 'Bearer test-token')
+      .send({ plan_id: 'elite', transaction_id: 'cs_test_1' });
+
+    expect(res.status).toBe(400);
+    expect(supabaseMock.current.auth.admin.updateUserById).not.toHaveBeenCalled();
+  });
+
+  it('verlängert die Laufzeit bei bereits verarbeiteter Transaktion NICHT (Replay)', async () => {
+    const expiresAt = new Date(Date.now() + 10 * 24 * 3600 * 1000).toISOString();
+    const configuredApp = await stripeApp({
+      premium_plan_id: 'pro',
+      premium_expires_at: expiresAt,
+      premium_transaction_id: 'cs_test_1',
+    });
+    purchaseVerificationMock.verifyStripePayment.mockResolvedValue({
+      valid: true,
+      raw: { client_reference_id: 'user-1', metadata: { plan_id: 'pro' } },
+    });
+
+    const res = await request(configuredApp)
+      .post('/api/premium/activate')
+      .set('Authorization', 'Bearer test-token')
+      .send({ plan_id: 'pro', transaction_id: 'cs_test_1' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.expires_at).toBe(expiresAt);
+    expect(supabaseMock.current.auth.admin.updateUserById).not.toHaveBeenCalled();
   });
 });
 

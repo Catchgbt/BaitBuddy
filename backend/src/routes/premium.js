@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
-import { verifyGooglePlayPurchase, verifyStripePayment } from '../lib/purchaseVerification.js';
+import { verifyGooglePlayPurchase, verifyStripePayment, createStripeCheckoutSession } from '../lib/purchaseVerification.js';
 import { sendDbError } from '../lib/errorResponse.js';
 import { resolvePlan, PLAN_RANK } from '../lib/planResolver.js';
 
@@ -10,9 +10,9 @@ const router = Router();
 // Ohne server-seitige Kaufverifikation (Google-Play-Service-Account bzw.
 // Stripe-Secret) darf /premium/activate niemanden freischalten — sonst reicht
 // ein beliebiger nicht-leerer purchase_token/transaction_id, um sich selbst
-// Elite zu geben. Beide Secrets sind aktuell nirgends konfiguriert (auch nicht
-// in backend/.env.example), die App ist laut CLAUDE.md noch nicht im
-// Play/App Store live.
+// Elite zu geben. Beide Env-Variablen sind in backend/.env.example
+// dokumentiert; ohne STRIPE_SECRET_KEY bleiben auch /premium/checkout und
+// die Stripe-Aktivierung mit 501 gesperrt.
 const GOOGLE_PLAY_VERIFICATION_CONFIGURED = !!process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON;
 const STRIPE_PAYMENT_VERIFICATION_CONFIGURED = !!process.env.STRIPE_SECRET_KEY;
 
@@ -45,9 +45,9 @@ router.post('/plan/status', requireAuth, async (req, res) => {
 });
 
 const PRODUCTS = [
-  { id: 'basic', name: 'Basic', price: 2.99, features: ['Fangbuch', 'Spots', 'Wetter'] },
-  { id: 'pro', name: 'Pro', price: 6.99, features: ['Alles in Basic', 'KI-Assistent', 'Community'] },
-  { id: 'elite', name: 'Elite', price: 12.99, features: ['Alles in Pro', 'Offline', 'Premium-Support'] },
+  { id: 'basic', name: 'Basic', price: 4.99, features: ['Fangbuch', 'Spots', 'Wetter'] },
+  { id: 'pro', name: 'Pro', price: 9.99, features: ['Alles in Basic', 'KI-Assistent', 'Community'] },
+  { id: 'elite', name: 'Ultimate', price: 19.99, features: ['Alles in Pro', 'Offline', 'Premium-Support'] },
 ];
 
 router.get('/premium/products', async (req, res) => {
@@ -82,8 +82,51 @@ router.post('/premium/check-feature', requireAuth, async (req, res) => {
   return res.json({ ok: true, allowed, plan: effectiveId, required_plan: requiredPlan || null });
 });
 
+// Preise serverseitig als Source of Truth — der Client sendet nur die plan_id,
+// niemals den Preis. Muss mit der Plan-Anzeige in src/pages/PremiumPlans.jsx
+// übereinstimmen.
+const CHECKOUT_PLANS = {
+  basic:           { name: 'Basic', amountCents: 499 },
+  pro:             { name: 'Pro', amountCents: 999 },
+  elite:           { name: 'Ultimate', amountCents: 1999 },
+  friends:         { name: 'Freundschaft (Jahresplan)', amountCents: 5499 },
+  // Der beworbene 19-€-Freundes-Rabatt hat noch keine serverseitige
+  // Freund-Erkennung — bis dahin gilt der reguläre Monatspreis.
+  friends_monthly: { name: 'Freundschaft Monatlich', amountCents: 3900 },
+};
+
 router.post('/premium/checkout', requireAuth, async (req, res) => {
-  return res.status(501).json({ error: 'Stripe checkout nicht konfiguriert' });
+  if (!STRIPE_PAYMENT_VERIFICATION_CONFIGURED) {
+    return res.status(501).json({ error: 'Stripe checkout nicht konfiguriert' });
+  }
+
+  const { plan_id } = req.body || {};
+  const plan = plan_id ? CHECKOUT_PLANS[plan_id] : null;
+  if (!plan) {
+    return res.status(400).json({ error: 'Unbekannte oder fehlende plan_id' });
+  }
+
+  // Rücksprung-Ziel nach der Zahlung: konfigurierte Basis-URL bevorzugen,
+  // sonst Origin des Requests (Frontend und API laufen auf derselben
+  // Vercel-Domain). {CHECKOUT_SESSION_ID} ersetzt Stripe beim Redirect.
+  const origin = process.env.APP_BASE_URL || req.get('origin') || `${req.protocol}://${req.get('host')}`;
+  const successUrl = `${origin}/PremiumPlans?checkout=success&plan_id=${encodeURIComponent(plan_id)}&session_id={CHECKOUT_SESSION_ID}`;
+  const cancelUrl = `${origin}/PremiumPlans?checkout=cancelled`;
+
+  const session = await createStripeCheckoutSession({
+    planId: plan_id,
+    planName: plan.name,
+    amountCents: plan.amountCents,
+    userId: req.user.id,
+    userEmail: req.user.email,
+    successUrl,
+    cancelUrl,
+  });
+  if (!session.ok) {
+    return res.status(502).json({ error: `Checkout-Session konnte nicht erstellt werden: ${session.reason}` });
+  }
+
+  return res.json({ ok: true, checkout_url: session.url, session_id: session.id });
 });
 
 router.post('/premium/activate-demo', requireAuth, async (req, res) => {
@@ -124,7 +167,35 @@ router.post('/premium/activate', requireAuth, async (req, res) => {
     return res.status(402).json({ error: `Zahlung konnte nicht verifiziert werden: ${verification.reason}` });
   }
 
+  // Stripe: Die Session muss zu diesem Nutzer und Plan gehören (Metadata aus
+  // /premium/checkout) — verhindert, dass eine fremde oder für einen
+  // günstigeren Plan bezahlte Session einen höheren Plan freischaltet.
+  if (!purchase_token) {
+    const session = verification.raw || {};
+    if (session.client_reference_id && session.client_reference_id !== req.user.id) {
+      return res.status(403).json({ error: 'Zahlung gehört zu einem anderen Konto' });
+    }
+    if (session.metadata?.plan_id && session.metadata.plan_id !== plan_id) {
+      return res.status(400).json({ error: 'Zahlung gehört zu einem anderen Plan' });
+    }
+  }
+
   const current = req.user.user_metadata || {};
+
+  // Replay-Schutz: Dieselbe Transaktion darf die Laufzeit nicht mehrfach
+  // verlängern (z.B. wiederholtes Aufrufen der Stripe-Success-URL oder
+  // "Käufe wiederherstellen" mit einem bereits verarbeiteten Play-Token).
+  const alreadyProcessed =
+    (transaction_id && current.premium_transaction_id === transaction_id) ||
+    (purchase_token && current.premium_purchase_token === purchase_token);
+  if (alreadyProcessed && current.premium_plan_id === plan_id) {
+    return res.json({
+      ok: true,
+      plan_id,
+      expires_at: current.premium_expires_at,
+      note: 'Transaktion bereits verarbeitet'
+    });
+  }
   const isYearly = /friends$/.test(plan_id);
   const durationMs = (isYearly ? 365 : 30) * 24 * 60 * 60 * 1000;
   const previousActivatedAt = current.premium_activated_at;
