@@ -299,6 +299,18 @@ export async function syncOfflinePhotos() {
 
         if (uploadResult?.file_url) {
           await markPhotoAsSynced(photo.id);
+
+          // Wenn das Foto mit einem Fang verlinkt ist, aktualisiere den Fang mit der photo_url
+          if (photo.catchId) {
+            try {
+              await entities.Catch.update(photo.catchId, { photo_url: uploadResult.file_url });
+              console.log(`Catch ${photo.catchId} mit Foto-URL aktualisiert: ${uploadResult.file_url}`);
+            } catch (updateError) {
+              console.warn(`Fehler beim Aktualisieren von Catch ${photo.catchId} mit Foto-URL:`, updateError);
+              // Nicht kritisch — Foto ist hochgeladen, nur die Verlinkung fehlgeschlagen
+            }
+          }
+
           console.log(`Foto ${photo.id} synchronisiert: ${uploadResult.file_url}`);
           synced++;
         } else {
