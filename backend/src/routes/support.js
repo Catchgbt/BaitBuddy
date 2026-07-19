@@ -57,9 +57,8 @@ router.post('/support/tickets', requireAuth, async (req, res) => {
 
     const ticket = data?.[0];
 
-    // Email-Versand (Support + Bestätigungsmail an Nutzer + Entwickler-Benachrichtigung)
+    // Email-Versand (Entwickler-Benachrichtigung + Bestätigungsmail an Nutzer)
     if (emailTransporter) {
-      const supportEmail = process.env.SUPPORT_EMAIL;
       const developerEmail = process.env.DEVELOPER_EMAIL;
       const escapeHtml = (str) => {
         const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
@@ -79,34 +78,14 @@ router.post('/support/tickets', requireAuth, async (req, res) => {
         <p><em>Dieses Ticket wurde am ${new Date().toLocaleString('de-DE')} erstellt.</em></p>
       `;
 
-      // 1. Email an Support-Team
-      if (!supportEmail) {
-        console.warn('SUPPORT_EMAIL nicht konfiguriert — Support-Benachrichtigung wird nicht versendet');
-      } else {
-        const supportMailOptions = {
-          from: `BaitBuddy Support <${process.env.SMTP_USER}>`,
-          to: supportEmail,
-          subject: `[${escapeHtml(category || 'TICKET')}] ${escapeHtml(subject)}`,
-          html: ticketDetailsHtml,
-          replyTo: user_email,
-        };
-
-        try {
-          await emailTransporter.sendMail(supportMailOptions);
-          console.log('Support-Benachrichtigung versendet für Ticket:', ticket?.id);
-        } catch (emailErr) {
-          console.error('Support-Email-Versand fehlgeschlagen:', emailErr.message);
-        }
-      }
-
-      // 2. Benachrichtigung an Entwickler
+      // 1. Benachrichtigung an Entwickler
       if (!developerEmail) {
         console.warn('DEVELOPER_EMAIL nicht konfiguriert — Entwickler-Benachrichtigung wird nicht versendet');
       } else {
         const developerMailOptions = {
           from: `BaitBuddy Support <${process.env.SMTP_USER}>`,
           to: developerEmail,
-          subject: `[DEV] Neues Ticket: ${escapeHtml(subject)}`,
+          subject: `[TICKET] ${escapeHtml(subject)}`,
           html: ticketDetailsHtml,
           replyTo: user_email,
         };
@@ -119,7 +98,7 @@ router.post('/support/tickets', requireAuth, async (req, res) => {
         }
       }
 
-      // 3. Bestätigungsmail an Nutzer
+      // 2. Bestätigungsmail an Nutzer
       const confirmationMailOptions = {
         from: `BaitBuddy Support <${process.env.SMTP_USER}>`,
         to: user_email,
@@ -146,7 +125,7 @@ router.post('/support/tickets', requireAuth, async (req, res) => {
         console.error('Bestätigungsmail-Versand fehlgeschlagen:', emailErr.message);
       }
     } else {
-      console.warn('SMTP nicht konfiguriert — Emails werden nicht versendet. Benoetigte Env-Vars: SMTP_HOST, SMTP_USER, SMTP_PASSWORD, SUPPORT_EMAIL, DEVELOPER_EMAIL');
+      console.warn('SMTP nicht konfiguriert — Emails werden nicht versendet. Benoetigte Env-Vars: SMTP_HOST, SMTP_USER, SMTP_PASSWORD, DEVELOPER_EMAIL');
     }
 
     // Erfolgreiche Antwort an Client
