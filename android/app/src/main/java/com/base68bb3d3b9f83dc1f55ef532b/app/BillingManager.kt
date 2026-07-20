@@ -14,7 +14,7 @@ class BillingManager(
 
     private val tag = "BillingManager"
 
-    private val productIds = listOf(
+    private val productIds = arrayOf(
         "catchgbt_basic_monthly",
         "catchgbt_pro_monthly",
         "catchgbt_ultimate_monthly",
@@ -32,7 +32,7 @@ class BillingManager(
         )
         .build()
 
-    private val productDetailsCache = mutableMapOf<String, ProductDetails>()
+    private val productDetailsCache = HashMap<String, ProductDetails>()
     private var isConnected = false
 
     init {
@@ -52,8 +52,8 @@ class BillingManager(
             queryProductDetails()
             queryActivePurchases()
         } else {
-            Log.e(tag, "Billing setup failed: ${billingResult.debugMessage}")
-            emitError(null, billingResult.responseCode, "Billing setup failed: ${billingResult.debugMessage}")
+            Log.e(tag, "Billing setup failed: " + billingResult.debugMessage)
+            emitError(null, billingResult.responseCode, "Billing setup failed: " + billingResult.debugMessage)
         }
     }
 
@@ -64,51 +64,62 @@ class BillingManager(
     }
 
     private fun queryProductDetails() {
-        val subProducts = productIds.filter { it != "catchgbt_trial_10_10" }.map { id ->
-            Product.newBuilder()
-                .setProductId(id)
-                .setProductType(BillingClient.ProductType.SUBS)
-                .build()
-        }
+        val subProducts = ArrayList<Product>()
+        val inappProducts = ArrayList<Product>()
 
-        val inappProducts = listOf(
-            Product.newBuilder()
-                .setProductId("catchgbt_trial_10_10")
-                .setProductType(BillingClient.ProductType.INAPP)
-                .build()
-        )
+        for (id in productIds) {
+            if (id == "catchgbt_trial_10_10") {
+                inappProducts.add(
+                    Product.newBuilder()
+                        .setProductId(id)
+                        .setProductType(BillingClient.ProductType.INAPP)
+                        .build()
+                )
+            } else {
+                subProducts.add(
+                    Product.newBuilder()
+                        .setProductId(id)
+                        .setProductType(BillingClient.ProductType.SUBS)
+                        .build()
+                )
+            }
+        }
 
         if (subProducts.isNotEmpty()) {
             val subsParams = QueryProductDetailsParams.newBuilder()
                 .setProductList(subProducts)
                 .build()
 
-            billingClient.queryProductDetailsAsync(subsParams) { result, productDetailsList ->
-                if (result.responseCode == BillingClient.BillingResponseCode.OK) {
-                    productDetailsList.forEach { pd ->
-                        productDetailsCache[pd.productId] = pd
+            billingClient.queryProductDetailsAsync(subsParams,
+                ProductDetailsResponseListener { result, productDetailsList ->
+                    if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                        for (i in 0 until productDetailsList.size) {
+                            val pd = productDetailsList[i]
+                            productDetailsCache[pd.productId] = pd
+                        }
+                        Log.i(tag, "Loaded " + productDetailsList.size + " subscription details")
+                    } else {
+                        Log.e(tag, "queryProductDetails (subs) failed: " + result.debugMessage)
                     }
-                    Log.i(tag, "Loaded ${productDetailsList.size} subscription details")
-                } else {
-                    Log.e(tag, "queryProductDetails (subs) failed: ${result.debugMessage}")
-                }
-            }
+                })
         }
 
         val inappParams = QueryProductDetailsParams.newBuilder()
             .setProductList(inappProducts)
             .build()
 
-        billingClient.queryProductDetailsAsync(inappParams) { result, productDetailsList ->
-            if (result.responseCode == BillingClient.BillingResponseCode.OK) {
-                productDetailsList.forEach { pd ->
-                    productDetailsCache[pd.productId] = pd
+        billingClient.queryProductDetailsAsync(inappParams,
+            ProductDetailsResponseListener { result, productDetailsList ->
+                if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                    for (i in 0 until productDetailsList.size) {
+                        val pd = productDetailsList[i]
+                        productDetailsCache[pd.productId] = pd
+                    }
+                    Log.i(tag, "Loaded " + productDetailsList.size + " inapp details")
+                } else {
+                    Log.e(tag, "queryProductDetails (inapp) failed: " + result.debugMessage)
                 }
-                Log.i(tag, "Loaded ${productDetailsList.size} inapp details")
-            } else {
-                Log.e(tag, "queryProductDetails (inapp) failed: ${result.debugMessage}")
-            }
-        }
+            })
     }
 
     fun startPurchase(productId: String) {
@@ -127,14 +138,12 @@ class BillingManager(
             .setProductDetails(productDetails)
 
         if (productDetails.productType == BillingClient.ProductType.SUBS) {
-            val offerToken = productDetails.subscriptionOfferDetails
-                ?.firstOrNull()
-                ?.offerToken
-            if (offerToken == null) {
+            val offers = productDetails.subscriptionOfferDetails
+            if (offers == null || offers.isEmpty()) {
                 emitError(productId, -1, "No subscription offer found")
                 return
             }
-            productDetailsParamsBuilder.setOfferToken(offerToken)
+            productDetailsParamsBuilder.setOfferToken(offers[0].offerToken)
         }
 
         val flowParams = BillingFlowParams.newBuilder()
@@ -143,43 +152,52 @@ class BillingManager(
 
         val launchResult = billingClient.launchBillingFlow(activity, flowParams)
         if (launchResult.responseCode != BillingClient.BillingResponseCode.OK) {
-            emitError(productId, launchResult.responseCode, launchResult.debugMessage ?: "launchBillingFlow failed")
+            val msg = launchResult.debugMessage
+            emitError(productId, launchResult.responseCode, if (msg != null) msg else "launchBillingFlow failed")
         }
     }
 
     override fun onPurchasesUpdated(billingResult: BillingResult, purchases: MutableList<Purchase>?) {
         when (billingResult.responseCode) {
             BillingClient.BillingResponseCode.OK -> {
-                purchases?.forEach { handlePurchase(it) }
+                if (purchases != null) {
+                    for (i in 0 until purchases.size) {
+                        handlePurchase(purchases[i])
+                    }
+                }
             }
             BillingClient.BillingResponseCode.USER_CANCELED -> {
                 emitCancel(null)
             }
             else -> {
-                emitError(null, billingResult.responseCode, billingResult.debugMessage ?: "Purchase failed")
+                val msg = billingResult.debugMessage
+                emitError(null, billingResult.responseCode, if (msg != null) msg else "Purchase failed")
             }
         }
     }
 
     private fun handlePurchase(purchase: Purchase) {
         if (purchase.purchaseState != Purchase.PurchaseState.PURCHASED) {
-            Log.w(tag, "Purchase pending or unknown state: ${purchase.purchaseState}")
+            Log.w(tag, "Purchase pending or unknown state: " + purchase.purchaseState)
             return
         }
 
-        val productId = purchase.products.firstOrNull() ?: return
+        val products = purchase.products
+        if (products.isEmpty()) return
+        val productId = products[0]
 
         if (!purchase.isAcknowledged) {
             val ackParams = AcknowledgePurchaseParams.newBuilder()
                 .setPurchaseToken(purchase.purchaseToken)
                 .build()
-            billingClient.acknowledgePurchase(ackParams) { ackResult ->
-                if (ackResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                    emitSuccess(productId, purchase)
-                } else {
-                    emitError(productId, ackResult.responseCode, "Acknowledge failed: ${ackResult.debugMessage}")
-                }
-            }
+            billingClient.acknowledgePurchase(ackParams,
+                AcknowledgePurchaseResponseListener { ackResult ->
+                    if (ackResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                        emitSuccess(productId, purchase)
+                    } else {
+                        emitError(productId, ackResult.responseCode, "Acknowledge failed: " + ackResult.debugMessage)
+                    }
+                })
         } else {
             emitSuccess(productId, purchase)
         }
@@ -192,66 +210,69 @@ class BillingManager(
             .setProductType(BillingClient.ProductType.SUBS)
             .build()
 
-        billingClient.queryPurchasesAsync(subsParams) { result, subsList ->
-            val all = mutableListOf<Purchase>()
-            if (result.responseCode == BillingClient.BillingResponseCode.OK) {
-                all.addAll(subsList)
-            }
-
-            val inappParams = QueryPurchasesParams.newBuilder()
-                .setProductType(BillingClient.ProductType.INAPP)
-                .build()
-
-            billingClient.queryPurchasesAsync(inappParams) { result2, inappList ->
-                if (result2.responseCode == BillingClient.BillingResponseCode.OK) {
-                    all.addAll(inappList)
+        billingClient.queryPurchasesAsync(subsParams,
+            PurchasesResponseListener { result, subsList ->
+                val all = ArrayList<Purchase>()
+                if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                    all.addAll(subsList)
                 }
 
-                if (notifyWeb) {
-                    emitRestored(all)
-                }
-            }
-        }
+                val inappParams = QueryPurchasesParams.newBuilder()
+                    .setProductType(BillingClient.ProductType.INAPP)
+                    .build()
+
+                billingClient.queryPurchasesAsync(inappParams,
+                    PurchasesResponseListener { result2, inappList ->
+                        if (result2.responseCode == BillingClient.BillingResponseCode.OK) {
+                            all.addAll(inappList)
+                        }
+
+                        if (notifyWeb) {
+                            emitRestored(all)
+                        }
+                    })
+            })
     }
 
     private fun emitSuccess(productId: String, purchase: Purchase) {
-        val json = JSONObject().apply {
-            put("productId", productId)
-            put("purchaseToken", purchase.purchaseToken)
-            put("orderId", purchase.orderId ?: JSONObject.NULL)
-        }
+        val json = JSONObject()
+        json.put("productId", productId)
+        json.put("purchaseToken", purchase.purchaseToken)
+        val orderId = purchase.orderId
+        json.put("orderId", if (orderId != null) orderId else JSONObject.NULL)
         emit("play-billing-success", json.toString())
     }
 
     private fun emitCancel(productId: String?) {
-        val json = JSONObject().apply {
-            put("productId", productId ?: JSONObject.NULL)
-        }
+        val json = JSONObject()
+        json.put("productId", if (productId != null) productId else JSONObject.NULL)
         emit("play-billing-cancel", json.toString())
     }
 
     private fun emitError(productId: String?, code: Int, message: String) {
-        val json = JSONObject().apply {
-            put("productId", productId ?: JSONObject.NULL)
-            put("code", code)
-            put("message", message)
-        }
+        val json = JSONObject()
+        json.put("productId", if (productId != null) productId else JSONObject.NULL)
+        json.put("code", code)
+        json.put("message", message)
         emit("play-billing-error", json.toString())
     }
 
-    private fun emitRestored(purchases: List<Purchase>) {
+    private fun emitRestored(purchases: ArrayList<Purchase>) {
         val arr = JSONArray()
-        purchases.forEach { p ->
-            val productId = p.products.firstOrNull() ?: return@forEach
-            arr.put(JSONObject().apply {
-                put("productId", productId)
-                put("purchaseToken", p.purchaseToken)
-                put("orderId", p.orderId ?: JSONObject.NULL)
-            })
+        for (i in 0 until purchases.size) {
+            val p = purchases[i]
+            val products = p.products
+            if (products.isEmpty()) continue
+            val productId = products[0]
+            val obj = JSONObject()
+            obj.put("productId", productId)
+            obj.put("purchaseToken", p.purchaseToken)
+            val orderId = p.orderId
+            obj.put("orderId", if (orderId != null) orderId else JSONObject.NULL)
+            arr.put(obj)
         }
-        val json = JSONObject().apply {
-            put("purchases", arr)
-        }
+        val json = JSONObject()
+        json.put("purchases", arr)
         emit("play-billing-restored", json.toString())
     }
 }
