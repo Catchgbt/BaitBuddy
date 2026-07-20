@@ -43,7 +43,7 @@ export default function WaterDataDisplay({ data }) {
               <Fish className="w-16 h-16 mx-auto text-cyan-400" />
             </div>
             <h3 className="text-2xl font-bold text-white mb-2">Fang-Prognose Score</h3>
-            <div className="text-6xl font-bold bg-gradient-to-r from-cyan-400 to-emerald-400 text-transparent bg-clip-text mb-4">
+            <div className="text-6xl font-bold text-cyan-400 mb-4">
               {aiAnalysis.fishingScore}<span className="text-3xl">/100</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left mt-6">

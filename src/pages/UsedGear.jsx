@@ -171,7 +171,7 @@ export function UsedGearMarketInner() {
         >
           <div className="flex items-center gap-3">
             <Package className="w-8 h-8 text-cyan-400" />
-            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400">
+            <h1 className="text-3xl font-bold text-cyan-400">
               Gebrauchtmarkt
             </h1>
             <span className="px-3 py-1 text-xs font-bold rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-[0_0_10px_rgba(168,85,247,0.3)]">

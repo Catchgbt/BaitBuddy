@@ -74,7 +74,7 @@ export default function SettingsPageTabbed() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-transparent bg-gradient-to-r from-cyan-400 via-blue-400 to-emerald-400 bg-clip-text mb-2">
+          <h1 className="text-3xl sm:text-4xl font-bold text-cyan-400 mb-2">
             Einstellungen
           </h1>
           <p className="text-gray-400 text-sm sm:text-base">
