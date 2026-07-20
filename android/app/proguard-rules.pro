@@ -42,6 +42,18 @@
 -keep public class * extends android.content.BroadcastReceiver
 -keep public class * extends android.content.ContentProvider
 
+# Google Play Billing
+-keep class com.android.billingclient.** { *; }
+-keep class com.android.vending.billing.** { *; }
+
+# Keep AndroidBilling JavaScript interface
+-keepclassmembers class com.base68bb3d3b9f83dc1f55ef532b.app.AndroidBillingBridge {
+  @android.webkit.JavascriptInterface <methods>;
+}
+
+# Keep Kotlin metadata for billing classes
+-keep class kotlin.Metadata { *; }
+
 # Optimization settings
 -optimizationpasses 5
 -allowaccessmodification
