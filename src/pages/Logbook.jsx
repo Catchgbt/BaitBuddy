@@ -13,7 +13,7 @@ import { MobileSelect } from "@/components/ui/mobile-select";
 import { Textarea } from "@/components/ui/textarea";
 import SwipeToRefresh from "@/components/utils/SwipeToRefresh";
 import { toast } from "sonner";
-import { Upload, X, Loader2, Share2, BarChart2 } from "lucide-react";
+import { Upload, X, Loader2, Share2, BarChart2, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { UploadFile } from "@/integrations/Core";
 import CatchHistory from "@/components/log/CatchHistory";
@@ -390,7 +390,7 @@ export default function Logbook() {
         </div>
       )}
 
-      <Card className="glass-morphism border-gray-800 rounded-2xl">
+      <Card id="fang-erfassen" className="glass-morphism border-gray-800 rounded-2xl scroll-mt-24">
         <CardHeader>
           {!editingCatch && (
             <div className="flex flex-wrap gap-2 mb-3">
@@ -661,6 +661,23 @@ export default function Logbook() {
         onOpenChange={setShowSocialMediaDialog}
         catchData={savedCatchData}
       />
+
+      <button
+        type="button"
+        aria-label="Neuen Fang eintragen"
+        onClick={() => {
+          const form = document.getElementById('fang-erfassen');
+          if (form) {
+            form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const speciesInput = form.querySelector('input, select, textarea');
+            if (speciesInput) setTimeout(() => speciesInput.focus(), 400);
+          }
+        }}
+        className="fixed right-5 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-cyan-500 to-emerald-500 shadow-lg shadow-cyan-500/40 flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-transform"
+        style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 5.5rem)' }}
+      >
+        <Plus className="w-7 h-7" />
+      </button>
           </div>
           </SwipeToRefresh>
           );
