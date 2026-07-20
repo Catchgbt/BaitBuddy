@@ -221,6 +221,7 @@ class TripSyncService {
     link.href = url;
     link.download = `tour_${trip.id}.json`;
     link.click();
+    URL.revokeObjectURL(url);
   }
 
   // Exportiere als CSV (einfache Fang-Daten)
@@ -238,6 +239,7 @@ class TripSyncService {
     link.href = url;
     link.download = `tour_${trip.id}.csv`;
     link.click();
+    URL.revokeObjectURL(url);
   }
 
   // Open IndexedDB

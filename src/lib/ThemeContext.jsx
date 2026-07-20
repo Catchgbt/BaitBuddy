@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { auth } from '@/api/auth';
 
 const ThemeContext = createContext();
@@ -16,20 +16,22 @@ export const ThemeProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [batteryMode, setBatteryMode] = useState(false);
   const [animationsEnabled, setAnimationsEnabled] = useState(true);
+  const settingsRef = useRef(null);
 
   useEffect(() => {
     (async () => {
       try {
         const user = await auth.me();
         if (user?.settings) {
+          settingsRef.current = user.settings;
           const savedTheme = user.settings.theme || 'dark';
-          const batteryMode = user.settings.battery_mode || false;
-          const animationsEnabled = user.settings.animations_enabled !== false;
+          const savedBatteryMode = user.settings.battery_mode || false;
+          const savedAnimations = user.settings.animations_enabled !== false;
 
           setTheme(savedTheme);
-          setBatteryMode(batteryMode);
-          setAnimationsEnabled(animationsEnabled);
-          applyTheme(savedTheme, batteryMode, animationsEnabled);
+          setBatteryMode(savedBatteryMode);
+          setAnimationsEnabled(savedAnimations);
+          applyTheme(savedTheme, savedBatteryMode, savedAnimations);
         } else {
           applyTheme('dark', false, true);
         }
@@ -66,25 +68,27 @@ export const ThemeProvider = ({ children }) => {
     }
   };
 
+  const saveSettings = async (patch, rollback) => {
+    try {
+      const merged = { ...settingsRef.current, ...patch };
+      await auth.updateMe({ settings: merged });
+      settingsRef.current = merged;
+    } catch (error) {
+      console.error('Fehler beim Speichern der Einstellungen:', error);
+      rollback();
+    }
+  };
+
   const toggleTheme = async (newTheme = null) => {
     const previousTheme = theme;
     const selectedTheme = newTheme || (theme === 'dark' ? 'light' : 'dark');
     setTheme(selectedTheme);
     applyTheme(selectedTheme, batteryMode, animationsEnabled);
 
-    try {
-      const user = await auth.me();
-      await auth.updateMe({
-        settings: {
-          ...user?.settings,
-          theme: selectedTheme
-        }
-      });
-    } catch (error) {
-      console.error('Fehler beim Speichern des Themes:', error);
+    await saveSettings({ theme: selectedTheme }, () => {
       setTheme(previousTheme);
       applyTheme(previousTheme, batteryMode, animationsEnabled);
-    }
+    });
   };
 
   const toggleBatteryMode = async (enabled = null) => {
@@ -93,19 +97,10 @@ export const ThemeProvider = ({ children }) => {
     setBatteryMode(newBatteryMode);
     applyTheme(theme, newBatteryMode, animationsEnabled);
 
-    try {
-      const user = await auth.me();
-      await auth.updateMe({
-        settings: {
-          ...user?.settings,
-          battery_mode: newBatteryMode
-        }
-      });
-    } catch (error) {
-      console.error('Fehler beim Speichern des Akku-Spar-Modus:', error);
+    await saveSettings({ battery_mode: newBatteryMode }, () => {
       setBatteryMode(previousBatteryMode);
       applyTheme(theme, previousBatteryMode, animationsEnabled);
-    }
+    });
   };
 
   const toggleAnimations = async (enabled = null) => {
@@ -114,19 +109,10 @@ export const ThemeProvider = ({ children }) => {
     setAnimationsEnabled(newAnimationsEnabled);
     applyTheme(theme, batteryMode, newAnimationsEnabled);
 
-    try {
-      const user = await auth.me();
-      await auth.updateMe({
-        settings: {
-          ...user?.settings,
-          animations_enabled: newAnimationsEnabled
-        }
-      });
-    } catch (error) {
-      console.error('Fehler beim Speichern der Animationseinstellungen:', error);
+    await saveSettings({ animations_enabled: newAnimationsEnabled }, () => {
       setAnimationsEnabled(previousAnimationsEnabled);
       applyTheme(theme, batteryMode, previousAnimationsEnabled);
-    }
+    });
   };
 
   const value = {

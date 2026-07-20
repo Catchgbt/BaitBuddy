@@ -109,8 +109,8 @@ function matchBalancedBrace(str, startIdx) {
 router.get('/health', (req, res) => {
   const key = getGroqKey();
   const keyInfo = key
-    ? `✓ Groq API Key gesetzt (${key.slice(0, 10)}...)`
-    : '✗ Groq API Key FEHLT - KI-Chat funktioniert nicht!';
+    ? 'Groq API Key gesetzt'
+    : 'Groq API Key FEHLT - KI-Chat funktioniert nicht!';
 
   res.json({
     ok: !!key,
@@ -456,8 +456,9 @@ const WMO = {
 
 router.post('/ai/fishing-recommendation', requireAuth, async (req, res) => {
   try {
-    const { latitude, longitude } = req.body || {};
-    if (latitude == null || longitude == null) {
+    const lat = Number(req.body?.latitude);
+    const lon = Number(req.body?.longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
       return res.status(400).json({ error: 'latitude und longitude erforderlich' });
     }
 
@@ -466,7 +467,7 @@ router.post('/ai/fishing-recommendation', requireAuth, async (req, res) => {
       (async () => {
         try {
           const w = await fetchWithTimeout(
-            `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,wind_speed_10m,weather_code,surface_pressure,relative_humidity_2m&timezone=auto`,
+            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,weather_code,surface_pressure,relative_humidity_2m&timezone=auto`,
             {}, WEATHER_TIMEOUT_MS
           ).then(r => r.json());
           if (w?.current) {
@@ -584,17 +585,19 @@ router.post('/ai/tts', requireAuth, async (req, res) => {
 
 router.post('/ai/fish-behavior-analysis', requireAuth, async (req, res) => {
   try {
-    const { species, water_data = {}, air_pressure, latitude = null, longitude = null } = req.body;
+    const { species, water_data = {}, air_pressure } = req.body;
+    const lat = req.body.latitude != null ? Number(req.body.latitude) : null;
+    const lon = req.body.longitude != null ? Number(req.body.longitude) : null;
 
     if (!species || !species.trim()) {
       return res.status(400).json({ error: 'Fischart (species) erforderlich' });
     }
 
     let currentWeather = null;
-    if (latitude != null && longitude != null) {
+    if (Number.isFinite(lat) && Number.isFinite(lon)) {
       try {
         const w = await fetchWithTimeout(
-          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,wind_speed_10m,weather_code,surface_pressure,relative_humidity_2m&timezone=auto`,
+          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,weather_code,surface_pressure,relative_humidity_2m&timezone=auto`,
           {}, WEATHER_TIMEOUT_MS
         ).then(r => r.json());
         if (w?.current) {

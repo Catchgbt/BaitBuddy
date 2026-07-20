@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useHaptic } from "@/components/utils/HapticFeedback";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function FloatingGoButton() {
   const { triggerHaptic } = useHaptic();
+  const navigate = useNavigate();
   const [currentMainAction, setCurrentMainAction] = useState(0);
   
   const ACTION_SWITCH_DURATION = 5000;
@@ -21,9 +23,9 @@ export default function FloatingGoButton() {
     triggerHaptic('medium');
     
     if (currentMainAction === 0) {
-      window.location.href = createPageUrl('Gear');
+      navigate(createPageUrl('Gear'));
     } else {
-      window.location.href = createPageUrl('AI');
+      navigate(createPageUrl('AI'));
     }
   };
 

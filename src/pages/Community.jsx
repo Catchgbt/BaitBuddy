@@ -204,29 +204,35 @@ export default function Community() {
   }, []);
 
   useEffect(() => {
+    let startY = 0;
+    let currentDistance = 0;
+
     const handleTouchStart = (e) => {
       if (window.scrollY === 0) {
-        setPullStart(e.touches[0].clientY);
+        startY = e.touches[0].clientY;
       }
     };
 
     const handleTouchMove = (e) => {
-      if (pullStart > 0) {
-        const distance = e.touches[0].clientY - pullStart;
+      if (startY > 0) {
+        const distance = e.touches[0].clientY - startY;
         if (distance > 0 && distance < 150) {
+          currentDistance = distance;
           setPullDistance(distance);
         }
       }
     };
 
     const handleTouchEnd = async () => {
-      if (pullDistance > 80) {
+      if (currentDistance > 80) {
         setIsRefreshing(true);
         await loadPosts();
         await loadCompetitions();
         await loadRecentActivity();
         setIsRefreshing(false);
       }
+      startY = 0;
+      currentDistance = 0;
       setPullStart(0);
       setPullDistance(0);
     };

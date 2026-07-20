@@ -16,6 +16,7 @@ export default function AudioNotesWidget() {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const streamRef = useRef(null);
+  const currentAudioRef = useRef(null);
   const { triggerHaptic } = useHaptic();
   const { playSound } = useSound();
 
@@ -123,19 +124,28 @@ export default function AudioNotesWidget() {
   const playNote = async (note) => {
     try {
       triggerHaptic('light');
-      const audio = new Audio(`data:${note.mime_type};base64,${note.audio_data}`);
 
-      audio.onplay = () => setPlayingId(note.id);
-      audio.onended = () => setPlayingId(null);
-      audio.onpause = () => setPlayingId(null);
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+        currentAudioRef.current = null;
+      }
 
       if (playingId === note.id) {
-        audio.pause();
         setPlayingId(null);
-      } else {
-        await audio.play();
+        return;
       }
+
+      const audio = new Audio(`data:${note.mime_type};base64,${note.audio_data}`);
+      currentAudioRef.current = audio;
+
+      audio.onended = () => { currentAudioRef.current = null; setPlayingId(null); };
+      audio.onpause = () => setPlayingId(null);
+
+      setPlayingId(note.id);
+      await audio.play();
     } catch (error) {
+      currentAudioRef.current = null;
+      setPlayingId(null);
       console.error('Fehler beim Abspielen:', error);
       toast.error('Fehler beim Abspielen der Notiz');
     }

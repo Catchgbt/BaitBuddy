@@ -7,7 +7,6 @@ import { queryClientInstance } from '@/lib/query-client'
 import VisualEditAgent from '@/lib/VisualEditAgent'
 import NavigationTracker from '@/lib/NavigationTracker'
 import { NavigationProvider } from '@/lib/NavigationContext'
-import { MobileStackProvider } from '@/components/navigation/MobileStackManager'
 import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
@@ -153,7 +152,6 @@ function App() {
       <AuthProvider>
         <ThemeProvider>
           <QueryClientProvider client={queryClientInstance}>
-            <MobileStackProvider>
               <Router>
                 <NavigationProvider>
                   <NavigationTracker />
@@ -161,7 +159,6 @@ function App() {
                   <AuthenticatedApp />
                 </NavigationProvider>
               </Router>
-            </MobileStackProvider>
             <Toaster />
             <VisualEditAgent />
           </QueryClientProvider>

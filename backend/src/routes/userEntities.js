@@ -53,7 +53,7 @@ function registerEntity(path, table, allowedFields, { publicRead = false, readOn
       } else {
         q = q.order('created_at', { ascending: false });
       }
-      if (req.query.limit) q = q.limit(Number(req.query.limit));
+      if (req.query.limit) q = q.limit(Math.min(Number(req.query.limit) || 50, 500));
 
       const { data, error } = await q;
       if (error) return sendDbError(res, error);
