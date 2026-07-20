@@ -59,12 +59,6 @@ export const tutorialSteps = {
       image: "https://media.base44.com/images/public/68bb3d3b9f83dc1f55ef532b/ca6f51067_generated_image.png"
     },
     {
-      title: "Voice Control",
-      route: "VoiceControl",
-      content: "Sage 'Hey Buddy', um die Sprachsteuerung zu starten. Stelle Fragen wie 'Wo soll ich werfen?', 'Welchen Koeder?', 'Welche Strategie?' oder 'Wie ist das Wetter?' - die KI antwortet mit echten Wetter- und Spot-Daten.",
-      image: "https://media.base44.com/images/public/68bb3d3b9f83dc1f55ef532b/124173541_Screenshot_20260506_075623_Comet.jpg"
-    },
-    {
       title: "Satelliten-Gewaesseranalyse",
       route: "WaterAnalysis",
       content: "KI-gestuetzte Wasseranalyse mit Echtzeit-Satellitendaten von Sentinel-2, MODIS und Copernicus. Tippe auf 'Standort' fuer GPS und auf 'Analyse', um Wassertemperatur, Chlorophyll, Truebung und Algenrisiko zu berechnen.",
@@ -269,12 +263,6 @@ export const tutorialSteps = {
       route: "ARView",
       content: "In the AR view a 3D depth map of your water is overlaid on the camera image. Motion sensors reveal structures and hotspots in your surroundings.",
       image: "https://media.base44.com/images/public/68bb3d3b9f83dc1f55ef532b/ca6f51067_generated_image.png"
-    },
-    {
-      title: "Voice Control",
-      route: "VoiceControl",
-      content: "Say 'Hey Buddy' to start voice control. Ask things like 'Where to cast?', 'Which bait?', 'Which strategy?' or 'How is the weather?' - the AI replies with real weather and spot data.",
-      image: "https://media.base44.com/images/public/68bb3d3b9f83dc1f55ef532b/124173541_Screenshot_20260506_075623_Comet.jpg"
     },
     {
       title: "Satellite Water Analysis",

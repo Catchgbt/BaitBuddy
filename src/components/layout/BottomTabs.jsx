@@ -20,7 +20,6 @@ import {
   Anchor,
   ShoppingBag,
   Compass,
-  Mic,
   ScrollText,
   Sparkles,
 } from "lucide-react";
@@ -45,7 +44,6 @@ const tabs = [
   { name: "Events", path: "Events", icon: Sparkles },
   { name: "Rang", path: "Rank", icon: Trophy },
   { name: "Shop", path: "Shop", icon: ShoppingBag },
-  { name: "Voice", path: "VoiceControl", icon: Mic },
   { name: "Premium", path: "PremiumPlans", icon: Crown },
   { name: "Profil", path: "Profile", icon: User },
   { name: "Settings", path: "Settings", icon: Settings },

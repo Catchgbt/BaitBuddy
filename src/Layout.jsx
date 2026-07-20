@@ -21,7 +21,6 @@ import { PlanProvider } from "@/components/premium/PlanContext";
 import TrialBanner from "@/components/premium/TrialBanner";
 import { AnimatePresence } from "framer-motion";
 import PageTransition from "@/lib/PageTransitionEnhanced";
-import { WakeWordDetector } from "@/components/utils/WakeWordDetector";
 import { isGuestAllowedPage } from "@/components/utils/guestMode";
 import { createPageUrl } from "@/utils";
 import { Link } from "react-router-dom";
@@ -29,7 +28,6 @@ import { MobileStackProvider } from "@/components/navigation/MobileStackManager"
 import BackButtonHandler from "@/components/navigation/BackButtonHandler";
 
 import ErrorBoundary from "@/lib/ErrorBoundary";
-import VoiceOverlay from "@/components/layout/VoiceOverlay";
 import WaterScene from "@/components/home/WaterScene";
 
 // Lazy-loaded nicht-kritische Komponenten
@@ -66,18 +64,10 @@ export default function Layout({ children, currentPageName }) {
 function LayoutContent({ children, currentPageName }) {
   const queryClient = useQueryClient();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [voiceOverlayOpen, setVoiceOverlayOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [scrollPositions, setScrollPositions] = useState({});
   const [previousPage, setPreviousPage] = useState(null);
-  const [wakeWordDetector, setWakeWordDetector] = useState(null);
-  const [voiceStatus, setVoiceStatus] = useState({
-    isActive: false,
-    mode: null,
-    isListening: false,
-    error: null
-  });
 
   // Dark mode detection
   useEffect(() => {
@@ -199,71 +189,6 @@ function LayoutContent({ children, currentPageName }) {
 
     setPreviousPage(currentPageName);
   }, [currentPageName]);
-
-  useEffect(() => {
-    const handleToggleVoiceControl = () => {
-      // Deaktiviere WakeWordDetector auf VoiceControl Seite
-      if (currentPageName === 'VoiceControl') {
-        return;
-      }
-
-      if (!wakeWordDetector) {
-        const detector = new WakeWordDetector(
-          'Hey Buddy',
-          () => {
-            window.dispatchEvent(new CustomEvent('wake-word-detected'));
-          },
-          (status, error) => {
-            setVoiceStatus({
-              isActive: true,
-              mode: detector.currentMode,
-              isListening: detector.isListening,
-              error: error
-            });
-          },
-          'auto'
-        );
-        setWakeWordDetector(detector);
-        detector.start();
-      } else {
-        if (wakeWordDetector.isListening) {
-          wakeWordDetector.stop();
-          setVoiceStatus({
-            isActive: false,
-            mode: null,
-            isListening: false,
-            error: null
-          });
-          setWakeWordDetector(null);
-        } else {
-          wakeWordDetector.start();
-        }
-      }
-    };
-
-    const handleWakeWordStatusChange = (event) => {
-      if (event.detail) {
-        setVoiceStatus(event.detail);
-      }
-    };
-
-    window.addEventListener('toggle-voice-control', handleToggleVoiceControl);
-    window.addEventListener('wake-word-status-change', handleWakeWordStatusChange);
-
-    // Cleanup wenn auf VoiceControl Seite navigiert wird
-    if (currentPageName === 'VoiceControl' && wakeWordDetector?.isListening) {
-      wakeWordDetector.stop();
-      setWakeWordDetector(null);
-    }
-
-    return () => {
-      window.removeEventListener('toggle-voice-control', handleToggleVoiceControl);
-      window.removeEventListener('wake-word-status-change', handleWakeWordStatusChange);
-      if (wakeWordDetector) {
-        wakeWordDetector.stop();
-      }
-    };
-  }, [wakeWordDetector, currentPageName]);
 
   // Service Worker Registrierung - angepasst für Backend-Funktion
   useEffect(() => {
@@ -458,12 +383,6 @@ function LayoutContent({ children, currentPageName }) {
                 <SuspenseWithErrorBoundary>
                   <AIBuddyWidgetStub />
                 </SuspenseWithErrorBoundary>
-
-                <VoiceOverlay 
-                  isOpen={voiceOverlayOpen} 
-                  onClose={() => setVoiceOverlayOpen(false)} 
-                  currentPageName={currentPageName} 
-                />
 
                 <Toaster 
                   position="bottom-center"

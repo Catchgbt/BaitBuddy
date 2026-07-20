@@ -12,7 +12,7 @@ export const ALLOWED_PAGES = [
   "AngelscheinPruefungSchonzeiten", "Quiz", "Licenses", "Events",
   "BaitMixer", "Koeder3D", "CatchStats", "ARKnotenAssistent", "Shop", "Premium",
   "PremiumPlans", "Help", "Tutorials", "Devices", "DeviceIntegration",
-  "StartFishing", "UsedGear", "BathymetricCrowdsourcing", "VoiceControl",
+  "StartFishing", "UsedGear", "BathymetricCrowdsourcing",
   "VoiceLecture"
 ];
 
@@ -103,9 +103,6 @@ const PAGE_ALIASES = {
 
   tiefenkarte: "BathymetricCrowdsourcing",
   bathymetriccrowdsourcing: "BathymetricCrowdsourcing",
-
-  voice: "VoiceControl", voicecontrol: "VoiceControl",
-  sprachsteuerung: "VoiceControl",
 
   vorlesung: "VoiceLecture", voicelecture: "VoiceLecture", lehrgang: "VoiceLecture"
 };

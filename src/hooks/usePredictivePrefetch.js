@@ -28,7 +28,6 @@ const PAGE_PREFETCH_MAP = {
   'WeatherAlerts': ['Weather', 'Dashboard'],
   'AngelscheinPruefungSchonzeiten': ['Dashboard'],
   'ARKnotenAssistent': ['Gear', 'Dashboard'],
-  'VoiceControl': ['Dashboard', 'AI'],
   'CatchCam': ['AI', 'Logbook'],
   'KiBuddyBeta': ['AI', 'Dashboard'],
   'Start': ['Dashboard', 'Home'],

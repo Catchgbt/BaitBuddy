@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { catchgbtChat } from '@/functions/catchgbtChat';
 import { speakWithFallback, cancelElevenLabs } from '@/components/utils/elevenLabsTTS';
 import { useChatMessages } from '@/hooks/useChatMessages';
-import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 
 const INITIAL_MESSAGE = 'Hallo! Ich bin dein KI-Buddy. Stelle mir eine Angel-Frage!';
 
@@ -22,19 +21,6 @@ export default function MiniKiBuddy() {
   const messagesEndRef = useRef(null);
   // Guard gegen State-Updates nach dem Unmount und Anker für den TTS-Abbruch.
   const isMountedRef = useRef(true);
-
-  const {
-    isListening,
-    start: startListening,
-    stop: stopListening,
-  } = useSpeechRecognition({
-    onResult: (text) => {
-      if (text?.trim()) {
-        setInput(text);
-        handleSendMessage(text, true);
-      }
-    },
-  });
 
   // Initialize location
   useEffect(() => {
@@ -115,14 +101,6 @@ export default function MiniKiBuddy() {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
-    }
-  };
-
-  const handleVoiceToggle = () => {
-    if (isListening) {
-      stopListening();
-    } else {
-      startListening();
     }
   };
 
@@ -212,22 +190,10 @@ export default function MiniKiBuddy() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Frage stellen oder sprechen..."
+          placeholder="Frage stellen..."
           disabled={isLoading}
           className="flex-1 min-w-0 bg-gray-900/60 border border-gray-600/50 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 disabled:opacity-50"
         />
-        <button
-          onClick={handleVoiceToggle}
-          disabled={isLoading}
-          className={`flex-shrink-0 px-3 py-2 rounded-lg text-white text-sm font-medium transition-colors ${
-            isListening
-              ? 'bg-red-600 hover:bg-red-500'
-              : 'bg-gray-700 hover:bg-gray-600 disabled:opacity-40'
-          }`}
-          title={isListening ? 'Hoere zu...' : 'Sprechen'}
-        >
-          {isListening ? 'Stop' : 'Sprache'}
-        </button>
         <button
           onClick={() => handleSendMessage()}
           disabled={isLoading || !input.trim()}
