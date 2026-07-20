@@ -114,13 +114,13 @@ export default function SchonzeitWarner() {
 
   return (
     <div className="rounded-2xl bg-gray-900/50 border border-gray-800/50 p-5 space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="text-xs font-semibold text-amber-400/80 uppercase tracking-wider">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="text-xs font-semibold text-amber-400/80 uppercase tracking-wider truncate">
           Schonzeit-Waechter {bundesland ? `- ${bundesland}` : ""}
         </div>
         <Link
           to={createPageUrl("AngelscheinPruefungSchonzeiten")}
-          className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+          className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors whitespace-nowrap"
         >
           Alle Regeln
         </Link>
@@ -133,10 +133,10 @@ export default function SchonzeitWarner() {
             {active.map((rule) => (
               <div
                 key={rule.id}
-                className="flex items-center justify-between bg-red-900/20 border border-red-500/20 rounded-xl px-4 py-2"
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-red-900/20 border border-red-500/20 rounded-xl px-4 py-2 gap-2"
               >
-                <span className="text-sm font-semibold text-red-300">{rule.fish}</span>
-                <span className="text-xs text-gray-400">
+                <span className="text-sm font-semibold text-red-300 truncate">{rule.fish}</span>
+                <span className="text-xs text-gray-400 whitespace-nowrap">
                   bis {new Date(rule.closed_to).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}
                 </span>
               </div>
@@ -152,10 +152,10 @@ export default function SchonzeitWarner() {
             {upcoming.map((rule) => (
               <div
                 key={rule.id}
-                className="flex items-center justify-between bg-amber-900/20 border border-amber-500/20 rounded-xl px-4 py-2"
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-amber-900/20 border border-amber-500/20 rounded-xl px-4 py-2 gap-2"
               >
-                <span className="text-sm font-semibold text-amber-300">{rule.fish}</span>
-                <span className="text-xs text-gray-400">
+                <span className="text-sm font-semibold text-amber-300 truncate">{rule.fish}</span>
+                <span className="text-xs text-gray-400 whitespace-nowrap">
                   ab {new Date(rule.closed_from).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}
                 </span>
               </div>

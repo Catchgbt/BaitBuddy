@@ -84,8 +84,8 @@ export default function SettingsPageTabbed() {
 
         {/* Tab Navigation */}
         <div className="mb-8">
-          <div className="glass-morphism border-gray-800 rounded-2xl p-2 sm:p-4">
-            <div className="flex overflow-x-auto gap-2 sm:gap-3 scrollbar-hide">
+          <div className="glass-morphism border-gray-800 rounded-2xl p-2 sm:p-4 overflow-hidden">
+            <div className="flex overflow-x-auto gap-1 sm:gap-3 scrollbar-hide">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
@@ -94,15 +94,15 @@ export default function SettingsPageTabbed() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`relative flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all duration-200 ${
+                    className={`relative flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-2.5 rounded-lg whitespace-nowrap text-xs sm:text-sm transition-all duration-200 flex-shrink-0 ${
                       isActive
                         ? 'bg-gradient-to-r from-cyan-600 to-cyan-700 text-white shadow-lg shadow-cyan-500/50 font-semibold'
                         : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
                     }`}
                   >
-                    <Icon className={`w-4 h-4 ${isActive ? '' : ''}`} />
-                    <span className="hidden sm:inline text-sm font-medium">{tab.label}</span>
-                    <span className="sm:hidden text-sm font-medium">{tab.label.slice(0, 3)}</span>
+                    <Icon className="w-4 h-4" />
+                    <span className="hidden sm:inline font-medium">{tab.label}</span>
+                    <span className="sm:hidden font-medium">{tab.label.slice(0, 3)}</span>
                   </button>
                 );
               })}
