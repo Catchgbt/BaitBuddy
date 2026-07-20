@@ -6,7 +6,7 @@ on:
       version_code:
         description: 'Android versionCode (muss hoeher sein als der zuletzt in der Play Console hochgeladene)'
         required: false
-        default: '28'
+        default: '30'
       version_name:
         description: 'Android versionName'
         required: false
@@ -102,7 +102,7 @@ jobs:
             -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
             -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
             -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }} \
-            -PappVersionCode=${{ github.event.inputs.version_code || '28' }} \
+            -PappVersionCode=${{ github.event.inputs.version_code || '30' }} \
             -PappVersionName=${{ github.event.inputs.version_name || '2.117899.0' }}
         env:
           ANDROID_HOME: ${{ env.ANDROID_SDK_ROOT }}

@@ -14,13 +14,13 @@
 import { functions } from "@/api/frontendClient";
 
 export const GOOGLE_PLAY_PRODUCT_IDS = {
-  basic: 'catchgbt_basic_monthly',
-  pro: 'catchgbt_pro_monthly',
-  ultimate: 'catchgbt_ultimate_monthly',
-  elite: 'catchgbt_ultimate_monthly', // Alias
-  friends: 'catchgbt_friends_yearly',
-  friends_monthly: 'catchgbt_friends_monthly',
-  trial_10_10: 'catchgbt_trial_10_10'
+  basic: 'baitbuddy_basic_monthly',
+  pro: 'baitbuddy_pro_monthly',
+  ultimate: 'baitbuddy_ultimate_monthly',
+  elite: 'baitbuddy_ultimate_monthly', // Alias
+  friends: 'baitbuddy_friends_yearly',
+  friends_monthly: 'baitbuddy_friends_monthly',
+  trial_10_10: 'baitbuddy_trial_10_10'
 };
 
 // Reverse-Map: productId -> planId
