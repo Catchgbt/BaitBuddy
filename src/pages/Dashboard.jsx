@@ -499,6 +499,28 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
           <WeatherWarningBanner />
         </SuspenseWithErrorBoundary>
 
+        {user && (
+          <div className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-br from-gray-900/80 to-gray-900/40 backdrop-blur-sm border border-gray-800/50">
+            <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-cyan-500 to-emerald-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-cyan-500/20">
+              {user.avatar_url ? (
+                <img src={user.avatar_url} alt={user.full_name} className="w-16 h-16 rounded-xl object-cover" />
+              ) : (
+                <span className="text-2xl font-bold text-white">
+                  {(user.full_name || user.email || '?')[0].toUpperCase()}
+                </span>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg font-bold text-white truncate">
+                {getGreeting()}!
+              </h2>
+              <p className="text-sm text-gray-400 truncate">
+                {user.email}
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center justify-between border-b border-gray-800/50 pb-5">
           <Button
             onClick={handleAiAnalysis}
