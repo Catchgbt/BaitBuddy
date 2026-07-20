@@ -51,9 +51,6 @@
   @android.webkit.JavascriptInterface <methods>;
 }
 
-# Keep Kotlin metadata for billing classes
--keep class kotlin.Metadata { *; }
-
 # Optimization settings
 -optimizationpasses 5
 -allowaccessmodification
