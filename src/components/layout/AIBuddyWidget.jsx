@@ -10,10 +10,9 @@ import { ai, events } from '@/api/frontendClient';
 import { speakWithFallback, cancelElevenLabs } from '@/components/utils/elevenLabsTTS';
 import { findOfflineBuddyAnswer, getOfflineBuddyFallback } from '@/lib/offlineBuddyQuestions';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { Mic, Send, X } from 'lucide-react';
+import { Send, X } from 'lucide-react';
 
 import { useChatMessages } from '@/hooks/useChatMessages';
-import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { useBuddyStorage } from '@/hooks/useBuddyStorage';
 import { executeBuddyAction } from '@/utils/buddyActions';
 import {
@@ -43,7 +42,7 @@ function getDefaultPos() {
 
 // Eigener State + React.memo: Tastenanschläge im Eingabefeld rendern so nur
 // diese Subkomponente neu, nicht die gesamte Nachrichtenliste/Avatar-Animation.
-const ChatInput = React.memo(function ChatInput({ isLoading, isListening, onSend, onVoiceInput }) {
+const ChatInput = React.memo(function ChatInput({ isLoading, onSend }) {
   const [value, setValue] = useState('');
 
   const submit = () => {
@@ -78,21 +77,6 @@ const ChatInput = React.memo(function ChatInput({ isLoading, isListening, onSend
           <Send size={16} />
         </button>
       </div>
-
-      <button
-        onClick={onVoiceInput}
-        disabled={isLoading}
-        className={`w-full py-2 px-4 rounded-lg font-semibold text-xs flex items-center justify-center gap-2 transition-colors ${
-          isListening
-            ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse'
-            : 'bg-green-500 hover:bg-green-600 text-white disabled:bg-gray-300'
-        }`}
-        aria-label={isListening ? 'Spracherkennung stoppen' : 'Spracherkennung starten'}
-        aria-pressed={isListening}
-      >
-        <Mic size={14} />
-        {isListening ? 'Höre zu...' : 'Sprich'}
-      </button>
     </div>
   );
 });
@@ -208,25 +192,6 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
       showWidget();
     }
   }, [initialOpen, showWidget]);
-
-  // Stabiler Speech-Callback: verhindert, dass useSpeechRecognition die
-  // Recognition-Instanz bei jedem Render neu aufbaut (das würde eine laufende
-  // Aufnahme abbrechen). showWidget und die State-Setter sind stabil.
-  const handleSpeechResult = useCallback((text) => {
-    if (text?.trim()) {
-      showWidget();
-      setIsOpen(true);
-      if (handleSendMessageRef.current) {
-        handleSendMessageRef.current(text);
-      }
-    }
-  }, [showWidget]);
-
-  const {
-    isListening,
-    start: startListening,
-    stop: stopListening,
-  } = useSpeechRecognition({ onResult: handleSpeechResult });
 
   const currentPage = getPageNameFromPathname(location.pathname);
   const tip = getTipForPage(currentPage);
@@ -525,23 +490,11 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
     handleSendMessageRef.current = handleSendMessage;
   }, [handleSendMessage]);
 
-  // Voice input handler
-  const handleVoiceInput = useCallback(() => {
-    if (isListening) {
-      stopListening();
-    } else {
-      startListening();
-    }
-  }, [isListening, startListening, stopListening]);
-
   // Bubble controls
   const handleCloseBubble = useCallback(() => {
-    if (isListening) {
-      stopListening();
-    }
     setIsOpen(false);
     hideWidget();
-  }, [hideWidget, isListening, stopListening]);
+  }, [hideWidget]);
 
   const handleShowBubble = useCallback(() => {
     showWidget();
@@ -609,24 +562,22 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
   const avatarAnimate = useMemo(() => {
     if (prefersReducedMotion) return { scale: 1, y: 0 };
     return {
-      scale: isListening ? [1, 1.06, 1, 1.04, 1] : 1,
-      y: isListening ? [0, -6, 0, -3, 0] : [0, -4, 0],
+      scale: 1,
+      y: [0, -4, 0],
     };
-  }, [prefersReducedMotion, isListening]);
+  }, [prefersReducedMotion]);
 
   const avatarTransition = useMemo(() => {
     if (prefersReducedMotion) return { duration: 0 };
     return {
-      scale: isListening
-        ? { duration: 0.7, repeat: Infinity, ease: 'easeInOut' }
-        : { type: 'spring', stiffness: 300, damping: 12 },
+      scale: { type: 'spring', stiffness: 300, damping: 12 },
       y: {
-        duration: isListening ? 0.7 : 3,
+        duration: 3,
         repeat: Infinity,
         ease: 'easeInOut',
       },
     };
-  }, [prefersReducedMotion, isListening]);
+  }, [prefersReducedMotion]);
 
   return (
     <>
@@ -771,9 +722,7 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
               {/* Input Section */}
               <ChatInput
                 isLoading={isLoading}
-                isListening={isListening}
                 onSend={handleSendMessage}
-                onVoiceInput={handleVoiceInput}
               />
 
               {/* Bubble Tail */}
@@ -800,7 +749,7 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
                 : 'drop-shadow-lg'
             }`}
           >
-            <BuddyAvatar speaking={isTalking} listening={isListening} size={56} />
+            <BuddyAvatar speaking={isTalking} size={56} />
           </div>
         </motion.div>
       </div>
