@@ -93,11 +93,11 @@ class BillingManager(
             billingClient.queryProductDetailsAsync(subsParams,
                 ProductDetailsResponseListener { result, productDetailsList ->
                     if (result.responseCode == BillingClient.BillingResponseCode.OK) {
-                        for (i in 0 until productDetailsList.size) {
-                            val pd = productDetailsList[i]
+                        for (i in 0 until productDetailsList.size()) {
+                            val pd = productDetailsList.get(i)
                             productDetailsCache[pd.productId] = pd
                         }
-                        Log.i(tag, "Loaded " + productDetailsList.size + " subscription details")
+                        Log.i(tag, "Loaded " + productDetailsList.size() + " subscription details")
                     } else {
                         Log.e(tag, "queryProductDetails (subs) failed: " + result.debugMessage)
                     }
@@ -139,11 +139,11 @@ class BillingManager(
 
         if (productDetails.productType == BillingClient.ProductType.SUBS) {
             val offers = productDetails.subscriptionOfferDetails
-            if (offers == null || offers.isEmpty()) {
+            if (offers == null || offers.size() == 0) {
                 emitError(productId, -1, "No subscription offer found")
                 return
             }
-            productDetailsParamsBuilder.setOfferToken(offers[0].offerToken)
+            productDetailsParamsBuilder.setOfferToken(offers.get(0).offerToken)
         }
 
         val flowParams = BillingFlowParams.newBuilder()
