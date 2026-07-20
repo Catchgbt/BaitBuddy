@@ -13,7 +13,7 @@ import { MobileSelect } from "@/components/ui/mobile-select";
 import { Textarea } from "@/components/ui/textarea";
 import SwipeToRefresh from "@/components/utils/SwipeToRefresh";
 import { toast } from "sonner";
-import { Upload, X, Loader2, Share2, BarChart2 } from "lucide-react";
+import { Upload, X, Loader2, Share2, BarChart2, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { UploadFile } from "@/integrations/Core";
 import CatchHistory from "@/components/log/CatchHistory";
@@ -77,6 +77,10 @@ export default function Logbook() {
 
   // ---- Pending photos ----
   const [pendingPhotos, setPendingPhotos] = useState([]);
+
+  // ---- Catch filtering ----
+  const [filterSpecies, setFilterSpecies] = useState("Alle");
+  const [filterYear, setFilterYear] = useState("Alle Jahre");
 
   // Ref so onSuccess closure always sees latest shareInCommunity value.
   const shareRef = useRef(shareInCommunity);
@@ -390,7 +394,7 @@ export default function Logbook() {
         </div>
       )}
 
-      <Card className="glass-morphism border-gray-800 rounded-2xl">
+      <Card id="fang-erfassen" className="glass-morphism border-gray-800 rounded-2xl scroll-mt-24">
         <CardHeader>
           {!editingCatch && (
             <div className="flex flex-wrap gap-2 mb-3">
@@ -617,7 +621,55 @@ export default function Logbook() {
           </button>
         </Link>
       </div>
-      <CatchHistory catches={catches} isLoading={loading} onEdit={handleEdit} onDelete={handleDelete} onRefresh={() => queryClient.invalidateQueries({ queryKey: ['catches'] })} />
+
+      {catches.length > 0 && !loading && (
+        <div className="space-y-3">
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Filter</h3>
+          <div className="flex gap-2 flex-wrap">
+            {["Alle", ...new Set(catches.map(c => c.species).filter(Boolean))].map(species => (
+              <button
+                key={species}
+                onClick={() => setFilterSpecies(species)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all border ${
+                  filterSpecies === species
+                    ? "bg-cyan-500/20 border-cyan-400 text-cyan-300"
+                    : "bg-gray-800/50 border-gray-700 text-gray-400 hover:bg-gray-800"
+                }`}
+              >
+                {species}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {["Alle Jahre", new Date().getFullYear().toString(), new Date().getFullYear() - 1, new Date().getFullYear() - 2].map(year => (
+              <button
+                key={year}
+                onClick={() => setFilterYear(year)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all border ${
+                  filterYear === year
+                    ? "bg-emerald-500/20 border-emerald-400 text-emerald-300"
+                    : "bg-gray-800/50 border-gray-700 text-gray-400 hover:bg-gray-800"
+                }`}
+              >
+                {year}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <CatchHistory
+        catches={catches.filter(c => {
+          const matchesSpecies = filterSpecies === "Alle" || c.species === filterSpecies;
+          const catchYear = c.catch_time ? new Date(c.catch_time).getFullYear().toString() : '';
+          const matchesYear = filterYear === "Alle Jahre" || catchYear === filterYear;
+          return matchesSpecies && matchesYear;
+        })}
+        isLoading={loading}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onRefresh={() => queryClient.invalidateQueries({ queryKey: ['catches'] })}
+      />
 
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
         <DialogContent className="bg-gray-900 border-gray-800 text-white">
@@ -661,6 +713,23 @@ export default function Logbook() {
         onOpenChange={setShowSocialMediaDialog}
         catchData={savedCatchData}
       />
+
+      <button
+        type="button"
+        aria-label="Neuen Fang eintragen"
+        onClick={() => {
+          const form = document.getElementById('fang-erfassen');
+          if (form) {
+            form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const speciesInput = form.querySelector('input, select, textarea');
+            if (speciesInput) setTimeout(() => speciesInput.focus(), 400);
+          }
+        }}
+        className="fixed right-5 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-cyan-500 to-emerald-500 shadow-lg shadow-cyan-500/40 flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-transform"
+        style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 5.5rem)' }}
+      >
+        <Plus className="w-7 h-7" />
+      </button>
           </div>
           </SwipeToRefresh>
           );

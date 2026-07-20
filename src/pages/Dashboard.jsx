@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import VoiceControlWidget from "@/components/dashboard/VoiceControlWidget";
 import MiniKarte from "@/components/home/MiniKarte";
-import { Brain, Mic, BookOpen, ArrowRight, MapPin, Cloud, BarChart2, MessageCircle, Camera, Waves, Wrench, Calendar, Users, Trophy, GraduationCap, Loader2, AlertTriangle, RefreshCw } from "lucide-react";
+import { Brain, Mic, BookOpen, ArrowRight, MapPin, Cloud, BarChart2, MessageCircle, Camera, Waves, Wrench, Calendar, Users, Trophy, GraduationCap, Loader2, AlertTriangle, RefreshCw, Plus, Beaker } from "lucide-react";
 import SchonzeitWarner from "@/components/dashboard/SchonzeitWarner";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -499,6 +499,28 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
           <WeatherWarningBanner />
         </SuspenseWithErrorBoundary>
 
+        {user && (
+          <div className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-br from-gray-900/80 to-gray-900/40 backdrop-blur-sm border border-gray-800/50">
+            <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-cyan-500 to-emerald-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-cyan-500/20">
+              {user.avatar_url ? (
+                <img src={user.avatar_url} alt={user.full_name} className="w-16 h-16 rounded-xl object-cover" />
+              ) : (
+                <span className="text-2xl font-bold text-white">
+                  {(user.full_name || user.email || '?')[0].toUpperCase()}
+                </span>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg font-bold text-white truncate">
+                {getGreeting()}!
+              </h2>
+              <p className="text-sm text-gray-400 truncate">
+                {user.email}
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center justify-between border-b border-gray-800/50 pb-5">
           <Button
             onClick={handleAiAnalysis}
@@ -568,6 +590,34 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
             <ArrowRight className="w-5 h-5 text-cyan-400 flex-shrink-0 group-hover:translate-x-1 transition-transform" />
           </div>
         </Link>
+
+        <div className="space-y-3">
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Schnellstart</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { name: "Fang eintragen", path: "Logbook", Icon: Plus, ring: "border-emerald-500/30 hover:border-emerald-400/60", iconBg: "from-emerald-500 to-emerald-600", glow: "shadow-emerald-500/20" },
+              { name: "Live-Karte", path: "Map", Icon: MapPin, ring: "border-blue-500/30 hover:border-blue-400/60", iconBg: "from-blue-500 to-blue-600", glow: "shadow-blue-500/20" },
+              { name: "KI-Kamera", path: "AI", Icon: Camera, ring: "border-cyan-500/30 hover:border-cyan-400/60", iconBg: "from-cyan-500 to-cyan-600", glow: "shadow-cyan-500/20" },
+              { name: "Köder-Mischer", path: "BaitMixer", Icon: Beaker, ring: "border-teal-500/30 hover:border-teal-400/60", iconBg: "from-teal-500 to-teal-600", glow: "shadow-teal-500/20" },
+            ].map((action) => {
+              const { Icon } = action;
+              return (
+                <Link
+                  key={action.path}
+                  to={createPageUrl(action.path)}
+                  aria-label={action.name}
+                  className={`group flex flex-col items-center justify-center gap-3 rounded-2xl bg-gradient-to-br from-gray-900/80 to-gray-900/40 backdrop-blur-sm p-5 border ${action.ring} transition-all`}
+                  style={{ minHeight: '112px' }}
+                >
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${action.iconBg} flex items-center justify-center shadow-lg ${action.glow} group-hover:scale-105 transition-transform`}>
+                    <Icon className="w-6 h-6 text-white" />
+                  </div>
+                  <span className="text-sm font-semibold text-white text-center leading-tight">{action.name}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
 
         <Link
           to={createPageUrl('Map')}
