@@ -85,10 +85,7 @@ dependencies {
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
 
-    def billing_version = "8.3.0"
-    implementation "com.android.billingclient:billing:$billing_version"
-    implementation "com.android.billingclient:billing-ktx:$billing_version"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
+    implementation "com.android.billingclient:billing:8.3.0"
 }
 
 apply from: 'capacitor.build.gradle'
