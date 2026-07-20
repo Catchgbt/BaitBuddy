@@ -9,7 +9,7 @@ import { functions } from "@/api/frontendClient";
 import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { UploadFile } from '@/integrations/Core';
-import { Camera, Copy, Check, Edit3, Calendar, Clock, MessageSquare, Crown, Link as LinkIcon, Mail, Volume2, AlertTriangle } from 'lucide-react';
+import { Camera, Copy, Check, Edit3, Calendar, Clock, MessageSquare, Crown, Link as LinkIcon, Mail, AlertTriangle } from 'lucide-react';
 import { toast } from "sonner";
 import { MobileSelect } from "@/components/ui/mobile-select";
 import { Separator } from "@/components/ui/separator";
@@ -174,30 +174,6 @@ export default function ProfilePage() {
       return;
     }
     saveProfileMutation.mutate({ nickname: nickname.trim() });
-  };
-
-  const voiceGenderMutation = useOptimisticMutation({
-    mutationFn: async (data) => {
-      await auth.updateMe(data);
-      return data;
-    },
-    optimisticUpdate: (oldUser, newData) => ({
-      ...oldUser,
-      ...newData
-    }),
-    onSuccess: () => {
-      toast.success('Stimme aktualisiert!');
-    },
-    onError: () => {
-      toast.error('Fehler beim Ändern der Stimme');
-    },
-    invalidateOnSettle: false
-  });
-
-  const handleVoiceGenderChange = (gender) => {
-    voiceGenderMutation.mutate({
-      settings: { ...user?.settings, voice_gender: gender }
-    });
   };
 
   const copyReferralLink = async () => {
@@ -491,37 +467,6 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Stimmeneinstellung */}
-      <Card className="glass-morphism border-gray-800 rounded-2xl">
-        <CardHeader>
-          <CardTitle className="text-cyan-400 drop-shadow-[0_0_12px_rgba(34,211,238,0.7)] flex items-center gap-2">
-            <Volume2 className="w-5 h-5" />
-            Spracheinstellungen
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <Label className="text-white text-base">KI-Buddy Stimme</Label>
-              <p className="text-sm text-gray-400 mt-1">
-                Wähle zwischen männlicher oder weiblicher Stimme
-              </p>
-            </div>
-            
-            <MobileSelect
-              value={user?.settings?.voice_gender || 'female'}
-              onValueChange={handleVoiceGenderChange}
-              label="Stimme waehlen"
-              options={[
-                { value: 'female', label: 'Weiblich' },
-                { value: 'male', label: 'Maennlich' },
-              ]}
-              className="w-full sm:w-48 bg-gray-800/50 border-gray-700"
-            />
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Chat-Historie Card */}
       <Card className="glass-morphism border-gray-800 rounded-2xl">

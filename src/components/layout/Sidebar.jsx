@@ -31,7 +31,6 @@ export default function Sidebar({ isOpen, setIsOpen, currentPageName, user, load
     { name: "KI-Kamera & Biss", path: "AI", key: "nav.ai_camera" },
     { name: "AR-Gewässer", path: "ARView", key: "nav.ar_view" },
     { name: "AR Knoten AI", path: "ARKnotenAssistent", key: "nav.ar_knoten" },
-    { name: "KI Voice Control", path: "VoiceControl", key: "nav.ai_voice" },
     { name: "Satelliten-Analyse", path: "WaterAnalysis", key: "nav.water_analysis" },
     { name: "KI-Köder-Mischer", path: "BaitMixer", key: "nav.bait_mixer" },
     { name: "3D-Köderführung", path: "Koeder3D", key: "nav.lure3d" },

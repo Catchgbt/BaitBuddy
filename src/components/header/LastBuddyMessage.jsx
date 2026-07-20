@@ -44,7 +44,7 @@ export default function LastBuddyMessage() {
   if (!lastMessage) {
     return (
       <Link
-        to={createPageUrl("VoiceControl")}
+        to={createPageUrl("KiBuddyBeta")}
         className="text-xl font-bold text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]"
       >
         BaitBuddy
@@ -59,7 +59,7 @@ export default function LastBuddyMessage() {
 
   return (
     <Link
-      to={createPageUrl("VoiceControl")}
+      to={createPageUrl("KiBuddyBeta")}
       className="flex flex-col items-center max-w-[200px] sm:max-w-[280px] active:scale-95 transition-transform"
       title="Zum Buddy"
     >

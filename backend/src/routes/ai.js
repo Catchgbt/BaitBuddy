@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
-import { invokeLLM } from '../lib/llm.js';
+import { invokeLLM, getGroqKey } from '../lib/llm.js';
 import {
   FISHING_KNOWLEDGE,
   PRACTICAL_GUIDE_RULES,
@@ -165,6 +165,16 @@ router.post('/ai/chat', requireAuth, async (req, res) => {
   try {
     const { messages = [], userLocation = null } = req.body;
     const userEmail = req.user.email;
+
+    // Pre-Check: Groq API Key vorhanden? Fehler sofort, bevor invokeLLM aufgerufen wird.
+    if (!getGroqKey()) {
+      return res.status(503).json({
+        ok: false,
+        error: 'Meine KI-Services sind gerade nicht konfiguriert (fehlender API-Schlüssel). Der Admin muss das fixen.',
+        reply: 'Meine KI-Services sind gerade nicht konfiguriert (fehlender API-Schlüssel). Der Admin muss das fixen.',
+        message: 'Meine KI-Services sind gerade nicht konfiguriert (fehlender API-Schlüssel). Der Admin muss das fixen.'
+      });
+    }
 
     // Eingabe hart validieren: Ein Nicht-Array führte zuvor beim Spread
     // [...messages] zu einem 500er statt einer sauberen 400. Zusätzlich pro
