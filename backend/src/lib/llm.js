@@ -26,14 +26,8 @@ function backoffDelay(attempt) {
   return 500 * 2 ** attempt;
 }
 
-// Akzeptiert mehrere mögliche Variablennamen für den Groq-Key.
 export function getGroqKey() {
-  return (
-    process.env.GROQ_API_KEY ||
-    process.env.GROG_API_KEY ||
-    process.env.GROK_API_KEY ||
-    null
-  );
+  return process.env.GROQ_API_KEY || null;
 }
 
 export async function invokeLLM({ prompt, imageBase64 = null }) {

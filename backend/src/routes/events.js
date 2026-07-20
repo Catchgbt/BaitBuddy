@@ -398,45 +398,47 @@ router.get('/events/invitations/me', requireAuth, async (req, res) => {
 
 router.post('/events/invitations/:id/accept', requireAuth, async (req, res) => {
   try {
-    // 1. Aktualisiere Einladungs-Status
+    // 1. Lade Einladung mit User-Scoping
+    const { data: invitation, error: fetchError } = await supabase
+      .from('event_invitations')
+      .select('id, event_id')
+      .eq('id', req.params.id)
+      .eq('invitee_id', req.user.email)
+      .single();
+
+    if (fetchError || !invitation) {
+      return res.status(404).json({ error: 'Einladung nicht gefunden' });
+    }
+
+    // 2. Aktualisiere Einladungs-Status
     const { error: inviteError } = await supabase
       .from('event_invitations')
       .update({
         status: 'accepted',
         accepted_at: new Date().toISOString()
       })
-      .eq('id', req.params.id)
+      .eq('id', invitation.id)
       .eq('invitee_id', req.user.email);
 
     if (inviteError) return sendDbError(res, inviteError);
 
-    // 2. Hole Event-ID
-    const { data: invitation } = await supabase
-      .from('event_invitations')
-      .select('event_id')
-      .eq('id', req.params.id)
-      .single();
+    // 3. Fuege User als Teilnehmer hinzu (Duplikate ignorieren)
+    const { error: participantError } = await supabase
+      .from('event_participants')
+      .insert({
+        event_id: invitation.event_id,
+        user_id: req.user.email,
+        joined_at: new Date().toISOString()
+      });
 
-    // 3. Füge User als Teilnehmer hinzu (Duplikate ignorieren)
-    if (invitation) {
-      const { error: participantError } = await supabase
-        .from('event_participants')
-        .insert({
-          event_id: invitation.event_id,
-          user_id: req.user.email,
-          joined_at: new Date().toISOString()
-        });
-
-      // 23505 = bereits Teilnehmer, das ist kein Fehler
-      if (participantError && participantError.code !== '23505') {
-        return res.status(500).json({ error: participantError.message });
-      }
+    if (participantError && participantError.code !== '23505') {
+      return sendDbError(res, participantError);
     }
 
     return res.json({ ok: true });
   } catch (error) {
     console.error('Error accepting invitation:', error);
-    res.status(500).json({ error: 'Fehler beim Akzeptieren der Einladung' });
+    return res.status(500).json({ error: 'Fehler beim Akzeptieren der Einladung' });
   }
 });
 

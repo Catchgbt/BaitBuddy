@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense, startTransition } from "react";
+import React, { useState, useEffect, useRef, lazy, Suspense, startTransition } from "react";
 import { usePrefetch } from "@/hooks/usePrefetch";
 import SEO from "@/components/pwa/SEO";
 import { LocationProvider } from "@/components/location/LocationManager";
@@ -66,35 +66,23 @@ function LayoutContent({ children, currentPageName }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [scrollPositions, setScrollPositions] = useState({});
+  const scrollPositionsRef = useRef({});
   const [previousPage, setPreviousPage] = useState(null);
-
-  // Dark mode detection
-  useEffect(() => {
-    const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
-    const applyDarkMode = (isDark) => {
-      if (isDark) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    };
-
-    applyDarkMode(darkModeQuery.matches);
-    const handleDarkModeChange = (e) => applyDarkMode(e.matches);
-    darkModeQuery.addEventListener('change', handleDarkModeChange);
-
-    return () => darkModeQuery.removeEventListener('change', handleDarkModeChange);
-  }, []);
+  const [voiceOverlayOpen, setVoiceOverlayOpen] = useState(false);
+  const [wakeWordDetector, setWakeWordDetector] = useState(null);
+  const [voiceStatus, setVoiceStatus] = useState({
+    isActive: false,
+    mode: null,
+    isListening: false,
+    error: null
+  });
 
   const refreshUser = async () => {
     try {
       let currentUser = await auth.me();
 
       if (currentUser && !currentUser.first_open_at) {
-        await auth.updateMe({ first_open_at: new Date().toISOString() });
-        currentUser = await auth.me();
+        currentUser = await auth.updateMe({ first_open_at: new Date().toISOString() });
       }
 
       startTransition(() => {
@@ -108,10 +96,6 @@ function LayoutContent({ children, currentPageName }) {
         setAuthLoading(false);
       });
     }
-  };
-
-  const deferredRefreshUser = () => {
-    refreshUser();
   };
 
   // Track total online time via UsageSession
@@ -155,7 +139,14 @@ function LayoutContent({ children, currentPageName }) {
       }
     };
 
-    const handleBeforeUnload = () => { stopSession(); };
+    const handleBeforeUnload = () => {
+      if (!sessionDbId) return;
+      const payload = JSON.stringify({
+        status: 'stopped',
+        stopped_at: new Date().toISOString()
+      });
+      navigator.sendBeacon?.(`/api/usage-sessions/${sessionDbId}`, new Blob([payload], { type: 'application/json' }));
+    };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => {
       clearInterval(heartbeat);
@@ -164,23 +155,20 @@ function LayoutContent({ children, currentPageName }) {
     };
   }, [user?.email]);
 
-  // Einmaliger, verzögerter Aufruf nach dem ersten Paint – blockiert FCP nicht
   useEffect(() => {
-    deferredRefreshUser();
-     
+    const id = requestIdleCallback ? requestIdleCallback(() => refreshUser()) : setTimeout(() => refreshUser(), 0);
+    return () => {
+      if (typeof requestIdleCallback !== 'undefined') cancelIdleCallback(id);
+      else clearTimeout(id);
+    };
   }, []);
 
   useEffect(() => {
-    // Save scroll position when leaving a page
     if (previousPage && previousPage !== currentPageName) {
-      setScrollPositions(prev => ({
-        ...prev,
-        [previousPage]: window.scrollY
-      }));
+      scrollPositionsRef.current[previousPage] = window.scrollY;
     }
 
-    // Restore scroll position when entering a page
-    const savedPosition = scrollPositions[currentPageName];
+    const savedPosition = scrollPositionsRef.current[currentPageName];
     if (savedPosition !== undefined) {
       setTimeout(() => window.scrollTo(0, savedPosition), 50);
     } else {
@@ -190,45 +178,108 @@ function LayoutContent({ children, currentPageName }) {
     setPreviousPage(currentPageName);
   }, [currentPageName]);
 
-  // Service Worker Registrierung - angepasst für Backend-Funktion
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      // Sobald der neue Service Worker die Kontrolle übernimmt (nach einem
-      // Deploy), einmalig neu laden, damit Benutzer nicht auf einer alten
-      // gecachten Version hängen bleiben, ohne es zu bemerken.
-      let reloadedForUpdate = false;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (reloadedForUpdate) return;
-        reloadedForUpdate = true;
-        window.location.reload();
-      });
+    const handleToggleVoiceControl = () => {
+      // Deaktiviere WakeWordDetector auf VoiceControl Seite
+      if (currentPageName === 'VoiceControl') {
+        return;
+      }
 
-      window.addEventListener('load', () => {
-        navigator.serviceWorker
-          .register('/sw.js', {
-            scope: '/'
-          })
-          .then((registration) => {
-            // Regelmäßig auf Updates prüfen, auch wenn die Seite lange offen bleibt
-            setInterval(() => {
-              registration.update().catch(() => {});
-            }, 60 * 60 * 1000);
-
-            // Prüfe auf Updates
-            registration.addEventListener('updatefound', () => {
-              const newWorker = registration.installing;
-
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  window.dispatchEvent(new CustomEvent('sw-update-available'));
-                }
-              });
+      if (!wakeWordDetector) {
+        const detector = new WakeWordDetector(
+          'Hey Buddy',
+          () => {
+            window.dispatchEvent(new CustomEvent('wake-word-detected'));
+          },
+          (status, error) => {
+            setVoiceStatus({
+              isActive: true,
+              mode: detector.currentMode,
+              isListening: detector.isListening,
+              error: error
             });
-          })
-          .catch((error) => {
+          },
+          'auto'
+        );
+        setWakeWordDetector(detector);
+        detector.start();
+      } else {
+        if (wakeWordDetector.isListening) {
+          wakeWordDetector.stop();
+          setVoiceStatus({
+            isActive: false,
+            mode: null,
+            isListening: false,
+            error: null
           });
-      });
+          setWakeWordDetector(null);
+        } else {
+          wakeWordDetector.start();
+        }
+      }
+    };
+
+    const handleWakeWordStatusChange = (event) => {
+      if (event.detail) {
+        setVoiceStatus(event.detail);
+      }
+    };
+
+    window.addEventListener('toggle-voice-control', handleToggleVoiceControl);
+    window.addEventListener('wake-word-status-change', handleWakeWordStatusChange);
+
+    // Cleanup wenn auf VoiceControl Seite navigiert wird
+    if (currentPageName === 'VoiceControl' && wakeWordDetector?.isListening) {
+      wakeWordDetector.stop();
+      setWakeWordDetector(null);
     }
+
+    return () => {
+      window.removeEventListener('toggle-voice-control', handleToggleVoiceControl);
+      window.removeEventListener('wake-word-status-change', handleWakeWordStatusChange);
+      if (wakeWordDetector) {
+        wakeWordDetector.stop();
+      }
+    };
+  }, [wakeWordDetector, currentPageName]);
+
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+
+    let reloadedForUpdate = false;
+    let updateInterval = null;
+
+    const hadController = !!navigator.serviceWorker.controller;
+    const onControllerChange = () => {
+      if (!hadController) return;
+      if (reloadedForUpdate) return;
+      reloadedForUpdate = true;
+      window.location.reload();
+    };
+    navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
+
+    navigator.serviceWorker
+      .register('/sw.js', { scope: '/' })
+      .then((registration) => {
+        updateInterval = setInterval(() => {
+          registration.update().catch(() => {});
+        }, 60 * 60 * 1000);
+
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              window.dispatchEvent(new CustomEvent('sw-update-available'));
+            }
+          });
+        });
+      })
+      .catch(() => {});
+
+    return () => {
+      navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+      if (updateInterval) clearInterval(updateInterval);
+    };
   }, []);
 
   // Landing Page - nur SEO

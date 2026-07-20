@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireAuth, optionalAuth } from '../middleware/auth.js';
+import { requireAuth, optionalAuth, requireAdmin } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
 import { Buffer } from 'buffer';
 import path from 'path';
@@ -181,10 +181,14 @@ router.post('/water/bathymetry', requireAuth, async (req, res) => {
 });
 
 router.post('/weather', optionalAuth, async (req, res) => {
-  const { latitude, longitude } = req.body;
+  const lat = Number(req.body?.latitude);
+  const lon = Number(req.body?.longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+    return res.status(400).json({ error: 'latitude und longitude erforderlich' });
+  }
   try {
     const w = await fetchWithTimeout(
-      `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,wind_speed_10m,weather_code,relative_humidity_2m&hourly=temperature_2m,precipitation_probability&timezone=auto`,
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,weather_code,relative_humidity_2m&hourly=temperature_2m,precipitation_probability&timezone=auto`,
       {}, UPSTREAM_TIMEOUT_MS
     ).then(r => r.json());
     return res.json(w);
@@ -300,7 +304,7 @@ router.post('/user/sessions/:id/end', requireAuth, async (req, res) => {
   return res.json({ ok: true });
 });
 
-router.get('/admin/users', requireAuth, async (req, res) => {
+router.get('/admin/users', requireAuth, requireAdmin, async (req, res) => {
   return res.json([]);
 });
 

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { functions } from "@/api/frontendClient";
 import { planMeetsRequirement, getPlanLevel } from './planHierarchy';
 
@@ -15,15 +15,15 @@ export function usePlan() {
 export function PlanProvider({ children }) {
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
+  const loadingRef = useRef(false);
 
-  const loadPlan = async () => {
+  const loadPlan = useCallback(async () => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     setLoading(true);
-    let retries = 0;
-    const maxRetries = 3; // max 3 retries, ~3s instead of 10s
 
-    const tryLoad = async () => {
+    for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        // Use Promise.race to enforce max 3s timeout per attempt
         const response = await Promise.race([
           functions.invoke('getPlanStatus'),
           new Promise((_, reject) =>
@@ -32,44 +32,32 @@ export function PlanProvider({ children }) {
         ]);
 
         const payload = response?.data ?? response;
-        console.log('[PlanContext] loadPlan response:', { payload, ok: payload?.ok, plan: payload?.plan });
-        if (payload && payload.plan) {
-          console.log('[PlanContext] Setting plan to:', payload.plan);
+        if (payload?.plan) {
           setPlan(payload.plan);
-          setLoading(false);
-          return true;
         } else {
-          console.log('[PlanContext] No plan in response, setting to free');
           setPlan({ id: 'free', name: 'Kostenlos', is_active: false });
-          setLoading(false);
-          return true;
         }
+        setLoading(false);
+        loadingRef.current = false;
+        return;
       } catch (error) {
-        console.error('[PlanContext] Error loading plan (attempt', retries + 1, '):', error.message);
-
-        // Retry if it looks like a token issue and we haven't exceeded retries
-        if (error.message?.includes('Kein Token') && retries < maxRetries) {
-          retries++;
-          // Non-blocking: don't await setTimeout directly; use Promise instead
-          await new Promise(r => setTimeout(r, 500)); // 500ms delay between retries
-          return await tryLoad();
-        } else {
-          console.error('[PlanContext] Giving up, setting to free');
-          setPlan({ id: 'free', name: 'Kostenlos', is_active: false });
-          setLoading(false);
-          return false;
+        if (error.message?.includes('Kein Token') && attempt < 2) {
+          await new Promise(r => setTimeout(r, 500));
+          continue;
         }
+        setPlan({ id: 'free', name: 'Kostenlos', is_active: false });
+        setLoading(false);
+        loadingRef.current = false;
+        return;
       }
-    };
-
-    await tryLoad();
-  };
+    }
+  }, []);
 
   useEffect(() => {
     loadPlan();
     window.addEventListener('plan-updated', loadPlan);
     return () => window.removeEventListener('plan-updated', loadPlan);
-  }, []);
+  }, [loadPlan]);
 
   const hasFeature = (requiredPlan = 'basic') => {
     const currentPlanId = plan?.id || 'free';
