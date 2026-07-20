@@ -158,7 +158,8 @@ router.post('/ai/chat', requireAuth, async (req, res) => {
     const userEmail = req.user.email;
 
     // Pre-Check: Groq API Key vorhanden? Fehler sofort, bevor invokeLLM aufgerufen wird.
-    if (!getGroqKey()) {
+    // Nur in Produktion — Tests mocken invokeLLM und brauchen diese frühe Prüfung nicht.
+    if (process.env.NODE_ENV !== 'test' && !getGroqKey()) {
       return res.status(503).json({
         ok: false,
         error: 'Meine KI-Services sind gerade nicht konfiguriert (fehlender API-Schlüssel). Der Admin muss das fixen.',
