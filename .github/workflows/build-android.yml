@@ -105,8 +105,8 @@ jobs:
             -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
             -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
             -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }} \
-            -PappVersionCode=${{ github.event.inputs.version_code || '28' }} \
-            -PappVersionName=${{ github.event.inputs.version_name || '2.117899.0' }}
+            -PappVersionCode=${{ github.event.inputs.version_code || '29' }} \
+            -PappVersionName=${{ github.event.inputs.version_name || '2.117900.0' }}
         env:
           ANDROID_HOME: ${{ env.ANDROID_SDK_ROOT }}
 
