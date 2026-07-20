@@ -168,7 +168,7 @@ export default function Sidebar({ isOpen, setIsOpen, currentPageName, user, load
                className="flex items-center gap-3 active:opacity-60 active:scale-95 focus:ring-2 focus:ring-cyan-400 rounded-lg transition-all p-1"
              >
               <div className="flex flex-col items-end">
-                <span className="font-semibold text-base leading-tight bg-gradient-to-r from-cyan-400 to-emerald-400 text-transparent bg-clip-text drop-shadow-[0_0_15px_rgba(34,211,238,0.8)] truncate max-w-[150px]">
+                <span className="font-semibold text-base leading-tight text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)] truncate max-w-[150px]">
                   {displayName}
                 </span>
                 <span className="text-gray-400 text-xs">

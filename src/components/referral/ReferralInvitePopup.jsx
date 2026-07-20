@@ -208,7 +208,7 @@ export default function ReferralInvitePopup() {
                 Freunde einladen
               </p>
               <h2 className="text-2xl sm:text-3xl font-extrabold leading-tight">
-                <span className="bg-gradient-to-r from-amber-200 via-white to-cyan-200 bg-clip-text text-transparent">
+                <span className="text-amber-200">
                   1 Woche Ultimate geschenkt
                 </span>
               </h2>

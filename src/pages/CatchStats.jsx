@@ -121,7 +121,7 @@ function CatchStatsContent() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-6 space-y-6 pb-safe-fixed">
-      <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">
+      <h1 className="text-2xl font-bold text-cyan-400">
         Fang-Statistiken
       </h1>
 
@@ -152,102 +152,94 @@ function CatchStatsContent() {
       </div>
 
       {/* Faenge nach Art */}
-      <Card className="glass-morphism border-gray-800 rounded-2xl overflow-hidden">
+      <Card className="glass-morphism border-gray-800 rounded-2xl">
         <CardHeader>
           <CardTitle className="text-white text-base">Faenge nach Fischart</CardTitle>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <div className="min-w-full">
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={stats?.speciesCountData} margin={{ top: 4, right: 4, left: 20, bottom: 60 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="name" tick={{ fill: "#9ca3af", fontSize: 10 }} angle={-45} textAnchor="end" height={80} interval={0} />
-                <YAxis tick={{ fill: "#9ca3af", fontSize: 11 }} allowDecimals={false} width={40} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="count" name="Anzahl" radius={[4, 4, 0, 0]}>
-                  {stats?.speciesCountData.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={stats?.speciesCountData} margin={{ top: 4, right: 8, left: -10, bottom: 40 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis dataKey="name" tick={{ fill: "#9ca3af", fontSize: 11 }} angle={-35} textAnchor="end" interval={0} />
+              <YAxis tick={{ fill: "#9ca3af", fontSize: 11 }} allowDecimals={false} />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar dataKey="count" name="Anzahl" radius={[4, 4, 0, 0]}>
+                {stats?.speciesCountData.map((_, i) => (
+                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </CardContent>
       </Card>
 
       {/* Gewicht nach Art */}
       {stats?.speciesWeightData.length > 0 && (
-        <Card className="glass-morphism border-gray-800 rounded-2xl overflow-hidden">
+        <Card className="glass-morphism border-gray-800 rounded-2xl">
           <CardHeader>
             <CardTitle className="text-white text-base">Gewicht nach Fischart (kg)</CardTitle>
           </CardHeader>
-          <CardContent className="overflow-x-auto">
-            <div className="min-w-full">
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={stats.speciesWeightData} margin={{ top: 4, right: 4, left: 20, bottom: 60 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="name" tick={{ fill: "#9ca3af", fontSize: 10 }} angle={-45} textAnchor="end" height={80} interval={0} />
-                  <YAxis tick={{ fill: "#9ca3af", fontSize: 11 }} width={40} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="gesamtgewicht" name="Gesamtgewicht (kg)" fill="#22d3ee" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="maxGewicht" name="Max. Einzelfang (kg)" fill="#10b981" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={stats.speciesWeightData} margin={{ top: 4, right: 8, left: -10, bottom: 40 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="name" tick={{ fill: "#9ca3af", fontSize: 11 }} angle={-35} textAnchor="end" interval={0} />
+                <YAxis tick={{ fill: "#9ca3af", fontSize: 11 }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="gesamtgewicht" name="Gesamtgewicht (kg)" fill="#22d3ee" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="maxGewicht" name="Max. Einzelfang (kg)" fill="#10b981" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       )}
 
       {/* Monatliche Aktivitaet */}
       {stats?.monthlyData.length > 1 && (
-        <Card className="glass-morphism border-gray-800 rounded-2xl overflow-hidden">
+        <Card className="glass-morphism border-gray-800 rounded-2xl">
           <CardHeader>
             <CardTitle className="text-white text-base">Monatliche Aktivitaet</CardTitle>
           </CardHeader>
-          <CardContent className="overflow-x-auto">
-            <div className="min-w-full">
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={stats.monthlyData} margin={{ top: 4, right: 4, left: 20, bottom: 50 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="month" tick={{ fill: "#9ca3af", fontSize: 10 }} angle={-35} textAnchor="end" height={70} interval={0} />
-                  <YAxis tick={{ fill: "#9ca3af", fontSize: 11 }} allowDecimals={false} width={40} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="count" name="Faenge" fill="#a78bfa" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={stats.monthlyData} margin={{ top: 4, right: 8, left: -10, bottom: 30 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="month" tick={{ fill: "#9ca3af", fontSize: 11 }} angle={-30} textAnchor="end" interval={0} />
+                <YAxis tick={{ fill: "#9ca3af", fontSize: 11 }} allowDecimals={false} />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="count" name="Faenge" fill="#a78bfa" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       )}
 
       {/* Koeder-Verteilung */}
       {stats?.baitData.length > 0 && (
-        <Card className="glass-morphism border-gray-800 rounded-2xl overflow-hidden">
+        <Card className="glass-morphism border-gray-800 rounded-2xl">
           <CardHeader>
             <CardTitle className="text-white text-base">Koeder-Verteilung</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col sm:flex-row items-center gap-4 overflow-x-auto">
-            <div className="min-w-full sm:min-w-0 sm:flex-1">
-              <ResponsiveContainer width="100%" height={220}>
-                <PieChart>
-                  <Pie
-                    data={stats.baitData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={60}
-                    label={({ name, percent }) => `${name.slice(0, 8)} ${(percent * 100).toFixed(0)}%`}
-                    labelLine={{ stroke: "#6b7280" }}
-                  >
-                    {stats.baitData.map((_, i) => (
-                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<CustomTooltip />} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+          <CardContent className="flex flex-col sm:flex-row items-center gap-4">
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie
+                  data={stats.baitData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={80}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  labelLine={{ stroke: "#6b7280" }}
+                >
+                  {stats.baitData.map((_, i) => (
+                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       )}

@@ -234,7 +234,7 @@ export default function AngelscheinPruefungSchonzeiten() {
           >
             <div className="text-center mb-8">
               <GraduationCap className="w-16 h-16 mx-auto mb-4 text-cyan-400" />
-              <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-cyan-400 to-emerald-400 text-transparent bg-clip-text">
+              <h1 className="text-4xl font-bold mb-2 text-cyan-400">
                 Angelschein-Prüfung & Schonzeiten
               </h1>
               <p className="text-gray-400">

@@ -131,7 +131,7 @@ function FeatureHints() {
         exit={{ opacity: 0, x: -20 }}
         transition={{ duration: 0.4 }}
       >
-        <p className="text-xs sm:text-sm font-medium bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent text-center max-w-md px-2">
+        <p className="text-xs sm:text-sm font-medium text-cyan-400 text-center max-w-md px-2">
           {features[currentFeature]}
         </p>
       </motion.div>
@@ -175,7 +175,7 @@ function SideLinks() {
                 repeat: Infinity,
                 ease: "easeInOut"
               }}
-              className="text-lg sm:text-xl font-bold bg-gradient-to-r from-emerald-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent drop-shadow-2xl break-all"
+              className="text-lg sm:text-xl font-bold text-cyan-400 drop-shadow-2xl break-all"
               style={{
                 backgroundSize: '200% auto',
                 animation: 'gradient-wave 3s ease infinite'
@@ -220,7 +220,7 @@ function SideLinks() {
                 repeat: Infinity,
                 ease: "easeInOut"
               }}
-              className="text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-transparent drop-shadow-2xl break-all"
+              className="text-lg sm:text-xl font-bold text-purple-400 drop-shadow-2xl break-all"
               style={{
                 backgroundSize: '200% auto',
                 animation: 'gradient-wave 3s ease infinite'
@@ -817,7 +817,7 @@ function LandingPageContent() {
                             repeat: Infinity,
                             ease: "linear"
                         }}
-                        className="text-xl font-bold bg-clip-text text-transparent drop-shadow-[0_0_12px_rgba(255,255,255,0.9)] hover:drop-shadow-[0_0_20px_rgba(255,255,255,1)] transition-all"
+                        className="text-xl font-bold text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.9)] hover:drop-shadow-[0_0_20px_rgba(255,255,255,1)] transition-all"
                     >
                         Tutorial
                     </motion.span>

@@ -312,7 +312,7 @@ Sei konkret, praktisch und detailliert!`;
 
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-cyan-400 to-sky-400 bg-clip-text text-transparent">
+            <h1 className="text-2xl sm:text-3xl font-bold text-cyan-400">
               Wetter & Angelprognose
             </h1>
             <div className="flex items-center gap-1.5 mt-1">

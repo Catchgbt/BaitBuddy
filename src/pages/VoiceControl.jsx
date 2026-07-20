@@ -914,7 +914,7 @@ function VoiceBuddy() {
           <motion.h1
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-5xl font-bold bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent"
+            className="text-5xl font-bold text-cyan-400"
           >
             Hey Buddy
           </motion.h1>

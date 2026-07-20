@@ -165,7 +165,7 @@ export default function TripFormDialog({ open, onClose, onSave, plan, currentLoc
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent className="max-w-3xl max-h-[95vh] overflow-y-auto bg-gradient-to-b from-gray-900 via-gray-950 to-gray-950 border border-cyan-500/20 rounded-2xl shadow-2xl">
         <DialogHeader className="pb-4 border-b border-cyan-500/10">
-          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">
+          <DialogTitle className="text-2xl font-bold text-cyan-400">
             {plan ? "Trip aktualisieren" : "Neuen Trip erstellen"}
           </DialogTitle>
           <DialogDescription className="text-gray-400 mt-2">

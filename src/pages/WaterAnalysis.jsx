@@ -65,7 +65,7 @@ export default function WaterAnalysisPage() {
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-3 mb-2">
               <Satellite className="w-10 h-10 text-cyan-400 animate-pulse" />
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-emerald-400 text-transparent bg-clip-text drop-shadow-[0_0_20px_rgba(34,211,238,0.8)]">
+              <h1 className="text-4xl font-bold text-cyan-400 drop-shadow-[0_0_20px_rgba(34,211,238,0.8)]">
                 Satelliten-Gewässeranalyse
               </h1>
             </div>
