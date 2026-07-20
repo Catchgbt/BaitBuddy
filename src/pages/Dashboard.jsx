@@ -6,7 +6,6 @@ import { auth } from "@/api/auth";
 import { useAITTS } from "@/hooks/useAITTS";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import VoiceControlWidget from "@/components/dashboard/VoiceControlWidget";
 import MiniKarte from "@/components/home/MiniKarte";
 import { Brain, Mic, BookOpen, ArrowRight, MapPin, Cloud, BarChart2, MessageCircle, Camera, Waves, Wrench, Calendar, Users, Trophy, GraduationCap, Loader2, AlertTriangle, RefreshCw, Plus, Beaker } from "lucide-react";
 import SchonzeitWarner from "@/components/dashboard/SchonzeitWarner";
@@ -542,9 +541,6 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
 
           <div className="flex flex-col items-end gap-2">
             <OfflineCacheIndicator />
-            <SuspenseWithErrorBoundary isMinimal={true}>
-              <VoiceControlWidget />
-            </SuspenseWithErrorBoundary>
           </div>
         </div>
 
