@@ -6,11 +6,11 @@ on:
       version_code:
         description: 'Android versionCode (muss hoeher sein als der zuletzt in der Play Console hochgeladene)'
         required: false
-        default: '28'
+        default: '29'
       version_name:
         description: 'Android versionName'
         required: false
-        default: '2.117899.0'
+        default: '2.117900.0'
   push:
     tags:
       - 'v*'
