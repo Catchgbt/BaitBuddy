@@ -106,15 +106,6 @@ function matchBalancedBrace(str, startIdx) {
   return -1;
 }
 
-// Liest den Groq-Key aus mehreren möglichen Variablennamen.
-function getGroqKey() {
-  const key = process.env.GROQ_API_KEY || process.env.GROG_API_KEY || process.env.GROK_API_KEY || null;
-  if (!key && process.env.NODE_ENV === 'development') {
-    console.warn('[AI] WARNUNG: GROQ_API_KEY ist nicht gesetzt. Bitte setze die Umgebungsvariable für KI-Funktionen.');
-  }
-  return key;
-}
-
 router.get('/health', (req, res) => {
   const key = getGroqKey();
   const keyInfo = key
