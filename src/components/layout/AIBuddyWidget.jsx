@@ -743,11 +743,7 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
           transition={avatarTransition}
         >
           <div
-            className={`relative w-14 h-14 transition-all ${
-              isListening
-                ? 'drop-shadow-[0_0_10px_rgba(63,224,208,0.8)]'
-                : 'drop-shadow-lg'
-            }`}
+            className="relative w-14 h-14 transition-all drop-shadow-lg"
           >
             <BuddyAvatar speaking={isTalking} size={56} />
           </div>
