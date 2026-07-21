@@ -157,6 +157,11 @@ class ApiClient {
   // sauber auf den gepufferten Nicht-Stream-Pfad (z. B. ai.chat) zurück.
   // Bewusst OHNE 401-Refresh-Retry: ein Mid-Stream-Refresh ist heikel; bei 401
   // wirft die Methode und der Aufrufer nutzt den regulären Pfad (mit Refresh).
+  /**
+   * @param {string} path
+   * @param {any} body
+   * @param {{ signal?: AbortSignal, onEvent?: (event: string, data: any) => void }} [options]
+   */
   async stream(path, body, { signal, onEvent } = {}) {
     const token = this.getToken();
     // 60s-Timeout: großzügiger als der 30s-Request-Default, weil ein Stream
@@ -727,6 +732,11 @@ export const ai = {
   // Gestreamte Chat-Antwort: ruft onDelta(text) je Text-Stück auf und liefert
   // am Ende { ok, reply, message, action } (wie ai.chat). Wirft bei Fehlern —
   // der Aufrufer soll dann auf ai.chat zurückfallen.
+  /**
+   * @param {any[]} messages
+   * @param {any} userLocation
+   * @param {{ onDelta?: (text: string) => void, signal?: AbortSignal }} [options]
+   */
   chatStream: async (messages, userLocation, { onDelta, signal } = {}) => {
     let result = null;
     let streamError = null;
