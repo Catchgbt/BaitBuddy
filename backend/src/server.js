@@ -28,6 +28,7 @@ import notesRoutes from './routes/notes.js';
 import functionsRoutes from './routes/functions.js';
 import referralsRoutes from './routes/referrals.js';
 import { aiRateLimiter, ttsRateLimiter, authRateLimiter } from './middleware/rateLimit.js';
+import { getAnthropicKey } from './lib/llm.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -49,7 +50,9 @@ function hasOpenAIKey() {
   return !!(process.env.OPENAI_API_KEY
     || Object.entries(process.env).find(([k, v]) => /open.?_?ai/i.test(k) && /key|token|secret/i.test(k) && v)?.[1]);
 }
-const healthPayload = () => ({ ok: true, app: 'BaitBuddy', version: '1.0.0', voice: hasOpenAIKey() });
+// `ai` zeigt an, ob der Claude-Key serverseitig ankommt — erlaubt eine
+// Diagnose des KI-Chats ohne Auth (kein LLM-Call, kein Key-Wert im Response).
+const healthPayload = () => ({ ok: true, app: 'BaitBuddy', version: '1.0.0', voice: hasOpenAIKey(), ai: !!getAnthropicKey() });
 app.get('/health', (req, res) => res.json(healthPayload()));
 app.get('/api/health', (req, res) => res.json(healthPayload()));
 
@@ -93,7 +96,7 @@ app.use((req, res) => res.status(404).json({ error: `Not found: ${req.method} ${
 app.use((err, req, res, next) => {
   if (res.headersSent) return next(err);
   console.error('Unhandled error:', err);
-  // Upstream-Timeouts (Groq, OpenAI, ElevenLabs, open-meteo, GoTrue) sauber als
+  // Upstream-Timeouts (Claude, OpenAI, ElevenLabs, open-meteo, GoTrue) sauber als
   // Gateway-Timeout melden statt als generischen 500.
   if (err?.timeout || err?.name === 'FetchTimeoutError' || err?.name === 'AbortError') {
     return res.status(504).json({ error: 'Zeitüberschreitung beim externen Dienst — bitte erneut versuchen' });

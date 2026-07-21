@@ -1,5 +1,5 @@
 // Zentraler fetch-Wrapper mit hartem Timeout. Vercel-Serverless-Funktionen
-// haben ein Plattform-Limit; ein langsamer Upstream (Groq, OpenAI, ElevenLabs,
+// haben ein Plattform-Limit; ein langsamer Upstream (Claude, OpenAI, ElevenLabs,
 // open-meteo, GoTrue) darf die Funktion nicht bis dorthin blockieren. Ohne
 // AbortController hängt der Request und verursacht 504s und unnötige Kosten.
 const DEFAULT_TIMEOUT_MS = 15000;

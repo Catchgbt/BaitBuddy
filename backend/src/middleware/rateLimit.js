@@ -58,7 +58,7 @@ export function createRateLimitStore() {
   });
 }
 
-// KI-Chat/Analyse-Endpunkte (Groq LLM — echte Kosten pro Aufruf).
+// KI-Chat/Analyse-Endpunkte (Claude LLM — echte Kosten pro Aufruf).
 // Getrennt von TTS, damit Sprachausgabe das Chat-Budget nicht aufbraucht.
 export const aiRateLimiter = rateLimit({
   windowMs: 60 * 1000,

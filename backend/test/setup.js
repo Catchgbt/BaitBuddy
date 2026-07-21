@@ -6,6 +6,6 @@ process.env.NODE_ENV = 'test';
 process.env.VERCEL = '1';
 process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'https://test.supabase.co';
 process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'test-service-role-key';
-process.env.GROQ_API_KEY = process.env.GROQ_API_KEY || 'test-groq-key';
+process.env.ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || 'test-anthropic-key';
 process.env.ADMIN_EMAILS = process.env.ADMIN_EMAILS || 'admin@baitbuddy.test';
 process.env.CRON_SECRET = process.env.CRON_SECRET || 'test-cron-secret';

@@ -78,7 +78,7 @@ E-Mail: kaisaschnitt99@gmail.com
 ### 4.3 Drittanbieter-Integrati­onen
 - **Supabase (Datenbank & Auth)** – [supabase.io/privacy](https://supabase.io/privacy)
 - **OpenAI Realtime API** (optional, Sprachgespräche) – [openai.com/privacy](https://openai.com/privacy)
-- **Groq API** (KI-Buddy, Textgenerierung) – [groq.com/privacy](https://groq.com/privacy)
+- **Anthropic API (Claude)** (KI-Buddy, Textgenerierung & Bildanalyse) – [anthropic.com/legal/privacy](https://www.anthropic.com/legal/privacy)
 - **ElevenLabs TTS** (optional, Sprachausgabe) – [elevenlabs.io/privacy](https://elevenlabs.io/privacy)
 - **Open-Meteo Weather API** (Wetterdaten) – kostenlos, keine Authentifizierung
 

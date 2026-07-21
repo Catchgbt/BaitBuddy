@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
-import { invokeLLM, invokeLLMStream, getGroqKey } from '../lib/llm.js';
+import { invokeLLM, invokeLLMStream, getAnthropicKey } from '../lib/llm.js';
 import {
   FISHING_KNOWLEDGE,
   PRACTICAL_GUIDE_RULES,
@@ -107,45 +107,44 @@ function matchBalancedBrace(str, startIdx) {
 }
 
 router.get('/health', (req, res) => {
-  const key = getGroqKey();
+  const key = getAnthropicKey();
   const keyInfo = key
-    ? 'Groq API Key gesetzt'
-    : 'Groq API Key FEHLT - KI-Chat funktioniert nicht!';
+    ? 'Anthropic API Key gesetzt'
+    : 'Anthropic API Key FEHLT - KI-Chat funktioniert nicht!';
 
   res.json({
     ok: !!key,
     status: key ? 'healthy' : 'degraded',
     ai_service: {
-      provider: 'Groq (Llama)',
+      provider: 'Anthropic (Claude)',
       api_key_configured: !!key,
       api_key_info: keyInfo,
-      text_model: 'llama-3.3-70b-versatile',
-      vision_model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      model: process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5',
     },
     server: {
       node_env: process.env.NODE_ENV,
       timestamp: new Date().toISOString(),
       uptime_seconds: process.uptime?.() || 0,
     },
-    recommendation: key ? 'Alles OK' : 'Admin: Setze GROQ_API_KEY in Vercel-Umgebungsvariablen'
+    recommendation: key ? 'Alles OK' : 'Admin: Setze ANTHROPIC_API_KEY in Vercel-Umgebungsvariablen'
   });
 });
 
 // requireAuth: /ai/test ruft echtes invokeLLM auf und würde ohne Auth
-// unauthentifizierte Groq-Kosten erlauben. Für einen kostenlosen Health-Ping
+// unauthentifizierte LLM-Kosten erlauben. Für einen kostenlosen Health-Ping
 // ohne LLM-Call gibt es /health bzw. /api/health.
 router.get('/ai/test', requireAuth, async (req, res) => {
   try {
-    if (!getGroqKey()) {
+    if (!getAnthropicKey()) {
       // Nur serverseitig loggen, welche Env-Variablen-NAMEN in Frage kaemen —
       // im Response landen weder Namen noch Werte (Aufzaehlung provisionierter
       // Secrets ist selbst Info-Disclosure).
-      console.warn('[AI] /ai/test: GROQ_API_KEY nicht gesetzt. Relevante Env-Variablen:',
-        Object.keys(process.env).filter(k => /open|api|key|gemini|anthropic|gro/i.test(k)).sort());
-      return res.json({ ok: false, error: 'GROQ_API_KEY ist nicht gesetzt', step: 'key_check' });
+      console.warn('[AI] /ai/test: ANTHROPIC_API_KEY nicht gesetzt. Relevante Env-Variablen:',
+        Object.keys(process.env).filter(k => /open|api|key|claude|anthropic|gro/i.test(k)).sort());
+      return res.json({ ok: false, error: 'ANTHROPIC_API_KEY ist nicht gesetzt', step: 'key_check' });
     }
     const reply = await invokeLLM({ prompt: 'Sage nur: Hallo, ich funktioniere!' });
-    return res.json({ ok: true, reply, provider: 'Groq (Llama)' });
+    return res.json({ ok: true, reply, provider: 'Anthropic (Claude)' });
   } catch (e) {
     console.error('Error in /ai/test:', e);
     return res.status(500).json({ ok: false, error: 'KI-Test fehlgeschlagen', step: 'llm_call' });
@@ -160,9 +159,9 @@ async function buildChatPrompt(req) {
   const { messages = [], userLocation = null } = req.body;
   const userEmail = req.user.email;
 
-  // Pre-Check: Groq API Key vorhanden? Fehler sofort, bevor der LLM aufgerufen wird.
+  // Pre-Check: Anthropic API Key vorhanden? Fehler sofort, bevor der LLM aufgerufen wird.
   // Nur in Produktion — Tests mocken den LLM und brauchen diese frühe Prüfung nicht.
-  if (process.env.NODE_ENV !== 'test' && !getGroqKey()) {
+  if (process.env.NODE_ENV !== 'test' && !getAnthropicKey()) {
     const msg = 'Meine KI-Services sind gerade nicht konfiguriert (fehlender API-Schlüssel). Der Admin muss das fixen.';
     return { ok: false, status: 503, body: { ok: false, error: msg, reply: msg, message: msg } };
   }
@@ -302,10 +301,10 @@ router.post('/ai/chat', requireAuth, async (req, res) => {
     let userMessage = 'Entschuldige, ich habe gerade Verbindungsprobleme. Versuch es gleich nochmal!';
     let httpStatus = 500;
 
-    if (msg.includes('GROQ_API_KEY')) {
+    if (msg.includes('ANTHROPIC_API_KEY')) {
       userMessage = 'Meine KI-Services sind gerade nicht konfiguriert (fehlender API-Schlüssel). Der Admin muss das fixen.';
       httpStatus = 503;
-      console.warn('[AI] GROQ_API_KEY nicht gesetzt');
+      console.warn('[AI] ANTHROPIC_API_KEY nicht gesetzt');
     } else if (msg.includes('429') || msg.includes('rate limit') || msg.includes('Rate limit')) {
       userMessage = 'Ich bin gerade überlastet. Versuch es in ein paar Sekunden nochmal!';
       httpStatus = 429;

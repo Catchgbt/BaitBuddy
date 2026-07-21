@@ -39,7 +39,7 @@ Capacitor-WebView verpackt.
 | **Karten** | Leaflet + react-leaflet + leaflet.markercluster |
 | **Backend** | Express (Node.js) als Vercel Serverless Function (`backend/`, gemountet über `api/[...path].mjs`) |
 | **Datenbank & Auth** | Supabase (Postgres, GoTrue-Auth, Storage) |
-| **LLM** | Groq (Llama) für Chat & Vision; OpenAI Realtime (optional) für Voice; ElevenLabs (optional) für TTS |
+| **LLM** | Anthropic Claude (Messages API) für Chat & Vision; OpenAI Realtime (optional) für Voice; ElevenLabs (optional) für TTS |
 | **Tests** | Vitest (Unit), Playwright (E2E) |
 | **CI/CD** | GitHub Actions; Vercel-Deploy (Web), Android-AAB-Build via Actions |
 
@@ -53,7 +53,7 @@ Capacitor-WebView verpackt.
 
 ### Voraussetzungen
 - Node.js 18+ und npm
-- Supabase-Projekt (URL + Keys), Groq-API-Key für KI-Funktionen
+- Supabase-Projekt (URL + Keys), Anthropic-API-Key (`ANTHROPIC_API_KEY`) für KI-Funktionen
 
 ### Installation
 
@@ -69,7 +69,7 @@ npm install --legacy-peer-deps
 npm install --legacy-peer-deps --prefix backend
 
 # Environment-Variablen setzen (siehe backend/.env.example)
-# u. a. SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, GROQ_API_KEY
+# u. a. SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ANTHROPIC_API_KEY
 
 # Frontend-Dev-Server
 npm run dev
@@ -130,7 +130,7 @@ baitbuddy/
 **Express-Backend** – kapselt alle Datenzugriffe und KI-Aufrufe; der
 Service-Role-Key bleibt ausschließlich serverseitig.
 
-**Externe APIs** – Groq (LLM), open-meteo (Wetter), optional OpenAI Realtime und
+**Externe APIs** – Anthropic Claude (LLM), open-meteo (Wetter), optional OpenAI Realtime und
 ElevenLabs (Voice/TTS).
 
 ---
@@ -178,7 +178,7 @@ npm run test:e2e   # Playwright-Smoke (nicht-blockierend in CI)
 ## 🤖 KI-Buddy
 
 - Kontextuelle Antworten auf Basis von Fangbuch, Wetter und Schonzeiten
-- Foto-Analyse: Fischart-Erkennung und Gewichtsschätzung (Groq Vision)
+- Foto-Analyse: Fischart-Erkennung und Gewichtsschätzung (Claude Vision)
 - Personalisierte Empfehlungen basierend auf der Historie
 - Voice-Chat optional (OpenAI Realtime oder Web Speech API + ElevenLabs)
 - Offline-Fallback mit gecachten Antworten
