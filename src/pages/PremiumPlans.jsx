@@ -187,7 +187,7 @@ export default function PremiumPlans() {
     {
       id: 'basic',
       name: 'Basic',
-      price: 9.99,
+      price: 8.99,
       icon: Zap,
       color: 'from-blue-600 to-cyan-600',
       description: 'Werbefrei mit vollem KI-Buddy',
@@ -207,7 +207,7 @@ export default function PremiumPlans() {
     {
       id: 'pro',
       name: 'Pro',
-      price: 19.99,
+      price: 18,
       icon: Star,
       color: 'from-purple-600 to-violet-600',
       description: 'Vollstaendige KI- & AR-Power',
@@ -229,7 +229,7 @@ export default function PremiumPlans() {
     {
       id: 'elite',
       name: 'Ultimate',
-      price: 29.99,
+      price: 36,
       icon: Crown,
       color: 'from-amber-500 to-orange-600',
       description: 'Alles inklusive - jede Funktion ohne Limit',
@@ -258,8 +258,8 @@ export default function PremiumPlans() {
     {
       id: 'friends',
       name: 'Freundschaft',
-      price: 99.99,
-      priceLabel: '99,99 / Jahr',
+      price: 150,
+      priceLabel: '150 / Jahr',
       icon: Sparkles,
       color: 'from-emerald-600 to-teal-600',
       description: 'Ultimate als Jahresabo mit Einladungen',

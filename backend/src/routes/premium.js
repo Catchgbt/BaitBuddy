@@ -95,9 +95,9 @@ router.post('/plan/status', requireAuth, async (req, res) => {
 });
 
 const PRODUCTS = [
-  { id: 'basic', name: 'Basic', price: 9.99, features: ['Werbefrei', 'KI-Buddy unbegrenzt', 'Fangbuch', 'Spots', 'Wetter'] },
-  { id: 'pro', name: 'Pro', price: 19.99, features: ['Alles in Basic', 'KI-Fangprognosen', 'AR & 3D', 'Community'] },
-  { id: 'elite', name: 'Ultimate', price: 29.99, features: ['Alles in Pro', 'Live-Bissanzeiger', 'CatchCam', 'Priorisierte KI'] },
+  { id: 'basic', name: 'Basic', price: 8.99, features: ['Werbefrei', 'KI-Buddy unbegrenzt', 'Fangbuch', 'Spots', 'Wetter'] },
+  { id: 'pro', name: 'Pro', price: 18, features: ['Alles in Basic', 'KI-Fangprognosen', 'AR & 3D', 'Community'] },
+  { id: 'elite', name: 'Ultimate', price: 36, features: ['Alles in Pro', 'Live-Bissanzeiger', 'CatchCam', 'Priorisierte KI'] },
 ];
 
 router.get('/premium/products', async (req, res) => {
@@ -136,13 +136,13 @@ router.post('/premium/check-feature', requireAuth, async (req, res) => {
 // niemals den Preis. Muss mit der Plan-Anzeige in src/pages/PremiumPlans.jsx
 // übereinstimmen.
 const CHECKOUT_PLANS = {
-  basic:           { name: 'Basic', amountCents: 999 },
-  pro:             { name: 'Pro', amountCents: 1999 },
-  elite:           { name: 'Ultimate', amountCents: 2999 },
-  friends:         { name: 'Freundschaft (Jahresabo)', amountCents: 9999 },
+  basic:           { name: 'Basic', amountCents: 899 },
+  pro:             { name: 'Pro', amountCents: 1800 },
+  elite:           { name: 'Ultimate', amountCents: 3600 },
+  friends:         { name: 'Freundschaft (Jahresabo)', amountCents: 15000 },
   // friends_monthly wird nicht mehr aktiv beworben (Freundschaftsplan ist ein
   // reines Jahresabo), bleibt aber für Bestandskäufe/Google-Play-Restore gültig.
-  friends_monthly: { name: 'Freundschaft Monatlich', amountCents: 2999 },
+  friends_monthly: { name: 'Freundschaft Monatlich', amountCents: 3600 },
 };
 
 router.post('/premium/checkout', requireAuth, async (req, res) => {
