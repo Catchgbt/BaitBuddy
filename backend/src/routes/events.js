@@ -635,8 +635,9 @@ router.get('/admin/events/auto-archive', async (req, res) => {
     }
 
     const now = new Date();
+    const retentionDays = Number(process.env.EVENT_AUTO_DELETE_DAYS) || 3;
 
-    // Finde alle abgelaufenen Events
+    // Schritt A: Finde alle gerade abgelaufenen, noch aktiven Events und archiviere sie
     const { data: expiredEvents, error: fetchError } = await supabase
       .from('events')
       .select('id')
@@ -662,9 +663,35 @@ router.get('/admin/events/auto-archive', async (req, res) => {
       archived++;
     }
 
+    // Schritt B: Blende beendete Events nach Ablauf der Nachlauffrist aus der Liste aus.
+    // Soft-Delete (is_active=false) statt Hard-Delete: Punkte-/Teilnehmer-Historie bleibt erhalten.
+    const retentionCutoff = new Date(now.getTime() - retentionDays * 24 * 60 * 60 * 1000);
+    const { data: retiredEvents, error: retireFetchError } = await supabase
+      .from('events')
+      .select('id')
+      .eq('status', 'ended')
+      .eq('is_active', true)
+      .lt('end_date', retentionCutoff.toISOString());
+
+    if (retireFetchError) {
+      return sendDbError(res, retireFetchError);
+    }
+
+    let deleted = 0;
+
+    for (const event of retiredEvents) {
+      await supabase
+        .from('events')
+        .update({ is_active: false })
+        .eq('id', event.id);
+
+      deleted++;
+    }
+
     return res.json({
       success: true,
-      archived_count: archived
+      archived_count: archived,
+      deleted_count: deleted
     });
   } catch (error) {
     console.error('Error archiving events:', error);

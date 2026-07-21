@@ -178,6 +178,26 @@ erfolgreich eingeladenem Freund**. Das Popup rotiert alle 72h (localStorage
   (Tabellen `user_referral_codes` + `referrals`, RLS: nur Lesen der eigenen
   Zeilen, Insert/Update ausschließlich vom Backend über die Service-Role).
 
+## 🗓️ Events — Auswahl & Lebenszyklus
+
+Die **Event-Auswahl** (Event-Vorlage wählen und starten) lebt auf der
+Events-Hauptseite (`src/pages/Events.jsx`, Nav „Event", Route `/Events`) über die
+Komponente `src/components/events/EventLauncher.jsx` (`GET /api/events/templates`,
+Start via `POST /api/events`). Sie ist **nicht** mehr in der Community-Sektion
+(`CompetitionsSection.jsx`) — dort bleibt nur der Wettbewerbs-Launcher
+(`CompetitionLauncher`).
+
+**Auto-Archivierung & Ausblenden** laufen im täglichen Cron
+`GET /api/admin/events/auto-archive` (`vercel.json`, 02:00 UTC,
+`backend/src/routes/events.js`) in zwei Schritten:
+1. Abgelaufene aktive Events (`status='active'` & `end_date < now`) werden mit
+   finalen Rankings archiviert (`status='ended'`), bleiben aber sichtbar
+   (finale Rangliste einsehbar).
+2. Beendete Events, deren Ende länger als `EVENT_AUTO_DELETE_DAYS` (Default 3 Tage)
+   zurückliegt, werden per **Soft-Delete** (`is_active=false`) aus der Liste
+   ausgeblendet. `GET /api/events` filtert nur `is_active=true`. Kein Hard-Delete —
+   `event_participants`/`event_submissions`/Punkte-Historie bleiben erhalten.
+
 ## 📱 Device-Features (Pflicht)
 
 | Feature | Anforderung |
