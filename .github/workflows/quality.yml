@@ -17,23 +17,35 @@ jobs:
           cache: ''
 
       - name: Install deps
-        run: npm ci --legacy-peer-deps
+        run: npm ci --legacy-peer-deps --prefer-offline --no-audit
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Install backend deps
-        run: cd backend && npm ci --legacy-peer-deps
+        run: cd backend && npm ci --legacy-peer-deps --prefer-offline --no-audit
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Lint
         run: npm run lint
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Typecheck
         run: npm run typecheck
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Unit tests
         run: npm run test
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Build
         run: npm run build
         timeout-minutes: 15
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
 
   e2e:
     runs-on: ubuntu-latest
