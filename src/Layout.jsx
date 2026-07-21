@@ -156,9 +156,16 @@ function LayoutContent({ children, currentPageName }) {
   }, [user?.email]);
 
   useEffect(() => {
-    const id = requestIdleCallback ? requestIdleCallback(() => refreshUser()) : setTimeout(() => refreshUser(), 0);
+    // requestIdleCallback fehlt in manchen WebViews/In-App-Browsern (z. B. iOS
+    // Safari < 16.4, Facebook/Messenger-In-App-Browser). Ein nackter Verweis
+    // auf die Variable wirft dort "Can't find variable: requestIdleCallback"
+    // und crasht die App in die ErrorBoundary — deshalb per typeof absichern.
+    const hasIdleCallback = typeof requestIdleCallback !== 'undefined';
+    const id = hasIdleCallback
+      ? requestIdleCallback(() => refreshUser())
+      : setTimeout(() => refreshUser(), 0);
     return () => {
-      if (typeof requestIdleCallback !== 'undefined') cancelIdleCallback(id);
+      if (hasIdleCallback && typeof cancelIdleCallback !== 'undefined') cancelIdleCallback(id);
       else clearTimeout(id);
     };
   }, []);
