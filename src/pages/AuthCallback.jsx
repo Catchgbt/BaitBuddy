@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/api/supabaseClient';
 import { api } from '@/api/frontendClient';
-import { deepLinkStore } from '@/lib/deepLinkHandler';
 
 export default function AuthCallback() {
   const [status, setStatus] = useState('Anmeldung wird verarbeitet...');
@@ -13,13 +12,6 @@ export default function AuthCallback() {
 
     const handleAuthFlow = async () => {
       if (unsubscribed) return;
-
-      // Clear any pending deep-link that brought us here
-      if (deepLinkStore.url) {
-        console.log('[AuthCallback] Clearing processed deep-link:', deepLinkStore.url);
-        deepLinkStore.url = null;
-        deepLinkStore.searchParams = null;
-      }
 
       const { data, error: sessionError } = await supabase.auth.getSession();
 
