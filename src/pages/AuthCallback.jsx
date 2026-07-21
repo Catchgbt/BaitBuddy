@@ -1,49 +1,68 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/api/supabaseClient';
 import { api } from '@/api/frontendClient';
 
 export default function AuthCallback() {
   const [status, setStatus] = useState('Anmeldung wird verarbeitet...');
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     let unsubscribed = false;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const handleAuthFlow = async () => {
       if (unsubscribed) return;
-      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.access_token) {
-        api.setToken(session.access_token);
-        if (session.refresh_token) api.setRefreshToken(session.refresh_token);
-        subscription.unsubscribe();
-        unsubscribed = true;
-        window.location.replace('/Dashboard');
-      }
-    });
 
-    supabase.auth.getSession().then(({ data, error }) => {
-      if (unsubscribed) return;
-      if (error) { setStatus('Fehler: ' + error.message); return; }
+      const { data, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        setStatus('Fehler: ' + sessionError.message);
+        return;
+      }
+
       if (data.session?.access_token) {
         api.setToken(data.session.access_token);
         if (data.session.refresh_token) api.setRefreshToken(data.session.refresh_token);
-        subscription.unsubscribe();
-        unsubscribed = true;
-        window.location.replace('/Dashboard');
+        if (!unsubscribed) {
+          window.location.replace('/Dashboard');
+        }
+        return;
       }
-    });
 
-    const timeout = setTimeout(() => {
-      if (!unsubscribed) {
+      // Fallback: warte auf onAuthStateChange Events
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (event, session) => {
+          if (unsubscribed) return;
+          if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.access_token) {
+            api.setToken(session.access_token);
+            if (session.refresh_token) api.setRefreshToken(session.refresh_token);
+            subscription.unsubscribe();
+            unsubscribed = true;
+            window.location.replace('/Dashboard');
+          }
+        }
+      );
+
+      const timeout = setTimeout(() => {
+        if (!unsubscribed) {
+          subscription.unsubscribe();
+          setStatus('Anmeldung fehlgeschlagen. Bitte erneut versuchen.');
+        }
+      }, 15000);
+
+      return () => {
+        unsubscribed = true;
         subscription.unsubscribe();
-        setStatus('Anmeldung fehlgeschlagen. Bitte erneut versuchen.');
-      }
-    }, 15000);
+        clearTimeout(timeout);
+      };
+    };
+
+    handleAuthFlow();
 
     return () => {
       unsubscribed = true;
-      subscription.unsubscribe();
-      clearTimeout(timeout);
     };
-  }, []);
+  }, [searchParams]);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black">
