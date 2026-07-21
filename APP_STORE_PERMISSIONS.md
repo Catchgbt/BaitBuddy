@@ -184,7 +184,7 @@ Für Google Play Policy (ab 2023):
 
 ⚠️ **Zu beachten:**
 - [ ] Biometrische Daten (falls Fingerprint Login): COPPA-Konformität
-- [ ] Drittanbieter-SDKs auditieren (Groq, OpenAI, ElevenLabs)
+- [ ] Drittanbieter-SDKs auditieren (Anthropic, OpenAI, ElevenLabs)
 
 ---
 
@@ -206,7 +206,7 @@ Vor jedem App Store Release:
 - [ ] Alle Berechtigungen in `Info.plist` (iOS) oder `AndroidManifest.xml` dokumentiert
 - [ ] Berechtigungen nur anfordert, wenn nötig
 - [ ] Keine Hintergrund-Tracking ohne explizite Zustimmung
-- [ ] Drittanbieter (Groq, OpenAI, Supabase) haben eigene Privacy Policies
+- [ ] Drittanbieter (Anthropic, OpenAI, Supabase) haben eigene Privacy Policies
 - [ ] Datenverarbeitung in Datenschutz-Labels dokumentiert
 - [ ] Benutzerdaten nicht an Werbetreibende/Analytics weitergegeben (außer anonymisiert)
 - [ ] Konto-Löschung = Datenlöschung innerhalb 30 Tage

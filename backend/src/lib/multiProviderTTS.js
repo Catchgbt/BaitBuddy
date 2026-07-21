@@ -14,10 +14,8 @@ import { fetchWithTimeout } from './fetchWithTimeout.js';
 //   3. Google Cloud TTS (de-DE, stabil)
 //   4. Gemini 2.5 TTS (multilingual inkl. Deutsch, Preview)
 //
-// Groq (PlayAI/Orpheus) unterstützt AKTUELL nur Englisch/Arabisch und ist für
-// die deutsche App ungeeignet. Es ist deshalb per Default AUS und nur über
-// GROQ_TTS_ENABLED=true zuschaltbar (z. B. für englische Inhalte). Claude/
-// Anthropic bietet gar kein TTS und ist daher nicht Teil der Kette.
+// Claude/Anthropic bietet kein TTS und ist daher nicht Teil der Kette.
+// Groq wurde vollständig aus der App entfernt (auch als TTS-Provider).
 
 const TTS_TIMEOUT_MS = 15000;
 
@@ -25,10 +23,6 @@ const TTS_TIMEOUT_MS = 15000;
 function buildProviderChain(text, voiceId) {
   const chain = [];
 
-  // Groq nur, wenn ausdrücklich freigeschaltet (English-only, siehe oben).
-  if (process.env.GROQ_TTS_ENABLED === 'true' && process.env.GROQ_API_KEY) {
-    chain.push({ name: 'groq', fn: () => groqTTS(text) });
-  }
   if (process.env.OPENAI_API_KEY) {
     chain.push({ name: 'openai', fn: () => openaiTTS(text) });
   }
@@ -261,31 +255,3 @@ function pcmToWav(pcmBuffer, sampleRate, channels = 1, bitsPerSample = 16) {
   return Buffer.concat([header, pcmBuffer]);
 }
 
-// ── Groq (PlayAI/Orpheus) — English/Arabic only, opt-in ─────────────────────
-// Nur aktiv, wenn GROQ_TTS_ENABLED=true. Für die deutsche App per Default AUS,
-// weil Groq-TTS aktuell kein Deutsch spricht. OpenAI-kompatibler Endpunkt.
-async function groqTTS(text) {
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) throw new Error('GROQ_API_KEY not configured');
-
-  const response = await fetchWithTimeout('https://api.groq.com/openai/v1/audio/speech', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: process.env.GROQ_TTS_MODEL || 'playai-tts',
-      input: text.slice(0, 4000),
-      voice: process.env.GROQ_TTS_VOICE || 'Fritz-PlayAI',
-      response_format: 'mp3',
-    }),
-  }, TTS_TIMEOUT_MS);
-
-  if (!response.ok) {
-    throw new Error(`Groq TTS error: ${response.status}`);
-  }
-
-  const arrayBuffer = await response.arrayBuffer();
-  return { audioBase64: Buffer.from(arrayBuffer).toString('base64'), contentType: 'audio/mpeg' };
-}

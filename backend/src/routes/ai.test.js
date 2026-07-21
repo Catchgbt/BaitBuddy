@@ -13,7 +13,7 @@ vi.mock('../lib/supabase.js', () => ({
 vi.mock('../lib/llm.js', () => ({
   invokeLLM: (...args) => llmMock.invokeLLM(...args),
   invokeLLMStream: (...args) => llmMock.invokeLLMStream(...args),
-  getGroqKey: () => 'test-key',
+  getAnthropicKey: () => 'test-key',
 }));
 
 let app;
@@ -94,7 +94,7 @@ describe('POST /api/ai/chat', () => {
   });
 
   it('meldet einen KI-Fehler als 500', async () => {
-    llmMock.invokeLLM = vi.fn().mockRejectedValue(new Error('Groq API Fehler 503'));
+    llmMock.invokeLLM = vi.fn().mockRejectedValue(new Error('Claude API Fehler 503'));
     const res = await request(app)
       .post('/api/ai/chat')
       .set('Authorization', 'Bearer tok')
@@ -209,7 +209,7 @@ describe('POST /api/ai/chat/stream (SSE)', () => {
   });
 
   it('sendet ein error-Event, wenn der LLM-Stream fehlschlägt', async () => {
-    llmMock.invokeLLMStream = vi.fn().mockRejectedValue(new Error('Groq down'));
+    llmMock.invokeLLMStream = vi.fn().mockRejectedValue(new Error('Claude down'));
 
     const res = await request(app)
       .post('/api/ai/chat/stream')
@@ -327,8 +327,7 @@ describe('POST /api/ai/tts', () => {
   // isolieren gezielt ElevenLabs, damit die geprüften fetch-Calls deterministisch
   // sind. Andere Provider werden deaktiviert und danach wiederhergestellt.
   const OTHER_PROVIDER_ENV = [
-    'GROQ_API_KEY', 'GROQ_TTS_ENABLED', 'OPENAI_API_KEY',
-    'GOOGLE_CLOUD_API_KEY', 'GEMINI_API_KEY',
+    'OPENAI_API_KEY', 'GOOGLE_CLOUD_API_KEY', 'GEMINI_API_KEY',
   ];
   const origElevenLabsKey = process.env.ELEVENLABS_API_KEY;
   const origOther = Object.fromEntries(OTHER_PROVIDER_ENV.map((k) => [k, process.env[k]]));

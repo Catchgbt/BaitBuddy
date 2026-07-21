@@ -4,8 +4,7 @@ import { getTTSAudio } from './multiProviderTTS.js';
 // Provider-Keys, die die Fallback-Kette aktivieren. Vor jedem Test alle leeren,
 // damit die Kette deterministisch ist.
 const PROVIDER_ENV = [
-  'GROQ_API_KEY', 'GROQ_TTS_ENABLED', 'OPENAI_API_KEY',
-  'ELEVENLABS_API_KEY', 'GOOGLE_CLOUD_API_KEY', 'GEMINI_API_KEY',
+  'OPENAI_API_KEY', 'ELEVENLABS_API_KEY', 'GOOGLE_CLOUD_API_KEY', 'GEMINI_API_KEY',
 ];
 const orig = {};
 
@@ -59,32 +58,6 @@ describe('getTTSAudio – Multi-Provider-Fallback-Kette', () => {
 
     expect(res.provider).toBe('elevenlabs');
     expect(String(fetchMock.mock.calls[1][0])).toContain('api.elevenlabs.io');
-  });
-
-  it('lässt Groq per Default aus (English-only) — auch mit gesetztem Key', async () => {
-    process.env.GROQ_API_KEY = 'gsk-test';
-    process.env.ELEVENLABS_API_KEY = 'el-test';
-    const fetchMock = vi.fn(async () => mp3Response());
-    vi.stubGlobal('fetch', fetchMock);
-
-    const res = await getTTSAudio('Hallo Welt');
-
-    // Ohne GROQ_TTS_ENABLED wird Groq übersprungen → ElevenLabs übernimmt.
-    expect(res.provider).toBe('elevenlabs');
-    expect(String(fetchMock.mock.calls[0][0])).not.toContain('groq.com');
-  });
-
-  it('nimmt Groq nur, wenn GROQ_TTS_ENABLED=true gesetzt ist', async () => {
-    process.env.GROQ_API_KEY = 'gsk-test';
-    process.env.GROQ_TTS_ENABLED = 'true';
-    process.env.ELEVENLABS_API_KEY = 'el-test';
-    const fetchMock = vi.fn(async () => mp3Response());
-    vi.stubGlobal('fetch', fetchMock);
-
-    const res = await getTTSAudio('Hallo Welt');
-
-    expect(res.provider).toBe('groq');
-    expect(String(fetchMock.mock.calls[0][0])).toBe('https://api.groq.com/openai/v1/audio/speech');
   });
 
   it('wandelt Gemini-PCM in ein WAV-Audio um (korrekter Header)', async () => {

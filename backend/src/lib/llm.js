@@ -1,21 +1,25 @@
-// Groq API (OpenAI-kompatibel) – kein SDK nötig, nutzt natives fetch.
+// Anthropic Claude API (Messages API) – kein SDK nötig, nutzt natives fetch.
 import { fetchWithTimeout } from './fetchWithTimeout.js';
 
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
+const ANTHROPIC_VERSION = '2023-06-01';
 
 // LLM-Antworten können langsamer sein als andere Upstreams; großzügigeres
 // Timeout, aber immer noch unter dem Vercel-Funktionslimit.
 const LLM_TIMEOUT_MS = 30000;
 
-// Text-Modell und Vision-Modell (für Bildanalyse)
-const TEXT_MODEL = 'llama-3.3-70b-versatile';
-const VISION_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
+// Ein Modell für Text UND Vision: Haiku 4.5 ist das schnellste/günstigste
+// Claude-Modell und hält als einziges das Latenz-Ziel des KI-Buddys
+// (< 2 Sek., siehe CLAUDE.md). Per Env auf ein größeres Modell umschaltbar
+// (z. B. ANTHROPIC_MODEL=claude-opus-4-8).
+const MODEL = () => process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
 
-// Transiente Upstream-Fehler (Rate-Limit, Gateway-/Server-Fehler) einmal kurz
-// erneut versuchen, statt sie sofort als 5xx durchzureichen — direkt relevant
-// für die Zuverlässigkeit des KI-Buddys. MAX_LLM_RETRIES sind ZUSÄTZLICHE Versuche.
+// Transiente Upstream-Fehler (Rate-Limit, Overload, Gateway-/Server-Fehler)
+// einmal kurz erneut versuchen, statt sie sofort als 5xx durchzureichen —
+// direkt relevant für die Zuverlässigkeit des KI-Buddys. MAX_LLM_RETRIES sind
+// ZUSÄTZLICHE Versuche. 529 = Anthropic "overloaded_error".
 const MAX_LLM_RETRIES = 2;
-const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
+const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504, 529]);
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -26,50 +30,107 @@ function backoffDelay(attempt) {
   return 500 * 2 ** attempt;
 }
 
-export function getGroqKey() {
-  return process.env.GROQ_API_KEY || null;
+// Entfernt Whitespace und versehentlich mitkopierte Anführungszeichen —
+// häufiger Fehler beim Einfügen von Keys in Vercel-Umgebungsvariablen.
+function cleanKey(value) {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim().replace(/^["']|["']$/g, '').trim();
+  return trimmed || null;
+}
+
+// Findet den Anthropic-Key tolerant: exakter Name zuerst, danach jede
+// Env-Variable, deren Name mit anthropic/claude beginnt (auch nach "_") und
+// key/token/secret enthält — z. B. CLAUDE_API_KEY oder VITE_ANTHROPIC_KEY.
+// Namens-Varianten zählen nur, wenn der Wert wie ein echter Anthropic-Key
+// aussieht (sk-ant-…) — das verhindert Fehltreffer durch Plattform-Variablen
+// (z. B. Tokens von Hosting-Tools, die zufällig "claude" im Namen tragen).
+// Hintergrund: In Vercel wurde der Key in der Vergangenheit unter abweichenden
+// Namen angelegt, wodurch der KI-Chat trotz gesetztem Key ausfiel.
+export function getAnthropicKey() {
+  const direct = cleanKey(process.env.ANTHROPIC_API_KEY);
+  if (direct) return direct;
+  for (const [name, value] of Object.entries(process.env)) {
+    if (!/(^|_)(anthropic|claude|cloude)/i.test(name)) continue;
+    if (!/key|token|secret/i.test(name)) continue;
+    const cleaned = cleanKey(value);
+    if (cleaned && cleaned.startsWith('sk-ant-')) return cleaned;
+  }
+  return null;
+}
+
+function buildHeaders(apiKey) {
+  return {
+    'Content-Type': 'application/json',
+    'x-api-key': apiKey,
+    'anthropic-version': ANTHROPIC_VERSION,
+  };
+}
+
+// Erkennt den Bild-Typ anhand der Magic-Bytes im Base64-Header — nötig, weil
+// die Vision-Routen HTTP-Bilder als ROHES Base64 (ohne data-URL-Präfix)
+// übergeben und die Anthropic Messages API einen media_type verlangt, der zu
+// den tatsächlichen Bytes passt (falscher Typ → 400). Nur die ersten Bytes
+// dekodieren, nicht das ganze Bild.
+function sniffMediaType(base64) {
+  if (/^\/9j\//.test(base64)) return 'image/jpeg';        // FF D8 FF
+  if (/^iVBORw0KGgo/.test(base64)) return 'image/png';    // 89 50 4E 47
+  if (/^R0lGOD/.test(base64)) return 'image/gif';         // GIF8
+  if (/^UklGR/.test(base64)) return 'image/webp';         // RIFF...WEBP
+  return 'image/jpeg'; // Kamera-Fotos sind ganz überwiegend JPEG
+}
+
+// Zerlegt imageBase64 (roher Base64-String ODER data-URL) in Anthropic-Format:
+// { media_type, data } — die Messages API erwartet beides getrennt.
+function parseImageBase64(imageBase64) {
+  const match = /^data:(image\/[a-z+.-]+);base64,(.*)$/is.exec(imageBase64);
+  if (match) return { media_type: match[1], data: match[2] };
+  return { media_type: sniffMediaType(imageBase64), data: imageBase64 };
+}
+
+// Extrahiert den Text aus einer Messages-API-Antwort (content ist ein Array
+// aus Blöcken; Text steht in Blöcken vom Typ "text").
+function extractText(data) {
+  if (!Array.isArray(data?.content)) return null;
+  const text = data.content
+    .filter((b) => b?.type === 'text' && typeof b.text === 'string')
+    .map((b) => b.text)
+    .join('');
+  return text.length ? text : null;
 }
 
 export async function invokeLLM({ prompt, imageBase64 = null }) {
-  const apiKey = getGroqKey();
+  const apiKey = getAnthropicKey();
   if (!apiKey) {
-    throw new Error('KI-Service nicht verfügbar – GROQ_API_KEY fehlt in den Server-Einstellungen.');
+    throw new Error('KI-Service nicht verfügbar – ANTHROPIC_API_KEY fehlt in den Server-Einstellungen.');
   }
 
-  const messages = [];
-  let model = TEXT_MODEL;
-
+  let content;
   if (imageBase64) {
-    model = VISION_MODEL;
-    const url = imageBase64.startsWith('data:')
-      ? imageBase64
-      : `data:image/jpeg;base64,${imageBase64}`;
-    messages.push({
-      role: 'user',
-      content: [
-        { type: 'image_url', image_url: { url } },
-        { type: 'text', text: prompt }
-      ]
-    });
+    const { media_type, data } = parseImageBase64(imageBase64);
+    content = [
+      { type: 'image', source: { type: 'base64', media_type, data } },
+      { type: 'text', text: prompt },
+    ];
   } else {
-    messages.push({ role: 'user', content: prompt });
+    content = prompt;
   }
 
   // 2048 statt 1024: Schritt-für-Schritt-Anleitungen des KI-Buddys (Montage,
   // Köderführung) brauchen mehr Platz und dürfen nicht mitten im Schritt enden.
-  const requestBody = JSON.stringify({ model, messages, max_tokens: 2048 });
+  const requestBody = JSON.stringify({
+    model: MODEL(),
+    max_tokens: 2048,
+    messages: [{ role: 'user', content }],
+  });
   let lastErr = null;
 
   for (let attempt = 0; attempt <= MAX_LLM_RETRIES; attempt++) {
     let res;
     try {
-      res = await fetchWithTimeout(GROQ_URL, {
+      res = await fetchWithTimeout(ANTHROPIC_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`
-        },
-        body: requestBody
+        headers: buildHeaders(apiKey),
+        body: requestBody,
       }, LLM_TIMEOUT_MS);
     } catch (e) {
       // Netzwerk-/Timeout-Fehler: begrenzt wiederholen.
@@ -87,12 +148,12 @@ export async function invokeLLM({ prompt, imageBase64 = null }) {
 
       // Bessere Fehlerdiagnose für häufige Probleme
       if (res.status === 401 || res.status === 403) {
-        errorMsg = `Groq-Auth-Fehler ${res.status}: Ungültiger oder fehlender API-Key. Bitte GROQ_API_KEY überprüfen.`;
+        errorMsg = `Claude-Auth-Fehler ${res.status}: Ungültiger oder fehlender API-Key. Bitte ANTHROPIC_API_KEY überprüfen.`;
         console.error('[LLM]', errorMsg);
       } else if (res.status === 429) {
-        errorMsg = `Groq Rate-Limit (429): Zu viele Anfragen. Versuch später erneut.`;
+        errorMsg = `Claude Rate-Limit (429): Zu viele Anfragen. Versuch später erneut.`;
       } else {
-        errorMsg = `Groq API Fehler ${res.status}: ${errorMsg}`;
+        errorMsg = `Claude API Fehler ${res.status}: ${errorMsg}`;
       }
 
       const err = new Error(errorMsg);
@@ -107,20 +168,24 @@ export async function invokeLLM({ prompt, imageBase64 = null }) {
     }
 
     const data = await res.json();
-    const content = data?.choices?.[0]?.message?.content;
-    if (typeof content !== 'string') {
-      throw new Error('Groq API lieferte eine unerwartete Antwortstruktur (keine Nachricht).');
+    // Sicherheits-Refusal der API: als klarer Fehler statt leerer Antwort.
+    if (data?.stop_reason === 'refusal') {
+      throw new Error('Claude API hat die Anfrage abgelehnt (refusal).');
     }
-    return content;
+    const text = extractText(data);
+    if (typeof text !== 'string') {
+      throw new Error('Claude API lieferte eine unerwartete Antwortstruktur (keine Nachricht).');
+    }
+    return text;
   }
 
   // Retries erschöpft (nur erreichbar, wenn der letzte Versuch transient war).
-  throw lastErr || new Error('Groq API Fehler: unbekannt');
+  throw lastErr || new Error('Claude API Fehler: unbekannt');
 }
 
 /**
- * Wie invokeLLM, aber gestreamt (Groq stream:true). Ruft `onDelta` je Text-
- * Stück auf und liefert am Ende den akkumulierten Volltext. Bewusst OHNE
+ * Wie invokeLLM, aber gestreamt (Anthropic stream:true). Ruft `onDelta` je
+ * Text-Stück auf und liefert am Ende den akkumulierten Volltext. Bewusst OHNE
  * Retry-Logik: ein bereits begonnener SSE-Stream lässt sich nicht sauber
  * wiederholen — bei Fehler wirft die Funktion, der Aufrufer fällt dann auf den
  * Nicht-Stream-Pfad (invokeLLM) zurück. Nur Text (kein Vision-Streaming).
@@ -129,15 +194,15 @@ export async function invokeLLM({ prompt, imageBase64 = null }) {
  * @returns {Promise<string>} vollständiger Antworttext
  */
 export async function invokeLLMStream({ prompt, onDelta, signal }) {
-  const apiKey = getGroqKey();
+  const apiKey = getAnthropicKey();
   if (!apiKey) {
-    throw new Error('KI-Service nicht verfügbar – GROQ_API_KEY fehlt in den Server-Einstellungen.');
+    throw new Error('KI-Service nicht verfügbar – ANTHROPIC_API_KEY fehlt in den Server-Einstellungen.');
   }
 
   const requestBody = JSON.stringify({
-    model: TEXT_MODEL,
-    messages: [{ role: 'user', content: prompt }],
+    model: MODEL(),
     max_tokens: 2048,
+    messages: [{ role: 'user', content: prompt }],
     stream: true,
   });
 
@@ -148,43 +213,46 @@ export async function invokeLLMStream({ prompt, onDelta, signal }) {
   const timeoutSignal = AbortSignal.timeout(LLM_TIMEOUT_MS);
   const combinedSignal = signal ? AbortSignal.any([timeoutSignal, signal]) : timeoutSignal;
 
-  const res = await fetch(GROQ_URL, {
+  const res = await fetch(ANTHROPIC_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
+    headers: buildHeaders(apiKey),
     body: requestBody,
     signal: combinedSignal,
   });
 
   if (!res.ok) {
     const body = await res.text().catch(() => '');
-    throw new Error(`Groq API Fehler ${res.status}: ${body.slice(0, 300)}`);
+    throw new Error(`Claude API Fehler ${res.status}: ${body.slice(0, 300)}`);
   }
   if (!res.body) {
-    throw new Error('Groq API lieferte keinen Stream-Body.');
+    throw new Error('Claude API lieferte keinen Stream-Body.');
   }
 
   const decoder = new TextDecoder();
   let buffer = '';
   let full = '';
 
-  // Verarbeitet eine komplette SSE-Zeile ("data: {...}" oder "data: [DONE]").
+  // Verarbeitet eine komplette SSE-Zeile ("data: {...}"). Anthropic streamt
+  // Events wie content_block_delta mit delta.type "text_delta".
   const handleLine = (line) => {
     const trimmed = line.trim();
     if (!trimmed.startsWith('data:')) return;
     const payload = trimmed.slice(5).trim();
-    if (payload === '[DONE]') return;
+    if (!payload || payload === '[DONE]') return;
     try {
       const json = JSON.parse(payload);
-      const delta = json?.choices?.[0]?.delta?.content;
-      if (typeof delta === 'string' && delta.length) {
-        full += delta;
-        onDelta?.(delta);
+      if (json?.type === 'content_block_delta' && json?.delta?.type === 'text_delta') {
+        const delta = json.delta.text;
+        if (typeof delta === 'string' && delta.length) {
+          full += delta;
+          onDelta?.(delta);
+        }
+      } else if (json?.type === 'error') {
+        throw new Error(`Claude Stream-Fehler: ${json?.error?.message || 'unbekannt'}`);
       }
-    } catch {
-      // Unvollständige/fehlerhafte Zeile ignorieren (Groq sendet nur ganze Events).
+    } catch (e) {
+      if (e instanceof Error && e.message.startsWith('Claude Stream-Fehler')) throw e;
+      // Unvollständige/fehlerhafte Zeile ignorieren (die API sendet ganze Events).
     }
   };
 
