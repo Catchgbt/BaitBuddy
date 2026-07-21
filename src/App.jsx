@@ -9,6 +9,7 @@ import NavigationTracker from '@/lib/NavigationTracker'
 import { NavigationProvider } from '@/lib/NavigationContext'
 import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { initializeDeepLinking } from '@/lib/deepLinkHandler';
 import { AnimatePresence } from 'framer-motion';
 import PageNotFound from './lib/PageNotFound';
 
@@ -135,8 +136,11 @@ const AnimatedRoutes = () => {
 
 
 function App() {
-  // Initialize network status and offline sync on app startup
+  // Initialize deep-linking, network status and offline sync on app startup
   useEffect(() => {
+    initializeDeepLinking().catch(err => {
+      console.error('[App] Deep-link init failed:', err);
+    });
     initNetworkStatus().catch(err => {
       console.error('[App] Network status init failed:', err);
     });
