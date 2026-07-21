@@ -137,7 +137,7 @@ describe('POST /api/premium/checkout', () => {
     expect(purchaseVerificationMock.createStripeCheckoutSession).toHaveBeenCalledWith(
       expect.objectContaining({
         planId: 'pro',
-        amountCents: 999,
+        amountCents: 1999,
         userId: 'user-1',
         successUrl: expect.stringContaining('https://baitbuddy.test/PremiumPlans?checkout=success&plan_id=pro'),
         cancelUrl: 'https://baitbuddy.test/PremiumPlans?checkout=cancelled',
@@ -242,6 +242,89 @@ describe('POST /api/premium/activate (Stripe-Härtung)', () => {
     expect(res.status).toBe(200);
     expect(res.body.expires_at).toBe(expiresAt);
     expect(supabaseMock.current.auth.admin.updateUserById).not.toHaveBeenCalled();
+  });
+});
+
+describe('Referral: 10-EUR-Ultimate-Rabatt', () => {
+  it('zieht den Referral-Rabatt beim Ultimate-Checkout ab (elite)', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+    supabaseMock.current = createSupabaseMock({
+      authUser: { ...TEST_USER, user_metadata: { ultimate_discount_cents: 1000 } },
+    });
+    vi.resetModules();
+    const configuredApp = (await import('../server.js')).default;
+    purchaseVerificationMock.createStripeCheckoutSession.mockResolvedValue({
+      ok: true, id: 'cs_test_2', url: 'https://checkout.stripe.com/pay/cs_test_2',
+    });
+
+    const res = await request(configuredApp)
+      .post('/api/premium/checkout')
+      .set('Authorization', 'Bearer test-token')
+      .send({ plan_id: 'elite' });
+
+    expect(res.status).toBe(200);
+    // Ultimate 2999 - 1000 Rabatt = 1999
+    expect(purchaseVerificationMock.createStripeCheckoutSession).toHaveBeenCalledWith(
+      expect.objectContaining({ planId: 'elite', amountCents: 1999 })
+    );
+  });
+
+  it('begrenzt den rabattierten Ultimate-Preis auf den Mindestbetrag (999)', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+    supabaseMock.current = createSupabaseMock({
+      authUser: { ...TEST_USER, user_metadata: { ultimate_discount_cents: 3000 } },
+    });
+    vi.resetModules();
+    const configuredApp = (await import('../server.js')).default;
+    purchaseVerificationMock.createStripeCheckoutSession.mockResolvedValue({
+      ok: true, id: 'cs_test_3', url: 'https://checkout.stripe.com/pay/cs_test_3',
+    });
+
+    const res = await request(configuredApp)
+      .post('/api/premium/checkout')
+      .set('Authorization', 'Bearer test-token')
+      .send({ plan_id: 'elite' });
+
+    expect(res.status).toBe(200);
+    // 2999 - 3000 = -1 -> auf Mindestbetrag 999 begrenzt
+    expect(purchaseVerificationMock.createStripeCheckoutSession).toHaveBeenCalledWith(
+      expect.objectContaining({ planId: 'elite', amountCents: 999 })
+    );
+  });
+
+  it('schreibt dem Referrer 10 EUR gut, wenn ein eingeladener Freund Basic aktiviert', async () => {
+    process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON = '{"type":"service_account"}';
+    purchaseVerificationMock.verifyGooglePlayPurchase.mockResolvedValue({ valid: true });
+    supabaseMock.current = createSupabaseMock({
+      authUser: { ...TEST_USER, user_metadata: { referred_by: 'ABC12345' } },
+      fromResults: {
+        referrals: { data: { id: 'ref-1', referrer_user_id: 'user-2', basic_reward_granted: false }, error: null },
+      },
+    });
+    supabaseMock.current.auth.admin = {
+      updateUserById: vi.fn(async () => ({ data: {}, error: null })),
+      getUserById: vi.fn(async () => ({ data: { user: { id: 'user-2', user_metadata: {} } }, error: null })),
+    };
+    vi.resetModules();
+    const configuredApp = (await import('../server.js')).default;
+
+    const res = await request(configuredApp)
+      .post('/api/premium/activate')
+      .set('Authorization', 'Bearer test-token')
+      .send({ plan_id: 'basic', purchase_token: 'echter-play-token' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.plan_id).toBe('basic');
+    expect(supabaseMock.current.auth.admin.getUserById).toHaveBeenCalledWith('user-2');
+    // Referrer (user-2) bekommt 1000 Cent Rabatt gutgeschrieben.
+    expect(supabaseMock.current.auth.admin.updateUserById).toHaveBeenCalledWith(
+      'user-2',
+      expect.objectContaining({
+        user_metadata: expect.objectContaining({ ultimate_discount_cents: 1000 }),
+      })
+    );
+    // Einladung als belohnt markiert (Idempotenz).
+    expect(supabaseMock.current.__builders.referrals.update).toHaveBeenCalledWith({ basic_reward_granted: true });
   });
 });
 

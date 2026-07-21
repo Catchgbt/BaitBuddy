@@ -10,10 +10,10 @@ export const PLAN_HIERARCHY = {
 
 export const PLAN_PRICES = {
   free: 0,
-  basic: 9,
-  pro: 19,
-  elite: 19,
-  ultimate: 30
+  basic: 9.99,
+  pro: 19.99,
+  elite: 29.99,
+  ultimate: 29.99
 };
 
 export const PLAN_NAMES = {
@@ -47,7 +47,7 @@ export function getRequiredPlan(featureId) {
     'tutorials': 'free',
     'notes_photos': 'free',
     
-    // Basic (4.99)
+    // Basic (9.99)
     'weather_extended': 'basic',
     'ai_buddy_ar_elements': 'basic',
     'satellite_images': 'basic',
@@ -57,7 +57,7 @@ export function getRequiredPlan(featureId) {
     'water_analysis': 'basic',
     'bait_mixer': 'basic',
     
-    // Pro (9.99)
+    // Pro (19.99)
     'ar_buddy_full': 'pro',
     'gps_heatmaps': 'pro',
     'catch_predictions': 'pro',
@@ -71,7 +71,7 @@ export function getRequiredPlan(featureId) {
     'devices': 'pro',
     'exam_prep': 'pro',
     
-    // Elite (19.99)
+    // Elite / Ultimate (29.99)
     'ar_live_paths': 'elite',
     'individual_spot_analysis': 'elite',
     'shop_full': 'elite',

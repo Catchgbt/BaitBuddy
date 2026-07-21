@@ -19,6 +19,54 @@ const STRIPE_PAYMENT_VERIFICATION_CONFIGURED = !!process.env.STRIPE_SECRET_KEY;
 // resolvePlan/PLAN_RANK kommen zentral aus lib/planResolver.js — auch der
 // TTS-Endpunkt (Ultimate-Stimme) nutzt dieselbe Auflösung.
 
+// Referral-Belohnung: Kauft ein eingeladener Freund den Basic-Plan, bekommt der
+// Referrer 10 € Rabatt auf den nächsten Ultimate-Kauf, gedeckelt bei 3 Freunden
+// (30 €). Der Rabatt lebt in den Referrer-Metadaten (ultimate_discount_cents)
+// und wird beim Ultimate-Web-Checkout eingelöst.
+const ULTIMATE_DISCOUNT_PER_REFERRAL_CENTS = 1000;
+const ULTIMATE_DISCOUNT_MAX_CENTS = 3000;
+const ULTIMATE_MIN_CHECKOUT_CENTS = 999;
+
+function readDiscountCents(user) {
+  const raw = Number(user?.user_metadata?.ultimate_discount_cents);
+  if (!Number.isFinite(raw) || raw <= 0) return 0;
+  return Math.min(Math.floor(raw), ULTIMATE_DISCOUNT_MAX_CENTS);
+}
+
+// Schreibt dem Referrer eine 10-€-Ultimate-Gutschrift gut, sobald der von ihm
+// eingeladene Nutzer erstmals Basic aktiviert. Best-effort: Fehler werden
+// geloggt, blockieren die Basic-Aktivierung aber nicht. Idempotent über das
+// Flag referrals.basic_reward_granted (eine Gutschrift je Einladung).
+async function grantReferralBasicReward(referredUser) {
+  try {
+    if (!referredUser?.user_metadata?.referred_by) return;
+
+    const { data: row, error } = await supabase
+      .from('referrals')
+      .select('id, referrer_user_id, basic_reward_granted')
+      .eq('referred_user_id', referredUser.id)
+      .maybeSingle();
+    if (error || !row || row.basic_reward_granted) return;
+
+    const { data: refRes, error: refErr } =
+      await supabase.auth.admin.getUserById(row.referrer_user_id);
+    if (refErr || !refRes?.user) return;
+
+    const refMeta = refRes.user.user_metadata || {};
+    const current = readDiscountCents(refRes.user);
+    const next = Math.min(current + ULTIMATE_DISCOUNT_PER_REFERRAL_CENTS, ULTIMATE_DISCOUNT_MAX_CENTS);
+
+    const { error: updErr } = await supabase.auth.admin.updateUserById(row.referrer_user_id, {
+      user_metadata: { ...refMeta, ultimate_discount_cents: next },
+    });
+    if (updErr) return;
+
+    await supabase.from('referrals').update({ basic_reward_granted: true }).eq('id', row.id);
+  } catch (e) {
+    console.error('[premium] grantReferralBasicReward fehlgeschlagen:', e?.message || e);
+  }
+}
+
 router.get('/premium/status', requireAuth, async (req, res) => {
   const { effectiveId, isActive, expiresAt, remainingHours, isTrial } = resolvePlan(req.user);
 
@@ -26,12 +74,14 @@ router.get('/premium/status', requireAuth, async (req, res) => {
     ok: true,
     plan: {
       id: effectiveId,
-      name: { free: 'Free', basic: 'Basic', pro: 'Pro', elite: 'Elite' }[effectiveId] || 'Free',
+      name: { free: 'Free', basic: 'Basic', pro: 'Pro', elite: 'Ultimate', ultimate: 'Ultimate', friends: 'Freundschaft', friends_monthly: 'Freundschaft' }[effectiveId] || 'Free',
       is_active: isActive,
       is_trial: isTrial && isActive,
       expires_at: expiresAt,
       remaining_days: remainingHours == null ? null : Math.ceil(remainingHours / 24),
-      remaining_hours: remainingHours
+      remaining_hours: remainingHours,
+      // Angesammelter Referral-Rabatt (Cent) auf den nächsten Ultimate-Kauf.
+      ultimate_discount_cents: readDiscountCents(req.user)
     }
   });
 });
@@ -45,9 +95,9 @@ router.post('/plan/status', requireAuth, async (req, res) => {
 });
 
 const PRODUCTS = [
-  { id: 'basic', name: 'Basic', price: 4.99, features: ['Fangbuch', 'Spots', 'Wetter'] },
-  { id: 'pro', name: 'Pro', price: 9.99, features: ['Alles in Basic', 'KI-Assistent', 'Community'] },
-  { id: 'elite', name: 'Ultimate', price: 19.99, features: ['Alles in Pro', 'Offline', 'Premium-Support'] },
+  { id: 'basic', name: 'Basic', price: 9.99, features: ['Werbefrei', 'KI-Buddy unbegrenzt', 'Fangbuch', 'Spots', 'Wetter'] },
+  { id: 'pro', name: 'Pro', price: 19.99, features: ['Alles in Basic', 'KI-Fangprognosen', 'AR & 3D', 'Community'] },
+  { id: 'elite', name: 'Ultimate', price: 29.99, features: ['Alles in Pro', 'Live-Bissanzeiger', 'CatchCam', 'Priorisierte KI'] },
 ];
 
 router.get('/premium/products', async (req, res) => {
@@ -86,13 +136,13 @@ router.post('/premium/check-feature', requireAuth, async (req, res) => {
 // niemals den Preis. Muss mit der Plan-Anzeige in src/pages/PremiumPlans.jsx
 // übereinstimmen.
 const CHECKOUT_PLANS = {
-  basic:           { name: 'Basic', amountCents: 499 },
-  pro:             { name: 'Pro', amountCents: 999 },
-  elite:           { name: 'Ultimate', amountCents: 1999 },
-  friends:         { name: 'Freundschaft (Jahresplan)', amountCents: 5499 },
-  // Der beworbene 19-€-Freundes-Rabatt hat noch keine serverseitige
-  // Freund-Erkennung — bis dahin gilt der reguläre Monatspreis.
-  friends_monthly: { name: 'Freundschaft Monatlich', amountCents: 3900 },
+  basic:           { name: 'Basic', amountCents: 999 },
+  pro:             { name: 'Pro', amountCents: 1999 },
+  elite:           { name: 'Ultimate', amountCents: 2999 },
+  friends:         { name: 'Freundschaft (Jahresabo)', amountCents: 9999 },
+  // friends_monthly wird nicht mehr aktiv beworben (Freundschaftsplan ist ein
+  // reines Jahresabo), bleibt aber für Bestandskäufe/Google-Play-Restore gültig.
+  friends_monthly: { name: 'Freundschaft Monatlich', amountCents: 2999 },
 };
 
 router.post('/premium/checkout', requireAuth, async (req, res) => {
@@ -113,10 +163,17 @@ router.post('/premium/checkout', requireAuth, async (req, res) => {
   const successUrl = `${origin}/PremiumPlans?checkout=success&plan_id=${encodeURIComponent(plan_id)}&session_id={CHECKOUT_SESSION_ID}`;
   const cancelUrl = `${origin}/PremiumPlans?checkout=cancelled`;
 
+  // Referral-Rabatt nur auf den Ultimate-Plan anwenden (elite). Betrag wird auf
+  // einen Mindestpreis begrenzt und beim Aktivieren verbraucht.
+  const isUltimate = plan_id === 'elite' || plan_id === 'ultimate';
+  const discountCents = isUltimate ? readDiscountCents(req.user) : 0;
+  const amountCents = Math.max(plan.amountCents - discountCents, ULTIMATE_MIN_CHECKOUT_CENTS);
+  const appliedDiscountCents = plan.amountCents - amountCents;
+
   const session = await createStripeCheckoutSession({
     planId: plan_id,
-    planName: plan.name,
-    amountCents: plan.amountCents,
+    planName: appliedDiscountCents > 0 ? `${plan.name} (Freundschafts-Rabatt)` : plan.name,
+    amountCents,
     userId: req.user.id,
     userEmail: req.user.email,
     successUrl,
@@ -213,6 +270,8 @@ router.post('/premium/activate', requireAuth, async (req, res) => {
     }
   }
 
+  const isUltimateTier = (PLAN_RANK[plan_id] ?? 0) >= PLAN_RANK.elite;
+
   const merged = {
     ...current,
     premium_plan_id: plan_id,
@@ -224,12 +283,20 @@ router.post('/premium/activate', requireAuth, async (req, res) => {
     premium_transaction_id: transaction_id,
     premium_activated_at: new Date().toISOString(),
     premium_activation_version: (current.premium_activation_version || 0) + 1,
+    // Angesammelten Referral-Rabatt beim Ultimate-Kauf verbrauchen.
+    ...(isUltimateTier ? { ultimate_discount_cents: 0 } : {}),
   };
 
   const { error } = await supabase.auth.admin.updateUserById(req.user.id, {
     user_metadata: merged,
   });
   if (error) return sendDbError(res, error);
+
+  // Referral-Belohnung: Aktiviert ein eingeladener Nutzer erstmals Basic,
+  // bekommt sein Referrer 10 € Ultimate-Rabatt gutgeschrieben (best-effort).
+  if (plan_id === 'basic') {
+    await grantReferralBasicReward({ id: req.user.id, user_metadata: merged });
+  }
 
   return res.json({
     ok: true,

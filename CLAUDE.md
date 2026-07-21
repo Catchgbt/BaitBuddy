@@ -157,10 +157,19 @@ erfolgreich eingeladenem Freund**. Das Popup rotiert alle 72h (localStorage
   einmalig ein. Der eingeladene Nutzer bekommt `referred_by` in seinen
   Metadaten gesetzt (verhindert Doppel-Einlösung); die `referrals`-Tabelle
   hat zusätzlich `UNIQUE(referred_user_id)` als strukturelle Absicherung.
-- **Belohnung**: 7 Tage werden an die bestehende Ultimate-Laufzeit angehängt
-  (oder ab jetzt +7 Tage, falls kein aktiver Ultimate-Plan). Ein bereits
+- **Belohnung (Anmeldung)**: 7 Tage werden an die bestehende Ultimate-Laufzeit
+  angehängt (oder ab jetzt +7 Tage, falls kein aktiver Ultimate-Plan). Ein bereits
   höherer Plan (`friends`) wird **nicht** herabgestuft. Der Server pflegt
   `referral_reward_count` in den Metadaten des Referrers.
+- **Belohnung (Basic-Kauf des Freundes)**: Aktiviert ein eingeladener Nutzer
+  erstmals den **Basic**-Plan, bekommt sein Referrer **10 € Rabatt auf den
+  nächsten Ultimate-Kauf** gutgeschrieben — gedeckelt bei 3 Freunden (30 €).
+  Gespeichert als `ultimate_discount_cents` in den Referrer-Metadaten, idempotent
+  über `referrals.basic_reward_granted` (Migration `20260721_referral_basic_reward.sql`).
+  Der Rabatt wird beim **Stripe-Web-Checkout** (`POST /api/premium/checkout`,
+  nur `elite`) vom Preis abgezogen (Mindestbetrag 9,99 €) und bei erfolgreicher
+  Ultimate-Aktivierung wieder auf 0 gesetzt. Google Play nutzt feste SKUs → dort
+  kein dynamischer Rabatt. Logik in `backend/src/routes/premium.js`.
 - **Migration**: `supabase/migrations/20260719_create_referrals_tables.sql`
   (Tabellen `user_referral_codes` + `referrals`, RLS: nur Lesen der eigenen
   Zeilen, Insert/Update ausschließlich vom Backend über die Service-Role).
