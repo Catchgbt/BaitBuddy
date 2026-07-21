@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
-import { invokeLLM, getGroqKey } from '../lib/llm.js';
+import { invokeLLM, invokeLLMStream, getGroqKey } from '../lib/llm.js';
 import {
   FISHING_KNOWLEDGE,
   PRACTICAL_GUIDE_RULES,
@@ -152,98 +152,97 @@ router.get('/ai/test', requireAuth, async (req, res) => {
   }
 });
 
-router.post('/ai/chat', requireAuth, async (req, res) => {
-  try {
-    const { messages = [], userLocation = null } = req.body;
-    const userEmail = req.user.email;
+// Baut den vollständigen LLM-Prompt für den Chat (System-Prompt + App-Kontext +
+// History). Geteilt von /ai/chat und /ai/chat/stream, damit die Prompt-Logik
+// nicht dupliziert wird. Liefert { ok:true, prompt } oder { ok:false, status,
+// body } für eine saubere HTTP-Antwort bei Validierungs-/Konfig-Fehlern.
+async function buildChatPrompt(req) {
+  const { messages = [], userLocation = null } = req.body;
+  const userEmail = req.user.email;
 
-    // Pre-Check: Groq API Key vorhanden? Fehler sofort, bevor invokeLLM aufgerufen wird.
-    // Nur in Produktion — Tests mocken invokeLLM und brauchen diese frühe Prüfung nicht.
-    if (process.env.NODE_ENV !== 'test' && !getGroqKey()) {
-      return res.status(503).json({
-        ok: false,
-        error: 'Meine KI-Services sind gerade nicht konfiguriert (fehlender API-Schlüssel). Der Admin muss das fixen.',
-        reply: 'Meine KI-Services sind gerade nicht konfiguriert (fehlender API-Schlüssel). Der Admin muss das fixen.',
-        message: 'Meine KI-Services sind gerade nicht konfiguriert (fehlender API-Schlüssel). Der Admin muss das fixen.'
-      });
-    }
+  // Pre-Check: Groq API Key vorhanden? Fehler sofort, bevor der LLM aufgerufen wird.
+  // Nur in Produktion — Tests mocken den LLM und brauchen diese frühe Prüfung nicht.
+  if (process.env.NODE_ENV !== 'test' && !getGroqKey()) {
+    const msg = 'Meine KI-Services sind gerade nicht konfiguriert (fehlender API-Schlüssel). Der Admin muss das fixen.';
+    return { ok: false, status: 503, body: { ok: false, error: msg, reply: msg, message: msg } };
+  }
 
-    // Eingabe hart validieren: Ein Nicht-Array führte zuvor beim Spread
-    // [...messages] zu einem 500er statt einer sauberen 400. Zusätzlich pro
-    // Nachricht Länge kappen und Anzahl begrenzen (Kosten-/Injection-Schutz).
-    if (!Array.isArray(messages)) {
-      return res.status(400).json({ error: 'messages muss ein Array sein' });
-    }
-    const safeMessages = messages
-      .filter(m => m && typeof m.content === 'string')
-      .slice(-MAX_CHAT_MESSAGES)
-      .map(m => ({
-        role: m.role === 'assistant' ? 'assistant' : 'user',
-        content: m.content.slice(0, MAX_CHAT_CONTENT_CHARS).trim(),
-      }))
-      .filter(m => m.content.length > 0);
+  // Eingabe hart validieren: Ein Nicht-Array führte zuvor beim Spread
+  // [...messages] zu einem 500er statt einer sauberen 400. Zusätzlich pro
+  // Nachricht Länge kappen und Anzahl begrenzen (Kosten-/Injection-Schutz).
+  if (!Array.isArray(messages)) {
+    return { ok: false, status: 400, body: { error: 'messages muss ein Array sein' } };
+  }
+  const safeMessages = messages
+    .filter(m => m && typeof m.content === 'string')
+    .slice(-MAX_CHAT_MESSAGES)
+    .map(m => ({
+      role: m.role === 'assistant' ? 'assistant' : 'user',
+      content: m.content.slice(0, MAX_CHAT_CONTENT_CHARS).trim(),
+    }))
+    .filter(m => m.content.length > 0);
 
-    const lastMsg = [...safeMessages].reverse().find(m => m.role === 'user')?.content || '';
-    const wantsCatches = /fang|fänge|gefangen|fangbuch|logbuch/i.test(lastMsg);
-    const wantsRules = /schonzeit|mindestmaß|erlaubt|verboten/i.test(lastMsg);
-    const wantsSpots = /spot|angelplatz|wo angel/i.test(lastMsg);
-    const wantsWeather = /wetter|temperatur|wind/i.test(lastMsg);
+  const lastMsg = [...safeMessages].reverse().find(m => m.role === 'user')?.content || '';
+  const wantsCatches = /fang|fänge|gefangen|fangbuch|logbuch/i.test(lastMsg);
+  const wantsRules = /schonzeit|mindestmaß|erlaubt|verboten/i.test(lastMsg);
+  const wantsSpots = /spot|angelplatz|wo angel/i.test(lastMsg);
+  const wantsWeather = /wetter|temperatur|wind/i.test(lastMsg);
 
-    // Kontext-Quellen laufen parallel statt sequenziell — spart Latenz vor dem
-    // LLM-Call (Ziel < 2 s). Jede Quelle liefert einen fertigen Kontext-String
-    // oder null; die Reihenfolge (Fänge, Schonzeiten, Spots, Wetter) bleibt fix.
-    const [catchesPart, rulesPart, spotsPart, weatherPart] = await Promise.all([
-      (async () => {
-        if (!wantsCatches) return null;
-        const { data: catches } = await supabase
-          .from('catches').select('*')
-          .eq('created_by', userEmail)
-          .order('catch_time', { ascending: false }).limit(10);
-        if (!catches?.length) return null;
-        return 'FANGBUCH:\n' + catches.map(c =>
-          `- ${c.species || '?'}, ${c.length_cm || '?'}cm, ${c.weight_kg || '?'}kg, Köder: ${c.bait_used || '?'}`
-        ).join('\n');
-      })(),
-      (async () => {
-        if (!wantsRules) return null;
-        const { data: rules } = await supabase.from('rule_entries').select('*').limit(30);
-        if (!rules?.length) return null;
-        const active = rules.filter(r => isInClosedSeason(r.closed_from, r.closed_to));
-        if (!active.length) return null;
-        return 'AKTIVE SCHONZEITEN:\n' + active.map(r =>
-          `- ${r.fish} (${r.region}): bis ${r.closed_to}`
-        ).join('\n');
-      })(),
-      (async () => {
-        if (!wantsSpots) return null;
-        const { data: spots } = await supabase
-          .from('spots').select('name,water_type')
-          .eq('created_by', userEmail).limit(10);
-        if (!spots?.length) return null;
-        return 'MEINE SPOTS:\n' + spots.map(s => `- ${s.name} (${s.water_type})`).join('\n');
-      })(),
-      (async () => {
-        if (!(wantsWeather && userLocation?.latitude)) return null;
-        // Koordinaten hart als Zahlen validieren, bevor sie in die Upstream-URL
-        // interpoliert werden — sonst könnte ein String wie "52.5&extra=1" fremde
-        // Query-Parameter einschleusen.
-        const lat = Number(userLocation.latitude);
-        const lon = Number(userLocation.longitude);
-        if (!Number.isFinite(lat) || !Number.isFinite(lon) ||
-            lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
-        const w = await fetchWithTimeout(
-          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,weather_code&timezone=auto`,
-          {}, WEATHER_TIMEOUT_MS
-        ).then(r => r.json()).catch(() => null);
-        if (!w?.current) return null;
-        return `WETTER: ${w.current.temperature_2m}°C, Wind: ${w.current.wind_speed_10m}m/s`;
-      })(),
-    ]);
+  // Kontext-Quellen laufen parallel statt sequenziell — spart Latenz vor dem
+  // LLM-Call (Ziel < 2 s). Jede Quelle liefert einen fertigen Kontext-String
+  // oder null; die Reihenfolge (Fänge, Schonzeiten, Spots, Wetter) bleibt fix.
+  const [catchesPart, rulesPart, spotsPart, weatherPart] = await Promise.all([
+    (async () => {
+      if (!wantsCatches) return null;
+      const { data: catches } = await supabase
+        .from('catches').select('*')
+        .eq('created_by', userEmail)
+        .order('catch_time', { ascending: false }).limit(10);
+      if (!catches?.length) return null;
+      return 'FANGBUCH:\n' + catches.map(c =>
+        `- ${c.species || '?'}, ${c.length_cm || '?'}cm, ${c.weight_kg || '?'}kg, Köder: ${c.bait_used || '?'}`
+      ).join('\n');
+    })(),
+    (async () => {
+      if (!wantsRules) return null;
+      const { data: rules } = await supabase.from('rule_entries').select('*').limit(30);
+      if (!rules?.length) return null;
+      const active = rules.filter(r => isInClosedSeason(r.closed_from, r.closed_to));
+      if (!active.length) return null;
+      return 'AKTIVE SCHONZEITEN:\n' + active.map(r =>
+        `- ${r.fish} (${r.region}): bis ${r.closed_to}`
+      ).join('\n');
+    })(),
+    (async () => {
+      if (!wantsSpots) return null;
+      const { data: spots } = await supabase
+        .from('spots').select('name,water_type')
+        .eq('created_by', userEmail).limit(10);
+      if (!spots?.length) return null;
+      return 'MEINE SPOTS:\n' + spots.map(s => `- ${s.name} (${s.water_type})`).join('\n');
+    })(),
+    (async () => {
+      if (!(wantsWeather && userLocation?.latitude)) return null;
+      // Koordinaten hart als Zahlen validieren, bevor sie in die Upstream-URL
+      // interpoliert werden — sonst könnte ein String wie "52.5&extra=1" fremde
+      // Query-Parameter einschleusen.
+      const lat = Number(userLocation.latitude);
+      const lon = Number(userLocation.longitude);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon) ||
+          lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
+      const w = await fetchWithTimeout(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,weather_code&timezone=auto`,
+        {}, WEATHER_TIMEOUT_MS
+      ).then(r => r.json()).catch(() => null);
+      if (!w?.current) return null;
+      return `WETTER: ${w.current.temperature_2m}°C, Wind: ${w.current.wind_speed_10m}m/s`;
+    })(),
+  ]);
 
-    const contextParts = [catchesPart, rulesPart, spotsPart, weatherPart].filter(Boolean);
-    const context = contextParts.length ? '\n\n--- App-Daten ---\n' + contextParts.join('\n\n') + '\n---\n' : '';
+  const contextParts = [catchesPart, rulesPart, spotsPart, weatherPart].filter(Boolean);
+  const context = contextParts.length ? '\n\n--- App-Daten ---\n' + contextParts.join('\n\n') + '\n---\n' : '';
 
-    const systemPrompt = `Du bist BaitBuddy, ein erfahrener und sympathischer Angel-Kumpel und Experte. Du sprichst locker und natürlich wie in einem echten Gespräch am Wasser — nicht steif oder formell. Bei Smalltalk und einfachen Fragen antwortest du kurz und gesprächig (1–3 Sätze). Keine Emojis, keine Sternchen-Aufzählungen — flüssige Sätze; nummerierte Schritte (1., 2., 3.) sind nur in Anleitungs-Antworten erlaubt.
+  const systemPrompt = `Du bist BaitBuddy, ein erfahrener und sympathischer Angel-Kumpel und Experte. Du sprichst locker und natürlich wie in einem echten Gespräch am Wasser — nicht steif oder formell. Bei Smalltalk und einfachen Fragen antwortest du kurz und gesprächig (1–3 Sätze). Keine Emojis, keine Sternchen-Aufzählungen — flüssige Sätze; nummerierte Schritte (1., 2., 3.) sind nur in Anleitungs-Antworten erlaubt.
 
 ${PRACTICAL_GUIDE_RULES}
 
@@ -273,11 +272,19 @@ Verfügbare Aktionen:
 
 Regeln: Aktions-Block nur wenn Nutzer wirklich eine Aktion will. Zuerst kurze Bestätigung, dann Block. Block wird dem Nutzer nicht angezeigt. Nutze fuer "page" exakt einen der erlaubten Werte.${context}`;
 
-    const history = safeMessages.slice(-6).map(m =>
-      `${m.role === 'user' ? 'Nutzer' : 'BaitBuddy'}: ${m.content}`
-    ).join('\n');
+  const history = safeMessages.slice(-6).map(m =>
+    `${m.role === 'user' ? 'Nutzer' : 'BaitBuddy'}: ${m.content}`
+  ).join('\n');
 
-    const reply = await invokeLLM({ prompt: `${systemPrompt}\n\n${history}\n\nAntworte:` });
+  return { ok: true, prompt: `${systemPrompt}\n\n${history}\n\nAntworte:` };
+}
+
+router.post('/ai/chat', requireAuth, async (req, res) => {
+  try {
+    const built = await buildChatPrompt(req);
+    if (!built.ok) return res.status(built.status).json(built.body);
+
+    const reply = await invokeLLM({ prompt: built.prompt });
 
     const { action, cleanReply } = extractAction(reply);
 
@@ -310,6 +317,63 @@ Regeln: Aktions-Block nur wenn Nutzer wirklich eine Aktion will. Zuerst kurze Be
       reply: userMessage,
       message: userMessage
     });
+  }
+});
+
+// Gestreamte Chat-Antwort (Server-Sent Events). Sendet Text-Deltas, sobald sie
+// vom LLM kommen, damit das Frontend satzweise vorlesen kann, BEVOR die ganze
+// Antwort fertig ist ("quasi live"). Am Ende wird der Aktions-Block aus dem
+// Volltext extrahiert und als 'done'-Event mit der bereinigten Antwort gesendet.
+router.post('/ai/chat/stream', requireAuth, async (req, res) => {
+  // Client-Disconnect abfangen, um den Upstream-Stream abzubrechen.
+  const abort = new AbortController();
+  res.on('close', () => abort.abort());
+
+  let built;
+  try {
+    built = await buildChatPrompt(req);
+  } catch (e) {
+    console.error('[AI Chat Stream] Prompt-Aufbau fehlgeschlagen:', e?.message);
+    return res.status(500).json({ ok: false, error: 'Interner Fehler beim Chat-Aufbau' });
+  }
+  // Validierungs-/Konfig-Fehler noch als normales JSON (Header nicht gesendet).
+  if (!built.ok) return res.status(built.status).json(built.body);
+
+  // SSE-Header. X-Accel-Buffering:no verhindert Proxy-Pufferung (nötig, damit
+  // Deltas sofort beim Client ankommen). flushHeaders() öffnet den Stream.
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream; charset=utf-8',
+    'Cache-Control': 'no-cache, no-transform',
+    Connection: 'keep-alive',
+    'X-Accel-Buffering': 'no',
+  });
+  res.flushHeaders?.();
+
+  const send = (event, data) => {
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  };
+
+  try {
+    const full = await invokeLLMStream({
+      prompt: built.prompt,
+      signal: abort.signal,
+      onDelta: (delta) => send('delta', { text: delta }),
+    });
+
+    const { action, cleanReply } = extractAction(full);
+    send('done', { ok: true, reply: cleanReply, message: cleanReply, action });
+    res.end();
+  } catch (e) {
+    // Client bereits weg? Dann nichts mehr senden.
+    if (abort.signal.aborted || res.writableEnded) {
+      try { res.end(); } catch { /* noop */ }
+      return;
+    }
+    const msg = e && typeof e.message === 'string' ? e.message : String(e);
+    console.error('[AI Chat Stream Error]', msg);
+    // Header sind schon raus → Fehler als SSE-Event, nicht als HTTP-Status.
+    send('error', { ok: false, error: 'Verbindungsproblem beim Streaming' });
+    res.end();
   }
 });
 

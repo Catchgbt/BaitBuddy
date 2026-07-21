@@ -17,21 +17,30 @@ vi.mock('@/utils/buddyActions', () => ({
 vi.mock('@/components/utils/elevenLabsTTS', () => ({
   speakWithFallback: vi.fn(async () => {}),
   cancelElevenLabs: vi.fn(),
+  createSpeechQueue: vi.fn(),
 }));
 vi.mock('@/lib/offlineBuddyQuestions', () => ({
   findOfflineBuddyAnswer: vi.fn(() => null),
   getOfflineBuddyFallback: vi.fn(() => 'OFFLINE_FALLBACK_ANTWORT'),
 }));
 vi.mock('@/api/frontendClient', () => ({
-  ai: { chat: vi.fn() },
+  ai: { chat: vi.fn(), chatStream: vi.fn() },
   events: { getActiveEvent: vi.fn(), leaderboard: vi.fn() },
 }));
 
 import AIBuddyWidget from './AIBuddyWidget';
 import { ai, events } from '@/api/frontendClient';
-import { speakWithFallback } from '@/components/utils/elevenLabsTTS';
+import { speakWithFallback, createSpeechQueue } from '@/components/utils/elevenLabsTTS';
 import { LAST_GREETING_KEY } from '@/lib/buddyGreetings';
 import { __resetAudioUnlock } from '@/lib/audioUnlock';
+
+// Zuletzt von createSpeechQueue erzeugte Fake-Queue — für Assertions auf
+// push/flush/cancel der satzweisen Sprech-Wiedergabe.
+let lastQueue = null;
+function makeFakeQueue() {
+  lastQueue = { push: vi.fn(), flush: vi.fn(), cancel: vi.fn() };
+  return lastQueue;
+}
 
 function suppressGreeting() {
   localStorage.setItem(LAST_GREETING_KEY, String(Date.now()));
@@ -73,6 +82,12 @@ describe('AIBuddyWidget – Chat-Verhalten', () => {
     // diese Tests das Seiten-Frage-Verhalten isoliert prüfen (die Begrüßung
     // ersetzt sonst die erste Frage-Blase; sie hat ihren eigenen describe-Block).
     suppressGreeting();
+    // Fake-Sprech-Queue: jede Erstellung liefert frische Spies.
+    createSpeechQueue.mockImplementation(() => makeFakeQueue());
+    // Standard: Streaming nicht verfügbar → Widget fällt auf ai.chat zurück.
+    // Einzelne Tests überschreiben chatStream für den echten Streaming-Pfad.
+    ai.chatStream.mockRejectedValue(new Error('kein Stream'));
+    lastQueue = null;
     // jsdom implementiert scrollIntoView nicht.
     Element.prototype.scrollIntoView = vi.fn();
   });
@@ -90,10 +105,12 @@ describe('AIBuddyWidget – Chat-Verhalten', () => {
     await sendMessage('Wann beißen Hechte?');
 
     expect(await screen.findByText('Hechte beißen morgens.')).toBeInTheDocument();
+    // Bei deaktivierter Stimme wird gar keine Sprech-Queue angelegt.
+    expect(createSpeechQueue).not.toHaveBeenCalled();
     expect(speakWithFallback).not.toHaveBeenCalled();
   });
 
-  it('spricht die Antwort, wenn die Stimme aktiviert ist', async () => {
+  it('spricht die Antwort über die Satz-Queue, wenn die Stimme aktiviert ist (Fallback-Pfad)', async () => {
     localStorage.setItem('buddy-voice-enabled', 'true');
     ai.chat.mockResolvedValue({ reply: 'Petri Heil!' });
 
@@ -101,11 +118,31 @@ describe('AIBuddyWidget – Chat-Verhalten', () => {
     await sendMessage('Gruß?');
 
     await screen.findByText('Petri Heil!');
-    await waitFor(() => expect(speakWithFallback).toHaveBeenCalled());
-    expect(speakWithFallback).toHaveBeenCalledWith(
-      expect.stringContaining('Petri Heil!'),
-      expect.objectContaining({ voiceEnabled: true })
-    );
+    // Antwort wird satzweise über die Queue gesprochen (nicht speakWithFallback).
+    await waitFor(() => expect(lastQueue?.push).toHaveBeenCalledWith(
+      expect.stringContaining('Petri Heil!')
+    ));
+    expect(lastQueue.flush).toHaveBeenCalled();
+  });
+
+  it('streamt die Antwort live und spricht die Deltas satzweise', async () => {
+    localStorage.setItem('buddy-voice-enabled', 'true');
+    // Echter Streaming-Pfad: Deltas eintröpfeln lassen, dann done liefern.
+    ai.chatStream.mockImplementation(async (_messages, _loc, { onDelta } = {}) => {
+      onDelta?.('Moin! ');
+      onDelta?.('Petri Heil!');
+      return { reply: 'Moin! Petri Heil!' };
+    });
+
+    renderWidget();
+    await sendMessage('Gruß?');
+
+    await screen.findByText('Moin! Petri Heil!');
+    // Der gestreamte Text wird in die Queue gepusht und am Ende geflusht.
+    await waitFor(() => expect(lastQueue?.push).toHaveBeenCalled());
+    expect(lastQueue.flush).toHaveBeenCalled();
+    // Kein erneuter Blob-Aufruf über speakWithFallback im Erfolgsfall.
+    expect(speakWithFallback).not.toHaveBeenCalled();
   });
 
   it('fällt bei einem API-Fehler auf die Offline-Antwort zurück (nie stumm)', async () => {

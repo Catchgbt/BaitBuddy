@@ -150,6 +150,79 @@ class ApiClient {
   post(path, body, options)  { return this.request('POST', path, body, options); }
   patch(path, body, options) { return this.request('PATCH', path, body, options); }
   del(path, options)         { return this.request('DELETE', path, undefined, options); }
+
+  // SSE-Streaming-POST für "quasi live"-Antworten. Liest den Response-Body als
+  // Stream und ruft `onEvent(eventName, data)` je Server-Sent-Event auf. Wirft
+  // bei !res.ok oder fehlender Stream-Unterstützung — der Aufrufer fällt dann
+  // sauber auf den gepufferten Nicht-Stream-Pfad (z. B. ai.chat) zurück.
+  // Bewusst OHNE 401-Refresh-Retry: ein Mid-Stream-Refresh ist heikel; bei 401
+  // wirft die Methode und der Aufrufer nutzt den regulären Pfad (mit Refresh).
+  /**
+   * @param {string} path
+   * @param {any} body
+   * @param {{ signal?: AbortSignal, onEvent?: (event: string, data: any) => void }} [options]
+   */
+  async stream(path, body, { signal, onEvent } = {}) {
+    const token = this.getToken();
+    // 60s-Timeout: großzügiger als der 30s-Request-Default, weil ein Stream
+    // über mehrere Deltas hinweg offen bleibt.
+    const timeoutSignal = AbortSignal.timeout(60000);
+    const combinedSignal = signal
+      ? AbortSignal.any([timeoutSignal, signal])
+      : timeoutSignal;
+
+    const res = await fetch(`${API_URL}${path}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'text/event-stream',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(body),
+      signal: combinedSignal,
+    });
+
+    if (!res.ok || !res.body || typeof res.body.getReader !== 'function') {
+      const err = /** @type {Error & { status?: number, data?: any }} */ (
+        new Error(`HTTP ${res.status}`)
+      );
+      err.status = res.status;
+      try { err.data = await res.json(); } catch { /* kein JSON */ }
+      throw err;
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    const dispatch = (rawEvent) => {
+      let eventName = 'message';
+      const dataLines = [];
+      for (const line of rawEvent.split('\n')) {
+        if (line.startsWith('event:')) eventName = line.slice(6).trim();
+        else if (line.startsWith('data:')) dataLines.push(line.slice(5).trim());
+      }
+      if (dataLines.length === 0) return;
+      const raw = dataLines.join('\n');
+      let data;
+      try { data = JSON.parse(raw); } catch { data = raw; }
+      onEvent?.(eventName, data);
+    };
+
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      // SSE-Events sind durch eine Leerzeile (\n\n) getrennt.
+      let sep;
+      while ((sep = buffer.indexOf('\n\n')) !== -1) {
+        const rawEvent = buffer.slice(0, sep);
+        buffer = buffer.slice(sep + 2);
+        if (rawEvent.trim()) dispatch(rawEvent);
+      }
+    }
+    if (buffer.trim()) dispatch(buffer);
+  }
 }
 
 export const api = new ApiClient();
@@ -656,6 +729,33 @@ export const spots = {
 
 export const ai = {
   chat:              (messages, userLocation) => api.post('/api/ai/chat', { messages, userLocation }),
+  // Gestreamte Chat-Antwort: ruft onDelta(text) je Text-Stück auf und liefert
+  // am Ende { ok, reply, message, action } (wie ai.chat). Wirft bei Fehlern —
+  // der Aufrufer soll dann auf ai.chat zurückfallen.
+  /**
+   * @param {any[]} messages
+   * @param {any} userLocation
+   * @param {{ onDelta?: (text: string) => void, signal?: AbortSignal }} [options]
+   */
+  chatStream: async (messages, userLocation, { onDelta, signal } = {}) => {
+    let result = null;
+    let streamError = null;
+    await api.stream('/api/ai/chat/stream', { messages, userLocation }, {
+      signal,
+      onEvent: (event, data) => {
+        if (event === 'delta') {
+          if (data?.text) onDelta?.(data.text);
+        } else if (event === 'done') {
+          result = data;
+        } else if (event === 'error') {
+          streamError = new Error(data?.error || 'Stream-Fehler');
+        }
+      },
+    });
+    if (streamError) throw streamError;
+    if (!result) throw new Error('Stream endete ohne Ergebnis');
+    return result;
+  },
   analyzeCatch:      (file_url, image_base64) => api.post('/api/ai/analyze-catch', { file_url, image_base64 }),
   fishingRecommend:  (lat, lng)               => api.post('/api/ai/fishing-recommendation', { latitude: lat, longitude: lng }),
   evaluateCatch:     (catch_data, context)    => api.post('/api/ai/evaluate-catch', { catch_data, context }),

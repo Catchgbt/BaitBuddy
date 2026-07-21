@@ -5,7 +5,15 @@ vi.mock('@/api/frontendClient', () => ({
   functions: { invoke: (...args) => invokeMock(...args) },
 }));
 
-import { speakWithFallback, speakWithElevenLabs, cancelElevenLabs } from './elevenLabsTTS';
+import {
+  speakWithFallback,
+  speakWithElevenLabs,
+  cancelElevenLabs,
+  splitIntoSentences,
+  createSpeechQueue,
+} from './elevenLabsTTS';
+
+const tick = () => new Promise((r) => setTimeout(r, 0));
 
 // Alle abgespielten FakeAudio-Instanzen, um Überlappungen prüfen zu können.
 let audioInstances;
@@ -132,5 +140,98 @@ describe('speakWithElevenLabs – überlappende Aufrufe (Doppelstimmen-Race)', (
 
     await expect(speaking).resolves.toBeNull();
     expect(audioInstances).toHaveLength(0);
+  });
+});
+
+describe('splitIntoSentences', () => {
+  it('teilt an Satzgrenzen, wenn die Mindestlänge erreicht ist', () => {
+    const { sentences, rest } = splitIntoSentences(
+      'Der erste Satz ist lang genug hier. Der zweite Satz auch, keine Frage.',
+    );
+    expect(sentences).toEqual([
+      'Der erste Satz ist lang genug hier.',
+      'Der zweite Satz auch, keine Frage.',
+    ]);
+    expect(rest).toBe('');
+  });
+
+  it('verschmilzt zu kurze Fragmente mit dem Folgesatz (kein Zerhacken)', () => {
+    // "Ja." (3 Zeichen) ist zu kurz → wird mit dem nächsten Satz zusammengefasst.
+    const { sentences } = splitIntoSentences('Ja. Genau das habe ich auch gedacht, Kollege.');
+    expect(sentences).toEqual(['Ja. Genau das habe ich auch gedacht, Kollege.']);
+  });
+
+  it('splittet nicht an Dezimalzahlen (Punkt ohne folgendes Whitespace)', () => {
+    const { sentences } = splitIntoSentences('Der Fisch wog stolze 3.5 kg und war richtig kräftig.');
+    expect(sentences).toEqual(['Der Fisch wog stolze 3.5 kg und war richtig kräftig.']);
+  });
+
+  it('gibt unvollständige Sätze als rest zurück, bis geflusht wird', () => {
+    const partial = splitIntoSentences('Ein noch nicht beendeter Satz ohne Ende');
+    expect(partial.sentences).toEqual([]);
+    expect(partial.rest).toBe('Ein noch nicht beendeter Satz ohne Ende');
+
+    const flushed = splitIntoSentences('Ein noch nicht beendeter Satz ohne Ende', { flush: true });
+    expect(flushed.sentences).toEqual(['Ein noch nicht beendeter Satz ohne Ende']);
+    expect(flushed.rest).toBe('');
+  });
+});
+
+describe('createSpeechQueue – satzweise, pipelined Wiedergabe', () => {
+  it('spielt Sätze in Reihenfolge und ruft onDrain nach dem letzten', async () => {
+    const onDrain = vi.fn();
+    const q = createSpeechQueue({ onDrain });
+    q.push('Der erste Satz ist lang genug hier. Der zweite Satz ist ebenfalls lang genug.');
+    q.flush();
+
+    // Erster Satz wird synthetisiert und abgespielt.
+    await tick();
+    expect(audioInstances).toHaveLength(1);
+    expect(onDrain).not.toHaveBeenCalled();
+
+    // Ende des ersten Satzes → zweiter Satz startet.
+    lastAudio.onended();
+    await tick();
+    expect(audioInstances).toHaveLength(2);
+
+    // Ende des zweiten (letzten) Satzes → onDrain feuert.
+    lastAudio.onended();
+    await tick();
+    expect(onDrain).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancel() bricht die Queue ab — kein weiteres Audio, kein onDrain', async () => {
+    const onDrain = vi.fn();
+    const q = createSpeechQueue({ onDrain });
+    q.push('Der erste Satz ist lang genug hier. Der zweite Satz ist ebenfalls lang genug.');
+    q.flush();
+
+    await tick();
+    expect(audioInstances).toHaveLength(1);
+
+    q.cancel();
+    // Das Ende-Event des laufenden Audios darf keinen weiteren Satz starten.
+    lastAudio.onended();
+    await tick();
+    expect(audioInstances).toHaveLength(1);
+    expect(onDrain).not.toHaveBeenCalled();
+  });
+
+  it('eine neue Queue löst die alte ab (Generation-Token)', async () => {
+    const onDrainOld = vi.fn();
+    const oldQ = createSpeechQueue({ onDrain: onDrainOld });
+    oldQ.push('Der erste Satz ist lang genug hier.');
+    oldQ.flush();
+    await tick();
+    expect(audioInstances).toHaveLength(1);
+
+    // Neue Queue übernimmt den Singleton; die alte darf nicht weiterlaufen.
+    const newQ = createSpeechQueue({});
+    oldQ.push('Dieser Satz darf nicht mehr gesprochen werden, wirklich nicht.');
+    oldQ.flush();
+    await tick();
+    // Kein zusätzliches Audio aus der alten Queue.
+    expect(audioInstances).toHaveLength(1);
+    newQ.cancel();
   });
 });

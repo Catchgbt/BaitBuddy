@@ -1,5 +1,13 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { invokeLLM } from './llm.js';
+import { invokeLLM, invokeLLMStream } from './llm.js';
+
+// Baut aus SSE-Text-Stücken einen async-iterierbaren Response-Body (wie fetch
+// ihn liefert), damit invokeLLMStream ihn Chunk für Chunk verarbeiten kann.
+function sseBody(chunks) {
+  return (async function* () {
+    for (const c of chunks) yield new TextEncoder().encode(c);
+  })();
+}
 
 describe('invokeLLM', () => {
   afterEach(() => {
@@ -110,5 +118,51 @@ describe('invokeLLM', () => {
         else process.env[k] = v;
       }
     }
+  });
+});
+
+describe('invokeLLMStream', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('parst SSE-Deltas, ruft onDelta pro Stück und liefert den Volltext', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      body: sseBody([
+        'data: {"choices":[{"delta":{"content":"Hallo "}}]}\n\n',
+        'data: {"choices":[{"delta":{"content":"Welt."}}]}\n\n',
+        'data: [DONE]\n\n',
+      ]),
+    }));
+
+    const deltas = [];
+    const full = await invokeLLMStream({ prompt: 'x', onDelta: (t) => deltas.push(t) });
+
+    expect(deltas).toEqual(['Hallo ', 'Welt.']);
+    expect(full).toBe('Hallo Welt.');
+  });
+
+  it('verarbeitet über Chunk-Grenzen zerrissene SSE-Zeilen korrekt', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      // Ein Event ist über zwei Chunks verteilt (kein abschließendes \n im ersten).
+      body: sseBody([
+        'data: {"choices":[{"delta":{"content":"Te',
+        'il1"}}]}\n\ndata: {"choices":[{"delta":{"content":"Teil2"}}]}\n\n',
+      ]),
+    }));
+
+    const full = await invokeLLMStream({ prompt: 'x' });
+    expect(full).toBe('Teil1Teil2');
+  });
+
+  it('wirft bei nicht-ok Response', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      text: async () => 'boom',
+    }));
+    await expect(invokeLLMStream({ prompt: 'x' })).rejects.toThrow(/500/);
   });
 });

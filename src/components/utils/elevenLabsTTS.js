@@ -44,6 +44,17 @@ export function cancelElevenLabs() {
   }
 }
 
+// Dekodiert Base64-Audio in einen Blob (zentral, damit Einzel-Aufruf und
+// Satz-Queue dieselbe Logik teilen).
+function base64ToBlob(audioBase64, contentType) {
+  const binary = atob(audioBase64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new Blob([bytes], { type: contentType || "audio/mpeg" });
+}
+
 /**
  * Holt ElevenLabs-Audio fürs übergebene Text und spielt es ab.
  * Wirft einen Fehler, wenn kein Audio geliefert wird (z. B. API-Key fehlt 501)
@@ -82,12 +93,7 @@ export async function speakWithElevenLabs(text, callbacks = {}, options = {}) {
   }
 
   // Base64 Blob
-  const binary = atob(audioBase64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  const blob = new Blob([bytes], { type: payload.contentType || "audio/mpeg" });
+  const blob = base64ToBlob(audioBase64, payload.contentType);
 
   const url = URL.createObjectURL(blob);
   currentUrl = url;
@@ -183,4 +189,216 @@ export async function speakWithFallback(text, options = {}) {
       resolve();
     };
   });
+}
+
+// ── Satzweise Streaming-Wiedergabe (Time-to-first-Audio senken) ──────────────
+//
+// Statt die komplette Antwort als EINEN TTS-Blob zu synthetisieren und erst
+// danach abzuspielen, zerlegt die Queue den (ggf. gestreamten) Text in Sätze:
+// Der erste Satz spricht sofort, während die nächsten schon im Hintergrund
+// synthetisiert werden (Pipelining). Das macht die Sprachausgabe spürbar „live".
+
+const SENTENCE_TERMINATORS = '.!?…';
+// Schließende Anführungszeichen/Klammern, die noch zum Satz gehören.
+const SENTENCE_TRAILING = '"\')]}“’';
+// Mindestlänge eines Satz-Chunks: verhindert zerhackte Ein-Wort-Fetzen
+// (z. B. „Ja." als eigener TTS-Call) — kurze Sätze werden mit dem nächsten
+// zusammengefasst.
+const MIN_SENTENCE_LENGTH = 25;
+
+/**
+ * Zerlegt Text an Satzgrenzen (Satzzeichen gefolgt von Whitespace/Ende sowie
+ * Zeilenumbrüchen). Zu kurze Fragmente werden mit dem Folgesatz verschmolzen.
+ * Nicht als Abkürzungen/Dezimalzahlen splitten (Satzzeichen ohne folgendes
+ * Whitespace, z. B. „z.B." oder „3.5", ist keine Grenze).
+ *
+ * @param {string} text
+ * @param {{ flush?: boolean, minLength?: number }} [opts]
+ *   flush=true → der verbleibende Rest wird als letzter Satz zurückgegeben.
+ * @returns {{ sentences: string[], rest: string }}
+ */
+export function splitIntoSentences(text, opts = {}) {
+  const { flush = false, minLength = MIN_SENTENCE_LENGTH } = opts;
+  const sentences = [];
+  const n = text.length;
+  let start = 0;
+  let i = 0;
+
+  const isSpace = (c) => c === undefined || /\s/.test(c);
+  const pushChunk = (endExclusive) => {
+    const chunk = text.slice(start, endExclusive).trim();
+    if (chunk) sentences.push(chunk);
+    start = endExclusive;
+    // Führende Whitespaces des nächsten Satzes überspringen.
+    while (start < n && /\s/.test(text[start])) start++;
+    i = start;
+  };
+
+  while (i < n) {
+    const ch = text[i];
+
+    if (SENTENCE_TERMINATORS.includes(ch)) {
+      // Aufeinanderfolgende Satzzeichen + schließende Zeichen konsumieren.
+      let j = i + 1;
+      while (j < n && (SENTENCE_TERMINATORS.includes(text[j]) || SENTENCE_TRAILING.includes(text[j]))) j++;
+      // Grenze nur, wenn danach Whitespace/Ende folgt (sonst Abkürzung/Zahl).
+      if (isSpace(text[j]) && text.slice(start, j).trim().length >= minLength) {
+        pushChunk(j);
+        continue;
+      }
+      i = j;
+      continue;
+    }
+
+    if (ch === '\n') {
+      if (text.slice(start, i).trim().length >= minLength) {
+        pushChunk(i);
+        continue;
+      }
+    }
+    i++;
+  }
+
+  let rest = text.slice(start);
+  if (flush) {
+    const trimmed = rest.trim();
+    if (trimmed) sentences.push(trimmed);
+    rest = '';
+  }
+  return { sentences, rest };
+}
+
+// Holt das Audio für einen einzelnen Satz und liefert einen Blob (oder null,
+// wenn die Queue zwischenzeitlich abgelöst/abgebrochen wurde bzw. kein Audio
+// kam). Wirft bei Netzwerkfehlern — die Queue überspringt den Satz dann still.
+async function fetchSentenceBlob(text, myGeneration) {
+  const response = await functions.invoke("textToSpeech", { text, voice: getPreferredTtsVoice() });
+  if (myGeneration !== generation) return null;
+  const payload = response?.audioBase64 ? response : response?.data;
+  const audioBase64 = payload?.audioBase64;
+  if (!audioBase64) return null;
+  return base64ToBlob(audioBase64, payload.contentType);
+}
+
+// Spielt einen Blob über den Modul-Singleton ab (damit cancelElevenLabs auch
+// die Queue-Wiedergabe stoppt) und löst auf, wenn die Wiedergabe endet.
+function playSentenceBlob(blob, myGeneration, rate) {
+  return new Promise((resolve) => {
+    if (myGeneration !== generation) return resolve();
+    const url = URL.createObjectURL(blob);
+    currentUrl = url;
+    const audio = new Audio(url);
+    currentAudio = audio;
+
+    if (Number.isFinite(rate) && rate >= 0.5 && rate <= 2.0 && rate !== 1.0) {
+      audio.playbackRate = rate;
+    }
+
+    const cleanup = () => {
+      if (currentUrl === url) {
+        URL.revokeObjectURL(url);
+        currentUrl = null;
+      }
+      if (currentAudio === audio) currentAudio = null;
+    };
+    audio.onended = () => { cleanup(); resolve(); };
+    audio.onerror = () => { cleanup(); resolve(); };
+    audio.play().catch(() => { cleanup(); resolve(); });
+  });
+}
+
+/**
+ * Erzeugt eine Sprech-Queue für satzweise, pipelined Wiedergabe.
+ *
+ * Nutzung (Streaming): für jedes Text-Delta `push(delta)`, am Ende `flush()`.
+ * Nutzung (Ganztext): `push(fullText)` gefolgt von `flush()`.
+ * Ein neuer speak-/cancel-Aufruf (Generation-Token) oder `cancel()` bricht
+ * die Queue sofort ab.
+ *
+ * @param {{ rate?: number, onDrain?: () => void }} [options]
+ * @returns {{ push: (chunk: string) => void, flush: () => void, cancel: () => void }}
+ */
+export function createSpeechQueue(options = {}) {
+  const { rate = 1.0, onDrain } = options;
+
+  // Wie speakWithElevenLabs: laufende Wiedergabe abbrechen und eigene
+  // Generation beanspruchen. Ein späterer speak-/cancel-/Queue-Aufruf bumpt
+  // generation weiter und deaktiviert diese Queue.
+  cancelElevenLabs();
+  const myGeneration = generation;
+
+  let textBuffer = "";
+  const queue = [];          // fertige Sätze in Reihenfolge
+  let headBlobPromise = null; // Prefetch für queue[0] (Tiefe 1 → keine Lücken)
+  let running = false;
+  let closed = false;
+  let drained = false;
+
+  const isActive = () => myGeneration === generation;
+
+  function ensureHeadPrefetch() {
+    if (!headBlobPromise && queue.length > 0 && isActive()) {
+      // Fehler abfangen, damit ein Reject nicht als Unhandled Rejection endet;
+      // die Wiedergabeschleife wertet das Ergebnis (null) aus.
+      headBlobPromise = fetchSentenceBlob(queue[0], myGeneration).catch(() => null);
+    }
+  }
+
+  function maybeDrain() {
+    if (isActive() && closed && !running && queue.length === 0 && textBuffer === "" && !drained) {
+      drained = true;
+      onDrain?.();
+    }
+  }
+
+  async function runLoop() {
+    if (running) return;
+    running = true;
+    try {
+      while (isActive() && queue.length > 0) {
+        ensureHeadPrefetch();
+        const blobPromise = headBlobPromise;
+        headBlobPromise = null;
+        queue.shift();
+        // Nächsten Satz schon anfordern, während der aktuelle spielt.
+        ensureHeadPrefetch();
+
+        const blob = await blobPromise;
+        if (!isActive()) return;
+        if (blob) {
+          await playSentenceBlob(blob, myGeneration, rate);
+          if (!isActive()) return;
+        }
+      }
+    } finally {
+      running = false;
+      maybeDrain();
+    }
+  }
+
+  function enqueueComplete(force) {
+    const { sentences, rest } = splitIntoSentences(textBuffer, { flush: force });
+    textBuffer = rest;
+    for (const s of sentences) queue.push(s);
+  }
+
+  return {
+    push(chunk) {
+      if (closed || !isActive() || !chunk) return;
+      textBuffer += chunk;
+      enqueueComplete(false);
+      runLoop();
+    },
+    flush() {
+      if (closed || !isActive()) return;
+      closed = true;
+      enqueueComplete(true);
+      if (running) return; // laufende Schleife ruft am Ende maybeDrain()
+      runLoop().then(maybeDrain);
+      maybeDrain(); // Fall: nichts zu sprechen → sofort drainen
+    },
+    cancel() {
+      cancelElevenLabs();
+    },
+  };
 }

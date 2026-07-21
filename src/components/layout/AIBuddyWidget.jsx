@@ -7,7 +7,8 @@ import { buildGreeting, shouldGreet, markGreeted } from '@/lib/buddyGreetings';
 import { runWhenAudioReady } from '@/lib/audioUnlock';
 import { useAuth } from '@/lib/AuthContext';
 import { ai, events } from '@/api/frontendClient';
-import { speakWithFallback, cancelElevenLabs } from '@/components/utils/elevenLabsTTS';
+import { speakWithFallback, cancelElevenLabs, createSpeechQueue } from '@/components/utils/elevenLabsTTS';
+import { stripActionMarker } from '@/lib/streamingReply';
 import { findOfflineBuddyAnswer, getOfflineBuddyFallback } from '@/lib/offlineBuddyQuestions';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Send, X } from 'lucide-react';
@@ -412,36 +413,104 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
       setChatError(null);
       setIsNodding(true);
 
+      // Satz-Queue: spricht die Antwort satzweise, sobald der erste Satz da ist
+      // (spürbar "live"), statt erst nach der kompletten Antwort. Nur anlegen,
+      // wenn die Stimme aktiv ist. `cancel()` im Fehlerfall bricht sie ab.
+      let speechQueue = null;
+
+      // Aktualisiert die (einzige) streamende Assistant-Bubble in-place bzw.
+      // legt sie beim ersten Delta an.
+      const upsertStreamingBubble = (visible) => {
+        setMessages((prev) => {
+          const copy = [...prev];
+          const last = copy[copy.length - 1];
+          if (last && last.role === 'assistant' && last.streaming) {
+            copy[copy.length - 1] = { ...last, content: visible };
+          } else {
+            copy.push({ role: 'assistant', content: visible, streaming: true });
+          }
+          return copy;
+        });
+      };
+
+      // Ersetzt die streamende Bubble durch die finale, bereinigte Antwort
+      // (bzw. legt sie an, falls kein Streaming lief – Fallback-Pfad).
+      const finalizeAssistantBubble = (content) => {
+        setMessages((prev) => {
+          const copy = [...prev];
+          const last = copy[copy.length - 1];
+          if (last && last.role === 'assistant' && last.streaming) {
+            copy[copy.length - 1] = { role: 'assistant', content };
+          } else if (content) {
+            copy.push({ role: 'assistant', content });
+          }
+          return copy;
+        });
+      };
+
       try {
-        const response = await ai.chat(history, getStoredLocation());
+        let botMessage = '';
+        let action = null;
+        let streamed = false;
 
-        // Nach dem await: Wurde das Widget zwischenzeitlich unmountet, keine
-        // Nachrichten/TTS mehr verarbeiten.
-        if (!isMountedRef.current) return;
+        if (buddyVoiceEnabled) speechQueue = createSpeechQueue({ rate: 1.0 });
 
-        const botMessage = response.reply || response.message || '';
-        if (botMessage) {
-          setMessages((prev) => [...prev, { role: 'assistant', content: botMessage }]);
-          setIsTalking(true);
+        try {
+          let raw = '';
+          let spokenLen = 0;
+          const result = await ai.chatStream(history, getStoredLocation(), {
+            onDelta: (delta) => {
+              if (!isMountedRef.current) return;
+              raw += delta;
+              const visible = stripActionMarker(raw);
+              upsertStreamingBubble(visible);
+              setIsTalking(true);
+              // Nur den neu hinzugekommenen (bereinigten) Text nachschieben.
+              if (speechQueue && visible.length > spokenLen) {
+                speechQueue.push(visible.slice(spokenLen));
+                spokenLen = visible.length;
+              }
+            },
+          });
+          streamed = true;
+          botMessage = result.reply || result.message || stripActionMarker(raw);
+          action = result.action || null;
+        } catch (streamErr) {
+          // Streaming nicht verfügbar (SSE ungeeignet, Netzfehler, 401) →
+          // gepufferter Standard-Pfad. Die Satz-Queue bleibt aktiv und spricht
+          // die Antwort trotzdem satzweise (schneller als ein einzelner Blob).
+          if (!isMountedRef.current) { speechQueue?.cancel(); return; }
+          console.warn('[Widget] Streaming nicht verfügbar, Fallback auf ai.chat:', streamErr?.message);
+          const response = await ai.chat(history, getStoredLocation());
+          botMessage = response.reply || response.message || '';
+          action = response.action || null;
         }
 
-        const actionResult = await executeBuddyAction(response.action, {
+        if (!isMountedRef.current) { speechQueue?.cancel(); return; }
+
+        finalizeAssistantBubble(botMessage);
+        if (botMessage) setIsTalking(true);
+
+        const actionResult = await executeBuddyAction(action, {
           navigate,
           userLocation: getStoredLocation(),
         });
 
-        if (!isMountedRef.current) return;
+        if (!isMountedRef.current) { speechQueue?.cancel(); return; }
 
         const actionNote = actionResult?.message;
         if (actionNote) {
           setMessages((prev) => [...prev, { role: 'assistant', content: actionNote }]);
         }
 
-        const speakText = actionNote ? `${botMessage} ${actionNote}`.trim() : botMessage;
-        if (speakText && buddyVoiceEnabled) {
-          await speakWithFallback(speakText, { voiceEnabled: buddyVoiceEnabled, rate: 1.0 });
+        if (speechQueue) {
+          // Beim Fallback-Pfad wurde noch nichts eingespeist → ganze Antwort jetzt.
+          if (!streamed && botMessage) speechQueue.push(botMessage);
+          if (actionNote) speechQueue.push(actionNote);
+          speechQueue.flush();
         }
       } catch (err) {
+        speechQueue?.cancel();
         console.error('Chat error:', err);
 
         if (!isMountedRef.current) return;
@@ -471,7 +540,15 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
           setChatError(botMessage);
         }
 
-        setMessages((prev) => [...prev, { role: 'assistant', content: botMessage }]);
+        setMessages((prev) => {
+          const copy = [...prev];
+          // Eine evtl. angefangene Streaming-Bubble verwerfen und durch die
+          // Fehlermeldung ersetzen.
+          const last = copy[copy.length - 1];
+          if (last && last.role === 'assistant' && last.streaming) copy.pop();
+          copy.push({ role: 'assistant', content: botMessage });
+          return copy;
+        });
 
         if (botMessage && status == null && buddyVoiceEnabled) {
           await speakWithFallback(botMessage, { voiceEnabled: buddyVoiceEnabled, rate: 1.0 });

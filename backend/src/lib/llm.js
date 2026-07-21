@@ -117,3 +117,88 @@ export async function invokeLLM({ prompt, imageBase64 = null }) {
   // Retries erschöpft (nur erreichbar, wenn der letzte Versuch transient war).
   throw lastErr || new Error('Groq API Fehler: unbekannt');
 }
+
+/**
+ * Wie invokeLLM, aber gestreamt (Groq stream:true). Ruft `onDelta` je Text-
+ * Stück auf und liefert am Ende den akkumulierten Volltext. Bewusst OHNE
+ * Retry-Logik: ein bereits begonnener SSE-Stream lässt sich nicht sauber
+ * wiederholen — bei Fehler wirft die Funktion, der Aufrufer fällt dann auf den
+ * Nicht-Stream-Pfad (invokeLLM) zurück. Nur Text (kein Vision-Streaming).
+ *
+ * @param {{ prompt: string, onDelta?: (text: string) => void, signal?: AbortSignal }} params
+ * @returns {Promise<string>} vollständiger Antworttext
+ */
+export async function invokeLLMStream({ prompt, onDelta, signal }) {
+  const apiKey = getGroqKey();
+  if (!apiKey) {
+    throw new Error('KI-Service nicht verfügbar – GROQ_API_KEY fehlt in den Server-Einstellungen.');
+  }
+
+  const requestBody = JSON.stringify({
+    model: TEXT_MODEL,
+    messages: [{ role: 'user', content: prompt }],
+    max_tokens: 2048,
+    stream: true,
+  });
+
+  // Direktes fetch statt fetchWithTimeout: Wir brauchen für den Stream sowohl
+  // ein hartes Timeout ALS AUCH das externe Abbruch-Signal (Client-Disconnect).
+  // fetchWithTimeout überschreibt ein übergebenes signal, deshalb hier selbst
+  // kombinieren.
+  const timeoutSignal = AbortSignal.timeout(LLM_TIMEOUT_MS);
+  const combinedSignal = signal ? AbortSignal.any([timeoutSignal, signal]) : timeoutSignal;
+
+  const res = await fetch(GROQ_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: requestBody,
+    signal: combinedSignal,
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`Groq API Fehler ${res.status}: ${body.slice(0, 300)}`);
+  }
+  if (!res.body) {
+    throw new Error('Groq API lieferte keinen Stream-Body.');
+  }
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let full = '';
+
+  // Verarbeitet eine komplette SSE-Zeile ("data: {...}" oder "data: [DONE]").
+  const handleLine = (line) => {
+    const trimmed = line.trim();
+    if (!trimmed.startsWith('data:')) return;
+    const payload = trimmed.slice(5).trim();
+    if (payload === '[DONE]') return;
+    try {
+      const json = JSON.parse(payload);
+      const delta = json?.choices?.[0]?.delta?.content;
+      if (typeof delta === 'string' && delta.length) {
+        full += delta;
+        onDelta?.(delta);
+      }
+    } catch {
+      // Unvollständige/fehlerhafte Zeile ignorieren (Groq sendet nur ganze Events).
+    }
+  };
+
+  for await (const chunk of res.body) {
+    buffer += decoder.decode(chunk, { stream: true });
+    let nlIndex;
+    while ((nlIndex = buffer.indexOf('\n')) !== -1) {
+      const line = buffer.slice(0, nlIndex);
+      buffer = buffer.slice(nlIndex + 1);
+      handleLine(line);
+    }
+  }
+  // Letzten Rest verarbeiten (falls kein abschließendes \n kam).
+  if (buffer.trim()) handleLine(buffer);
+
+  return full;
+}

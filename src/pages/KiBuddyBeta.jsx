@@ -3,7 +3,9 @@ import { catchgbtChat } from "@/functions/catchgbtChat";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
 import { useElevenLabsVoice } from "@/hooks/useElevenLabsVoice";
 import { useEventActivityTracking } from "@/hooks/useEventActivityTracking";
-import { events } from "@/api/frontendClient";
+import { events, ai } from "@/api/frontendClient";
+import { createSpeechQueue } from "@/components/utils/elevenLabsTTS";
+import { stripActionMarker } from "@/lib/streamingReply";
 import { findOfflineBuddyAnswer, getOfflineBuddyFallback } from "@/lib/offlineBuddyQuestions";
 import { buildGreeting } from "@/lib/buddyGreetings";
 
@@ -51,7 +53,14 @@ function KiBuddyBetaInner() {
   // gegen State-Updates/TTS nach Unmount.
   const messagesRef = useRef(messages);
   const isMountedRef = useRef(true);
-  const { speak, stop: stopVoice, isSpeaking } = useElevenLabsVoice();
+  // useElevenLabsVoice nur noch fürs Stoppen (cancelElevenLabs) — die eigentliche
+  // Wiedergabe läuft jetzt über die satzweise Sprech-Queue (createSpeechQueue),
+  // die denselben Audio-Singleton nutzt. „Spricht gerade" wird über den
+  // status-State ("speaking") abgebildet.
+  const { stop: stopVoice } = useElevenLabsVoice();
+  const isSpeaking = status === "speaking";
+  // Aktive Streaming-Queue des laufenden Turns (für Abbruch bei neuem Turn/Unmount).
+  const speechQueueRef = useRef(null);
 
   // Einzige Schreibstelle für Nachrichten: hält Ref und State synchron und
   // unterbindet Updates nach dem Unmount.
@@ -59,6 +68,32 @@ function KiBuddyBetaInner() {
     if (!isMountedRef.current || items.length === 0) return;
     messagesRef.current = [...messagesRef.current, ...items];
     setMessages(messagesRef.current);
+  }
+
+  // Live-Streaming der Assistant-Antwort: aktualisiert die letzte Bubble
+  // in-place (streaming) bzw. legt sie beim ersten Delta an.
+  function upsertAssistantStreaming(text) {
+    if (!isMountedRef.current) return;
+    const arr = messagesRef.current;
+    const last = arr[arr.length - 1];
+    const next = last && last.role === "assistant" && last.streaming
+      ? [...arr.slice(0, -1), { role: "assistant", text, streaming: true }]
+      : [...arr, { role: "assistant", text, streaming: true }];
+    messagesRef.current = next;
+    setMessages(next);
+  }
+
+  // Ersetzt die streamende Bubble durch die finale Antwort (bzw. legt sie an,
+  // falls kein Streaming lief — Fallback-Pfad).
+  function finalizeAssistant(text) {
+    if (!isMountedRef.current) return;
+    const arr = messagesRef.current;
+    const last = arr[arr.length - 1];
+    const next = last && last.role === "assistant" && last.streaming
+      ? [...arr.slice(0, -1), { role: "assistant", text }]
+      : [...arr, { role: "assistant", text }];
+    messagesRef.current = next;
+    setMessages(next);
   }
 
   useEffect(() => {
@@ -95,30 +130,36 @@ function KiBuddyBetaInner() {
     setWaveBars([4, 4, 4, 4, 4]);
   }
 
-  async function speakWithElevenLabs(text) {
+  // Spricht einen fertigen Text (Fallback-/Offline-Antworten) satzweise über
+  // die Sprech-Queue — spürbar schneller, weil der erste Satz sofort startet.
+  // Bei Ton aus wird direkt weiter zugehört.
+  function speakAnswer(text) {
     if (!isMountedRef.current) return;
+    if (!tonAn || !text) {
+      setStatus("");
+      stopWave();
+      maybeContinueConversation();
+      return;
+    }
     setStatus("speaking");
     startWave();
-    const success = await speak(text, {
-      onEnd: () => {
-        setStatus("");
-        stopWave();
-        maybeContinueConversation();
-      },
-      onError: () => {
+    const queue = createSpeechQueue({
+      rate: 1.0,
+      onDrain: () => {
+        if (!isMountedRef.current) return;
         setStatus("");
         stopWave();
         maybeContinueConversation();
       },
     });
-    if (!success) {
-      setStatus("");
-      stopWave();
-      maybeContinueConversation();
-    }
+    speechQueueRef.current = queue;
+    queue.push(text);
+    queue.flush();
   }
 
   function stopSpeaking() {
+    speechQueueRef.current?.cancel();
+    speechQueueRef.current = null;
     stopVoice();
     stopWave();
     setStatus("");
@@ -155,6 +196,23 @@ function KiBuddyBetaInner() {
       abortRef.current?.abort();
       abortRef.current = new AbortController();
     }
+    // Vorherige Sprech-Queue beenden (neuer Turn übernimmt die Wiedergabe).
+    speechQueueRef.current?.cancel();
+    speechQueueRef.current = null;
+
+    const signal = abortRef.current?.signal;
+    // Satz-Queue fürs Live-Streaming: spricht den ersten Satz, sobald er da ist.
+    const queue = tonAn ? createSpeechQueue({
+      rate: 1.0,
+      onDrain: () => {
+        if (!isMountedRef.current) return;
+        setStatus("");
+        stopWave();
+        maybeContinueConversation();
+      },
+    }) : null;
+    if (queue) speechQueueRef.current = queue;
+
     try {
       // Historie aus der Ref bauen — der auslösende User-Turn wurde bereits über
       // appendMessages angehängt und ist hier enthalten (kein erneutes Pushen).
@@ -162,24 +220,56 @@ function KiBuddyBetaInner() {
         .filter(m => m.role !== "system")
         .map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.text }));
 
-      const res = await catchgbtChat({
-        messages: chatMessages,
-        context: "ki_buddy_beta"
-      }, { signal: abortRef.current?.signal });
+      let raw = "";
+      let spokenLen = 0;
+      let uiSpeaking = false;
+      let streamedOk = false;
+      let result;
 
-      if (!isMountedRef.current) return;
+      try {
+        result = await ai.chatStream(chatMessages, null, {
+          signal,
+          onDelta: (delta) => {
+            if (!isMountedRef.current) return;
+            raw += delta;
+            const visible = stripActionMarker(raw);
+            upsertAssistantStreaming(visible);
+            if (queue && visible.length > spokenLen) {
+              if (!uiSpeaking) { uiSpeaking = true; setStatus("speaking"); startWave(); }
+              queue.push(visible.slice(spokenLen));
+              spokenLen = visible.length;
+            }
+          },
+        });
+        streamedOk = true;
+      } catch (streamErr) {
+        if (streamErr?.name === "AbortError" || signal?.aborted) { queue?.cancel(); return; }
+        // Streaming nicht verfügbar (SSE ungeeignet, Server-Fehler) → gepufferter
+        // Standard-Pfad. Ein echter Netzwerkfehler wirft hier erneut und landet
+        // im äußeren catch (Offline-/Retry-Logik).
+        queue?.cancel();
+        const res = await catchgbtChat({
+          messages: chatMessages,
+          context: "ki_buddy_beta",
+        }, { signal });
+        result = { reply: res?.reply || res?.message, action: res?.action || null };
+      }
 
-      const ans = res?.reply || res?.message || "Keine Antwort erhalten.";
+      if (!isMountedRef.current) { queue?.cancel(); return; }
+
+      const ans = result?.reply || result?.message || stripActionMarker(raw) || "Keine Antwort erhalten.";
       retryRef.current = 0;
-      appendMessages({ role: "assistant", text: ans });
+      finalizeAssistant(ans);
       if (activeEventId) {
         trackAIChat(activeEventId);
       }
-      if (tonAn) {
-        speakWithElevenLabs(ans);
+
+      if (streamedOk && queue && spokenLen > 0) {
+        // Gestreamte Sätze sind bereits in der Queue → nur den Rest abschließen.
+        queue.flush();
       } else {
-        setStatus("");
-        maybeContinueConversation();
+        // Ton aus, Fallback-Pfad oder nichts gestreamt → jetzt sprechen.
+        speakAnswer(ans);
       }
     } catch (error) {
       if (!isMountedRef.current) return;
@@ -188,6 +278,16 @@ function KiBuddyBetaInner() {
       // Behandlung, der neue Aufruf übernimmt bzw. die Seite ist verlassen.
       if (error?.name === "AbortError") return;
 
+      queue?.cancel();
+      // Eine evtl. angefangene Streaming-Bubble verwerfen (bevor Offline-/
+      // Fallback-Nachrichten angehängt werden).
+      const arr = messagesRef.current;
+      if (arr[arr.length - 1]?.streaming) {
+        const trimmed = arr.slice(0, -1);
+        messagesRef.current = trimmed;
+        setMessages(trimmed);
+      }
+
       // Bei Verbindungsfehlern: Versuche offline Antwort zu finden
       const offlineAnswer = findOfflineBuddyAnswer(q);
 
@@ -195,12 +295,7 @@ function KiBuddyBetaInner() {
         // Offline-Antwort gefunden
         retryRef.current = 0;
         appendMessages({ role: "assistant", text: offlineAnswer });
-        if (tonAn) {
-          speakWithElevenLabs(offlineAnswer);
-        } else {
-          setStatus("");
-          maybeContinueConversation();
-        }
+        speakAnswer(offlineAnswer);
         return;
       }
 
