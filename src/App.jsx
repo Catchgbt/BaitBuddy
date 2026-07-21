@@ -8,7 +8,7 @@ import VisualEditAgent from '@/lib/VisualEditAgent'
 import NavigationTracker from '@/lib/NavigationTracker'
 import { NavigationProvider } from '@/lib/NavigationContext'
 import { pagesConfig } from './pages.config'
-import { BrowserRouter as Router, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import PageNotFound from './lib/PageNotFound';
 
@@ -61,60 +61,9 @@ const AuthenticatedApp = () => {
 
 const AnimatedRoutes = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   const { Pages, Layout, mainPage } = pagesConfig;
   const mainPageKey = mainPage ?? Object.keys(Pages)[0];
   const MainPage = mainPageKey ? Pages[mainPageKey] : null;
-
-  // Deep-Link Handler für Capacitor Android OAuth
-  useEffect(() => {
-    let unsubscribe;
-
-    const setupDeepLinkListener = async () => {
-      const handleDeepLink = (data) => {
-        const url = data.url;
-        console.log('[DeepLink] Opened:', url);
-
-        try {
-          const appUrlString = url.split('://')[1];
-          if (!appUrlString) return;
-
-          const [, ...pathParts] = appUrlString.split('/');
-          const pathWithQuery = pathParts.join('/');
-          const [pathname, queryString] = pathWithQuery.split('?');
-
-          if (pathname === 'auth' || pathname === 'auth/callback') {
-            const redirectPath = queryString ? `/AuthCallback?${queryString}` : '/AuthCallback';
-            console.log('[DeepLink] Navigating to:', redirectPath);
-            navigate(redirectPath);
-          } else if (pathname === 'logbook') {
-            navigate('/Logbook');
-          } else if (pathname === 'dashboard') {
-            navigate('/Dashboard');
-          }
-        } catch (error) {
-          console.error('[DeepLink] Parse error:', error);
-        }
-      };
-
-      if (typeof window !== 'undefined' && window.Capacitor) {
-        try {
-          const { App } = window.Capacitor;
-          if (App && App.addListener) {
-            unsubscribe = await App.addListener('appUrlOpen', handleDeepLink);
-          }
-        } catch (error) {
-          console.debug('[DeepLink] Setup failed:', error.message);
-        }
-      }
-    };
-
-    setupDeepLinkListener();
-
-    return () => {
-      unsubscribe?.remove?.();
-    };
-  }, [navigate]);
 
   // Erstes Pfadsegment statt kompletter Rest-Pfad: bei den zusätzlichen
   // verschachtelten Routen (/events/create, /events/:id, /leaderboards/monthly)
