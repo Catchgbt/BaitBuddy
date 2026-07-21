@@ -287,7 +287,8 @@ router.post('/ai/chat', requireAuth, async (req, res) => {
 
     const { action, cleanReply } = extractAction(reply);
 
-    // Fallback: wenn nur Action, keine Text-Antwort — zeige Bestätigung
+    // Fallback: Wenn die Antwort nur eine Action war und kein Text blieb,
+    // sende eine Standard-Bestätigung. Der Nutzer soll IMMER eine Nachricht im Chat sehen.
     const finalReply = cleanReply || (action ? 'OK, mache das gleich!' : 'Entschuldige, ich konnte das nicht verstehen.');
 
     return res.json({ ok: true, reply: finalReply, message: finalReply, action });
