@@ -17,13 +17,18 @@ jobs:
           cache: 'npm'
           cache-dependency-path: package-lock.json
 
+      - name: Clean npm cache
+        run: npm cache clean --force
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+
       - name: Install deps
-        run: npm ci --legacy-peer-deps --prefer-offline --no-audit
+        run: npm install --legacy-peer-deps --no-audit
         env:
           NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Install backend deps
-        run: cd backend && npm ci --legacy-peer-deps --prefer-offline --no-audit
+        run: cd backend && npm install --legacy-peer-deps --no-audit
         env:
           NODE_OPTIONS: --max-old-space-size=4096
 
