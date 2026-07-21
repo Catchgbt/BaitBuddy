@@ -14,8 +14,8 @@ import { fetchWithTimeout } from './fetchWithTimeout.js';
 //   3. Google Cloud TTS (de-DE, stabil)
 //   4. Gemini 2.5 TTS (multilingual inkl. Deutsch, Preview)
 //
-// Claude/Anthropic bietet kein TTS und ist daher nicht Teil der Kette.
-// Groq wurde vollständig aus der App entfernt (auch als TTS-Provider).
+// Claude/Anthropic bietet kein TTS — die LLM-Logik nutzt Anthropic Cloud API (siehe llm.js).
+// TTS erfolgt über die obigen Provider; LLM-Anfragen ausschließlich über Backend-Endpoints.
 
 const TTS_TIMEOUT_MS = 15000;
 
