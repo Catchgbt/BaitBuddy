@@ -101,6 +101,14 @@ async function openaiTTS(text) {
 }
 
 // ── ElevenLabs ──────────────────────────────────────────────────────────────
+// Standardmodell: eleven_flash_v2_5 — für die "quasi live"-Sprachausgabe. Es
+// spricht sauberes Deutsch (32 Sprachen) und hat mit ~75 ms Modell-Latenz einen
+// Bruchteil der Verzögerung von eleven_multilingual_v2. Über ELEVENLABS_MODEL_ID
+// jederzeit auf das Qualitätsmodell (eleven_multilingual_v2) zurückstellbar,
+// ohne Deploy. output_format hält die Payload klein (schnellerer Transfer).
+const DEFAULT_ELEVENLABS_MODEL = 'eleven_flash_v2_5';
+const DEFAULT_ELEVENLABS_OUTPUT_FORMAT = 'mp3_22050_32';
+
 async function elevenlabsTTS(text, voiceId) {
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) throw new Error('ELEVENLABS_API_KEY not configured');
@@ -109,9 +117,11 @@ async function elevenlabsTTS(text, voiceId) {
   const DEFAULT_VOICE_ID = 'onwK4e9ZLuTAKqWW03F9'; // Daniel (männlich)
 
   const voiceIdToUse = voiceId || process.env.ELEVENLABS_VOICE_ID || DEFAULT_VOICE_ID;
+  const modelId = process.env.ELEVENLABS_MODEL_ID || DEFAULT_ELEVENLABS_MODEL;
+  const outputFormat = process.env.ELEVENLABS_OUTPUT_FORMAT || DEFAULT_ELEVENLABS_OUTPUT_FORMAT;
 
   const callElevenLabs = (vid) => fetchWithTimeout(
-    `https://api.elevenlabs.io/v1/text-to-speech/${vid}`,
+    `https://api.elevenlabs.io/v1/text-to-speech/${vid}?output_format=${encodeURIComponent(outputFormat)}`,
     {
       method: 'POST',
       headers: {
@@ -121,7 +131,7 @@ async function elevenlabsTTS(text, voiceId) {
       },
       body: JSON.stringify({
         text: text.slice(0, 2000),
-        model_id: 'eleven_multilingual_v2',
+        model_id: modelId,
         voice_settings: {
           stability: 0.5,
           similarity_boost: 0.75,

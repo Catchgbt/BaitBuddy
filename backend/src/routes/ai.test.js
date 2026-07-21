@@ -4,7 +4,7 @@ import { createSupabaseMock } from '../../test/mockSupabase.js';
 
 const { supabaseMock, llmMock } = vi.hoisted(() => ({
   supabaseMock: { current: null },
-  llmMock: { invokeLLM: null },
+  llmMock: { invokeLLM: null, invokeLLMStream: null },
 }));
 
 vi.mock('../lib/supabase.js', () => ({
@@ -12,6 +12,8 @@ vi.mock('../lib/supabase.js', () => ({
 }));
 vi.mock('../lib/llm.js', () => ({
   invokeLLM: (...args) => llmMock.invokeLLM(...args),
+  invokeLLMStream: (...args) => llmMock.invokeLLMStream(...args),
+  getGroqKey: () => 'test-key',
 }));
 
 let app;
@@ -150,6 +152,73 @@ describe('POST /api/ai/chat', () => {
     // 4001 nicht mehr.
     expect(prompt).toContain('a'.repeat(4000));
     expect(prompt).not.toContain('a'.repeat(4001));
+  });
+});
+
+describe('POST /api/ai/chat/stream (SSE)', () => {
+  it('lehnt Zugriff ohne Token ab (401)', async () => {
+    llmMock.invokeLLMStream = vi.fn();
+    const res = await request(app).post('/api/ai/chat/stream').send({ messages: [] });
+    expect(res.status).toBe(401);
+    expect(llmMock.invokeLLMStream).not.toHaveBeenCalled();
+  });
+
+  it('streamt Text-Deltas und schließt mit einem done-Event ab', async () => {
+    llmMock.invokeLLMStream = vi.fn(async ({ onDelta }) => {
+      onDelta('Hallo ');
+      onDelta('Welt.');
+      return 'Hallo Welt.';
+    });
+
+    const res = await request(app)
+      .post('/api/ai/chat/stream')
+      .set('Authorization', 'Bearer tok')
+      .send({ messages: [{ role: 'user', content: 'Sag Hallo' }] });
+
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('text/event-stream');
+    // Deltas als eigene SSE-Events.
+    expect(res.text).toContain('event: delta');
+    expect(res.text).toContain('"text":"Hallo "');
+    expect(res.text).toContain('"text":"Welt."');
+    // Abschluss-Event mit vollständiger Antwort.
+    expect(res.text).toContain('event: done');
+    expect(res.text).toContain('"reply":"Hallo Welt."');
+  });
+
+  it('trennt den ACTION-Block ab und liefert die geparste Aktion im done-Event', async () => {
+    llmMock.invokeLLMStream = vi.fn(async ({ onDelta }) => {
+      onDelta('Klar, ich öffne die Karte!');
+      // Der Aktions-Block kommt am Ende der Roh-Antwort.
+      return 'Klar, ich öffne die Karte!<<ACTION>>{"type":"navigate","params":{"page":"karte"}}<<END>>';
+    });
+
+    const res = await request(app)
+      .post('/api/ai/chat/stream')
+      .set('Authorization', 'Bearer tok')
+      .send({ messages: [{ role: 'user', content: 'Zeig mir die Karte' }] });
+
+    expect(res.status).toBe(200);
+    // done-Event enthält die bereinigte Antwort ohne Marker + die Aktion.
+    const doneLine = res.text.split('\n').find((l) => l.startsWith('data:') && l.includes('"reply"') && l.includes('navigate'));
+    expect(doneLine).toBeTruthy();
+    const payload = JSON.parse(doneLine.slice(5).trim());
+    expect(payload.reply).toBe('Klar, ich öffne die Karte!');
+    expect(payload.reply).not.toContain('<<ACTION>>');
+    expect(payload.action).toEqual({ type: 'navigate', params: { page: 'karte' } });
+  });
+
+  it('sendet ein error-Event, wenn der LLM-Stream fehlschlägt', async () => {
+    llmMock.invokeLLMStream = vi.fn().mockRejectedValue(new Error('Groq down'));
+
+    const res = await request(app)
+      .post('/api/ai/chat/stream')
+      .set('Authorization', 'Bearer tok')
+      .send({ messages: [{ role: 'user', content: 'Hallo' }] });
+
+    // Header sind bereits raus (200) → Fehler kommt als SSE-Event, nicht als HTTP-Status.
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('event: error');
   });
 });
 

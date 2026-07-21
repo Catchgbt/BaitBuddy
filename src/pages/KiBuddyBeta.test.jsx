@@ -12,11 +12,23 @@ vi.mock('@/hooks/useFeatureTracking', () => ({ useFeatureTracking: () => {} }));
 vi.mock('@/hooks/useEventActivityTracking', () => ({
   useEventActivityTracking: () => ({ trackAIChat: vi.fn() }),
 }));
-vi.mock('@/hooks/useElevenLabsVoice', () => ({
-  useElevenLabsVoice: () => ({ speak: vi.fn(async () => true), stop: vi.fn(), isSpeaking: false }),
-}));
+// stop muss über Renders hinweg stabil sein (wie die echte useCallback-Variante),
+// sonst re-triggert der [stopVoice]-Effekt jeden Render und bricht den laufenden
+// Request-Controller ab.
+vi.mock('@/hooks/useElevenLabsVoice', () => {
+  const stop = vi.fn();
+  return {
+    useElevenLabsVoice: () => ({ speak: vi.fn(async () => true), stop, isSpeaking: false }),
+  };
+});
 vi.mock('@/api/frontendClient', () => ({
   events: { getActiveEvent: vi.fn(async () => ({})) },
+  ai: { chatStream: vi.fn() },
+}));
+// Sprech-Queue wegmocken: die Chat-/History-Logik ist hier der Prüfgegenstand,
+// nicht die (bereits separat getestete) TTS-Wiedergabe.
+vi.mock('@/components/utils/elevenLabsTTS', () => ({
+  createSpeechQueue: vi.fn(() => ({ push: vi.fn(), flush: vi.fn(), cancel: vi.fn() })),
 }));
 vi.mock('@/lib/offlineBuddyQuestions', () => ({
   findOfflineBuddyAnswer: vi.fn(() => null),
@@ -26,6 +38,7 @@ vi.mock('@/functions/catchgbtChat', () => ({ catchgbtChat: vi.fn() }));
 
 import KiBuddyBeta from './KiBuddyBeta';
 import { catchgbtChat } from '@/functions/catchgbtChat';
+import { ai } from '@/api/frontendClient';
 
 async function ask(text) {
   const input = await screen.findByPlaceholderText('Frage stellen...');
@@ -36,6 +49,9 @@ async function ask(text) {
 describe('KiBuddyBeta – Chat-Historie', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Standard: Streaming nicht verfügbar → Beta fällt auf catchgbtChat zurück
+    // (die History-/Abort-Tests prüfen genau diesen bewährten Pfad).
+    ai.chatStream.mockRejectedValue(new Error('kein Stream'));
     Element.prototype.scrollIntoView = vi.fn();
   });
   afterEach(() => cleanup());
@@ -67,31 +83,60 @@ describe('KiBuddyBeta – Chat-Historie', () => {
 describe('KiBuddyBeta – Abbruch bei Unmount', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Standard: Streaming nicht verfügbar → Beta fällt auf catchgbtChat zurück
+    // (die History-/Abort-Tests prüfen genau diesen bewährten Pfad).
+    ai.chatStream.mockRejectedValue(new Error('kein Stream'));
     Element.prototype.scrollIntoView = vi.fn();
   });
   afterEach(() => cleanup());
 
-  it('übergibt ein AbortSignal an catchgbtChat und aktualisiert nach Unmount keinen State mehr', async () => {
+  it('übergibt ein AbortSignal an den Streaming-Request und aktualisiert nach Unmount keinen State mehr', async () => {
     let resolveChat;
-    catchgbtChat.mockImplementation(() => new Promise((res) => { resolveChat = res; }));
+    // Streaming-Request hängen lassen, bis wir ihn manuell auflösen.
+    ai.chatStream.mockImplementation(() => new Promise((res) => {
+      resolveChat = () => res({ reply: 'zu spät' });
+    }));
 
     const { unmount } = render(<KiBuddyBeta />);
 
     await ask('frage vor unmount');
 
-    // Der laufende Request bekommt ein AbortSignal mit, damit er beim Unmount
-    // abgebrochen werden kann.
-    const opts = catchgbtChat.mock.calls[0][1];
+    // Der laufende Streaming-Request bekommt ein AbortSignal mit, damit er beim
+    // Unmount abgebrochen werden kann (3. Argument: options).
+    const opts = ai.chatStream.mock.calls[0][2];
     expect(opts?.signal).toBeInstanceOf(AbortSignal);
 
     unmount();
 
     // Späte Auflösung nach dem Unmount darf keinen State-Update/Crash auslösen.
     await act(async () => {
-      resolveChat({ reply: 'zu spät' });
+      resolveChat();
       await Promise.resolve();
     });
 
     expect(screen.queryByText('zu spät')).not.toBeInTheDocument();
+  });
+});
+
+describe('KiBuddyBeta – Live-Streaming', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+  afterEach(() => cleanup());
+
+  it('streamt die Antwort live und ruft NICHT den gepufferten catchgbtChat auf', async () => {
+    ai.chatStream.mockImplementation(async (_messages, _loc, { onDelta } = {}) => {
+      onDelta?.('Klar, ');
+      onDelta?.('Hechte beißen früh am Morgen am besten.');
+      return { reply: 'Klar, Hechte beißen früh am Morgen am besten.' };
+    });
+
+    render(<KiBuddyBeta />);
+    await ask('Wann beißen Hechte?');
+
+    expect(await screen.findByText('Klar, Hechte beißen früh am Morgen am besten.')).toBeInTheDocument();
+    // Im Streaming-Erfolgsfall wird der gepufferte Pfad nicht mehr angefasst.
+    expect(catchgbtChat).not.toHaveBeenCalled();
   });
 });
