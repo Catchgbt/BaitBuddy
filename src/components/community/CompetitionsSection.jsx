@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Zap, Trophy, Users, Heart, TrendingUp, Info } from 'lucide-react';
-import EventLauncher from './EventLauncher';
+import { Trophy, Users, Heart, TrendingUp, Info } from 'lucide-react';
 import CompetitionLauncher from './CompetitionLauncher';
 import VotingEventCard from './VotingEventCard';
 import RewardsInfo from './RewardsInfo';
@@ -143,19 +142,6 @@ export default function CompetitionsSection({
         <h2 className="text-2xl font-bold text-white mb-4">Wettbewerbsarten</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <CompetitionTypeCard
-            type="events"
-            title="Veranstaltungen"
-            icon={Zap}
-            description="Tauchen Sie ein in professionelle Wettbewerbe mit Ranglistentracking"
-            count={eventCompetitions?.length || 0}
-            color={{
-              bg: "from-cyan-900/20 to-blue-900/20",
-              border: "border-cyan-500/30",
-              icon: "bg-cyan-500/20",
-              text: "#06B6D4"
-            }}
-          />
-          <CompetitionTypeCard
             type="voting"
             title="Abstimmungs-Events"
             icon={Heart}
@@ -197,13 +183,9 @@ export default function CompetitionsSection({
         </div>
       </motion.div>
 
-      {/* Event Vorlagen & Launcher */}
+      {/* Competition Launcher */}
       <motion.div variants={itemVariants} className="space-y-4">
-        <h2 className="text-2xl font-bold text-white">Veranstaltungen starten</h2>
-        <EventLauncher
-          currentUser={currentUser}
-          onStarted={onCompetitionUpdated}
-        />
+        <h2 className="text-2xl font-bold text-white">Wettbewerb starten</h2>
         <CompetitionLauncher
           currentUser={currentUser}
           onStarted={onCompetitionUpdated}

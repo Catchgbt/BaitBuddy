@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { auth } from "@/api/auth";
 import { api } from "@/api/frontendClient";
 import { ChevronRight, Zap, Award } from "lucide-react";
+import EventLauncher from "@/components/events/EventLauncher";
 
 function getCountdown(endDate) {
   const now = new Date();
@@ -297,6 +298,11 @@ export default function Events() {
         totalPoints={pointsSummary.total_points}
         participatingEvents={pointsSummary.participating_events}
       />
+
+      {/* Event-Auswahl: Vorlage wählen und Event starten */}
+      <div className="mb-8">
+        <EventLauncher currentUser={currentUser} onStarted={loadData} />
+      </div>
 
       {/* Events */}
       {competitions.length > 0 ? (
