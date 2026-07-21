@@ -20,8 +20,10 @@ test.describe('KI-Buddy Widget', () => {
       .catch(() => {});
 
     // Referral-Popup schließen, falls es sich öffnet
-    const closePopupBtn = page.getByLabel('Später').first();
-    await closePopupBtn.click().catch(() => {});
+    await page
+      .getByRole('button', { name: 'Später' })
+      .click()
+      .catch(() => {});
 
     // Avatar des Widget-Stubs (schwebt unten rechts). Klick per Koordinaten:
     // Die Endlos-Schwebe-Animation (framer-motion) laesst Playwrights
