@@ -19,5 +19,5 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // onAuthStateChange weiterhin SIGNED_IN/SIGNED_OUT-Events und spiegelt sie
 // in bb_token/bb_refresh. Siehe CLAUDE.md ("Auth-Architektur").
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: { autoRefreshToken: false },
+  auth: { autoRefreshToken: false, flowType: 'pkce' },
 });

@@ -287,7 +287,10 @@ router.post('/ai/chat', requireAuth, async (req, res) => {
 
     const { action, cleanReply } = extractAction(reply);
 
-    return res.json({ ok: true, reply: cleanReply, message: cleanReply, action });
+    // Fallback: wenn nur Action, keine Text-Antwort — zeige Bestätigung
+    const finalReply = cleanReply || (action ? 'OK, mache das gleich!' : 'Entschuldige, ich konnte das nicht verstehen.');
+
+    return res.json({ ok: true, reply: finalReply, message: finalReply, action });
   } catch (e) {
     // Gegen Nicht-Error-Throws absichern: e.message könnte undefined sein und
     // .includes() würde dann selbst werfen (verschluckter Fehler → 500 ohne Log).
@@ -360,7 +363,8 @@ router.post('/ai/chat/stream', requireAuth, async (req, res) => {
     });
 
     const { action, cleanReply } = extractAction(full);
-    send('done', { ok: true, reply: cleanReply, message: cleanReply, action });
+    const finalReply = cleanReply || (action ? 'OK, mache das gleich!' : 'Entschuldige, ich konnte das nicht verstehen.');
+    send('done', { ok: true, reply: finalReply, message: finalReply, action });
     res.end();
   } catch (e) {
     // Client bereits weg? Dann nichts mehr senden.

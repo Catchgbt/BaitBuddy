@@ -6,6 +6,7 @@ import { createPageUrl } from '@/utils';
 import { setGuestSession } from '@/components/utils/guestMode';
 import { isOnline } from '@/utils/networkStatus';
 import { supabase } from '@/api/supabaseClient';
+import { Browser } from '@capacitor/browser';
 import { toast } from 'sonner';
 import LanguageSwitcher from '@/components/i18n/LanguageSwitcher';
 import { LanguageProvider, useLanguage } from '@/components/i18n/LanguageContext';
@@ -280,6 +281,12 @@ function LandingPageContent() {
         };
     }, []);
 
+    useEffect(() => {
+        const onOAuthError = (e) => setLoginError('Social Login fehlgeschlagen: ' + (e.detail?.message || 'Unbekannter Fehler'));
+        window.addEventListener('baitbuddy:oauth-error', onOAuthError);
+        return () => window.removeEventListener('baitbuddy:oauth-error', onOAuthError);
+    }, []);
+
     const loadUserName = async () => {
         try {
             const isAuth = await auth.isAuthenticated();
@@ -502,11 +509,35 @@ function LandingPageContent() {
           ? 'app://baitbuddy/auth/callback'
           : buildPublicUrl('/AuthCallback');
 
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider,
-            options: { redirectTo: redirectUrl },
-        });
-        if (error) setLoginError('Social Login fehlgeschlagen: ' + error.message);
+        try {
+            if (isNative) {
+                // Native: Use skipBrowserRedirect + Browser.open for external OAuth
+                const { data, error } = await supabase.auth.signInWithOAuth({
+                    provider,
+                    options: {
+                        redirectTo: redirectUrl,
+                        skipBrowserRedirect: true,
+                    },
+                });
+                if (error) {
+                    setLoginError('Social Login fehlgeschlagen: ' + error.message);
+                    return;
+                }
+                if (data?.url) {
+                    await Browser.open({ url: data.url, windowName: '_system' });
+                }
+            } else {
+                // Web: Standard OAuth flow
+                const { error } = await supabase.auth.signInWithOAuth({
+                    provider,
+                    options: { redirectTo: redirectUrl },
+                });
+                if (error) setLoginError('Social Login fehlgeschlagen: ' + error.message);
+            }
+        } catch (err) {
+            console.error('[OAuth Error]', err);
+            setLoginError('Social Login Fehler: ' + err.message);
+        }
     };
 
     const handleGuestLogin = () => {

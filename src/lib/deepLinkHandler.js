@@ -1,5 +1,7 @@
-// Global ref to store pending deep-link URL (set before Router context exists)
-export const deepLinkStore = { url: null };
+import { App } from '@capacitor/app';
+import { Browser } from '@capacitor/browser';
+import { supabase } from '@/api/supabaseClient';
+import { api } from '@/api/frontendClient';
 
 // Initialize deep-link listener at app startup (before Router renders)
 export async function initializeDeepLinking() {
@@ -10,26 +12,59 @@ export async function initializeDeepLinking() {
   if (!isNative) return;
 
   try {
-    const { App } = window.Capacitor;
     if (!App?.addListener) return;
 
     // Handle deep-links that arrive while app is running
-    const listener = await App.addListener('appUrlOpen', (data) => {
+    const listener = await App.addListener('appUrlOpen', async (data) => {
       const url = data?.url;
       if (!url) return;
 
       console.log('[DeepLink] Received:', url);
 
-      // Parse app://baitbuddy/auth/callback?code=...&state=...
-      if (url.includes('auth/callback') || url.includes('auth')) {
-        // Store the full URL with query params
+      // Parse app://baitbuddy/auth/callback?code=...&state=... or #access_token=...
+      if (url.includes('auth/callback')) {
         try {
+          // Close the browser Custom Tab as promptly as possible
+          await Browser.close().catch(() => {});
+
           const urlObj = new URL(url.replace('app://', 'https://'));
-          deepLinkStore.url = url; // Keep original for reference
-          deepLinkStore.searchParams = urlObj.search; // Query params
-          console.log('[DeepLink] Stored for navigation:', deepLinkStore.url);
+          const code = urlObj.searchParams.get('code');
+          const error = urlObj.searchParams.get('error');
+          const errorDescription = urlObj.searchParams.get('error_description');
+
+          if (error) {
+            const message = errorDescription ? decodeURIComponent(errorDescription) : error;
+            console.error('[DeepLink] OAuth error:', message);
+            window.dispatchEvent(new CustomEvent('baitbuddy:oauth-error', { detail: { message } }));
+            return;
+          }
+
+          if (!code) {
+            console.warn('[DeepLink] No code or error in URL');
+            return;
+          }
+
+          console.log('[DeepLink] Exchanging PKCE code...');
+          const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+
+          if (exchangeError) {
+            console.error('[DeepLink] Code exchange failed:', exchangeError.message);
+            window.dispatchEvent(new CustomEvent('baitbuddy:oauth-error', { detail: { message: exchangeError.message } }));
+            return;
+          }
+
+          if (sessionData?.session?.access_token) {
+            console.log('[DeepLink] Session acquired, syncing tokens...');
+            api.setToken(sessionData.session.access_token);
+            if (sessionData.session.refresh_token) {
+              api.setRefreshToken(sessionData.session.refresh_token);
+            }
+            console.log('[DeepLink] Redirecting to Dashboard');
+            window.location.replace('/Dashboard');
+          }
         } catch (e) {
-          console.error('[DeepLink] Parse error:', e);
+          console.error('[DeepLink] Processing error:', e);
+          window.dispatchEvent(new CustomEvent('baitbuddy:oauth-error', { detail: { message: e.message } }));
         }
       }
     });
