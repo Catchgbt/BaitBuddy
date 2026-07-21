@@ -24,7 +24,6 @@ export default function Header({
   const { triggerHaptic } = useHaptic();
   const { playSound } = useSound();
   const navigate = useNavigate();
-  const [activeAlertsCount, setActiveAlertsCount] = useState(0);
   const [activeTripsCount, setActiveTripsCount] = useState(0);
   const [user, setUser] = useState(null);
   const [currentPlan, setCurrentPlan] = useState(null);
@@ -44,17 +43,6 @@ export default function Header({
         setUser(currentUser);
       }
       setActiveTripsCount(plans?.length || 0);
-
-      const alerts = currentUser?.settings?.weather_alerts || {};
-      let count = 0;
-      if (alerts.rain_alert_enabled) count++;
-      if (alerts.wind_alert_enabled) count++;
-      if (alerts.temp_alert_enabled) count++;
-      if (alerts.storm_alert_enabled) count++;
-      if (alerts.uv_alert_enabled) count++;
-      if (alerts.visibility_alert_enabled) count++;
-      if (alerts.dewpoint_alert_enabled) count++;
-      setActiveAlertsCount(count);
 
       const planPayload = planStatusResponse?.data ?? planStatusResponse;
       if (planPayload?.plan) {
@@ -201,39 +189,8 @@ export default function Header({
           )}
         </div>
 
-        {/* Right Side - Wetter-Alarm, Trip-Alarm, Wake Word */}
+        {/* Right Side - Trip-Alarm, Wake Word */}
         <div className="flex items-center gap-2 relative z-20">
-          {activeAlertsCount > 0 && (
-            <Link to={createPageUrl('WeatherAlerts')}>
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                className="relative"
-              >
-                <Button
-                   variant="ghost"
-                   size="icon"
-                   aria-label={`${activeAlertsCount} Wetteralarme aktiv`}
-                   className="text-amber-400 active:scale-95 active:bg-amber-500/10 focus:ring-2 focus:ring-amber-400 relative min-h-[44px] min-w-[44px]"
-                   onClick={() => {
-                     triggerHaptic('light');
-                     playSound('click');
-                   }}
-                 >
-                   <Bell aria-hidden="true" className="w-5 h-5" />
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="absolute -top-1 -right-1 bg-amber-500 text-black text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-gray-950"
-                  >
-                    {activeAlertsCount}
-                  </motion.div>
-                </Button>
-              </motion.div>
-            </Link>
-          )}
 
           {activeTripsCount > 0 && (
             <Link to={createPageUrl('TripPlanner')}>

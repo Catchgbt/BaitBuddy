@@ -20,9 +20,13 @@ export function LocationProvider({ children }) {
 
   // GPS-Standort abrufen
   const requestGpsLocation = async () => {
+    console.log("[LocationManager] requestGpsLocation aufgerufen");
+
     if (!navigator.geolocation) {
-      setError("GPS wird von diesem Browser nicht unterstützt");
-      toast.error("GPS wird von diesem Browser nicht unterstützt");
+      const msg = "GPS wird von diesem Browser nicht unterstützt";
+      console.error("[LocationManager]", msg);
+      setError(msg);
+      toast.error(msg);
       return;
     }
 
@@ -30,17 +34,29 @@ export function LocationProvider({ children }) {
     setError(null);
 
     try {
+      console.log("[LocationManager] Starte Geolocation.getCurrentPosition");
+
       const position = await new Promise((resolve, reject) => {
         // Harter JS-Fallback zusaetzlich zur nativen timeout-Option: In
         // manchen Browsern/WebViews laeuft der native Timeout NICHT, solange
         // der Berechtigungsdialog offen ist bzw. die Berechtigung in einem
         // unklaren Zustand haengt — die Standortsuche lud dann endlos.
         const fallbackTimer = setTimeout(() => {
+          console.error("[LocationManager] Fallback-Timeout nach 15s");
           reject({ code: 3, message: 'GPS-Timeout (Fallback nach 15s)' });
         }, 15000);
+
         navigator.geolocation.getCurrentPosition(
-          (pos) => { clearTimeout(fallbackTimer); resolve(pos); },
-          (err) => { clearTimeout(fallbackTimer); reject(err); },
+          (pos) => {
+            console.log("[LocationManager] Geolocation erfolgreich", pos.coords);
+            clearTimeout(fallbackTimer);
+            resolve(pos);
+          },
+          (err) => {
+            console.error("[LocationManager] Geolocation-Fehler:", err.code, err.message);
+            clearTimeout(fallbackTimer);
+            reject(err);
+          },
           {
             enableHighAccuracy: true,
             timeout: 15000,
@@ -58,6 +74,8 @@ export function LocationProvider({ children }) {
         source: "gps"
       };
 
+      console.log("[LocationManager] Speichere Location:", location);
+
       setGpsLocation(location);
       setCurrentLocation(location);
       setIsGpsEnabled(true);
@@ -65,21 +83,22 @@ export function LocationProvider({ children }) {
       // GPS-Standort im localStorage speichern
       localStorage.setItem("fm_gps_location", JSON.stringify(location));
       localStorage.setItem("fm_current_location", JSON.stringify(location));
-      localStorage.setItem("fm_gps_fetched", "true"); // Flag setzen
-      
+      localStorage.setItem("fm_gps_fetched", "true");
+
       toast.success(
         "Standort erfolgreich ermittelt",
         {
-          description: `Genauigkeit: ${Math.round(position.coords.accuracy)}m`,
+          description: `Lat: ${location.lat.toFixed(3)}, Lon: ${location.lon.toFixed(3)}`,
           duration: 3000
         }
       );
 
     } catch (err) {
       const errorMsg = String(err?.message || err || "Unbekannter GPS-Fehler");
-      
+      console.error("[LocationManager] GPS-Fehler:", errorMsg, err);
+
       let userMessage = "GPS-Standort konnte nicht ermittelt werden.";
-      
+
       if (err.code === 1) {
         userMessage = "Standortzugriff wurde verweigert. Bitte erlaube den Zugriff in den Browser-Einstellungen.";
       } else if (err.code === 2) {
@@ -87,10 +106,10 @@ export function LocationProvider({ children }) {
       } else if (err.code === 3) {
         userMessage = "Standortabfrage hat zu lange gedauert.";
       }
-      
+
       setError(userMessage);
       setIsGpsEnabled(false);
-      
+
       toast.warning(
         "Standort nicht verfügbar",
         {
@@ -98,8 +117,6 @@ export function LocationProvider({ children }) {
           duration: 5000
         }
       );
-      
-      console.warn("GPS-Fehler:", errorMsg);
     } finally {
       setLoading(false);
     }

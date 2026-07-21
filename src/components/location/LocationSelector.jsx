@@ -32,12 +32,15 @@ export default function LocationSelector({ compact = false }) {
   }, []);
 
   const handleSpotChange = async (spotId) => {
+    console.log("[LocationSelector] handleSpotChange:", spotId);
     setSelectedSpot(spotId);
     if (spotId === "gps" && gpsLocation) {
+      console.log("[LocationSelector] GPS-Standort wird verwendet");
       setCurrentLocation(gpsLocation);
     } else if (spotId && spotId !== "gps") {
       const spot = spots.find(s => s.id === spotId);
       if (spot) {
+        console.log("[LocationSelector] Spot als Location gesetzt:", spot.name);
         await setSpotAsLocation(spot);
       }
     }
@@ -62,6 +65,13 @@ export default function LocationSelector({ compact = false }) {
     );
   };
 
+  const handleGpsClick = () => {
+    console.log("[LocationSelector] GPS-Button geklickt");
+    requestGpsLocation().catch(err => {
+      console.error("[LocationSelector] Fehler beim Aufrufen von requestGpsLocation:", err);
+    });
+  };
+
   if (compact) {
     return (
       <div className="flex items-center gap-2">
@@ -69,9 +79,10 @@ export default function LocationSelector({ compact = false }) {
         <Button
           size="sm"
           variant="outline"
-          onClick={requestGpsLocation}
+          onClick={handleGpsClick}
           disabled={loading}
           className="px-2"
+          type="button"
         >
           {loading ? (
             <Loader2 className="w-3 h-3 animate-spin" />
@@ -90,8 +101,9 @@ export default function LocationSelector({ compact = false }) {
         <Button
           size="sm"
           variant="outline"
-          onClick={requestGpsLocation}
+          onClick={handleGpsClick}
           disabled={loading}
+          type="button"
         >
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin mr-2" />

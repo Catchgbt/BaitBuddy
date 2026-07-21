@@ -7,7 +7,6 @@ import AppearanceSettings from './AppearanceSettings';
 import BatterySettings from './BatterySettings';
 import VoiceSettings from './VoiceSettings';
 import TickerSettings from './TickerSettings';
-import WeatherAlertsSettings from './WeatherAlertsSettings';
 import ActionNotificationSettings from './ActionNotificationSettings';
 import DeleteAccountSection from './DeleteAccountSection';
 import { useTheme } from '@/lib/ThemeContext';
@@ -46,12 +45,6 @@ export default function SettingsPageTabbed() {
       label: 'Ticker',
       icon: Shield,
       component: TickerSettings
-    },
-    {
-      id: 'weather',
-      label: 'Wetter',
-      icon: FileText,
-      component: WeatherAlertsSettings
     },
     {
       id: 'notifications',

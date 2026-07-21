@@ -70,7 +70,7 @@ export default function WeatherWarningBanner({ lat, lon }) {
 
   return (
     <Link
-      to={createPageUrl("WeatherAlerts")}
+      to={createPageUrl("Weather")}
       className={`flex items-center gap-3 rounded-2xl border ${s.border} ${s.bg} backdrop-blur-sm p-4 transition-colors hover:brightness-110`}
       role="alert"
     >

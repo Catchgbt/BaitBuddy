@@ -6,7 +6,6 @@ import { useLocation } from "@/components/location/LocationManager";
 import { InvokeLLM } from "@/integrations/Core";
 import { events } from "@/api/frontendClient";
 import { useEventActivityTracking } from "@/hooks/useEventActivityTracking";
-import WeatherAlertsSettings from "@/components/settings/WeatherAlertsSettings";
 import WeatherWarnings from "@/components/weather/WeatherWarnings";
 import { toast } from "sonner";
 import { speakWithFallback, cancelElevenLabs } from "@/components/utils/elevenLabsTTS";
@@ -17,7 +16,7 @@ import WeatherRadarMap from "@/components/weather/WeatherRadarMap";
 
 export default function Weather() {
   return (
-    <PremiumGuard requiredPlan="basic" feature="Wetter 5-Tage & Wetter-Alarme">
+    <PremiumGuard requiredPlan="basic" feature="Wetter 5-Tage">
       <WeatherInner />
     </PremiumGuard>
   );
@@ -334,11 +333,10 @@ Sei konkret, praktisch und detailliert!`;
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-gray-800/50">
+          <TabsList className="grid w-full grid-cols-3 bg-gray-800/50">
             <TabsTrigger value="current">Aktuell</TabsTrigger>
             <TabsTrigger value="radar">Radar</TabsTrigger>
             <TabsTrigger value="forecast">Vorhersage</TabsTrigger>
-            <TabsTrigger value="alerts">Alarme</TabsTrigger>
           </TabsList>
 
           <TabsContent value="current" className="space-y-6">
@@ -575,11 +573,10 @@ Sei konkret, praktisch und detailliert!`;
               </CardContent>
             </Card>
 
-          </TabsContent>
+            {currentLocation?.lat && currentLocation?.lon && (
+              <WeatherWarnings lat={currentLocation.lat} lon={currentLocation.lon} />
+            )}
 
-          <TabsContent value="alerts" className="space-y-6">
-            <WeatherWarnings lat={currentLocation?.lat} lon={currentLocation?.lon} />
-            <WeatherAlertsSettings />
           </TabsContent>
 
         </Tabs>

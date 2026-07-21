@@ -6,7 +6,7 @@
 
 // Kanonische Seiten-Keys, die als Navigationsziel erlaubt sind.
 export const ALLOWED_PAGES = [
-  "Dashboard", "Home", "Logbook", "Map", "Weather", "WeatherAlerts",
+  "Dashboard", "Home", "Logbook", "Map", "Weather",
   "Community", "Gear", "AIAssistant", "KiBuddyBeta", "TripPlanner",
   "Profile", "Settings", "Rank", "WaterAnalysis",
   "AngelscheinPruefungSchonzeiten", "Quiz", "Licenses", "Events",
@@ -29,8 +29,6 @@ const PAGE_ALIASES = {
   karte: "Map", map: "Map", gewässerkarte: "Map", gewaesserkarte: "Map",
 
   wetter: "Weather", weather: "Weather",
-  warnung: "WeatherAlerts", warnungen: "WeatherAlerts",
-  unwetter: "WeatherAlerts", wetterwarnung: "WeatherAlerts",
 
   community: "Community", forum: "Community", feed: "Community",
 
