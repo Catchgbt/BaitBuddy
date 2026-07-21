@@ -104,12 +104,13 @@ public class BillingManager implements PurchasesUpdatedListener, BillingClientSt
                 .setProductList(subProducts)
                 .build();
 
-            billingClient.queryProductDetailsAsync(subsParams, (result, productDetailsList) -> {
+            billingClient.queryProductDetailsAsync(subsParams, (result, productDetailsResult) -> {
                 if (result.getResponseCode() == BillingClient.BillingResponseCode.OK) {
-                    for (ProductDetails pd : productDetailsList) {
+                    List<ProductDetails> list = productDetailsResult.getProductDetailsList();
+                    for (ProductDetails pd : list) {
                         productDetailsCache.put(pd.getProductId(), pd);
                     }
-                    Log.i(TAG, "Loaded " + productDetailsList.size() + " subscription details");
+                    Log.i(TAG, "Loaded " + list.size() + " subscription details");
                 } else {
                     Log.e(TAG, "queryProductDetails (subs) failed: " + result.getDebugMessage());
                 }
@@ -120,12 +121,13 @@ public class BillingManager implements PurchasesUpdatedListener, BillingClientSt
             .setProductList(inappProducts)
             .build();
 
-        billingClient.queryProductDetailsAsync(inappParams, (result, productDetailsList) -> {
+        billingClient.queryProductDetailsAsync(inappParams, (result, productDetailsResult) -> {
             if (result.getResponseCode() == BillingClient.BillingResponseCode.OK) {
-                for (ProductDetails pd : productDetailsList) {
+                List<ProductDetails> list = productDetailsResult.getProductDetailsList();
+                for (ProductDetails pd : list) {
                     productDetailsCache.put(pd.getProductId(), pd);
                 }
-                Log.i(TAG, "Loaded " + productDetailsList.size() + " inapp details");
+                Log.i(TAG, "Loaded " + list.size() + " inapp details");
             } else {
                 Log.e(TAG, "queryProductDetails (inapp) failed: " + result.getDebugMessage());
             }
