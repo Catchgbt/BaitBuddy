@@ -159,6 +159,11 @@ export default function PremiumPlans() {
     }
   };
 
+  // Pläne bewusst nach Funktionswert priorisiert: Free ist werbefinanziert und
+  // enthält nur die Einstiegs-Funktionen (der KI-Buddy ist dabei, aber
+  // eingeschränkt). Die wirklich starken KI-, AR- und Analyse-Features steigen
+  // mit dem Preis. Preise sind Source-of-Truth-gespiegelt in
+  // backend/src/routes/premium.js (CHECKOUT_PLANS/PRODUCTS).
   const plans = [
     {
       id: 'free',
@@ -166,34 +171,34 @@ export default function PremiumPlans() {
       price: 0,
       icon: Check,
       color: 'from-gray-600 to-gray-700',
-      description: 'Kostenlos - alle Grundfunktionen',
+      description: 'Kostenlos mit Werbung - zum Reinschnuppern',
       features: [
-        'Dashboard mit Wetter & Spot-Karte',
+        'Mit Werbeeinblendungen',
+        'KI-Buddy Chat eingeschraenkt (5 Nachrichten/Tag)',
         'Digitales Fangbuch (unbegrenzt)',
-        'Interaktive Angelkarte mit Community-Spots',
+        'Angelkarte mit Community-Spots (Basis)',
         'Schonzeiten & Mindestmasse nachschlagen',
         'Angelschein-Pruefungsvorbereitung (Quiz)',
         'Tutorials & AR-Knotenassistent',
-        'Fang-Statistiken (CatchStats)',
-        'Profil & Einstellungen',
-        'Community-Feed lesen & posten'
+        'Aktuelles Wetter (heute)',
+        'Community-Feed lesen'
       ]
     },
     {
       id: 'basic',
       name: 'Basic',
-      price: 4.99,
+      price: 9.99,
       icon: Zap,
       color: 'from-blue-600 to-cyan-600',
-      description: 'Mehr KI, mehr Daten',
+      description: 'Werbefrei mit vollem KI-Buddy',
       popular: false,
       features: [
-        'Alles aus Free',
-        'KI-Buddy Chat (unbegrenzt) - BaitBuddy',
-        'KI-Foto-Analyse von Faengen (unbegrenzt)',
+        'Alles aus Free - komplett werbefrei',
+        'KI-Buddy Chat unbegrenzt - BaitBuddy',
+        'KI-Foto-Analyse von Faengen',
         'Wetter 5 Tage + Wetter-Alarme',
         'Eigene Spots speichern & verwalten',
-        'KI-Koeder-Mischer',
+        'Fang-Statistiken (CatchStats)',
         'Gewaesser-Wasseranalyse',
         'Trip-Planer mit KI-Unterstuetzung',
         'Angelbedarf-Marktplatz (UsedGear)'
@@ -202,84 +207,72 @@ export default function PremiumPlans() {
     {
       id: 'pro',
       name: 'Pro',
-      price: 9.99,
+      price: 19.99,
       icon: Star,
       color: 'from-purple-600 to-violet-600',
-      description: 'Vollstaendige KI-Power',
+      description: 'Vollstaendige KI- & AR-Power',
       popular: true,
       features: [
         'Alles aus Basic',
         'KI-Fangprognosen & Hotspot-Erkennung',
         'Satelliten-Gewaesseranalyse (Echtdaten)',
-        'AR-Gewaesser-Ansicht 3D',
+        'AR-Gewaesser-Ansicht 3D & 3D-Koederanimation',
         'Tiefenkarten & Bathymetrie-Crowdsourcing',
         'Geraete-Integration (Echolot, Bissanzeiger)',
-        'Voice Control: Hey Buddy',
+        'KI-Koeder-Mischer',
         'Digitale Lizenzverwaltung',
         'Community-Ranking, Clans & Events',
         'Fang-Export (PDF)',
-        'KI-Trip-Detailbericht (Premium)'
+        'KI-Trip-Detailbericht'
       ]
     },
     {
       id: 'elite',
       name: 'Ultimate',
-      price: 19.99,
+      price: 29.99,
       icon: Crown,
       color: 'from-amber-500 to-orange-600',
-      description: 'Profi-Angler Level',
+      description: 'Alles inklusive - jede Funktion ohne Limit',
       popular: false,
       features: [
-        'Alles aus Pro',
+        'Alles aus Pro - jede Funktion ohne Einschraenkung',
+        'KI Voice Live Chat (nur Ultimate)',
         'Live-Bissanzeiger per Smartphone-Kamera',
         'KI-Kamera: Echtzeit-Fischerkennung',
         'CatchCam - KI-Analyse direkt vom Foto',
-        'Spot-Gruppen mit Freunden teilen',
-        'Profi-Analyse: Zeitreihen & Trends',
-        'Priorisierte KI-Antworten',
-        'Fruehzeitiger Zugang zu neuen Features'
+        'Weibliche KI-Stimme "Matilda" (ElevenLabs)',
+        'KI-Buddy Chat & Foto-Analyse unbegrenzt',
+        'KI-Fangprognosen, Hotspots & Satelliten-Analyse',
+        '3D-Koederfuehrung, AR-Gewaesser & AR-Knotenassistent',
+        'Tiefenkarten, Wasseranalyse & KI-Koeder-Mischer',
+        'Geraete-Integration (Echolot, Bissanzeiger)',
+        'Live-Trip-Tracking, Trip-Planer & Lizenzverwaltung',
+        'Community-Ranking, Clans, Events & Marktplatz',
+        'Spot-Gruppen teilen, Profi-Analyse & Fang-Export',
+        'Priorisierte KI-Antworten & frueher Feature-Zugang',
+        '3 Freundes-Einladungen inklusive',
+        '10 EUR Rabatt auf deinen naechsten Ultimate-Plan pro Freund, der Basic kauft (bis zu 3x = 30 EUR)',
+        'Alle weiteren App-Funktionen ohne Einschraenkung'
       ]
     },
     {
       id: 'friends',
       name: 'Freundschaft',
-      price: 54.99,
-      priceLabel: '54,99 / Jahr',
+      price: 99.99,
+      priceLabel: '99,99 / Jahr',
       icon: Sparkles,
       color: 'from-emerald-600 to-teal-600',
-      description: 'Jahresplan mit Einladungen',
+      description: 'Ultimate als Jahresabo mit Einladungen',
       popular: false,
       yearly: true,
       features: [
         'Alles aus Ultimate (12 Monate)',
-        '3 Freundes-Einladungen inklusive (Basic)',
-        'Gemeinsame Spot-Gruppen mit Freunden',
-        'Geteilte Fangbuecher & Statistiken',
-        'Freunde zu Clans & Events einladen',
-        'Gruppen-Ranking & Team-Challenges',
-        '~23% Ersparnis gegenueber monatlichem Ultimate'
-      ]
-    },
-    {
-      id: 'friends_monthly',
-      name: 'Freundschaft Monatlich',
-      price: 39.00,
-      discountedPrice: 19.00,
-      icon: Sparkles,
-      color: 'from-pink-600 to-rose-600',
-      description: 'Monatsplan - 19 EUR sobald ein Freund sich anmeldet',
-      popular: false,
-      yearly: false,
-      features: [
-        'Alles aus Ultimate (1 Monat)',
-        'Regulaer 39 EUR/Monat',
-        'NUR 19 EUR/Monat sobald ein eingeladener Freund sich anmeldet',
         'Freundes-Einladungen inklusive',
         'Gemeinsame Spot-Gruppen mit Freunden',
         'Geteilte Fangbuecher & Statistiken',
         'Freunde zu Clans & Events einladen',
         'Gruppen-Ranking & Team-Challenges',
-        'Monatlich kuendbar'
+        '~72% Ersparnis gegenueber monatlichem Ultimate'
       ]
     }
   ];
@@ -355,6 +348,18 @@ export default function PremiumPlans() {
             const isCurrentPlan = currentPlan?.id === plan.id;
             const isProcessing = processingPlan === plan.id;
 
+            // Referral-Rabatt (10€ je eingeladenem Freund, der Basic kauft) gilt
+            // nur für den Ultimate-Plan und nur beim Web-Checkout. Betrag kommt
+            // aus dem Plan-Status (ultimate_discount_cents).
+            const discountEuro = Math.min(
+              (currentPlan?.ultimate_discount_cents || 0) / 100,
+              30
+            );
+            const showUltimateDiscount = plan.id === 'elite' && !billingAvailable && discountEuro > 0;
+            const discountedPrice = showUltimateDiscount
+              ? Math.max(plan.price - discountEuro, 9.99).toFixed(2)
+              : null;
+
             return (
               <Card
                 key={plan.id}
@@ -381,16 +386,25 @@ export default function PremiumPlans() {
                   <p className="text-xs text-gray-400 mt-1">{plan.description}</p>
                   <CardDescription>
                     <div className="text-3xl font-bold text-white mt-2">
-                      {plan.price === 0 ? 'Gratis' : `${plan.price}€`}
+                      {plan.price === 0 ? 'Gratis' : (
+                        <>
+                          {showUltimateDiscount && (
+                            <span className="text-lg text-gray-500 line-through mr-2 font-normal">
+                              {plan.price}€
+                            </span>
+                          )}
+                          {`${showUltimateDiscount ? discountedPrice : plan.price}€`}
+                        </>
+                      )}
                       {plan.price > 0 && (
                         <span className="text-sm text-gray-400 font-normal">
                           {plan.yearly ? '/Jahr' : '/Monat'}
                         </span>
                       )}
                     </div>
-                    {plan.discountedPrice && (
+                    {showUltimateDiscount && (
                       <div className="mt-2 text-sm text-emerald-400 font-semibold">
-                        Mit Freund: nur {plan.discountedPrice}€/Monat
+                        Freundschafts-Rabatt: {discountEuro.toFixed(2)}€ gespart
                       </div>
                     )}
                     {plan.yearly && (
