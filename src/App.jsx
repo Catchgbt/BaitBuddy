@@ -8,13 +8,12 @@ import VisualEditAgent from '@/lib/VisualEditAgent'
 import NavigationTracker from '@/lib/NavigationTracker'
 import { NavigationProvider } from '@/lib/NavigationContext'
 import { pagesConfig } from './pages.config'
-import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import PageNotFound from './lib/PageNotFound';
 
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { ThemeProvider } from '@/lib/ThemeContext';
-import { useDeepLinkHandler } from '@/hooks/useDeepLinkHandler';
 import SplashIntro from '@/components/intro/SplashIntro';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ErrorBoundary from '@/lib/ErrorBoundary';
@@ -39,7 +38,6 @@ const LazyPageFallback = () => (
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
-  useDeepLinkHandler();
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -63,9 +61,55 @@ const AuthenticatedApp = () => {
 
 const AnimatedRoutes = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { Pages, Layout, mainPage } = pagesConfig;
   const mainPageKey = mainPage ?? Object.keys(Pages)[0];
   const MainPage = mainPageKey ? Pages[mainPageKey] : null;
+
+  // Deep-Link Handler für Capacitor Android OAuth
+  useEffect(() => {
+    const handleDeepLink = (data) => {
+      const url = data.url;
+      console.log('[DeepLink] Opened:', url);
+
+      try {
+        const appUrlString = url.split('://')[1];
+        if (!appUrlString) return;
+
+        const [, ...pathParts] = appUrlString.split('/');
+        const pathWithQuery = pathParts.join('/');
+        const [pathname, queryString] = pathWithQuery.split('?');
+
+        if (pathname === 'auth' || pathname === 'auth/callback') {
+          const redirectPath = queryString ? `/AuthCallback?${queryString}` : '/AuthCallback';
+          console.log('[DeepLink] Navigating to:', redirectPath);
+          navigate(redirectPath);
+        } else if (pathname === 'logbook') {
+          navigate('/Logbook');
+        } else if (pathname === 'dashboard') {
+          navigate('/Dashboard');
+        }
+      } catch (error) {
+        console.error('[DeepLink] Parse error:', error);
+      }
+    };
+
+    if (typeof window !== 'undefined' && window.Capacitor) {
+      try {
+        const { App } = window.Capacitor;
+        if (App && App.addListener) {
+          App.addListener('appUrlOpen', handleDeepLink).then((listener) => {
+            const unsubscribe = listener;
+            return () => {
+              unsubscribe?.remove?.();
+            };
+          });
+        }
+      } catch (error) {
+        console.debug('[DeepLink] Setup failed:', error.message);
+      }
+    }
+  }, [navigate]);
 
   // Erstes Pfadsegment statt kompletter Rest-Pfad: bei den zusätzlichen
   // verschachtelten Routen (/events/create, /events/:id, /leaderboards/monthly)
