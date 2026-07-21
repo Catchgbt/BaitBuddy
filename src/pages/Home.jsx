@@ -501,6 +501,30 @@ function LandingPageContent() {
         }
     };
 
+    // Öffnet die OAuth-URL im externen System-Browser. Bevorzugt das
+    // @capacitor/browser-Plugin (Custom Tab), fällt aber robust auf
+    // window.open zurück, falls das Plugin im installierten Container fehlt
+    // (z. B. ältere Beta-APK, die die Live-Site lädt) — sonst schlägt der
+    // Login mit "'Browser' plugin is not implemented on android" fehl.
+    const openOAuthUrl = async (url) => {
+        const browserAvailable = typeof window !== 'undefined' &&
+            window.Capacitor?.isPluginAvailable?.('Browser');
+        if (browserAvailable) {
+            try {
+                await Browser.open({ url, windowName: '_system' });
+                return;
+            } catch (err) {
+                console.warn('[OAuth] Browser.open failed, falling back to window.open:', err);
+            }
+        }
+        // Fallback: Capacitor-Core leitet externe URLs via onCreateWindow an
+        // den System-Browser weiter (kein Browser-Plugin nötig).
+        const opened = window.open(url, '_system');
+        if (!opened) {
+            window.location.href = url;
+        }
+    };
+
     const handleSocialLogin = async (provider) => {
         setLoginError('');
         const isNative = typeof window !== 'undefined' &&
@@ -511,7 +535,7 @@ function LandingPageContent() {
 
         try {
             if (isNative) {
-                // Native: Use skipBrowserRedirect + Browser.open for external OAuth
+                // Native: Use skipBrowserRedirect + externen Browser für OAuth
                 const { data, error } = await supabase.auth.signInWithOAuth({
                     provider,
                     options: {
@@ -524,7 +548,7 @@ function LandingPageContent() {
                     return;
                 }
                 if (data?.url) {
-                    await Browser.open({ url: data.url, windowName: '_system' });
+                    await openOAuthUrl(data.url);
                 }
             } else {
                 // Web: Standard OAuth flow
