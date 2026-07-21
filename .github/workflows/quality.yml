@@ -36,6 +36,7 @@ jobs:
 
       - name: Build
         run: npm run build
+        timeout-minutes: 15
 
   e2e:
     runs-on: ubuntu-latest
