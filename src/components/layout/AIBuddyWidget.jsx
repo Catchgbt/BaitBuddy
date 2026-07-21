@@ -535,6 +535,11 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
           }
         }
 
+        // Stelle sicher, dass botMessage ein String ist
+        if (typeof botMessage !== 'string') {
+          botMessage = String(botMessage || 'Ein unbekannter Fehler ist aufgetreten.');
+        }
+
         // Nur echte HTTP-Fehler (mit Status) in den roten Alert, nicht Offline-Fallbacks
         if (status != null && !isOfflineError) {
           setChatError(botMessage);
