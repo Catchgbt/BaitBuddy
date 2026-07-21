@@ -66,8 +66,9 @@ function EventTimer() {
 
   return (
     <Link to={createPageUrl("Events")}>
-      <div className="flex items-center bg-gray-900/80 border border-cyan-500/30 rounded-md px-2 py-1 cursor-pointer hover:border-cyan-400/60 transition-colors">
-        <span className="font-mono text-[11px] text-cyan-400 tracking-widest">
+      <div className="flex items-center gap-1 bg-gray-900/80 border border-cyan-500/30 rounded px-1.5 py-0.5 cursor-pointer hover:border-cyan-400/60 transition-colors">
+        <span className="text-[9px] text-cyan-300/70 font-medium">Event:</span>
+        <span className="font-mono text-[10px] text-cyan-400 tracking-wide">
           {formatTime(totalSeconds)}
         </span>
       </div>
