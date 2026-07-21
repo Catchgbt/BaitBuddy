@@ -24,8 +24,12 @@ export async function initializeDeepLinking() {
       // Parse app://baitbuddy/auth/callback?code=...&state=... or #access_token=...
       if (url.includes('auth/callback')) {
         try {
-          // Close the browser Custom Tab as promptly as possible
-          await Browser.close().catch(() => {});
+          // Close the browser Custom Tab as promptly as possible.
+          // Nur aufrufen, wenn das Plugin im Container verfügbar ist —
+          // ältere Beta-APKs ohne @capacitor/browser würden sonst werfen.
+          if (window.Capacitor?.isPluginAvailable?.('Browser')) {
+            await Browser.close().catch(() => {});
+          }
 
           const urlObj = new URL(url.replace('app://', 'https://'));
           const code = urlObj.searchParams.get('code');
