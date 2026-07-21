@@ -1,49 +1,58 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-let CapacitorApp;
-try {
-  CapacitorApp = require('@capacitor/app').App;
-} catch (e) {
-  CapacitorApp = null;
-}
-
 export const useDeepLinkHandler = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!CapacitorApp) return;
-
-    const handleDeepLink = async (data) => {
-      const url = data.url;
-      console.log('[DeepLink] Opened:', url);
-
+    const setupDeepLinkListener = async () => {
       try {
-        const appUrlString = url.split('://')[1];
-        if (!appUrlString) return;
+        const { App } = await import('@capacitor/app');
 
-        const [, ...pathParts] = appUrlString.split('/');
-        const pathWithQuery = pathParts.join('/');
-        const [pathname, queryString] = pathWithQuery.split('?');
+        const handleDeepLink = (data) => {
+          const url = data.url;
+          console.log('[DeepLink] Opened:', url);
 
-        if (pathname === 'auth' || pathname === 'auth/callback') {
-          const redirectPath = queryString ? `/AuthCallback?${queryString}` : '/AuthCallback';
-          console.log('[DeepLink] Navigating to:', redirectPath);
-          navigate(redirectPath);
-        } else if (pathname === 'logbook') {
-          navigate('/Logbook');
-        } else if (pathname === 'dashboard') {
-          navigate('/Dashboard');
-        }
+          try {
+            const appUrlString = url.split('://')[1];
+            if (!appUrlString) return;
+
+            const [, ...pathParts] = appUrlString.split('/');
+            const pathWithQuery = pathParts.join('/');
+            const [pathname, queryString] = pathWithQuery.split('?');
+
+            if (pathname === 'auth' || pathname === 'auth/callback') {
+              const redirectPath = queryString ? `/AuthCallback?${queryString}` : '/AuthCallback';
+              console.log('[DeepLink] Navigating to:', redirectPath);
+              navigate(redirectPath);
+            } else if (pathname === 'logbook') {
+              navigate('/Logbook');
+            } else if (pathname === 'dashboard') {
+              navigate('/Dashboard');
+            }
+          } catch (error) {
+            console.error('[DeepLink] Parse error:', error);
+          }
+        };
+
+        const unsubscribe = await App.addListener('appUrlOpen', handleDeepLink);
+
+        return () => {
+          unsubscribe?.remove?.();
+        };
       } catch (error) {
-        console.error('[DeepLink] Parse error:', error);
+        console.debug('[DeepLink] Not available (web environment)', error.message);
+        return () => {};
       }
     };
 
-    const unsubscribe = CapacitorApp.addListener('appUrlOpen', handleDeepLink);
+    let cleanup;
+    setupDeepLinkListener().then((fn) => {
+      cleanup = fn;
+    });
 
     return () => {
-      unsubscribe.then((listener) => listener?.remove?.());
+      cleanup?.();
     };
   }, [navigate]);
 };
