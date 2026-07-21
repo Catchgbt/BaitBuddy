@@ -68,47 +68,52 @@ const AnimatedRoutes = () => {
 
   // Deep-Link Handler für Capacitor Android OAuth
   useEffect(() => {
-    const handleDeepLink = (data) => {
-      const url = data.url;
-      console.log('[DeepLink] Opened:', url);
+    let unsubscribe;
 
-      try {
-        const appUrlString = url.split('://')[1];
-        if (!appUrlString) return;
+    const setupDeepLinkListener = async () => {
+      const handleDeepLink = (data) => {
+        const url = data.url;
+        console.log('[DeepLink] Opened:', url);
 
-        const [, ...pathParts] = appUrlString.split('/');
-        const pathWithQuery = pathParts.join('/');
-        const [pathname, queryString] = pathWithQuery.split('?');
+        try {
+          const appUrlString = url.split('://')[1];
+          if (!appUrlString) return;
 
-        if (pathname === 'auth' || pathname === 'auth/callback') {
-          const redirectPath = queryString ? `/AuthCallback?${queryString}` : '/AuthCallback';
-          console.log('[DeepLink] Navigating to:', redirectPath);
-          navigate(redirectPath);
-        } else if (pathname === 'logbook') {
-          navigate('/Logbook');
-        } else if (pathname === 'dashboard') {
-          navigate('/Dashboard');
+          const [, ...pathParts] = appUrlString.split('/');
+          const pathWithQuery = pathParts.join('/');
+          const [pathname, queryString] = pathWithQuery.split('?');
+
+          if (pathname === 'auth' || pathname === 'auth/callback') {
+            const redirectPath = queryString ? `/AuthCallback?${queryString}` : '/AuthCallback';
+            console.log('[DeepLink] Navigating to:', redirectPath);
+            navigate(redirectPath);
+          } else if (pathname === 'logbook') {
+            navigate('/Logbook');
+          } else if (pathname === 'dashboard') {
+            navigate('/Dashboard');
+          }
+        } catch (error) {
+          console.error('[DeepLink] Parse error:', error);
         }
-      } catch (error) {
-        console.error('[DeepLink] Parse error:', error);
+      };
+
+      if (typeof window !== 'undefined' && window.Capacitor) {
+        try {
+          const { App } = window.Capacitor;
+          if (App && App.addListener) {
+            unsubscribe = await App.addListener('appUrlOpen', handleDeepLink);
+          }
+        } catch (error) {
+          console.debug('[DeepLink] Setup failed:', error.message);
+        }
       }
     };
 
-    if (typeof window !== 'undefined' && window.Capacitor) {
-      try {
-        const { App } = window.Capacitor;
-        if (App && App.addListener) {
-          App.addListener('appUrlOpen', handleDeepLink).then((listener) => {
-            const unsubscribe = listener;
-            return () => {
-              unsubscribe?.remove?.();
-            };
-          });
-        }
-      } catch (error) {
-        console.debug('[DeepLink] Setup failed:', error.message);
-      }
-    }
+    setupDeepLinkListener();
+
+    return () => {
+      unsubscribe?.remove?.();
+    };
   }, [navigate]);
 
   // Erstes Pfadsegment statt kompletter Rest-Pfad: bei den zusätzlichen
