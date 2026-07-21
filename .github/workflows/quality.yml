@@ -15,27 +15,52 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: |
-            package-lock.json
-            backend/package-lock.json
+          cache-dependency-path: package-lock.json
+
+      - name: Clean npm cache
+        run: npm cache clean --force
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Install deps
-        run: npm ci --legacy-peer-deps
+        run: npm install --legacy-peer-deps --no-audit
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Install backend deps
-        run: cd backend && npm ci --legacy-peer-deps
+        run: cd backend && npm install --legacy-peer-deps --no-audit
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+
+      - name: Verify dependencies
+        run: |
+          echo "Root node_modules check:"
+          test -d node_modules && echo "✓ Root node_modules exists" || echo "✗ Root node_modules missing"
+          echo "Backend node_modules check:"
+          test -d backend/node_modules && echo "✓ Backend node_modules exists" || echo "✗ Backend node_modules missing"
+          echo "Checking critical dependencies:"
+          ls -la node_modules/express-async-errors/package.json 2>/dev/null || echo "✗ express-async-errors not found"
 
       - name: Lint
         run: npm run lint
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Typecheck
         run: npm run typecheck
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Unit tests
         run: npm run test
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Build
         run: npm run build
+        timeout-minutes: 15
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
 
   e2e:
     runs-on: ubuntu-latest
