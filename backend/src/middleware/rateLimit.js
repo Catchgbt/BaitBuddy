@@ -1,4 +1,4 @@
-import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
+import rateLimit from 'express-rate-limit';
 import { RedisStore } from 'rate-limit-redis';
 import Redis from 'ioredis';
 
@@ -7,8 +7,7 @@ import Redis from 'ioredis';
 // denselben Limit-Topf (20 KI-Requests/Minute global statt pro Nutzer) und
 // express-rate-limit loggte pro Request zwei ValidationErrors
 // (ERR_ERL_UNEXPECTED_X_FORWARDED_FOR / ERR_ERL_FORWARDED_HEADER). Die echte
-// Client-IP kommt aus den von Vercel gesetzten, vertrauenswuerdigen Headern;
-// ipKeyGenerator normalisiert IPv6-Adressen auf ihr Subnetz.
+// Client-IP kommt aus den von Vercel gesetzten, vertrauenswuerdigen Headern.
 function clientIp(req) {
   const fwd = req.headers['x-vercel-forwarded-for']
     || req.headers['x-real-ip']
@@ -20,7 +19,18 @@ function clientIp(req) {
   return req.ip || 'unknown';
 }
 
-export const rateLimitKeyGenerator = (req) => ipKeyGenerator(clientIp(req));
+// IPv6-Normalisierung: reduziert auf /56-Subnetz
+// 56 Bits = 3 komplette Hextets (48 Bits) + 8 Bits des 4. Hextets
+function normalizeIp(ip) {
+  if (!ip.includes(':')) return ip;
+  const parts = ip.split(':');
+  if (parts.length < 4) return ip;
+  // /56: erste 3 Hextets + 4. Hextet (ganz)
+  const subnet = parts.slice(0, 4).join(':') + '::/56';
+  return subnet;
+}
+
+export const rateLimitKeyGenerator = (req) => normalizeIp(clientIp(req));
 
 // Instanzuebergreifendes Rate-Limiting auf Vercel Serverless.
 // Der Standard-MemoryStore von express-rate-limit zaehlt PRO Lambda-Instanz —
