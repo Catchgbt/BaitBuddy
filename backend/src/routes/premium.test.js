@@ -137,7 +137,7 @@ describe('POST /api/premium/checkout', () => {
     expect(purchaseVerificationMock.createStripeCheckoutSession).toHaveBeenCalledWith(
       expect.objectContaining({
         planId: 'pro',
-        amountCents: 1999,
+        amountCents: 1800,
         userId: 'user-1',
         successUrl: expect.stringContaining('https://baitbuddy.test/PremiumPlans?checkout=success&plan_id=pro'),
         cancelUrl: 'https://baitbuddy.test/PremiumPlans?checkout=cancelled',
@@ -263,9 +263,9 @@ describe('Referral: 10-EUR-Ultimate-Rabatt', () => {
       .send({ plan_id: 'elite' });
 
     expect(res.status).toBe(200);
-    // Ultimate 2999 - 1000 Rabatt = 1999
+    // Ultimate 3600 - 1000 Rabatt = 2600
     expect(purchaseVerificationMock.createStripeCheckoutSession).toHaveBeenCalledWith(
-      expect.objectContaining({ planId: 'elite', amountCents: 1999 })
+      expect.objectContaining({ planId: 'elite', amountCents: 2600 })
     );
   });
 
@@ -286,7 +286,7 @@ describe('Referral: 10-EUR-Ultimate-Rabatt', () => {
       .send({ plan_id: 'elite' });
 
     expect(res.status).toBe(200);
-    // 2999 - 3000 = -1 -> auf Mindestbetrag 999 begrenzt
+    // 3600 - 3000 = 600 -> auf Mindestbetrag 999 begrenzt
     expect(purchaseVerificationMock.createStripeCheckoutSession).toHaveBeenCalledWith(
       expect.objectContaining({ planId: 'elite', amountCents: 999 })
     );

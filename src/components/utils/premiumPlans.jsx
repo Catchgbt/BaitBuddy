@@ -10,10 +10,10 @@ export const PLAN_HIERARCHY = {
 
 export const PLAN_PRICES = {
   free: 0,
-  basic: 9.99,
-  pro: 19.99,
-  elite: 29.99,
-  ultimate: 29.99
+  basic: 8.99,
+  pro: 18,
+  elite: 36,
+  ultimate: 36
 };
 
 export const PLAN_NAMES = {
