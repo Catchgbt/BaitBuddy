@@ -5,54 +5,48 @@ export const useDeepLinkHandler = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const setupDeepLinkListener = async () => {
+    const handleDeepLink = (data) => {
+      const url = data.url;
+      console.log('[DeepLink] Opened:', url);
+
       try {
-        const { App } = await import('@capacitor/app');
+        const appUrlString = url.split('://')[1];
+        if (!appUrlString) return;
 
-        const handleDeepLink = (data) => {
-          const url = data.url;
-          console.log('[DeepLink] Opened:', url);
+        const [, ...pathParts] = appUrlString.split('/');
+        const pathWithQuery = pathParts.join('/');
+        const [pathname, queryString] = pathWithQuery.split('?');
 
-          try {
-            const appUrlString = url.split('://')[1];
-            if (!appUrlString) return;
-
-            const [, ...pathParts] = appUrlString.split('/');
-            const pathWithQuery = pathParts.join('/');
-            const [pathname, queryString] = pathWithQuery.split('?');
-
-            if (pathname === 'auth' || pathname === 'auth/callback') {
-              const redirectPath = queryString ? `/AuthCallback?${queryString}` : '/AuthCallback';
-              console.log('[DeepLink] Navigating to:', redirectPath);
-              navigate(redirectPath);
-            } else if (pathname === 'logbook') {
-              navigate('/Logbook');
-            } else if (pathname === 'dashboard') {
-              navigate('/Dashboard');
-            }
-          } catch (error) {
-            console.error('[DeepLink] Parse error:', error);
-          }
-        };
-
-        const unsubscribe = await App.addListener('appUrlOpen', handleDeepLink);
-
-        return () => {
-          unsubscribe?.remove?.();
-        };
+        if (pathname === 'auth' || pathname === 'auth/callback') {
+          const redirectPath = queryString ? `/AuthCallback?${queryString}` : '/AuthCallback';
+          console.log('[DeepLink] Navigating to:', redirectPath);
+          navigate(redirectPath);
+        } else if (pathname === 'logbook') {
+          navigate('/Logbook');
+        } else if (pathname === 'dashboard') {
+          navigate('/Dashboard');
+        }
       } catch (error) {
-        console.debug('[DeepLink] Not available (web environment)', error.message);
-        return () => {};
+        console.error('[DeepLink] Parse error:', error);
       }
     };
 
-    let cleanup;
-    setupDeepLinkListener().then((fn) => {
-      cleanup = fn;
-    });
+    let unsubscribe;
+    if (typeof window !== 'undefined' && window.Capacitor) {
+      try {
+        const { App } = window.Capacitor;
+        if (App && App.addListener) {
+          App.addListener('appUrlOpen', handleDeepLink).then((listener) => {
+            unsubscribe = listener;
+          });
+        }
+      } catch (error) {
+        console.debug('[DeepLink] Setup failed:', error.message);
+      }
+    }
 
     return () => {
-      cleanup?.();
+      unsubscribe?.remove?.();
     };
   }, [navigate]);
 };
