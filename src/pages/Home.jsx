@@ -496,9 +496,15 @@ function LandingPageContent() {
 
     const handleSocialLogin = async (provider) => {
         setLoginError('');
+        const isNative = typeof window !== 'undefined' &&
+                        (window.Capacitor?.isNativePlatform?.() || window.capacitor?.platform);
+        const redirectUrl = isNative
+          ? 'app://baitbuddy/auth/callback'
+          : buildPublicUrl('/AuthCallback');
+
         const { error } = await supabase.auth.signInWithOAuth({
             provider,
-            options: { redirectTo: buildPublicUrl('/AuthCallback') },
+            options: { redirectTo: redirectUrl },
         });
         if (error) setLoginError('Social Login fehlgeschlagen: ' + error.message);
     };

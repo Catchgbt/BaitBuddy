@@ -29,6 +29,14 @@
                 <data android:scheme="https" android:host="baitbuddy.vercel.app" />
             </intent-filter>
 
+            <!-- OAuth Deep-Link Handler -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="app" android:host="baitbuddy" />
+            </intent-filter>
+
         </activity>
 
         <provider
