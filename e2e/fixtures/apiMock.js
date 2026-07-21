@@ -60,7 +60,8 @@ export async function installApiMocks(page, { authenticated = false } = {}) {
       return fulfillJson(route, { ok: true, app: 'BaitBuddy', version: 'e2e' });
     }
     if (path === '/api/referrals/me') {
-      return authenticated ? fulfillJson(route, { ok: true, code: 'e2etest1', referral_count: 0 }) : fulfillJson(route, { error: 'Kein Token' }, 401);
+      // E2E tests: keine Referral-Daten, damit das Popup nicht erscheint
+      return fulfillJson(route, { ok: false }, 200);
     }
     if (path === '/api/referrals/redeem' && method === 'POST') {
       return fulfillJson(route, { ok: true });
