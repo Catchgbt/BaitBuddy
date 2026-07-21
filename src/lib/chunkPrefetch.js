@@ -78,7 +78,6 @@ export const CHUNK_ROUTES = {
   
   // AI features
   AI: () => import('@/pages/AI'),
-  AIAssistant: () => import('@/pages/AIAssistant'),
   ARView: () => import('@/pages/ARView'),
   
   // Heavy components
@@ -95,11 +94,10 @@ export const CHUNK_ROUTES = {
  */
 export const NAVIGATION_GRAPH = {
   Home: ['Dashboard', 'Map', 'Weather'],
-  Dashboard: ['Map', 'Logbook', 'AIAssistant'],
+  Dashboard: ['Map', 'Logbook', 'Weather'],
   Map: ['WaterAnalysis', 'ARView', 'Analysis'],
-  Logbook: ['Analysis', 'AIAssistant', 'Map'],
+  Logbook: ['Analysis', 'Map', 'Weather'],
   Weather: ['Map', 'Dashboard', 'WaterAnalysis'],
-  AIAssistant: ['Map', 'Logbook', 'Dashboard'],
   Profile: ['Settings', 'Licenses', 'Premium'],
 };
 
