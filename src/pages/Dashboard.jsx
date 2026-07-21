@@ -661,12 +661,14 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
                           <div className="text-lg sm:text-xl font-bold text-white" aria-label={`Spot ${index + 1}: ${spot.name}`}>{spot.name}</div>
                           <div className="text-xs sm:text-sm text-gray-400 capitalize" aria-label={`Gewassertyp: ${spot.water_type}`}>{spot.water_type}</div>
                         </div>
-                        <div className="text-xs font-medium text-emerald-300 whitespace-nowrap ml-2">
-                          {spot.distance < 1
-                            ? `${Math.round(spot.distance * 1000)}m`
-                            : `${spot.distance.toFixed(1)}km`
-                          }
-                        </div>
+                        {spot.distance != null && (
+                          <div className="text-xs font-medium text-emerald-300 whitespace-nowrap ml-2">
+                            {spot.distance < 1
+                              ? `${Math.round(spot.distance * 1000)}m`
+                              : `${spot.distance.toFixed(1)}km`
+                            }
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
