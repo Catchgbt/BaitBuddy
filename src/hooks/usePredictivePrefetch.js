@@ -25,7 +25,6 @@ const PAGE_PREFETCH_MAP = {
   'BaitMixer': ['Logbook', 'Dashboard'],
   'TripPlanner': ['Map', 'Logbook', 'Dashboard'],
   'BathymetricCrowdsourcing': ['Map', 'Devices'],
-  'WeatherAlerts': ['Weather', 'Dashboard'],
   'AngelscheinPruefungSchonzeiten': ['Dashboard'],
   'ARKnotenAssistent': ['Gear', 'Dashboard'],
   'CatchCam': ['AI', 'Logbook'],

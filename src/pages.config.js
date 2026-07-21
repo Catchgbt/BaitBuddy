@@ -94,7 +94,6 @@ const Tutorials = lazy(() => import('./pages/Tutorials'));
 const UsedGear = lazy(() => import('./pages/UsedGear'));
 const WaterAnalysis = lazy(() => import('./pages/WaterAnalysis'));
 const Weather = lazy(() => import('./pages/Weather'));
-const WeatherAlerts = lazy(() => import('./pages/WeatherAlerts'));
 import __Layout from './Layout.jsx';
 
 
@@ -141,7 +140,6 @@ export const PAGES = {
     "UsedGear": UsedGear,
     "WaterAnalysis": WaterAnalysis,
     "Weather": Weather,
-    "WeatherAlerts": WeatherAlerts,
 }
 
 export const pagesConfig = {
