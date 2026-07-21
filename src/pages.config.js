@@ -55,7 +55,6 @@ import { lazy } from 'react';
 const AGB = lazy(() => import('./pages/AGB'));
 const AuthCallback = lazy(() => import('./pages/AuthCallback'));
 const AI = lazy(() => import('./pages/AI'));
-const AIAssistant = lazy(() => import('./pages/AIAssistant'));
 const ARKnotenAssistent = lazy(() => import('./pages/ARKnotenAssistent'));
 const ARView = lazy(() => import('./pages/ARView'));
 const AdminUsers = lazy(() => import('./pages/AdminUsers'));
@@ -103,7 +102,6 @@ export const PAGES = {
     "AGB": AGB,
     "AuthCallback": AuthCallback,
     "AI": AI,
-    "AIAssistant": AIAssistant,
     "ARKnotenAssistent": ARKnotenAssistent,
     "ARView": ARView,
     "AdminUsers": AdminUsers,

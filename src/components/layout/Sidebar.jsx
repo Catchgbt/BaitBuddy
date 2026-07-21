@@ -27,7 +27,6 @@ export default function Sidebar({ isOpen, setIsOpen, currentPageName, user, load
   ];
 
   const aiItems = [
-    { name: "KI Chat-Buddy", path: "AIAssistant", key: "nav.ai_chat" },
     { name: "KI-Kamera & Biss", path: "AI", key: "nav.ai_camera" },
     { name: "AR-Gewässer", path: "ARView", key: "nav.ar_view" },
     { name: "AR Knoten AI", path: "ARKnotenAssistent", key: "nav.ar_knoten" },
