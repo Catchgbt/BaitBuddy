@@ -27,6 +27,7 @@ function buildCaption(catchItem) {
 async function downloadImage(url, filename) {
   try {
     const res = await fetch(url, { mode: 'cors' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}: Download fehlgeschlagen`);
     const blob = await res.blob();
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -48,6 +49,7 @@ async function shareNative(catchItem, caption) {
     if (catchItem.photo_url && navigator.canShare) {
       try {
         const res = await fetch(catchItem.photo_url, { mode: 'cors' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}: Photo konnte nicht geladen werden`);
         const blob = await res.blob();
         const file = new File([blob], `fang-${Date.now()}.jpg`, { type: blob.type || 'image/jpeg' });
         if (navigator.canShare({ files: [file] })) {

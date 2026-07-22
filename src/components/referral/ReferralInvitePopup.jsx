@@ -62,6 +62,7 @@ export default function ReferralInvitePopup() {
 
   useEffect(() => {
     let cancelled = false;
+    let timeoutId = null;
 
     const init = async () => {
       const isAuth = await auth.isAuthenticated().catch(() => false);
@@ -91,17 +92,19 @@ export default function ReferralInvitePopup() {
       if (!data?.code) return;
 
       // Kurzer Delay, damit das Dashboard erst montiert ist.
-      const t = setTimeout(() => {
+      timeoutId = setTimeout(() => {
         if (!cancelled) {
           setOpen(true);
           markPopupShown();
         }
       }, 900);
-      return () => clearTimeout(t);
     };
 
     init();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [loadReferral]);
 
   const handleCopy = async () => {
