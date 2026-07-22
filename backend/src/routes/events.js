@@ -56,11 +56,30 @@ router.get('/events/templates/:templateId', optionalAuth, async (req, res) => {
 
 router.get('/events', optionalAuth, async (req, res) => {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('events')
       .select('*')
-      .eq('is_active', true)
-      .order('created_at', { ascending: false });
+      .eq('is_active', true);
+
+    if (req.user?.id) {
+      // Authentifizierter User: eigene Events + öffentliche Events + Events von Freunden
+      // Freunde = Nutzer, die dieser User als Referrer hat (referrals.referrer_user_id = user.id)
+      // ODER Nutzer, die diesen User eingeladen haben (user.referred_by)
+      const friendQuery = `
+        created_by = '${req.user.id}' OR
+        created_by IN (
+          SELECT referred_user_id FROM public.referrals
+          WHERE referrer_user_id = '${req.user.id}'
+        ) OR
+        created_by IN (
+          SELECT referrer_user_id FROM public.referrals
+          WHERE referred_user_id = '${req.user.id}'
+        )
+      `;
+      query = query.or(friendQuery);
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) return sendDbError(res, error);
     return res.json(data || []);

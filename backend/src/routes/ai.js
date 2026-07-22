@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
+import { checkChatRateLimit } from '../middleware/rateLimit.js';
 import { supabase } from '../lib/supabase.js';
 import { invokeLLM, invokeLLMStream, getAnthropicKey } from '../lib/llm.js';
 import {
@@ -278,7 +279,7 @@ Regeln: Aktions-Block nur wenn Nutzer wirklich eine Aktion will. Zuerst kurze Be
   return { ok: true, prompt: `${systemPrompt}\n\n${history}\n\nAntworte:` };
 }
 
-router.post('/ai/chat', requireAuth, async (req, res) => {
+router.post('/ai/chat', requireAuth, checkChatRateLimit, async (req, res) => {
   try {
     const built = await buildChatPrompt(req);
     if (!built.ok) return res.status(built.status).json(built.body);
@@ -327,7 +328,7 @@ router.post('/ai/chat', requireAuth, async (req, res) => {
 // vom LLM kommen, damit das Frontend satzweise vorlesen kann, BEVOR die ganze
 // Antwort fertig ist ("quasi live"). Am Ende wird der Aktions-Block aus dem
 // Volltext extrahiert und als 'done'-Event mit der bereinigten Antwort gesendet.
-router.post('/ai/chat/stream', requireAuth, async (req, res) => {
+router.post('/ai/chat/stream', requireAuth, checkChatRateLimit, async (req, res) => {
   // Client-Disconnect abfangen, um den Upstream-Stream abzubrechen.
   const abort = new AbortController();
   res.on('close', () => abort.abort());
