@@ -41,6 +41,41 @@ function isNetworkError(error) {
   return error != null && error.status == null;
 }
 
+// ── Resilienz: Exponential Backoff bei transienter Serverüberlast ───────────────
+// Der Server meldet Überlast/Timeouts mit klaren Statuscodes (408/429/502/503/504).
+// Statt sofort erneut anzufragen (und den Server weiter zu belasten) wartet der
+// Client gestaffelt: 1s → 2s → 4s. Nur idempotente GETs werden automatisch
+// wiederholt — Writes (POST/PATCH/DELETE) dürfen nicht blind erneut gesendet
+// werden (Doppel-Mutation). Netzwerk-/Timeout-Fehler (fetch wirft, kein Status)
+// gelten ebenfalls als transient und werden für GETs mit Backoff wiederholt.
+export const RETRYABLE_STATUS = new Set([408, 429, 502, 503, 504]);
+const MAX_RETRIES = 3; // 4 Versuche insgesamt (initial + 3 Wiederholungen)
+const MAX_RETRY_DELAY_MS = 30000;
+
+// Berechnet die Wartezeit vor dem nächsten Versuch. Ein vom Server gesetzter
+// `Retry-After`-Header (Sekunden) hat Vorrang; sonst greift 1s·2^attempt mit
+// etwas Jitter, um Retry-Wellen bei gleichzeitigen Clients zu entzerren.
+export function computeRetryDelay(attempt, retryAfterSeconds) {
+  if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds >= 0) {
+    return Math.min(retryAfterSeconds * 1000, MAX_RETRY_DELAY_MS);
+  }
+  const base = 1000 * Math.pow(2, attempt); // 1000, 2000, 4000, …
+  const jitter = Math.random() * 250;
+  return Math.min(base + jitter, MAX_RETRY_DELAY_MS);
+}
+
+// Parst den `Retry-After`-Header. Unterstützt das Sekunden-Format
+// (RFC 9110 delay-seconds); ein HTTP-Datum wäre ebenfalls zulässig, kommt bei
+// unseren Limitern aber nicht vor — dann liefert die Funktion undefined und der
+// exponentielle Default greift.
+function parseRetryAfter(headerValue) {
+  if (!headerValue) return undefined;
+  const seconds = Number(headerValue);
+  return Number.isFinite(seconds) ? seconds : undefined;
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 // ── Raw HTTP Client ───────────────────────────────────────────────────────────
 class ApiClient {
   constructor() {
@@ -112,7 +147,7 @@ class ApiClient {
     // Komponente, die den laufenden Request beim Unmount abbrechen will). Das
     // interne 30s-Timeout bleibt immer aktiv und wird mit dem externen Signal
     // kombiniert. `_retried` verhindert Endlos-Refresh-Schleifen bei 401.
-    const { signal: externalSignal, _retried = false } = options;
+    const { signal: externalSignal, _retried = false, _attempt = 0 } = options;
     const token = this.getToken();
     const timeoutSignal = AbortSignal.timeout(30000); // 30s timeout
     const opts = {
@@ -126,7 +161,14 @@ class ApiClient {
         : timeoutSignal,
     };
     if (body !== undefined) opts.body = JSON.stringify(body);
+
+    // Bewusst KEIN Retry, wenn fetch selbst wirft (offline/DNS/Timeout): ein
+    // solcher Fehler hat keinen HTTP-Status und muss den Offline-Fallback
+    // (gecachtes Profil, lokale Warteschlange) SOFORT auslösen, statt erst
+    // mehrere Sekunden lang zu warten. Backoff greift nur bei echter, vom Server
+    // gemeldeter Überlast (transiente Statuscodes unten).
     const res = await fetch(`${API_URL}${path}`, opts);
+
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       // Abgelaufene Sitzung: einmalig Token erneuern und Anfrage wiederholen.
@@ -134,7 +176,16 @@ class ApiClient {
       const noRetry = ['/api/auth/login', '/api/auth/register', '/api/auth/refresh'];
       if (res.status === 401 && !_retried && !noRetry.some(p => path.startsWith(p)) && this.getRefreshToken()) {
         const refreshed = await this._refreshSession();
-        if (refreshed) return this.request(method, path, body, { signal: externalSignal, _retried: true });
+        if (refreshed) return this.request(method, path, body, { signal: externalSignal, _retried: true, _attempt });
+      }
+      // Transiente Serverüberlast (408/429/502/503/504): GET gestaffelt erneut
+      // versuchen (Exponential Backoff, ggf. mit Retry-After des Servers), statt
+      // den überlasteten Server sofort weiter zu bombardieren. Writes werden hier
+      // bewusst NICHT wiederholt (Gefahr der Doppel-Mutation).
+      if (method === 'GET' && RETRYABLE_STATUS.has(res.status) && _attempt < MAX_RETRIES) {
+        const retryAfter = parseRetryAfter(res.headers?.get?.('Retry-After'));
+        await sleep(computeRetryDelay(_attempt, retryAfter));
+        return this.request(method, path, body, { ...options, _attempt: _attempt + 1 });
       }
       const err = /** @type {Error & { status?: number, data?: any }} */ (
         new Error(data.error || `HTTP ${res.status}`)

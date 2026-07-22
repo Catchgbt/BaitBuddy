@@ -1,10 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { api, entities, auth, integrations } from './frontendClient';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { api, entities, auth, integrations, computeRetryDelay, RETRYABLE_STATUS } from './frontendClient';
 
-function jsonResponse(body, { ok = true, status = ok ? 200 : 400 } = {}) {
+function jsonResponse(body, { ok = true, status = ok ? 200 : 400, headers = {} } = {}) {
   return {
     ok,
     status,
+    headers: { get: (name) => headers[name] ?? headers[name?.toLowerCase?.()] ?? null },
     json: async () => body,
   };
 }
@@ -262,5 +263,113 @@ describe('auth.login', () => {
 
     expect(api.getToken()).toBe('tok');
     expect(api.getRefreshToken()).toBe('ref');
+  });
+});
+
+describe('computeRetryDelay (Exponential Backoff)', () => {
+  it('staffelt ohne Retry-After exponentiell: 1s, 2s, 4s (+ Jitter < 250ms)', () => {
+    for (const [attempt, base] of [[0, 1000], [1, 2000], [2, 4000]]) {
+      const delay = computeRetryDelay(attempt);
+      expect(delay).toBeGreaterThanOrEqual(base);
+      expect(delay).toBeLessThan(base + 250);
+    }
+  });
+
+  it('respektiert einen Retry-After-Wert des Servers (Sekunden) mit Vorrang', () => {
+    expect(computeRetryDelay(0, 3)).toBe(3000);
+    expect(computeRetryDelay(2, 0)).toBe(0);
+  });
+
+  it('deckelt sehr grosse Wartezeiten bei 30s', () => {
+    expect(computeRetryDelay(0, 120)).toBe(30000);
+    expect(computeRetryDelay(20)).toBe(30000);
+  });
+});
+
+describe('ApiClient Resilienz (transiente Serverfehler)', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.restoreAllMocks();
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('wiederholt GET bei 503 mit Backoff und liefert schliesslich das Ergebnis', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({ error: 'überlastet' }, { ok: false, status: 503 }))
+      .mockResolvedValueOnce(jsonResponse({ error: 'überlastet' }, { ok: false, status: 503 }))
+      .mockResolvedValueOnce(jsonResponse([{ id: 42 }]));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const promise = api.get('/api/community/posts');
+    await vi.runAllTimersAsync();
+    const result = await promise;
+
+    expect(result).toEqual([{ id: 42 }]);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('gibt nach erschöpften Wiederholungen (4 Versuche) den Fehler weiter', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({ error: 'überlastet' }, { ok: false, status: 503 })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const promise = api.get('/api/community/posts');
+    const assertion = expect(promise).rejects.toThrow();
+    await vi.runAllTimersAsync();
+    await assertion;
+
+    expect(fetchMock).toHaveBeenCalledTimes(4); // initial + 3 Wiederholungen
+  });
+
+  it('wiederholt POST (Write) NICHT bei 503 — keine Doppel-Mutation', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({ error: 'überlastet' }, { ok: false, status: 503 })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const promise = api.post('/api/catches', { species: 'Hecht' });
+    const assertion = expect(promise).rejects.toThrow();
+    await vi.runAllTimersAsync();
+    await assertion;
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('nutzt den Retry-After-Header des Servers bei 429', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({ error: 'zu viele Anfragen' }, { ok: false, status: 429, headers: { 'Retry-After': '2' } }))
+      .mockResolvedValueOnce(jsonResponse({ ok: true }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const promise = api.get('/api/community/posts');
+    await vi.advanceTimersByTimeAsync(1999);
+    expect(fetchMock).toHaveBeenCalledTimes(1); // vor Ablauf von 2s noch kein Retry
+    await vi.advanceTimersByTimeAsync(2);
+    await promise;
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('wiederholt einen reinen Netzwerkfehler NICHT (Offline-Fallback bleibt sofort)', async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const promise = api.get('/api/community/posts');
+    const assertion = expect(promise).rejects.toThrow();
+    await vi.runAllTimersAsync();
+    await assertion;
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('RETRYABLE_STATUS enthält die transienten Überlast-Codes', () => {
+    for (const code of [408, 429, 502, 503, 504]) {
+      expect(RETRYABLE_STATUS.has(code)).toBe(true);
+    }
+    expect(RETRYABLE_STATUS.has(400)).toBe(false);
+    expect(RETRYABLE_STATUS.has(404)).toBe(false);
   });
 });

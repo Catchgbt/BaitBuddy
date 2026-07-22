@@ -2,8 +2,15 @@ import { Router } from 'express';
 import { requireAuth, optionalAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
 import { sendDbError } from '../lib/errorResponse.js';
+import { MemoryCache } from '../lib/memoryCache.js';
 
 const router = Router();
+
+// Kurzlebiger Read-Cache für die Liste aktiver Wettbewerbe: Diese wird häufig
+// abgerufen (jedes Community-/Event-Rendering), ändert sich aber selten. 30s TTL
+// deckelt die Staleness, `invalidate` leert ihn sofort nach einem Insert.
+const COMPETITIONS_CACHE_KEY = 'competitions:active';
+const competitionsCache = new MemoryCache({ defaultTtlMs: 30000, maxEntries: 4 });
 
 // Whitelist der erlaubten Felder pro Ressource
 const ALLOWED_POST_FIELDS = ['title', 'content', 'image_url'];
@@ -234,10 +241,19 @@ router.get('/community/clans/:id/leaderboard', optionalAuth, async (req, res) =>
 });
 
 router.get('/competitions', optionalAuth, async (req, res) => {
-  const { data, error } = await supabase.from('competitions')
-    .select('*').eq('is_active', true).order('created_at', { ascending: false });
-  if (error) return sendDbError(res, error);
-  return res.json(data || []);
+  // Cache-Aside: DB nur bei Cache-Miss/abgelaufener TTL treffen. Ein DB-Fehler
+  // wird nicht gecacht (wrap wirft und der Producer läuft beim nächsten Mal neu).
+  try {
+    const data = await competitionsCache.wrap(COMPETITIONS_CACHE_KEY, async () => {
+      const { data: rows, error } = await supabase.from('competitions')
+        .select('*').eq('is_active', true).order('created_at', { ascending: false });
+      if (error) throw error;
+      return rows || [];
+    });
+    return res.json(data);
+  } catch (error) {
+    return sendDbError(res, error);
+  }
 });
 
 router.post('/competitions', requireAuth, async (req, res) => {
@@ -246,6 +262,9 @@ router.post('/competitions', requireAuth, async (req, res) => {
     ...filteredBody, created_by: req.user.email
   }).select().single();
   if (error) return sendDbError(res, error);
+  // Neuer Wettbewerb: gecachte Liste sofort verwerfen, damit er ohne TTL-Wartezeit
+  // erscheint.
+  competitionsCache.delete(COMPETITIONS_CACHE_KEY);
   return res.json(data);
 });
 
