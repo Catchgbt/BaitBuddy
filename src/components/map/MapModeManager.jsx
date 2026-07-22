@@ -192,7 +192,7 @@ function MapModeManager({
           <div className="sticky top-0 bg-gradient-to-r from-cyan-900/40 to-blue-900/40 border-b border-cyan-600 p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="text-4xl">{currentTourStep.icon}</div>
-              <button
+              <button type="button"
                 onClick={() => setShowTour(false)}
                 className="text-gray-400 hover:text-gray-200 text-2xl"
               >
@@ -236,7 +236,7 @@ function MapModeManager({
                 <div className="font-semibold text-blue-300 mb-3">Welcher Modus passt zu dir?</div>
                 <div className="space-y-2">
                   {Object.entries(modes).map(([modeKey, modeData]) => (
-                    <button
+                    <button type="button"
                       key={modeKey}
                       onClick={() => {
                         onModeChange(modeKey);
@@ -258,7 +258,7 @@ function MapModeManager({
 
             {/* Action Button (wenn vorhanden) */}
             {currentTourStep.actionText && (
-              <button
+              <button type="button"
                 onClick={currentTourStep.onAction}
                 className="w-full bg-cyan-600 hover:bg-cyan-500 text-white py-2 rounded-lg font-semibold transition"
               >
@@ -269,7 +269,7 @@ function MapModeManager({
 
           {/* Footer */}
           <div className="sticky bottom-0 bg-gray-800/80 border-t border-cyan-600 p-6 flex items-center justify-between gap-3">
-            <button
+            <button type="button"
               onClick={() => setShowTour(false)}
               className="px-4 py-2 text-gray-300 hover:text-gray-100 text-sm font-medium transition"
             >
@@ -277,7 +277,7 @@ function MapModeManager({
             </button>
 
             {currentTourStep.isFinal ? (
-              <button
+              <button type="button"
                 onClick={handleTourComplete}
                 className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-lg font-semibold transition"
               >
@@ -285,7 +285,7 @@ function MapModeManager({
                 Tour abschließen
               </button>
             ) : (
-              <button
+              <button type="button"
                 onClick={handleStepNext}
                 className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-lg font-semibold transition"
               >

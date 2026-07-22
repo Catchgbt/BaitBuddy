@@ -79,7 +79,7 @@ export default function CommunityPostDialog({ isOpen, onOpenChange }) {
 
         {posts.length > 1 && (
           <DialogFooter className="flex flex-row items-center justify-between sm:justify-between border-t border-gray-800 pt-3">
-            <button
+            <button type="button"
               onClick={goPrev}
               className="text-gray-300 hover:text-white px-3 py-1 rounded-md min-h-[44px] min-w-[44px]"
               aria-label="Vorheriger Beitrag"
@@ -89,7 +89,7 @@ export default function CommunityPostDialog({ isOpen, onOpenChange }) {
             <span className="text-sm text-gray-400">
               {currentIndex + 1} / {posts.length}
             </span>
-            <button
+            <button type="button"
               onClick={goNext}
               className="text-gray-300 hover:text-white px-3 py-1 rounded-md min-h-[44px] min-w-[44px]"
               aria-label="Naechster Beitrag"

@@ -90,7 +90,7 @@ export default function ResetPassword() {
                 required
                 className="w-full bg-white/8 border border-white/15 rounded-xl pl-4 pr-11 py-2.5 text-white text-sm placeholder-gray-500 outline-none focus:border-cyan-500/60 focus:bg-white/12 transition-all"
               />
-              <button
+              <button type="button"
                 type="button"
                 onClick={() => setShow(s => !s)}
                 aria-label={show ? 'Passwort verbergen' : 'Passwort anzeigen'}
@@ -108,7 +108,7 @@ export default function ResetPassword() {
               className="w-full bg-white/8 border border-white/15 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-500 outline-none focus:border-cyan-500/60 focus:bg-white/12 transition-all"
             />
             {error && <p className="text-red-400 text-xs text-center">{error}</p>}
-            <button
+            <button type="button"
               type="submit"
               disabled={saving}
               className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold text-sm hover:from-cyan-400 hover:to-blue-400 disabled:opacity-50 transition-all mt-1"

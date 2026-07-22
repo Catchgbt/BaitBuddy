@@ -20,6 +20,7 @@ export default function WeatherTipsPanel() {
       try {
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${L.lat}&longitude=${L.lon}&current=temperature_2m,wind_speed_10m,wind_direction_10m,pressure_msl&hourly=cloud_cover,precipitation&daily=sunrise,sunset&timezone=auto`;
         const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}: Weather API`);
         const json = await res.json();
         w = {
           temp: Math.round(json?.current?.temperature_2m ?? 0),

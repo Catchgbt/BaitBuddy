@@ -54,7 +54,7 @@ export default class ErrorBoundary extends React.Component {
                 ? 'Modul konnte nicht geladen werden. Netzwerkproblem?'
                 : 'Komponente konnte nicht geladen werden'}
             </p>
-            <button
+            <button type="button"
               onClick={this.handleRetry}
               className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors min-h-[44px]"
               aria-label={isChunkError ? 'Seite neu laden' : 'Komponente erneut laden'}
@@ -81,7 +81,7 @@ export default class ErrorBoundary extends React.Component {
                 : error?.message || 'Ein Fehler ist aufgetreten'}
             </p>
             <div className="flex flex-col gap-2">
-              <button
+              <button type="button"
                 onClick={this.handleRetry}
                 className="w-full py-2 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-semibold transition-colors min-h-[44px]"
                 aria-label={isChunkError ? 'Seite neu laden' : 'Seite erneut versuchen zu laden'}
@@ -91,7 +91,7 @@ export default class ErrorBoundary extends React.Component {
                   : `Erneut versuchen${retryCount > 0 ? ` (${retryCount})` : ''}`}
               </button>
               {!isChunkError && (
-                <button
+                <button type="button"
                   onClick={this.handleFullPageReload}
                   className="w-full py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white font-semibold transition-colors min-h-[44px]"
                   aria-label="Gesamte Seite neu laden"

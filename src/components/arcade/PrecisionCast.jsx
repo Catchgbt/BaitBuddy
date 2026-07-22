@@ -214,7 +214,7 @@ export default function PrecisionCast({ onGameEnd }) {
                 className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan-500"
               />
             </div>
-            <button 
+            <button type="button" 
               className="w-full py-4 bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 text-white text-lg font-bold rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
               onClick={startAiming}
             >
@@ -236,7 +236,7 @@ export default function PrecisionCast({ onGameEnd }) {
                 ></div>
               </div>
             </div>
-            <button 
+            <button type="button" 
               className="w-full py-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white text-lg font-bold rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] animate-pulse"
               onClick={cast}
             >
@@ -255,7 +255,7 @@ export default function PrecisionCast({ onGameEnd }) {
           <div className="text-center space-y-4">
             <h3 className="text-cyan-400 text-2xl font-bold">Spiel beendet!</h3>
             <p className="text-gray-300 text-lg">Endscore: {score} Punkte</p>
-            <button 
+            <button type="button" 
               className="px-6 py-3 bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 text-white font-bold rounded-xl transition-all hover:scale-[1.02]"
               onClick={reset}
             >

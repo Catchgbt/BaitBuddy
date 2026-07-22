@@ -216,7 +216,7 @@ export default function Sidebar({ isOpen, setIsOpen, currentPageName, user, load
 
           <div className="flex-shrink-0">
             <div className="px-4 py-3 border-t border-gray-800 space-y-1.5">
-              <button
+              <button type="button"
                 onClick={() => {
                   triggerHaptic('medium');
                   playSound('click');

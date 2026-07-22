@@ -111,7 +111,7 @@ export default function FeedbackDialog({ feature, onClose }) {
         >
           <Card className="w-full max-w-md glass-morphism border-gray-700 relative overflow-hidden">
             {/* Schließen-Button */}
-            <button
+            <button type="button"
               onClick={handleSkip}
               className="absolute top-4 right-4 z-10 text-gray-400 hover:text-white transition-colors"
             >

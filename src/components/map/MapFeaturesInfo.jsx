@@ -97,14 +97,14 @@ function MapFeaturesInfo() {
             </div>
           </div>
           <div className="flex gap-2">
-            <button
+            <button type="button"
               onClick={() => setIsExpanded(true)}
               className="text-cyan-400 hover:text-cyan-300 p-1"
               title="Details anzeigen"
             >
               <Eye className="w-5 h-5" />
             </button>
-            <button
+            <button type="button"
               onClick={handleDismiss}
               className="text-gray-400 hover:text-gray-300 p-1"
               title="Schließen"
@@ -125,7 +125,7 @@ function MapFeaturesInfo() {
                 <p className="text-xs text-gray-400">Alle Funktionen & Bedienelemente</p>
               </div>
             </div>
-            <button
+            <button type="button"
               onClick={() => setIsExpanded(false)}
               className="text-gray-400 hover:text-gray-300 p-2"
             >
@@ -227,13 +227,13 @@ function MapFeaturesInfo() {
 
           {/* Dismiss Button */}
           <div className="mt-6 flex gap-2">
-            <button
+            <button type="button"
               onClick={() => setIsExpanded(false)}
               className="flex-1 bg-cyan-900/40 hover:bg-cyan-900/60 text-cyan-400 px-4 py-2 rounded font-medium transition"
             >
               Schließen
             </button>
-            <button
+            <button type="button"
               onClick={handleDismiss}
               className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded font-medium transition"
             >

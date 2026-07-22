@@ -108,7 +108,7 @@ export default function CompetitionLauncher({ currentUser, onStarted }) {
                 <span className="px-2 py-0.5 bg-gray-700/50 rounded">{tpl.duration}</span>
                 <span className="px-2 py-0.5 bg-gray-700/50 rounded">{tpl.species}</span>
               </div>
-              <button
+              <button type="button"
                 onClick={() => handleStart(tpl.id)}
                 disabled={loadingId === tpl.id || !currentUser}
                 className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg transition text-sm flex items-center justify-center gap-2"

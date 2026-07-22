@@ -49,7 +49,7 @@ export function VoiceGreeting({ user, fullGreeting = false }) {
       </div>
 
       <div style={{ display: 'flex', gap: 8 }}>
-        <button
+        <button type="button"
           onClick={() => !isSpeaking ? speak(greeting) : stop()}
           style={{
             background: isSpeaking ? '#22d3c8' : '#0d1a2a',

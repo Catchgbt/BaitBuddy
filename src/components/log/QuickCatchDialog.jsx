@@ -768,7 +768,7 @@ export default function QuickCatchDialog() {
               {form.photo_url && (
                 <div className="relative">
                   <img src={form.photo_url} alt="Fang" className="h-36 rounded-xl object-cover w-full" />
-                  <button
+                  <button type="button"
                     type="button"
                     onClick={() => setForm(prev => ({ ...prev, photo_url: "" }))}
                     className="absolute top-2 right-2 bg-black/60 rounded-full p-1 text-white hover:bg-black/80"

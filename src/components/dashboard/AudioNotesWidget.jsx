@@ -226,7 +226,7 @@ export default function AudioNotesWidget() {
               key={note.id}
               className="flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200 hover:border-blue-300"
             >
-              <button
+              <button type="button"
                 onClick={() => playNote(note)}
                 className="p-1.5 hover:bg-blue-100 rounded-lg transition"
               >
@@ -246,7 +246,7 @@ export default function AudioNotesWidget() {
                 </p>
               </div>
 
-              <button
+              <button type="button"
                 onClick={() => downloadNote(note)}
                 className="p-1 hover:bg-gray-100 rounded transition"
                 title="Herunterladen"
@@ -254,7 +254,7 @@ export default function AudioNotesWidget() {
                 <Download className="w-4 h-4 text-gray-600" />
               </button>
 
-              <button
+              <button type="button"
                 onClick={() => deleteNote(note.id)}
                 className="p-1 hover:bg-red-100 rounded transition"
                 title="Löschen"

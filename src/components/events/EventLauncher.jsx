@@ -57,10 +57,10 @@ export default function EventLauncher({ currentUser, onStarted }) {
 
       if (response && (response.id || response.success)) {
         toast.success(`"${template.name}" gestartet! Andere können jetzt mitmachen.`);
-        if (onStarted) await onStarted();
+        if (onStarted && typeof onStarted === 'function') await onStarted();
       } else {
         toast.success(`"${template.name}" aktiviert!`);
-        if (onStarted) await onStarted();
+        if (onStarted && typeof onStarted === 'function') await onStarted();
       }
     } catch (error) {
       console.error('Fehler beim Starten des Events:', error);
@@ -114,7 +114,7 @@ export default function EventLauncher({ currentUser, onStarted }) {
                 <span className="text-xs bg-cyan-500/20 text-cyan-300 px-2 py-1 rounded">
                   {template.duration_days || 14} Tage
                 </span>
-                <button
+                <button type="button"
                   onClick={() => handleStartEvent(template)}
                   disabled={loadingId === (template.template_id || template.id) || !currentUser}
                   className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold rounded transition flex items-center gap-1"

@@ -50,7 +50,7 @@ export default function FishingRecommendationCard() {
           <h3 className="text-sm font-semibold text-cyan-400/70 uppercase tracking-wider">KI Angelempfehlung</h3>
           <p className="text-xs text-gray-500 mt-0.5">Basierend auf Wetter + deinem Fangbuch</p>
         </div>
-        <button
+        <button type="button"
           onClick={analyze}
           disabled={loading}
           className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"

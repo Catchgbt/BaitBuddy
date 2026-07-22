@@ -78,7 +78,7 @@ export default function TutorialModal({ isOpen, onClose }) {
           exit={{ opacity: 0, scale: 0.9 }}
           className="relative w-full max-w-lg bg-gradient-to-b from-gray-900 to-gray-950 rounded-2xl shadow-2xl border border-gray-800 overflow-hidden"
         >
-          <button
+          <button type="button"
             onClick={onClose}
             className="absolute top-4 right-4 z-10 p-2 rounded-full bg-gray-800/90 hover:bg-gray-700 transition-colors shadow-lg"
           >
@@ -129,7 +129,7 @@ export default function TutorialModal({ isOpen, onClose }) {
                   <h2 className="text-lg font-bold text-white leading-tight">
                     {currentStepData.title}
                   </h2>
-                  <button
+                  <button type="button"
                     onClick={() => handlePlayAudio(currentStep)}
                     disabled={isPlaying}
                     className="ml-3 p-2 rounded-full bg-cyan-600/20 hover:bg-cyan-600/30 transition-all disabled:opacity-50 border border-cyan-500/30 flex-shrink-0"

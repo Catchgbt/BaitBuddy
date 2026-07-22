@@ -439,7 +439,7 @@ function Match3QuestGame() {
           <div className="text-white mb-4">
             Endpunktzahl: {score}
           </div>
-          <button
+          <button type="button"
             onClick={resetGame}
             className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold"
           >

@@ -84,7 +84,7 @@ export default function SettingsPageTabbed() {
                 const isActive = activeTab === tab.id;
 
                 return (
-                  <button
+                  <button type="button"
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     className={`relative flex items-center gap-2 px-4 py-2.5 rounded-lg whitespace-nowrap transition-all duration-200 ${

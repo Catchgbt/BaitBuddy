@@ -68,7 +68,7 @@ const ChatInput = React.memo(function ChatInput({ isLoading, onSend }) {
           disabled={isLoading}
           aria-label="Chat-Eingabefeld"
         />
-        <button
+        <button type="button"
           onClick={submit}
           disabled={isLoading || !value.trim()}
           className="p-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-lg transition-colors flex-shrink-0"
@@ -728,7 +728,7 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
                     <p className="text-xs text-gray-500">Dein Angel-Buddy</p>
                   </div>
                 </div>
-                <button
+                <button type="button"
                   onClick={handleCloseBubble}
                   className="p-1 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0"
                   aria-label="Chat schließen"
@@ -751,7 +751,7 @@ export default function AIBuddyWidget({ initialOpen = false, initialLastTouch = 
                       <div className="w-full space-y-2">
                         <p className="text-xs font-semibold text-gray-500 px-2">Fragen:</p>
                         {tip.suggestions.map((suggestion) => (
-                          <button
+                          <button type="button"
                             key={suggestion}
                             onClick={() => handleSendMessage(suggestion)}
                             disabled={isLoading}

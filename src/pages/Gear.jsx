@@ -496,7 +496,7 @@ Sei konkret und praxisorientiert!`;
                   className="flex-1 p-2 rounded-lg bg-gray-700 text-white border border-gray-600"
                 />
                 {position && (
-                  <button
+                  <button type="button"
                     onClick={() => position && loadWeatherData(position[0], position[1])}
                     disabled={weatherLoading}
                     className="p-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
@@ -511,7 +511,7 @@ Sei konkret und praxisorientiert!`;
               {(suggestions.length > 0 && searchQuery.length > 1 && !searchLoading) && (
                 <div className="absolute z-10 mt-1 w-full bg-gray-800 rounded-lg border border-gray-600 shadow-xl max-h-60 overflow-y-auto">
                   {suggestions.map((suggestion, index) => (
-                    <button
+                    <button type="button"
                       key={index}
                       onClick={() => selectLocation(suggestion.latitude, suggestion.longitude, suggestion.name)}
                       className="w-full text-left px-3 py-2 hover:bg-gray-700 flex items-center gap-2 text-white first:rounded-t-lg last:rounded-b-lg"
@@ -595,7 +595,7 @@ Sei konkret und praxisorientiert!`;
             </div>
           )}
 
-          <button
+          <button type="button"
             onClick={analyzeGearWithAI}
             className="w-full mt-2 p-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2 transition-all shadow-lg shadow-purple-900/30"
           >
@@ -603,7 +603,7 @@ Sei konkret und praxisorientiert!`;
             KI-Buddy Setup-Check
           </button>
 
-          <button
+          <button type="button"
             onClick={saveToPlan}
             className="w-full p-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-900/30"
           >
@@ -611,7 +611,7 @@ Sei konkret und praxisorientiert!`;
             In meinen Plan speichern
           </button>
 
-          <button onClick={resetAll} className="w-full p-2 text-xs text-red-400/70 bg-red-900/20 rounded-xl hover:bg-red-900/40 flex items-center justify-center gap-2 transition-colors border border-red-900/30">
+          <button type="button" onClick={resetAll} className="w-full p-2 text-xs text-red-400/70 bg-red-900/20 rounded-xl hover:bg-red-900/40 flex items-center justify-center gap-2 transition-colors border border-red-900/30">
             <RefreshCcw className="h-3 w-3"/> Zurücksetzen
           </button>
         </div>

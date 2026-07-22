@@ -116,7 +116,7 @@ export default function AdminTracking() {
         </div>
         <div className="flex gap-2">
           {[1, 7, 30, 90].map((d) => (
-            <button
+            <button type="button"
               key={d}
               onClick={() => setRange(d)}
               className={`px-3 py-2 rounded-lg text-sm font-medium transition ${

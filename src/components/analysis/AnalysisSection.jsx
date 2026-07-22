@@ -38,8 +38,19 @@ export default function AnalysisSection() {
       }
     }
     // If no cache or error parsing cache, fetch data
-    setCatches(await Catch.list());
-    setSpots(await Spot.list());
+    try {
+      const [catchData, spotData] = await Promise.all([
+        Catch.list(),
+        Spot.list()
+      ]);
+      setCatches(catchData);
+      setSpots(spotData);
+    } catch (error) {
+      console.error("Error loading analysis data:", error);
+      toast.error("Fehler beim Laden der Analysedaten");
+      setCatches([]);
+      setSpots([]);
+    }
   })(); }, []);
 
   useEffect(()=> {

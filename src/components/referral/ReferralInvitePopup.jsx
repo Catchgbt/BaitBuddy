@@ -259,7 +259,7 @@ export default function ReferralInvitePopup() {
                     <span className="flex-1 truncate font-mono text-sm text-white">
                       {shareUrl}
                     </span>
-                    <button
+                    <button type="button"
                       type="button"
                       onClick={handleCopy}
                       aria-label="Einladungslink kopieren"

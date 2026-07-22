@@ -72,7 +72,7 @@ function NewFeaturesNotification() {
           </div>
         </div>
 
-        <button
+        <button type="button"
           onClick={handleClose}
           className="flex-shrink-0 p-1.5 rounded-lg hover:bg-white/10 transition-colors text-gray-400 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
           aria-label="Schließen"

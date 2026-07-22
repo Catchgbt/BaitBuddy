@@ -176,7 +176,7 @@ export default function VoiceSettings() {
               const locked = voice.requiresUltimate && !hasUltimate && !planLoading;
               const active = selectedVoice === voice.id;
               return (
-                <button
+                <button type="button"
                   key={voice.id}
                   type="button"
                   role="radio"

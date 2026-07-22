@@ -218,7 +218,7 @@ export default function MiniKiVoiceBuddy() {
           <span style={{ fontSize: 16, fontWeight: 600, color: "#22d3c8", letterSpacing: 0.3 }}>KI Voice-Buddy</span>
           <span style={{ marginLeft: 8, fontSize: 11, color: "#4455aa", fontWeight: 500, background: "#0d1a33", border: "1px solid #1e2f55", borderRadius: 8, padding: "2px 7px" }}>BETA</span>
         </div>
-        <button
+        <button type="button"
           onClick={() => { setTonAn(t => !t); if (tonAn) cancelElevenLabs(); }}
           style={{ display: "flex", alignItems: "center", gap: 6, background: tonAn ? "#22d3c8" : "#0d2020", border: "1px solid #22d3c8", borderRadius: 20, padding: "4px 12px", fontSize: 12, color: tonAn ? "#060d1a" : "#22d3c8", fontWeight: 500, cursor: "pointer" }}
         >
@@ -230,7 +230,7 @@ export default function MiniKiVoiceBuddy() {
       {/* Voice control row */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", background: "#08111f" }}>
         <span style={{ fontSize: 12, color: "#8899aa", maxWidth: 180, lineHeight: 1.4 }}>Mikrofon aktivieren und Frage stellen</span>
-        <button
+        <button type="button"
           onClick={toggleMic}
           disabled={status === "speaking" || status === "thinking"}
           style={{
@@ -318,14 +318,14 @@ export default function MiniKiVoiceBuddy() {
           placeholder="Frage stellen..."
           style={{ flex: 1, minWidth: 0, background: "#0d1a2a", border: "1px solid #1e2f44", borderRadius: 10, padding: "10px 14px", color: "#ccdde8", fontSize: 13, fontFamily: "inherit", outline: "none" }}
         />
-        <button
+        <button type="button"
           onClick={sendText}
           disabled={!input.trim() || status === "thinking"}
           style={{ background: "linear-gradient(135deg,#7c3aed,#4f46e5)", border: "none", borderRadius: 10, padding: "10px 16px", color: "white", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", opacity: !input.trim() || status === "thinking" ? 0.5 : 1 }}
         >
           Senden
         </button>
-        <button
+        <button type="button"
           onClick={stopSpeaking}
           style={{ background: "#0d1a2a", border: "1px solid #1e2f44", borderRadius: 10, padding: "10px 12px", color: "#556677", cursor: "pointer", fontSize: 13 }}
           title="Stopp"

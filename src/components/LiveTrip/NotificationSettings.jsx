@@ -72,7 +72,7 @@ function NotificationSettings({ isOpen, onClose }) {
             <Bell className="w-5 h-5" />
             Benachrichtigungen
           </h2>
-          <button
+          <button type="button"
             onClick={onClose}
             className="text-gray-400 hover:text-gray-300 text-2xl"
           >
@@ -87,7 +87,7 @@ function NotificationSettings({ isOpen, onClose }) {
               <AlertCircle className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
               <div className="text-xs text-yellow-300">
                 <div className="font-semibold mb-2">Benachrichtigungen nicht aktiviert</div>
-                <button
+                <button type="button"
                   onClick={handleRequestPermission}
                   disabled={loading}
                   className="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-semibold py-2 rounded transition disabled:opacity-50"
@@ -186,7 +186,7 @@ function NotificationSettings({ isOpen, onClose }) {
           </label>
           <div className="grid grid-cols-2 gap-2">
             {commonSpecies.map((species) => (
-              <button
+              <button type="button"
                 key={species}
                 onClick={() => toggleSpecies(species)}
                 className={`px-3 py-2 rounded text-xs font-semibold transition border ${
@@ -203,7 +203,7 @@ function NotificationSettings({ isOpen, onClose }) {
 
         {/* Buttons */}
         <div className="space-y-2 border-t border-gray-700 pt-3">
-          <button
+          <button type="button"
             onClick={handleTestNotification}
             disabled={permissionStatus !== 'granted'}
             className="w-full bg-purple-600 hover:bg-purple-500 disabled:bg-gray-700 text-white font-semibold py-2 rounded transition text-sm"
@@ -211,7 +211,7 @@ function NotificationSettings({ isOpen, onClose }) {
             Test-Benachrichtigung
           </button>
 
-          <button
+          <button type="button"
             onClick={handleSave}
             className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2 rounded transition text-sm flex items-center justify-center gap-2"
           >
@@ -219,7 +219,7 @@ function NotificationSettings({ isOpen, onClose }) {
             Einstellungen speichern
           </button>
 
-          <button
+          <button type="button"
             onClick={onClose}
             className="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 font-semibold py-2 rounded transition text-sm"
           >

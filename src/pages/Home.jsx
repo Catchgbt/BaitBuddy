@@ -953,7 +953,7 @@ function LandingPageContent() {
 
                         <div className="flex flex-col gap-2">
                             <div className="relative">
-                                <button
+                                <button type="button"
                                     onClick={() => handleSocialLogin('google')}
                                     disabled={loginLoading}
                                     className="flex items-center justify-center gap-2.5 w-full py-2.5 px-4 rounded-xl bg-white/10 text-white font-medium text-sm border border-white/20 hover:bg-white/20 hover:border-white/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
@@ -1003,7 +1003,7 @@ function LandingPageContent() {
                                     required
                                     className="w-full bg-gray-800/90 border border-gray-600 rounded-xl pl-4 pr-11 py-2.5 text-white text-sm placeholder-gray-400 outline-none focus:border-cyan-400 focus:bg-gray-800 focus:ring-2 focus:ring-cyan-400/30 transition-all"
                                 />
-                                <button
+                                <button type="button"
                                     type="button"
                                     onClick={() => setShowPassword(s => !s)}
                                     aria-label={showPassword ? 'Passwort verbergen' : 'Passwort anzeigen'}
@@ -1013,7 +1013,7 @@ function LandingPageContent() {
                                 </button>
                             </div>
                             {loginMode === 'login' && (
-                                <button
+                                <button type="button"
                                     type="button"
                                     onClick={handleForgotPassword}
                                     disabled={loginLoading}
@@ -1028,7 +1028,7 @@ function LandingPageContent() {
                             {loginInfo && (
                                 <p className="text-emerald-400 text-xs text-center">{loginInfo}</p>
                             )}
-                            <button
+                            <button type="button"
                                 type="submit"
                                 disabled={loginLoading}
                                 className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold text-sm hover:from-cyan-400 hover:to-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-0.5"
@@ -1040,7 +1040,7 @@ function LandingPageContent() {
                         <p className="text-center text-xs text-gray-500 mt-3">
                             {loginMode === 'login' ? 'Noch kein Konto?' : 'Bereits ein Konto?'}
                             {' '}
-                            <button
+                            <button type="button"
                                 onClick={() => { setLoginMode(m => m === 'login' ? 'register' : 'login'); setLoginError(''); }}
                                 className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors"
                             >
@@ -1054,7 +1054,7 @@ function LandingPageContent() {
                             <div className="flex-1 h-px bg-white/10" />
                         </div>
 
-                        <button
+                        <button type="button"
                             onClick={handleGuestLogin}
                             className="w-full mt-3 py-2.5 rounded-xl bg-transparent text-gray-400 text-sm font-medium border border-white/10 hover:border-white/20 hover:text-gray-300 transition-all"
                         >
@@ -1126,7 +1126,7 @@ function LandingPageContent() {
                     {showDeleteAccount ? (
                         <div className="w-80">
                             <DeleteAccountSection />
-                            <button
+                            <button type="button"
                                 onClick={() => setShowDeleteAccount(false)}
                                 className="mt-2 w-full text-xs text-gray-500 hover:text-gray-300 transition-colors text-center"
                             >
@@ -1134,7 +1134,7 @@ function LandingPageContent() {
                             </button>
                         </div>
                     ) : (
-                        <button
+                        <button type="button"
                             onClick={() => setShowDeleteAccount(true)}
                             className="px-4 py-2 rounded-lg bg-red-950/40 hover:bg-red-900/50 text-red-400 border border-red-800/40 text-xs font-medium transition"
                         >

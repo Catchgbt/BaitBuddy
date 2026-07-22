@@ -69,7 +69,7 @@ export default function LanguageSwitcher() {
             className="absolute top-full left-0 mt-2 w-56 bg-gray-900/95 backdrop-blur-xl border border-gray-700 rounded-xl shadow-2xl overflow-hidden z-50 max-h-96 overflow-y-auto"
           >
             {LANGUAGES.map((lang) => (
-              <button
+              <button type="button"
                 key={lang.code}
                 onClick={() => handleLanguageSelect(lang.code)}
                 className={`w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-800/80 transition-colors ${

@@ -192,7 +192,7 @@ export default function RulesDisplay() {
                 transition={{ duration: 0.3 }}
               >
                 <Card className="bg-gray-900/50 border-gray-800 overflow-hidden">
-                  <button
+                  <button type="button"
                     onClick={() => toggleFish(fishName)}
                     className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-800/30 transition-colors"
                   >
