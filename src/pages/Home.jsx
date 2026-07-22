@@ -548,6 +548,35 @@ function LandingPageContent() {
                     return;
                 }
                 if (data?.url) {
+                    // Starte OAuth mit Timeout für Config-Fehler (z. B. fehlende
+                    // Redirect-URL in Supabase). Wenn der Deep-Link nicht innerhalb
+                    // von 35 Sekunden zurückkommt, zeige Konfigurationshilfe an.
+                    let timeoutId;
+                    let oauthErrorListener;
+
+                    const cleanup = () => {
+                        clearTimeout(timeoutId);
+                        if (oauthErrorListener) {
+                            window.removeEventListener('baitbuddy:oauth-error', oauthErrorListener);
+                        }
+                    };
+
+                    oauthErrorListener = (evt) => {
+                        cleanup();
+                        setLoginError('Social Login Fehler: ' + (evt?.detail?.message || 'Unbekannter Fehler'));
+                    };
+
+                    timeoutId = setTimeout(() => {
+                        cleanup();
+                        setLoginError(
+                            'Anmeldung hat zu lange gedauert. Häufige Ursachen:\n' +
+                            '1. Redirect-URL in Supabase nicht konfiguriert (supabase.co → Authentication → URL Configuration → ' + redirectUrl + ')\n' +
+                            '2. Netzwerkfehler oder Browser blockiert externe URL\n\n' +
+                            'Bitte versuche es erneut.'
+                        );
+                    }, 35000);
+
+                    window.addEventListener('baitbuddy:oauth-error', oauthErrorListener);
                     await openOAuthUrl(data.url);
                 }
             } else {
