@@ -209,6 +209,25 @@ Start via `POST /api/events`). Sie ist **nicht** mehr in der Community-Sektion
 
 **Regel:** Permissions immer präzise checken, niemals blind anfordern.
 
+### Geräteverbindung (BLE / Device Hub)
+Der **Device Hub** (`src/components/devices/DeviceHub.jsx`) verbindet echte
+Hardware per **Web Bluetooth** (Herzfrequenz-Sensoren, Waagen, Rollen, castable
+Echolote, Umwelt-Sensoren). Verbindungen müssen **stabil und zuverlässig** sein:
+- **Zeitlimit** auf jeden Verbindungsaufbau (`gatt.connect()` kann im WebView
+  sonst unendlich hängen) — via `withTimeout` aus `src/lib/bleConnection.js`.
+- **Automatischer Reconnect** bei unerwartetem `gattserverdisconnected` mit
+  Exponential-Backoff + Jitter (`retryWithBackoff`/`computeBackoffDelay`); nutzt
+  das vorhandene Geräte-Handle, **kein** erneuter `requestDevice`-Dialog.
+- **Manuelles Trennen** setzt `manualDisconnect` und unterdrückt den Reconnect.
+- **Vollständiges Cleanup beim Unmount**: alle GATT-Handles trennen, laufende
+  Reconnects abbrechen, Kamera-Stream stoppen (sonst leaken Verbindungen).
+- **Keine Stale-Closures**: HR-Session-Zustand läuft über Refs, damit die beim
+  Verbinden registrierten BLE-Listener stets aktuelle Werte sehen.
+- `requestDevice` **immer innerhalb der Nutzergeste** (nicht Timeout-gewrappt).
+
+Die reine Timeout-/Backoff-/Retry-Logik liegt in `src/lib/bleConnection.js`
+(ohne GATT-Import, unit-testbar; Tests in `bleConnection.test.js`).
+
 ---
 
 ## ⚡ Performance-Anforderungen
