@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth, optionalAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
 import { sendDbError } from '../lib/errorResponse.js';
+import { resolvePlan, PLAN_RANK } from '../lib/planResolver.js';
 import {
   calculateSubmissionPoints,
   calculateEventFinalRankings,
@@ -54,6 +55,48 @@ router.get('/events/templates/:templateId', optionalAuth, async (req, res) => {
 // EVENTS (CRUD)
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Löst die E-Mail-Adressen der "Freunde" eines Nutzers auf. Freunde = beide
+// Richtungen der referrals-Beziehung (Nutzer, die ich eingeladen habe, UND der
+// Nutzer, der mich eingeladen hat). Die referrals-Tabelle speichert UUIDs; die
+// events.created_by-Spalte speichert E-Mails (siehe POST /events) — daher der
+// Umweg über auth.admin.getUserById (bestehendes Muster aus premium.js/
+// referrals.js). Best-effort: Fehler einzelner Lookups werden übersprungen,
+// nie soll die Event-Liste daran scheitern.
+async function resolveFriendEmails(userId) {
+  const friendIds = new Set();
+
+  const [{ data: invited }, { data: inviters }] = await Promise.all([
+    supabase.from('referrals').select('referred_user_id').eq('referrer_user_id', userId),
+    supabase.from('referrals').select('referrer_user_id').eq('referred_user_id', userId),
+  ]);
+  (invited || []).forEach((r) => r.referred_user_id && friendIds.add(r.referred_user_id));
+  (inviters || []).forEach((r) => r.referrer_user_id && friendIds.add(r.referrer_user_id));
+
+  const emails = [];
+  await Promise.all([...friendIds].map(async (id) => {
+    try {
+      const { data, error } = await supabase.auth.admin.getUserById(id);
+      if (!error && data?.user?.email) emails.push(data.user.email);
+    } catch {
+      // best-effort: einzelnen Lookup überspringen
+    }
+  }));
+  return emails;
+}
+
+// Baut den PostgREST-.or()-Ausdruck für die Sichtbarkeit. Öffentliche Events
+// sieht jeder; 'friends'-Events nur, wenn created_by (E-Mail) in der erlaubten
+// Liste liegt (eigene E-Mail + Freundes-E-Mails). Werte werden in Doppelquotes
+// gefasst, damit Sonderzeichen (@ .) die Filter-Syntax nicht brechen.
+function buildVisibilityOrExpr(allowedEmails) {
+  const quoted = allowedEmails
+    .filter(Boolean)
+    .map((e) => `"${String(e).replace(/"/g, '')}"`)
+    .join(',');
+  if (!quoted) return 'visibility.eq.public';
+  return `visibility.eq.public,and(visibility.eq.friends,created_by.in.(${quoted}))`;
+}
+
 router.get('/events', optionalAuth, async (req, res) => {
   try {
     let query = supabase
@@ -62,21 +105,14 @@ router.get('/events', optionalAuth, async (req, res) => {
       .eq('is_active', true);
 
     if (req.user?.id) {
-      // Authentifizierter User: eigene Events + öffentliche Events + Events von Freunden
-      // Freunde = Nutzer, die dieser User als Referrer hat (referrals.referrer_user_id = user.id)
-      // ODER Nutzer, die diesen User eingeladen haben (user.referred_by)
-      const friendQuery = `
-        created_by = '${req.user.id}' OR
-        created_by IN (
-          SELECT referred_user_id FROM public.referrals
-          WHERE referrer_user_id = '${req.user.id}'
-        ) OR
-        created_by IN (
-          SELECT referrer_user_id FROM public.referrals
-          WHERE referred_user_id = '${req.user.id}'
-        )
-      `;
-      query = query.or(friendQuery);
+      // Eingeloggt: öffentliche Events + eigene/Freundes-'friends'-Events.
+      // created_by speichert E-Mails, referrals speichert UUIDs -> auflösen.
+      const friendEmails = await resolveFriendEmails(req.user.id);
+      const allowed = [req.user.email, ...friendEmails];
+      query = query.or(buildVisibilityOrExpr(allowed));
+    } else {
+      // Ausgeloggt: nur öffentliche Events.
+      query = query.eq('visibility', 'public');
     }
 
     const { data, error } = await query.order('created_at', { ascending: false });
@@ -107,11 +143,19 @@ router.get('/events/:id', optionalAuth, async (req, res) => {
 
 router.post('/events', requireAuth, async (req, res) => {
   try {
-    const { name, description, start_date, end_date, template_id, scoring_method, target_species, prize_description } = req.body;
+    const { name, description, start_date, end_date, template_id, scoring_method, target_species, prize_description, visibility } = req.body;
 
     if (!name || !start_date || !end_date) {
       return res.status(400).json({ error: 'Name, Startdatum und Enddatum erforderlich' });
     }
+
+    // Sichtbarkeit: 'friends'-Events (nur für Freunde/Referrals sichtbar) sind
+    // ein Friends-Plan-Feature. Wer den Plan nicht hat, dessen Event fällt still
+    // auf 'public' zurück, statt die Erstellung zu blockieren.
+    const { effectiveId } = resolvePlan(req.user);
+    const wantsFriends = visibility === 'friends';
+    const canHostFriends = (PLAN_RANK[effectiveId] ?? 0) >= PLAN_RANK.friends;
+    const eventVisibility = wantsFriends && canHostFriends ? 'friends' : 'public';
 
     // 1. Event erstellen
     const { data: event, error: eventError } = await supabase
@@ -127,6 +171,7 @@ router.post('/events', requireAuth, async (req, res) => {
         scoring_method: scoring_method || 'points',
         target_species: target_species || null,
         prize_description: prize_description || null,
+        visibility: eventVisibility,
         status: 'active',
         is_active: true
       })
