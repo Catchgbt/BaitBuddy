@@ -80,6 +80,47 @@ export const aiRateLimiter = rateLimit({
   message: { error: 'Zu viele KI-Anfragen — bitte kurz warten' },
 });
 
+// Plan-spezifisches Chat-Limit für Free-User (3 pro Tag).
+// Basic+ haben unbegrenzten Zugang.
+export async function checkChatRateLimit(req, res, next) {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Auth erforderlich' });
+  }
+
+  const { effectiveId } = require('../lib/planResolver.js').resolvePlan(req.user);
+
+  // Nur Free-User limitieren
+  if (effectiveId !== 'free') {
+    return next();
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+  const key = `bb:chat:free:${req.user.id}:${today}`;
+  const limit = 3;
+
+  try {
+    const client = redisClient;
+    if (client) {
+      const count = await client.incr(key);
+      if (count === 1) {
+        await client.expire(key, 24 * 60 * 60); // 24 Stunden
+      }
+
+      if (count > limit) {
+        return res.status(429).json({
+          error: `${limit}/${limit} tägliche KI-Anfragen verbraucht. Upgrade zu Basic für unbegrenzten Zugang.`
+        });
+      }
+    }
+  } catch (e) {
+    console.error('[checkChatRateLimit] Redis-Fehler (Fail-Open):', e.message);
+    // Fail-Open: Fehler beim Redis blockiert nicht
+  }
+
+  next();
+}
+});
+
 // TTS-Endpunkt (ElevenLabs) — eigener Limiter, da jede Chat-Nachricht mit Voice
 // automatisch einen TTS-Call ausloest und sonst das gemeinsame Budget doppelt
 // belastet wird.
