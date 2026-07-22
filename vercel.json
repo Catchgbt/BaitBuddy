@@ -35,6 +35,10 @@
   ],
   "crons": [
     {
+      "path": "/api/admin/premium/check-expiry",
+      "schedule": "0 3 * * *"
+    },
+    {
       "path": "/api/admin/events/auto-archive",
       "schedule": "0 2 * * *"
     },
