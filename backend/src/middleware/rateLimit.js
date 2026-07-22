@@ -1,6 +1,7 @@
 import rateLimit from 'express-rate-limit';
 import { RedisStore } from 'rate-limit-redis';
 import Redis from 'ioredis';
+import { resolvePlan } from '../lib/planResolver.js';
 
 // Vercel terminiert die Verbindung am Edge-Proxy: ohne 'trust proxy' ist
 // req.ip immer die interne Proxy-Adresse — damit zaehlten ALLE Nutzer in
@@ -80,14 +81,14 @@ export const aiRateLimiter = rateLimit({
   message: { error: 'Zu viele KI-Anfragen — bitte kurz warten' },
 });
 
-// Plan-spezifisches Chat-Limit für Free-User (3 pro Tag).
+// Plan-spezifisches Chat-Limit für Free-User (5 pro Tag).
 // Basic+ haben unbegrenzten Zugang.
 export async function checkChatRateLimit(req, res, next) {
   if (!req.user) {
     return res.status(401).json({ error: 'Auth erforderlich' });
   }
 
-  const { effectiveId } = require('../lib/planResolver.js').resolvePlan(req.user);
+  const { effectiveId } = resolvePlan(req.user);
 
   // Nur Free-User limitieren
   if (effectiveId !== 'free') {
@@ -96,7 +97,7 @@ export async function checkChatRateLimit(req, res, next) {
 
   const today = new Date().toISOString().split('T')[0];
   const key = `bb:chat:free:${req.user.id}:${today}`;
-  const limit = 3;
+  const limit = 5;
 
   try {
     const client = redisClient;

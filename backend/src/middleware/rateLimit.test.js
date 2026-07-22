@@ -1,8 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
+// Steuerbarer Zählerstand für den gemockten redisClient.incr — Tests setzen
+// redisState.incrValue, um Free-User über/unter das Limit zu bringen.
+const { redisState } = vi.hoisted(() => ({ redisState: { incrValue: 1 } }));
+
 // ioredis wird gemockt — die Tests laufen ohne echten Netz-/Redis-Zugriff.
 // Der Client selbst wird im Modul-Scope nur erzeugt, wenn KV_URL gesetzt ist;
-// hier reicht ein Stub mit on() und call().
+// hier reicht ein Stub mit on(), call() und den von checkChatRateLimit
+// genutzten incr()/expire().
 vi.mock('ioredis', () => ({
   default: vi.fn().mockImplementation(() => ({
     on: vi.fn(),
@@ -11,6 +16,8 @@ vi.mock('ioredis', () => ({
     call: vi.fn(async (cmd) =>
       String(cmd).toUpperCase() === 'SCRIPT' ? 'test-sha' : 1
     ),
+    incr: vi.fn(async () => redisState.incrValue),
+    expire: vi.fn(async () => 1),
   })),
 }));
 
@@ -27,6 +34,7 @@ beforeEach(() => {
   vi.resetModules();
   delete process.env.KV_URL;
   delete process.env.REDIS_URL;
+  redisState.incrValue = 1;
 });
 
 afterEach(() => {
@@ -62,6 +70,77 @@ describe('Rate-Limiter-Middleware', () => {
     expect(typeof mod.aiRateLimiter).toBe('function');
     expect(typeof mod.ttsRateLimiter).toBe('function');
     expect(typeof mod.authRateLimiter).toBe('function');
+  });
+});
+
+describe('checkChatRateLimit', () => {
+  // Kleiner Test-Helfer: baut ein res-Objekt, das Status + JSON-Body festhält.
+  function makeRes() {
+    const captured = { status: null, body: null };
+    return {
+      captured,
+      status(code) {
+        captured.status = code;
+        return { json: (b) => { captured.body = b; return b; } };
+      },
+    };
+  }
+
+  it('lehnt ohne authentifizierten User ab (401)', async () => {
+    const { checkChatRateLimit } = await import('./rateLimit.js');
+    const res = makeRes();
+    let nextCalled = false;
+    await checkChatRateLimit({}, res, () => { nextCalled = true; });
+    expect(res.captured.status).toBe(401);
+    expect(nextCalled).toBe(false);
+  });
+
+  it('laesst Basic-User ohne Limit durch (next, kein Redis)', async () => {
+    process.env.KV_URL = 'redis://localhost:6379';
+    const { checkChatRateLimit } = await import('./rateLimit.js');
+    const future = new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString();
+    const req = { user: { id: 'u-basic', user_metadata: { premium_plan_id: 'basic', premium_expires_at: future } } };
+    const res = makeRes();
+    let nextCalled = false;
+    await checkChatRateLimit(req, res, () => { nextCalled = true; });
+    expect(nextCalled).toBe(true);
+    expect(res.captured.status).toBeNull();
+  });
+
+  it('laesst Free-User unter dem Limit durch (next)', async () => {
+    process.env.KV_URL = 'redis://localhost:6379';
+    redisState.incrValue = 5; // genau am Limit, noch erlaubt (> löst aus)
+    const { checkChatRateLimit } = await import('./rateLimit.js');
+    const req = { user: { id: 'u-free', user_metadata: {} } };
+    const res = makeRes();
+    let nextCalled = false;
+    await checkChatRateLimit(req, res, () => { nextCalled = true; });
+    expect(nextCalled).toBe(true);
+    expect(res.captured.status).toBeNull();
+  });
+
+  it('blockt Free-User ueber dem Tageslimit (429)', async () => {
+    process.env.KV_URL = 'redis://localhost:6379';
+    redisState.incrValue = 6; // 6 > limit(5)
+    const { checkChatRateLimit } = await import('./rateLimit.js');
+    const req = { user: { id: 'u-free', user_metadata: {} } };
+    const res = makeRes();
+    let nextCalled = false;
+    await checkChatRateLimit(req, res, () => { nextCalled = true; });
+    expect(res.captured.status).toBe(429);
+    expect(res.captured.body?.error).toContain('5/5');
+    expect(nextCalled).toBe(false);
+  });
+
+  it('faellt bei Redis-Fehler offen durch (next statt Block)', async () => {
+    // Ohne KV_URL existiert kein redisClient -> Free-User laeuft ungehindert durch.
+    const { checkChatRateLimit } = await import('./rateLimit.js');
+    const req = { user: { id: 'u-free', user_metadata: {} } };
+    const res = makeRes();
+    let nextCalled = false;
+    await checkChatRateLimit(req, res, () => { nextCalled = true; });
+    expect(nextCalled).toBe(true);
+    expect(res.captured.status).toBeNull();
   });
 });
 

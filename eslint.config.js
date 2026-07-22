@@ -71,4 +71,25 @@ export default [
       "react-hooks/exhaustive-deps": "warn",
     },
   },
+  {
+    // Backend ist reines ESM ("type":"module"). `require()` ist dort zur Laufzeit
+    // NICHT definiert (ReferenceError) — ein solcher Aufruf hat bereits den KI-Buddy
+    // in Produktion lahmgelegt, ohne dass die Vitest-Tests es zeigten (Vitest stellt
+    // in ESM ein require-Shim bereit). Diese Regel macht künftiges require() im
+    // Backend zum harten Lint-Fehler (CI "quality"), Tests hin oder her.
+    files: ["backend/**/*.{js,mjs,cjs}", "api/**/*.{js,mjs,cjs}"],
+    languageOptions: {
+      globals: globals.node,
+      parserOptions: { ecmaVersion: 2022, sourceType: "module" },
+    },
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "CallExpression[callee.name='require']",
+          message: "require() ist in diesem ESM-Backend nicht definiert — nutze statische import-Syntax.",
+        },
+      ],
+    },
+  },
 ];
