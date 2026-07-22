@@ -119,7 +119,6 @@ export async function checkChatRateLimit(req, res, next) {
 
   next();
 }
-});
 
 // TTS-Endpunkt (ElevenLabs) — eigener Limiter, da jede Chat-Nachricht mit Voice
 // automatisch einen TTS-Call ausloest und sonst das gemeinsame Budget doppelt
