@@ -150,7 +150,7 @@ function OfflineMapManager({ bounds, autoCache = true, showStats = false }) {
 
       {/* Prefetch Button (only online) */}
       {isOnline && (
-        <button
+        <button type="button"
           onClick={handlePrefetch}
           disabled={cacheProgress > 0 && cacheProgress < 100}
           className="flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-gray-600 px-3 py-2 rounded-lg text-xs text-white font-semibold transition-colors"

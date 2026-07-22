@@ -82,13 +82,13 @@ export default function OfflinePhotoQueueStatus() {
           </div>
         </div>
         <div className="flex gap-2">
-          <button
+          <button type="button"
             onClick={() => setShowDetails(!showDetails)}
             className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded text-gray-200"
           >
             Details
           </button>
-          <button
+          <button type="button"
             onClick={handleManualSync}
             disabled={syncing}
             className="px-2 py-1 text-xs bg-blue-700 hover:bg-blue-600 disabled:bg-gray-600 rounded text-white flex items-center gap-1"

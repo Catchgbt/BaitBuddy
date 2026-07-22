@@ -41,7 +41,7 @@ export default function AppearanceSettings() {
             {themeOptions.map((option) => {
               const Icon = option.icon;
               return (
-                <button
+                <button type="button"
                   key={option.id}
                   onClick={() => setTheme(option.id)}
                   className={`p-4 rounded-xl transition-all duration-200 flex flex-col items-center justify-center gap-2 ${

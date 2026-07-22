@@ -443,7 +443,7 @@ export default function ARKnotenAssistent() {
       <div className="flex-0 bg-gray-800 p-4 space-y-3">
         <div className="flex gap-2">
           {Object.keys(KNOTS).map(k => (
-            <button
+            <button type="button"
               key={k}
               onClick={() => { currentKnotRef.current = k; currentStepRef.current = 0; setCurrentKnot(k); setCurrentStep(0); }}
               className={`px-3 py-1 rounded text-xs font-medium transition ${
@@ -456,16 +456,16 @@ export default function ARKnotenAssistent() {
         </div>
 
         <div className="flex gap-2">
-          <button onClick={() => navigate(-1)} disabled={currentStep === 0} className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded disabled:opacity-50 text-sm font-medium">
+          <button type="button" onClick={() => navigate(-1)} disabled={currentStep === 0} className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded disabled:opacity-50 text-sm font-medium">
             Zurück
           </button>
-          <button onClick={repeatStep} className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm font-medium">
+          <button type="button" onClick={repeatStep} className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm font-medium">
             Wiederholen
           </button>
-          <button onClick={toggleMic} className={`flex-1 px-4 py-2 rounded text-sm font-medium ${isListening ? 'bg-orange-600' : 'bg-gray-700'}`}>
+          <button type="button" onClick={toggleMic} className={`flex-1 px-4 py-2 rounded text-sm font-medium ${isListening ? 'bg-orange-600' : 'bg-gray-700'}`}>
             {isListening ? 'Höre...' : 'Mikrofon'}
           </button>
-          <button onClick={() => navigate(1)} disabled={currentStep === steps.length - 1} className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded disabled:opacity-50 text-sm font-medium">
+          <button type="button" onClick={() => navigate(1)} disabled={currentStep === steps.length - 1} className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded disabled:opacity-50 text-sm font-medium">
             Weiter
           </button>
         </div>
@@ -475,7 +475,7 @@ export default function ARKnotenAssistent() {
         </div>
 
         {!cameraStarted && (
-          <button onClick={startCamera} className="w-full px-4 py-2 bg-cyan-600 hover:bg-cyan-500 rounded font-medium">
+          <button type="button" onClick={startCamera} className="w-full px-4 py-2 bg-cyan-600 hover:bg-cyan-500 rounded font-medium">
             Kamera starten
           </button>
         )}

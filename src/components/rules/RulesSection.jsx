@@ -204,7 +204,7 @@ export default function RulesSection() {
                 </span>
               )}
               {!isOffline && (
-                <button
+                <button type="button"
                   onClick={() => loadRules(true)}
                   aria-label="Regeln aktualisieren und offline speichern"
                   className="flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 transition-colors"

@@ -130,7 +130,7 @@ export default function MiniKiBuddy() {
       <div className="px-4 py-3 border-b border-gray-700/50 flex items-center justify-between">
         <span className="text-cyan-400 font-medium text-sm">KI-Buddy</span>
         <div className="flex items-center gap-3">
-          <button
+          <button type="button"
             onClick={() => setVoiceEnabled((v) => !v)}
             className={`text-xs px-2 py-1 rounded-lg border transition-colors ${
               voiceEnabled
@@ -173,7 +173,7 @@ export default function MiniKiBuddy() {
       {messages.length === 1 && !isLoading && (
         <div className="px-3 pb-1 flex flex-wrap gap-1.5 overflow-hidden max-h-20">
           {EXAMPLE_QUESTIONS.map((q, i) => (
-            <button
+            <button type="button"
               key={i}
               onClick={() => handleSendMessage(q)}
               className="text-xs px-3 py-1.5 rounded-full bg-gray-700/60 border border-gray-600/50 text-gray-300 hover:bg-cyan-700/40 hover:border-cyan-500/50 hover:text-white transition-colors"
@@ -194,7 +194,7 @@ export default function MiniKiBuddy() {
           disabled={isLoading}
           className="flex-1 min-w-0 bg-gray-900/60 border border-gray-600/50 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 disabled:opacity-50"
         />
-        <button
+        <button type="button"
           onClick={() => handleSendMessage()}
           disabled={isLoading || !input.trim()}
           className="flex-shrink-0 px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"

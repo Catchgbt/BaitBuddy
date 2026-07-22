@@ -340,7 +340,7 @@ function LayoutContent({ children, currentPageName }) {
                       Diese Funktion ist nur fuer angemeldete Nutzer verfuegbar.
                     </p>
                     <div className="flex flex-col gap-3">
-                      <button
+                      <button type="button"
                         onClick={() => auth.redirectToLogin()}
                         className="w-full py-3 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold transition-colors"
                       >

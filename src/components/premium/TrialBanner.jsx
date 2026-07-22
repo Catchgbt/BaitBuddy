@@ -37,7 +37,7 @@ export default function TrialBanner() {
           Jetzt dauerhaft sichern
         </Link>
       </span>
-      <button
+      <button type="button"
         onClick={dismiss}
         aria-label="Hinweis schließen"
         className="absolute right-2 top-1/2 -translate-y-1/2 text-white/80 hover:text-white"

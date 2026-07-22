@@ -181,7 +181,7 @@ function VoiceLectureInner() {
             padding: 24,
             marginBottom: 32
           }}>
-            <button
+            <button type="button"
               onClick={() => {
                 setSelectedTopic(null);
                 stop();
@@ -218,7 +218,7 @@ function VoiceLectureInner() {
             )}
 
             {!lectureContent && !isGenerating ? (
-              <button
+              <button type="button"
                 onClick={() => generateLecture(currentTopic)}
                 disabled={isGenerating}
                 style={{
@@ -276,7 +276,7 @@ function VoiceLectureInner() {
                       borderRadius: 8,
                       marginBottom: 16
                     }}>
-                      <button
+                      <button type="button"
                         onClick={() => isSpeaking ? stop() : speak(lectureContent)}
                         style={{
                           background: isSpeaking ? '#22d3c8' : '#0d1a2a',

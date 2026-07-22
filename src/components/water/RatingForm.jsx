@@ -60,7 +60,7 @@ export default function RatingForm({ spot, onSuccess }) {
         <label className="text-xs text-gray-400">Sterne-Bewertung</label>
         <div className="flex gap-1">
           {[1, 2, 3, 4, 5].map((star) => (
-            <button
+            <button type="button"
               key={star}
               type="button"
               aria-label={`${star} Stern${star > 1 ? 'e' : ''}`}

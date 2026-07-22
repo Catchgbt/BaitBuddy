@@ -47,7 +47,7 @@ vi.mock('@/components/LiveTrip/TripForm', () => ({
   default: ({ onClose }) => (
     <div data-testid="trip-form">
       Trip-Formular
-      <button onClick={onClose}>Schliessen</button>
+      <button type="button" onClick={onClose}>Schliessen</button>
     </div>
   ),
 }));

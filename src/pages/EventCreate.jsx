@@ -116,7 +116,7 @@ export default function EventCreate() {
             <h2 className="text-lg font-semibold text-white">Vorlagen auswählen</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {templates.map((template) => (
-                <button
+                <button type="button"
                   key={template.id}
                   onClick={() => handleSelectTemplate(template)}
                   className="p-4 bg-gray-900/50 border border-cyan-500/20 rounded-lg hover:border-cyan-500/40 transition text-left"
@@ -133,7 +133,7 @@ export default function EventCreate() {
               ))}
 
               {/* Custom Option */}
-              <button
+              <button type="button"
                 onClick={() => setSelectedTemplate({ id: "custom" })}
                 className="p-4 bg-gray-900/50 border border-cyan-500/20 rounded-lg hover:border-cyan-500/40 transition text-left"
               >
@@ -151,7 +151,7 @@ export default function EventCreate() {
         {selectedTemplate && (
           <form onSubmit={handleCreateEvent} className="space-y-6">
             {/* Back Button */}
-            <button
+            <button type="button"
               type="button"
               onClick={() => {
                 setSelectedTemplate(null);
@@ -216,7 +216,7 @@ export default function EventCreate() {
             </div>
 
             {/* Submit Button */}
-            <button
+            <button type="button"
               type="submit"
               disabled={creating}
               className="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:opacity-50 text-white font-semibold rounded-lg transition"

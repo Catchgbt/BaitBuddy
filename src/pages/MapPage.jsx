@@ -417,7 +417,7 @@ export default function MapPage() {
           <h1 className="text-lg sm:text-2xl font-bold text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]">
             Karte & Spots
           </h1>
-          <button
+          <button type="button"
             onClick={() => setShowDetails(v => !v)}
             className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs bg-gray-800/70 border border-gray-700 text-gray-300 hover:bg-gray-700/70 transition-colors"
           >
@@ -428,7 +428,7 @@ export default function MapPage() {
 
         {/* Umschalter: Spots | Wetter-Radar | Beiszeiten */}
         <div className="flex p-1 rounded-xl bg-gray-900/70 border border-gray-800 gap-1">
-          <button
+          <button type="button"
             onClick={() => setMapView("spots")}
             aria-pressed={mapView === "spots"}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
@@ -440,7 +440,7 @@ export default function MapPage() {
             <MapPin className="w-4 h-4" />
             Spots
           </button>
-          <button
+          <button type="button"
             onClick={() => setMapView("radar")}
             aria-pressed={mapView === "radar"}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
@@ -452,7 +452,7 @@ export default function MapPage() {
             <CloudRain className="w-4 h-4" />
             Radar
           </button>
-          <button
+          <button type="button"
             onClick={() => setMapView("bitezeit")}
             aria-pressed={mapView === "bitezeit"}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
@@ -470,7 +470,7 @@ export default function MapPage() {
         {mapView === "radar" && (
           <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
             {Object.entries(RADAR_MODES).map(([key, val]) => (
-              <button
+              <button type="button"
                 key={key}
                 onClick={() => radar.setMode(key)}
                 className={`shrink-0 px-3 py-1.5 rounded-full text-xs border transition-colors ${
@@ -518,7 +518,7 @@ export default function MapPage() {
                   <span className="text-green-400 font-semibold">{showPublicSpots ? publicLocations.length : '0'}</span>
                 </div>
                 {!showPublicSpots && (
-                  <button
+                  <button type="button"
                     onClick={loadPublicSpots}
                     className="w-full mt-2 px-3 py-1 text-xs bg-green-900/50 hover:bg-green-800 text-green-300 rounded border border-green-700 transition-colors"
                   >
@@ -526,7 +526,7 @@ export default function MapPage() {
                   </button>
                 )}
                 {showPublicSpots && (
-                  <button
+                  <button type="button"
                     onClick={() => setShowPublicSpots(false)}
                     className="w-full mt-2 px-3 py-1 text-xs bg-red-900/50 hover:bg-red-800 text-red-300 rounded border border-red-700 transition-colors"
                   >
@@ -541,7 +541,7 @@ export default function MapPage() {
                     </span>
                   </div>
                   {!showPermitLocations ? (
-                    <button
+                    <button type="button"
                       onClick={() => setShowPermitLocations(true)}
                       className="w-full mt-2 px-3 py-1 text-xs bg-orange-900/50 hover:bg-orange-800 text-orange-300 rounded border border-orange-700 transition-colors flex items-center justify-center gap-1"
                     >
@@ -560,7 +560,7 @@ export default function MapPage() {
                           <option key={state} value={state}>{state}</option>
                         ))}
                       </select>
-                      <button
+                      <button type="button"
                         onClick={() => setShowPermitLocations(false)}
                         className="w-full mt-1 px-3 py-1 text-xs bg-red-900/50 hover:bg-red-800 text-red-300 rounded border border-red-700 transition-colors"
                       >
@@ -726,7 +726,7 @@ export default function MapPage() {
           </MapContainer>
 
           {/* Schwebender Standort-Button (mobilfreundlich, oben rechts) */}
-          <button
+          <button type="button"
             onClick={handleLocateMe}
             aria-label="Zu meinem Standort"
             className="absolute top-3 right-3 z-[1000] w-11 h-11 flex items-center justify-center rounded-full bg-gray-900/85 border border-gray-700 text-cyan-300 shadow-lg backdrop-blur-sm active:scale-95 transition-transform"
@@ -738,7 +738,7 @@ export default function MapPage() {
           {mapView === 'radar' && (
             <div className="absolute bottom-3 left-3 right-3 z-[1000] rounded-xl bg-gray-900/90 border border-gray-700 backdrop-blur-md p-3 shadow-xl">
               <div className="flex items-center gap-3">
-                <button
+                <button type="button"
                   onClick={() => radar.setIsPlaying(!radar.isPlaying)}
                   aria-label={radar.isPlaying ? 'Pause' : 'Abspielen'}
                   className="shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-emerald-600 text-white active:scale-95 transition-transform"

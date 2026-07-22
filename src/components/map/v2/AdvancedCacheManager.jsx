@@ -70,7 +70,7 @@ function AdvancedCacheManager({ visible = true }) {
           <Zap className="w-4 h-4" />
           <span>Cache Optimierung</span>
         </div>
-        <button
+        <button type="button"
           onClick={() => setShowStats(!showStats)}
           className="text-gray-400 hover:text-gray-200"
         >
@@ -112,7 +112,7 @@ function AdvancedCacheManager({ visible = true }) {
       )}
 
       <div className="flex gap-2">
-        <button
+        <button type="button"
           onClick={handleClear}
           disabled={isClearing}
           className="flex-1 flex items-center justify-center gap-1 bg-red-900/40 hover:bg-red-900/60 text-red-400 px-2 py-1.5 rounded text-xs font-medium disabled:opacity-50 transition"

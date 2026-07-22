@@ -144,7 +144,7 @@ export function TackleManager({ userId }) {
           <CardTitle className="text-emerald-400 flex items-center gap-2">
             <span>Tackle Management</span>
           </CardTitle>
-          <button
+          <button type="button"
             onClick={() => setExpanded(!expanded)}
             className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
           >
@@ -298,14 +298,14 @@ export function TackleManager({ userId }) {
                               )}
                             </div>
                             <div className="flex gap-2">
-                              <button
+                              <button type="button"
                                 onClick={() => handleEdit(item)}
                                 className="p-2 hover:bg-gray-700 rounded transition-colors"
                                 title="Bearbeiten"
                               >
                                 <Edit2 className="w-4 h-4 text-blue-400" />
                               </button>
-                              <button
+                              <button type="button"
                                 onClick={() => handleDelete(item.id)}
                                 className="p-2 hover:bg-gray-700 rounded transition-colors"
                                 title="Löschen"

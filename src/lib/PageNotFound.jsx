@@ -16,7 +16,7 @@ export default function PageNotFound() {
         <div className="text-6xl font-bold">404</div>
         <h1 className="text-2xl font-bold">Seite nicht gefunden</h1>
         <p className="text-gray-400">Die angeforderte Seite existiert nicht.</p>
-        <button
+        <button type="button"
           onClick={handleGoHome}
           className="w-full py-3 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold transition-colors"
         >

@@ -280,7 +280,7 @@ function LiveTripPage() {
               GPS-Tracking, Fang-Logging & Echtzeit-Statistiken
             </p>
           </div>
-          <button
+          <button type="button"
             onClick={() => setShowNotificationSettings(true)}
             className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition border border-gray-700 flex items-center gap-2"
             title="Benachrichtigungseinstellungen"
@@ -311,7 +311,7 @@ function LiveTripPage() {
                 </div>
               </div>
 
-              <button
+              <button type="button"
                 onClick={startTrip}
                 className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-all"
               >
@@ -420,7 +420,7 @@ function LiveTripPage() {
               <div className="h-[400px] flex flex-col">
                 {/* Tab-Navigation */}
                 <div className="flex gap-2 border-b border-gray-700 p-2 bg-gray-800/50">
-                  <button
+                  <button type="button"
                     onClick={() => setInfoTab('tides')}
                     className={`flex items-center gap-1 px-3 py-1 rounded text-xs font-semibold transition ${
                       infoTab === 'tides'
@@ -431,7 +431,7 @@ function LiveTripPage() {
                     <Droplets className="w-3 h-3" />
                     Gezeiten
                   </button>
-                  <button
+                  <button type="button"
                     onClick={() => setInfoTab('solunar')}
                     className={`flex items-center gap-1 px-3 py-1 rounded text-xs font-semibold transition ${
                       infoTab === 'solunar'
@@ -442,7 +442,7 @@ function LiveTripPage() {
                     <Moon className="w-3 h-3" />
                     Solunar
                   </button>
-                  <button
+                  <button type="button"
                     onClick={() => setInfoTab('prediction')}
                     className={`flex items-center gap-1 px-3 py-1 rounded text-xs font-semibold transition ${
                       infoTab === 'prediction'
@@ -488,7 +488,7 @@ function LiveTripPage() {
 
             {/* Fang-Logger + Kontrolle */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <button
+              <button type="button"
                 onClick={() => setShowCatchModal(true)}
                 className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition"
               >
@@ -497,7 +497,7 @@ function LiveTripPage() {
               </button>
 
               {!isPaused ? (
-                <button
+                <button type="button"
                   onClick={pauseTrip}
                   className="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition"
                 >
@@ -505,7 +505,7 @@ function LiveTripPage() {
                   Pausieren
                 </button>
               ) : (
-                <button
+                <button type="button"
                   onClick={resumeTrip}
                   className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition"
                 >
@@ -514,7 +514,7 @@ function LiveTripPage() {
                 </button>
               )}
 
-              <button
+              <button type="button"
                 onClick={endTrip}
                 className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition"
               >
@@ -616,13 +616,13 @@ function CatchLoggerModal({ onClose, onSave }) {
         </div>
 
         <div className="flex gap-2 mt-6">
-          <button
+          <button type="button"
             onClick={onClose}
             className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 font-semibold py-2 rounded transition"
           >
             Abbrechen
           </button>
-          <button
+          <button type="button"
             onClick={handleSave}
             className="flex-1 bg-green-600 hover:bg-green-500 text-white font-semibold py-2 rounded transition"
           >

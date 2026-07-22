@@ -40,7 +40,7 @@ export default function RecipeBuilder({
             {ingredients.map((ingredient) => {
               const currentValue = mix[ingredient.name] || 0;
               return (
-                <button
+                <button type="button"
                   key={ingredient.id}
                   onClick={() => onAddIngredient(ingredient)}
                   disabled={currentValue >= ingredient.max_percentage}
@@ -122,7 +122,7 @@ export default function RecipeBuilder({
 
                     {/* Inline Buttons für schnelle Anpassung */}
                     <div className="flex gap-1 mt-2">
-                      <button
+                      <button type="button"
                         onClick={() =>
                           onUpdatePercentage(name, Math.max(0, value - 5))
                         }
@@ -130,7 +130,7 @@ export default function RecipeBuilder({
                       >
                         −5%
                       </button>
-                      <button
+                      <button type="button"
                         onClick={() =>
                           onUpdatePercentage(
                             name,

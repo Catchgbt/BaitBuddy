@@ -61,7 +61,7 @@ function MapLayerControls({
     <div className="absolute top-3 right-3 z-[500]">
       {/* Collapsed button */}
       {!isExpanded && (
-        <button
+        <button type="button"
           onClick={() => setIsExpanded(true)}
           className="flex items-center gap-2 bg-gray-900/80 backdrop-blur-sm border border-gray-700 rounded-lg p-2.5 text-cyan-400 hover:bg-gray-900 transition hover:border-cyan-600"
           title="Erweiterte Kartenlayer"
@@ -83,7 +83,7 @@ function MapLayerControls({
               <Layers className="w-5 h-5" />
               <span>Kartenlayer</span>
             </div>
-            <button
+            <button type="button"
               onClick={() => setIsExpanded(false)}
               className="text-gray-400 hover:text-gray-200 text-xl"
             >
@@ -94,7 +94,7 @@ function MapLayerControls({
           {/* Layer toggles */}
           <div className="space-y-2">
             {layers.map(layer => (
-              <button
+              <button type="button"
                 key={layer.id}
                 onClick={() => {
                   layer.onToggle(!layer.enabled);

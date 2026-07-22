@@ -91,7 +91,7 @@ export default function MapLegendFilter({
                     LEGENDE
                   </div>
                   
-                  <button
+                  <button type="button"
                     onClick={() => handleFilterToggle('mySpots')}
                     aria-pressed={activeFilters.mySpots}
                     aria-label="Eigene Spots anzeigen"
@@ -110,7 +110,7 @@ export default function MapLegendFilter({
                     </Badge>
                   </button>
 
-                  <button
+                  <button type="button"
                     onClick={() => handleFilterToggle('publicLocations')}
                     aria-pressed={activeFilters.publicLocations}
                     aria-label="Oeffentliche Orte anzeigen"
@@ -129,7 +129,7 @@ export default function MapLegendFilter({
                     </Badge>
                   </button>
 
-                  <button
+                  <button type="button"
                     onClick={() => handleFilterToggle('favorites')}
                     aria-pressed={activeFilters.favorites}
                     aria-label="Nur Favoriten anzeigen"

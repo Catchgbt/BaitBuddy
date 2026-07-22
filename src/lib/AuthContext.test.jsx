@@ -30,7 +30,7 @@ import { AuthProvider, useAuth } from './AuthContext';
 
 function TestConsumer() {
   const { logout } = useAuth();
-  return <button onClick={() => logout(false)}>logout</button>;
+  return <button type="button" onClick={() => logout(false)}>logout</button>;
 }
 
 describe('AuthContext – Supabase-Token-Sync', () => {

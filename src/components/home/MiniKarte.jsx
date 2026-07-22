@@ -136,7 +136,7 @@ export default function MiniKarte() {
 
             {/* Button zur Karte */}
             <Link to={createPageUrl('Map')}>
-              <button className="w-full mt-2 px-3 py-2 bg-cyan-600/20 hover:bg-cyan-600/30 border border-cyan-500/30 rounded-lg text-cyan-400 text-xs font-medium transition-all flex items-center justify-center gap-2">
+              <button type="button" className="w-full mt-2 px-3 py-2 bg-cyan-600/20 hover:bg-cyan-600/30 border border-cyan-500/30 rounded-lg text-cyan-400 text-xs font-medium transition-all flex items-center justify-center gap-2">
                 <Map className="w-3 h-3" />
                 Zur Karte
               </button>
@@ -154,7 +154,7 @@ export default function MiniKarte() {
               Finde Vereine, Angelparks und speichere deine eigenen Spots
             </div>
             <Link to={createPageUrl('Map')}>
-              <button className="w-full px-3 py-2 bg-blue-600/70 hover:bg-blue-700/80 border border-blue-500/40 text-white rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-2">
+              <button type="button" className="w-full px-3 py-2 bg-blue-600/70 hover:bg-blue-700/80 border border-blue-500/40 text-white rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-2">
                 <Plus className="w-3 h-3" />
                 Karte erkunden
               </button>

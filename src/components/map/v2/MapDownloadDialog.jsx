@@ -70,7 +70,7 @@ export default function MapDownloadDialog({ isOpen, onClose, bounds, currentZoom
       <div className="bg-gray-900 rounded-2xl border border-gray-800 shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-gray-900 border-b border-gray-800 p-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-white">Karte offline laden</h2>
-          <button
+          <button type="button"
             onClick={onClose}
             disabled={isDownloading}
             className="text-gray-400 hover:text-white transition-colors disabled:opacity-50"
@@ -103,7 +103,7 @@ export default function MapDownloadDialog({ isOpen, onClose, bounds, currentZoom
             </label>
             <div className="grid grid-cols-4 gap-2">
               {[10, 12, 14, 16].map(zoom => (
-                <button
+                <button type="button"
                   key={zoom}
                   onClick={() => handleZoomToggle(zoom)}
                   disabled={isDownloading}
@@ -169,14 +169,14 @@ export default function MapDownloadDialog({ isOpen, onClose, bounds, currentZoom
 
           {/* Buttons */}
           <div className="flex gap-3">
-            <button
+            <button type="button"
               onClick={onClose}
               disabled={isDownloading}
               className="flex-1 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium transition-colors disabled:opacity-50"
             >
               Abbrechen
             </button>
-            <button
+            <button type="button"
               onClick={handleDownload}
               disabled={isDownloading || selectedZooms.length === 0}
               className="flex-1 px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"

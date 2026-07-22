@@ -615,7 +615,7 @@ export default function Logbook() {
 
       <div className="flex justify-end">
         <Link to="/CatchStats">
-          <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 border border-gray-700 text-cyan-400 text-sm font-medium transition-colors min-h-[44px]">
+          <button type="button" className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 border border-gray-700 text-cyan-400 text-sm font-medium transition-colors min-h-[44px]">
             <BarChart2 className="w-4 h-4" />
             Fang-Statistiken anzeigen
           </button>
@@ -627,7 +627,7 @@ export default function Logbook() {
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Filter</h3>
           <div className="flex gap-2 flex-wrap">
             {["Alle", ...new Set(catches.map(c => c.species).filter(Boolean))].map(species => (
-              <button
+              <button type="button"
                 key={species}
                 onClick={() => setFilterSpecies(species)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all border ${
@@ -642,7 +642,7 @@ export default function Logbook() {
           </div>
           <div className="flex gap-2 flex-wrap">
             {["Alle Jahre", new Date().getFullYear().toString(), new Date().getFullYear() - 1, new Date().getFullYear() - 2].map(year => (
-              <button
+              <button type="button"
                 key={year}
                 onClick={() => setFilterYear(year)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all border ${
@@ -714,7 +714,7 @@ export default function Logbook() {
         catchData={savedCatchData}
       />
 
-      <button
+      <button type="button"
         type="button"
         aria-label="Neuen Fang eintragen"
         onClick={() => {

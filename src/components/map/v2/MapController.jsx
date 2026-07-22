@@ -138,6 +138,7 @@ function MapController() {
     const loadForellenseen = async () => {
       try {
         const response = await fetch('/assets/forellenseen/forellenseen.json');
+        if (!response.ok) throw new Error(`HTTP ${response.status}: Forellenseen`);
         const data = await response.json();
         setForellenseen(data);
       } catch (error) {
@@ -149,6 +150,7 @@ function MapController() {
     const loadBathymetry = async () => {
       try {
         const response = await fetch('/assets/bathymetry/bathymetry_metadata.json');
+        if (!response.ok) throw new Error(`HTTP ${response.status}: Bathymetrie`);
         const data = await response.json();
         setBathymetryData(data.bundeslaender_list || []);
       } catch (error) {
@@ -160,6 +162,7 @@ function MapController() {
     const loadDeutscheFluesse = async () => {
       try {
         const response = await fetch('/assets/rivers/deutsche_fluesse.json');
+        if (!response.ok) throw new Error(`HTTP ${response.status}: Deutsche Flüsse`);
         const data = await response.json();
         setDeutscheFluesse(data);
       } catch (error) {
@@ -171,6 +174,7 @@ function MapController() {
     const loadEuropeanRivers = async () => {
       try {
         const response = await fetch('/assets/rivers/european_rivers.json');
+        if (!response.ok) throw new Error(`HTTP ${response.status}: Europäische Flüsse`);
         const data = await response.json();
         setEuropeanRivers(data);
       } catch (error) {
@@ -182,6 +186,7 @@ function MapController() {
     const loadEuropeanBathymetry = async () => {
       try {
         const response = await fetch('/assets/bathymetry/european_bathymetry_metadata.json');
+        if (!response.ok) throw new Error(`HTTP ${response.status}: Europäische Bathymetrie`);
         const data = await response.json();
         setEuropeanBathymetry(data);
       } catch (error) {
@@ -470,7 +475,7 @@ function MapController() {
 
            {/* Filter Buttons */}
            <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-9 gap-1.5">
-             <button
+             <button type="button"
                onClick={() => setFilters({ ...filters, spots: !filters.spots })}
                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                  filters.spots
@@ -480,7 +485,7 @@ function MapController() {
              >
                Spots
              </button>
-             <button
+             <button type="button"
                onClick={() => setFilters({ ...filters, clubs: !filters.clubs })}
                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                  filters.clubs
@@ -490,7 +495,7 @@ function MapController() {
              >
                Vereine
              </button>
-             <button
+             <button type="button"
                onClick={() => setFilters({ ...filters, parks: !filters.parks })}
                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                  filters.parks
@@ -500,7 +505,7 @@ function MapController() {
              >
                Parks
              </button>
-             <button
+             <button type="button"
                onClick={() => setFilters({ ...filters, angelparks: !filters.angelparks })}
                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                  filters.angelparks
@@ -510,7 +515,7 @@ function MapController() {
              >
                Angelparks
              </button>
-             <button
+             <button type="button"
                onClick={() => setFilters({ ...filters, angelshops: !filters.angelshops })}
                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                  filters.angelshops
@@ -520,7 +525,7 @@ function MapController() {
              >
                Shops
              </button>
-             <button
+             <button type="button"
                onClick={() => setFilters({ ...filters, angelparksEu: !filters.angelparksEu })}
                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                  filters.angelparksEu
@@ -530,7 +535,7 @@ function MapController() {
              >
                EU Parks
              </button>
-             <button
+             <button type="button"
                onClick={() => setFilters({ ...filters, waters: !filters.waters })}
                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                  filters.waters
@@ -540,7 +545,7 @@ function MapController() {
              >
                Gewässer
              </button>
-             <button
+             <button type="button"
                onClick={() => setFilters({ ...filters, tiefenkarten: !filters.tiefenkarten })}
                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                  filters.tiefenkarten
@@ -550,7 +555,7 @@ function MapController() {
              >
                Tiefenkarten
              </button>
-             <button
+             <button type="button"
                onClick={() => setFilters({ ...filters, forellenseen: !filters.forellenseen })}
                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                  filters.forellenseen
@@ -560,7 +565,7 @@ function MapController() {
              >
                Forellenseen
              </button>
-             <button
+             <button type="button"
                onClick={() => setFilters({ ...filters, bathymetrie: !filters.bathymetrie })}
                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                  filters.bathymetrie
@@ -570,7 +575,7 @@ function MapController() {
              >
                Bathymetrie
              </button>
-             <button
+             <button type="button"
                onClick={() => setFilters({ ...filters, fluesse: !filters.fluesse })}
                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                  filters.fluesse
@@ -632,7 +637,7 @@ function MapController() {
                   </p>
                 </div>
               </div>
-              <button
+              <button type="button"
                 onClick={() => setShowInfo(false)}
                 aria-label="Infobanner schliessen"
                 className="text-gray-400 hover:text-white transition-colors p-2 min-h-[44px] min-w-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 rounded active:scale-95"

@@ -84,7 +84,7 @@ function TripHistory() {
             {stats && `${stats.totalTrips} Touren • ${stats.pendingTrips} ausstehend • ~${stats.estimatedSizeMB}MB`}
           </p>
         </div>
-        <button
+        <button type="button"
           onClick={handleSync}
           disabled={syncing || !stats?.pendingTrips}
           className={`px-4 py-2 rounded font-semibold text-sm flex items-center gap-2 transition ${
@@ -162,21 +162,21 @@ function TripHistory() {
 
                 {/* Actions */}
                 <div className="flex gap-1 flex-shrink-0">
-                  <button
+                  <button type="button"
                     onClick={() => handleExport(trip, 'json')}
                     title="Als JSON exportieren"
                     className="p-1.5 bg-gray-700 hover:bg-gray-600 rounded transition text-gray-300 hover:text-cyan-300"
                   >
                     <Download className="w-3 h-3" />
                   </button>
-                  <button
+                  <button type="button"
                     onClick={() => handleExport(trip, 'csv')}
                     title="Als CSV exportieren"
                     className="p-1.5 bg-gray-700 hover:bg-gray-600 rounded transition text-gray-300 hover:text-cyan-300"
                   >
                     <Download className="w-3 h-3" />
                   </button>
-                  <button
+                  <button type="button"
                     onClick={() => handleDelete(trip.id)}
                     title="Löschen"
                     className="p-1.5 bg-red-900/30 hover:bg-red-900/50 rounded transition text-red-400 hover:text-red-300"

@@ -326,7 +326,7 @@ export default function WaterAnalysisTutorial() {
             <CardContent className="space-y-3">
               {sections.map((section) => (
                 <div key={section.id} className="border border-gray-700 rounded-lg overflow-hidden">
-                  <button
+                  <button type="button"
                     onClick={() => setActiveSection(activeSection === section.id ? null : section.id)}
                     className="w-full px-4 py-3 bg-gray-800/50 hover:bg-gray-800/70 transition-colors flex items-center justify-between text-left"
                   >

@@ -258,7 +258,7 @@ function MapNavigationHub({
   if (!isExpanded) {
     return (
       <div className="fixed bottom-24 right-4 z-40">
-        <button
+        <button type="button"
           onClick={() => setIsExpanded(true)}
           className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white p-4 rounded-full shadow-lg flex items-center justify-center w-14 h-14 transition-all hover:scale-110"
           title="Map Navigation Hub öffnen"
@@ -282,7 +282,7 @@ function MapNavigationHub({
             <div className="text-2xl"></div>
             <h1 className="text-lg font-bold text-cyan-300">Map Navigation Hub</h1>
           </div>
-          <button
+          <button type="button"
             onClick={() => setIsExpanded(false)}
             className="text-gray-400 hover:text-gray-200 text-2xl"
           >
@@ -294,7 +294,7 @@ function MapNavigationHub({
         <div className="text-xs text-gray-400 mb-2">Aktueller Modus:</div>
         <div className="flex gap-2 flex-wrap">
           {modes.map(mode => (
-            <button
+            <button type="button"
               key={mode.id}
               onClick={() => onModeChange(mode.id)}
               className={`px-3 py-1 rounded text-xs font-medium transition ${
@@ -329,7 +329,7 @@ function MapNavigationHub({
         {/* Category Navigation */}
         <div className="grid grid-cols-2 gap-2">
           {Object.entries(categories).map(([key, cat]) => (
-            <button
+            <button type="button"
               key={key}
               onClick={() => setActiveCategory(key)}
               className={`p-3 rounded-lg border-2 transition text-left ${
@@ -382,7 +382,7 @@ function MapNavigationHub({
 
       {/* Footer */}
       <div className="sticky bottom-0 bg-gray-900/98 border-t border-cyan-700 p-3 flex items-center justify-between">
-        <button
+        <button type="button"
           onClick={() => setHideHints(!hideHints)}
           className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-300"
         >

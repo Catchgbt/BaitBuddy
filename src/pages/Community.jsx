@@ -611,7 +611,7 @@ export default function Community() {
 
         {/* Tab Navigation */}
         <div className="flex gap-2 p-1 bg-gray-900/60 border border-gray-800 rounded-2xl overflow-x-auto">
-          <button
+          <button type="button"
             onClick={() => setActiveTab("competitions")}
             className={`flex-1 min-w-fit flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
               activeTab === "competitions"
@@ -622,7 +622,7 @@ export default function Community() {
             <Trophy className="w-4 h-4" />
             Wettbewerbe
           </button>
-          <button
+          <button type="button"
             onClick={() => setActiveTab("feed")}
             className={`flex-1 min-w-fit flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
               activeTab === "feed"
@@ -633,7 +633,7 @@ export default function Community() {
             <MessageCircle className="w-4 h-4" />
             Feed
           </button>
-          <button
+          <button type="button"
             onClick={() => setActiveTab("leaderboards")}
             className={`flex-1 min-w-fit flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
               activeTab === "leaderboards"

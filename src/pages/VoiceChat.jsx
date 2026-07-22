@@ -304,7 +304,7 @@ export default function VoiceChat() {
           <h1 className="text-lg font-bold text-white">Live-Gespräch</h1>
           <p className="text-xs text-gray-500">Echtzeit-Sprache mit deinem KI-Buddy</p>
         </div>
-        <button
+        <button type="button"
           onClick={() => { hangUp(); navigate(createPageUrl('AIAssistant')); }}
           className="p-2 text-gray-500 hover:text-white"
           title="Schließen"
@@ -373,7 +373,7 @@ export default function VoiceChat() {
       {/* Steuerung */}
       <div className="fixed bottom-0 left-0 right-0 p-6 border-t border-gray-800 bg-gray-950/90 backdrop-blur flex items-center justify-center gap-6">
         {!active && phase !== PHASE.CONNECTING ? (
-          <button
+          <button type="button"
             onClick={start}
             className="flex items-center gap-2 px-8 py-4 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow-lg transition-colors"
           >
@@ -383,7 +383,7 @@ export default function VoiceChat() {
           <>
             {/* Stummschalten nur im echten Realtime-Modus (persistenter Mic-Stream) */}
             {!fallbackMode && (
-              <button
+              <button type="button"
                 onClick={toggleMute}
                 disabled={phase === PHASE.CONNECTING}
                 className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors disabled:opacity-50 ${
@@ -394,7 +394,7 @@ export default function VoiceChat() {
                 <Mic size={22} className={muted ? 'opacity-40' : ''} />
               </button>
             )}
-            <button
+            <button type="button"
               onClick={hangUp}
               className="flex items-center gap-2 px-8 py-4 rounded-full bg-red-600 hover:bg-red-500 text-white font-semibold shadow-lg transition-colors"
             >

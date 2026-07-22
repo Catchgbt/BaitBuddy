@@ -132,7 +132,7 @@ export default function WeatherWarnings({ lat, lon }) {
           <AlertTriangle className="w-4 h-4 text-amber-400" />
           Amtliche Unwetterwarnungen
         </h2>
-        <button
+        <button type="button"
           onClick={loadAlerts}
           disabled={loading}
           aria-label="Warnungen aktualisieren"
@@ -156,7 +156,7 @@ export default function WeatherWarnings({ lat, lon }) {
         <Card className="glass-morphism border-red-900/50 rounded-2xl">
           <CardContent className="py-6 text-center text-sm text-red-300">
             Warnungen konnten nicht geladen werden.
-            <button onClick={loadAlerts} className="ml-2 underline hover:text-red-200">
+            <button type="button" onClick={loadAlerts} className="ml-2 underline hover:text-red-200">
               Erneut versuchen
             </button>
           </CardContent>

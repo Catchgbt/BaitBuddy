@@ -52,7 +52,7 @@ export default function RatingWidget({ functionName, title, onComplete }) {
       <CardContent className="space-y-4">
         <div className="flex gap-2 justify-center">
           {[1, 2, 3, 4, 5].map((star) => (
-            <button
+            <button type="button"
               key={star}
               type="button"
               onClick={() => setRating(star)}

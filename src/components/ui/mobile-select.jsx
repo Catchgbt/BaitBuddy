@@ -32,7 +32,7 @@ export function MobileSelect({
 
   return (
     <>
-      <button
+      <button type="button"
         type="button"
         id={triggerId}
         onClick={() => setOpen(true)}
@@ -72,7 +72,7 @@ export function MobileSelect({
           >
             <div className="space-y-2">
               {options.map((option) => (
-                <button
+                <button type="button"
                   key={option.value}
                   type="button"
                   role="option"

@@ -152,7 +152,7 @@ export default function WeatherRadarMap() {
             </>
           ) : "Keine Daten"}
         </div>
-        <button
+        <button type="button"
           onClick={() => setIsPlaying(!isPlaying)}
           className="px-3 py-1 rounded-md bg-cyan-600/20 hover:bg-cyan-600/40 border border-cyan-500/30 text-xs text-cyan-300 transition-colors"
         >
@@ -165,7 +165,7 @@ export default function WeatherRadarMap() {
         <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Kartenstil</div>
         <div className="flex gap-1 flex-wrap">
           {Object.entries(BASE_LAYERS).map(([key, val]) => (
-            <button
+            <button type="button"
               key={key}
               onClick={() => setBaseLayer(key)}
               className={`px-2 py-1 rounded-md text-[11px] border transition-colors ${
@@ -185,7 +185,7 @@ export default function WeatherRadarMap() {
         <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Wetterlayer</div>
         <div className="flex gap-1 flex-wrap">
           {Object.entries(OVERLAY_MODES).map(([key, val]) => (
-            <button
+            <button type="button"
               key={key}
               onClick={() => setOverlayMode(key)}
               className={`px-2 py-1 rounded-md text-[11px] border transition-colors ${

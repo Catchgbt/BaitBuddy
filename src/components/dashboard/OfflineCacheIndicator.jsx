@@ -57,7 +57,7 @@ export default function OfflineCacheIndicator() {
 
   return (
     <div className="relative">
-      <button
+      <button type="button"
         onClick={() => setShowDetail(!showDetail)}
         className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs hover:bg-amber-500/20 transition-colors"
       >

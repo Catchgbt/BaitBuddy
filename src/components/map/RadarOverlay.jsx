@@ -33,9 +33,16 @@ export function useRainviewerRadar(active) {
     setLoading(true);
     setError(false);
     fetch("https://api.rainviewer.com/public/weather-maps.json")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}: Radar data unavailable`);
+        return res.json();
+      })
       .then((data) => {
         if (cancelled) return;
+        if (!data || !data.radar) {
+          setError(true);
+          return;
+        }
         const past = data.radar?.past || [];
         const nowcast = data.radar?.nowcast || [];
         const all = [...past, ...nowcast];

@@ -57,7 +57,7 @@ export default function WeatherSection() {
     setLoading(false);
   }, []);
 
-  // KI-Buddy über Funktionsaufruf informieren
+  // KI-Buddy über Funktionsaufruf informieren (nur beim Mount)
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('kiBuddyFunctionCall', {
       detail: {

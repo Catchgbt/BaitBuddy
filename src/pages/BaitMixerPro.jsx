@@ -435,7 +435,7 @@ Exportiert: ${exportData.exportDate}
           {/* Tabs */}
           <div className="flex gap-2 overflow-x-auto pb-2 border-b border-gray-800">
             {TABS.map(tab => (
-              <button
+              <button type="button"
                 key={tab.id}
                 onClick={() => {
                   setActiveTab(tab.id);

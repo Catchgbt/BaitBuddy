@@ -160,7 +160,7 @@ export default function SocialMediaShareDialog({ open, onOpenChange, catchData }
             <label className="block text-sm font-medium text-gray-300">Plattformen</label>
             <div className="grid grid-cols-2 gap-2">
               {PLATFORMS.map(platform => (
-                <button
+                <button type="button"
                   key={platform.id}
                   onClick={() => togglePlatform(platform.id)}
                   className={`p-3 rounded-lg border transition-colors ${

@@ -27,7 +27,7 @@ export default function LureControls({
         aria-label="Köder auswählen"
       >
         {lures.map((lure) => (
-          <button
+          <button type="button"
             key={lure.id}
             role="tab"
             aria-selected={lure.id === selectedLureId}
@@ -46,7 +46,7 @@ export default function LureControls({
       {selectedLure && selectedLure.styles.length > 1 && (
         <div className="flex flex-wrap gap-2" role="tablist" aria-label="Führungsstil auswählen">
           {selectedLure.styles.map((style) => (
-            <button
+            <button type="button"
               key={style.id}
               role="tab"
               aria-selected={style.id === selectedStyleId}

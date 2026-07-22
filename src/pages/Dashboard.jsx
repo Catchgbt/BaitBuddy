@@ -546,7 +546,7 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
 
         {showAnalysis && aiAnalysis && (
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-900/30 to-blue-900/30 backdrop-blur-sm p-6 border border-purple-500/30 shadow-2xl" role="region" aria-live="assertive" aria-label="KI-Analyse Ergebnis">
-            <button
+            <button type="button"
               onClick={() => setShowAnalysis(false)}
               aria-label="Analyse schliessen"
               className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors flex items-center justify-center"
@@ -701,7 +701,7 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
                 </>
               );
               return feature.path === "Community" ? (
-                <button
+                <button type="button"
                   key={feature.path}
                   onClick={() => setShowCommunityDialog(true)}
                   className="group relative overflow-hidden rounded-xl bg-gray-900/60 hover:bg-gray-800/70 border border-gray-800/50 hover:border-gray-700/70 p-4 text-center transition-all"

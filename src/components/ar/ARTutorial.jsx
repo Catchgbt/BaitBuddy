@@ -100,7 +100,7 @@ export default function ARTutorial({ isOpen, onClose }) {
             </Button>
           </div>
 
-          <button
+          <button type="button"
             onClick={onClose}
             className="text-gray-400 hover:text-white text-sm mt-4 w-full text-center"
           >

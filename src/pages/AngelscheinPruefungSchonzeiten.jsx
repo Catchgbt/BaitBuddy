@@ -466,7 +466,7 @@ export default function AngelscheinPruefungSchonzeiten() {
                         const wasAnswered = userAnswers[index] !== null;
                         
                         return (
-                          <button
+                          <button type="button"
                             key={index}
                             onClick={() => {
                               setCurrentQuestion(index);
@@ -587,7 +587,7 @@ export default function AngelscheinPruefungSchonzeiten() {
                     const showCorrect = showResults || userAnswers[currentQuestion] !== null;
 
                     return (
-                      <button
+                      <button type="button"
                         key={index}
                         onClick={() => !showResults && handleAnswer(index)}
                         disabled={showResults}

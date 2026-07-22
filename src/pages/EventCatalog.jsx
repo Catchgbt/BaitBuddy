@@ -144,7 +144,7 @@ export default function EventCatalog() {
               <Trophy className="w-10 h-10 text-amber-400" />
               Neues Event erstellen
             </h1>
-            <button
+            <button type="button"
               onClick={() => setShowCreateForm(false)}
               className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
             >
@@ -261,7 +261,7 @@ export default function EventCatalog() {
         {/* Filter Tabs */}
         <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
           {['all', 'ongoing', 'custom'].map((tab) => (
-            <button
+            <button type="button"
               key={tab}
               onClick={() => setFilter(tab)}
               className={`px-4 py-2 rounded-full whitespace-nowrap transition-all ${

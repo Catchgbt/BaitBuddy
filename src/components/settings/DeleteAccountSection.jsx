@@ -76,7 +76,7 @@ export default function DeleteAccountSection() {
           </p>
 
           {step === 'idle' && (
-            <button
+            <button type="button"
               aria-label="Konto löschen starten"
               onClick={handleInitiateDelete}
               className="min-h-[44px] w-full px-4 py-2 rounded-lg bg-red-900/30 hover:bg-red-900/50 text-red-400 border border-red-800/50 text-sm font-medium transition"
@@ -102,7 +102,7 @@ export default function DeleteAccountSection() {
                   {error && <p className="text-xs text-red-400 mt-2">{error}</p>}
                 </div>
               </div>
-              <button
+              <button type="button"
                 onClick={handleInitiateDelete}
                 className="mt-4 w-full min-h-[44px] px-4 py-2 rounded-lg bg-red-900/30 hover:bg-red-900/50 text-red-400 border border-red-800/50 text-sm font-medium transition"
               >

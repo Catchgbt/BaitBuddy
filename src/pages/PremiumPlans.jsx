@@ -426,13 +426,13 @@ export default function PremiumPlans() {
                   </ul>
 
                   {isCurrentPlan ? (
-                    <Button disabled className="w-full bg-emerald-600">
-                      Aktiver Plan
-                    </Button>
+                    <Badge className="w-full justify-center py-2 bg-emerald-600 text-white">
+                      ✓ Aktiver Plan
+                    </Badge>
                   ) : plan.price === 0 ? (
-                    <Button disabled className="w-full bg-gray-700">
-                      Kostenlos nutzen
-                    </Button>
+                    <Badge variant="secondary" className="w-full justify-center py-2">
+                      Kostenlos verfügbar
+                    </Badge>
                   ) : (
                     <div className="space-y-2">
                       {billingAvailable && (
