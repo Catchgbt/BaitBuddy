@@ -52,21 +52,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Fehlende Secrets sind hier bewusst KEIN harter Fehler: sonst blockiert
+      # dieser Job jeden PR, solange die Secrets noch nicht hinterlegt sind —
+      # inklusive des PRs, der diesen Workflow ueberhaupt erst einfuehrt. Der
+      # Trockenlauf ist rein informativ; scharf gestellt sind `apply` und
+      # `drift-check`, die weiterhin hart fehlschlagen.
       - name: Secrets pruefen
+        id: secrets
         run: |
           if [ -z "$SUPABASE_ACCESS_TOKEN" ] || [ -z "$SUPABASE_DB_PASSWORD" ]; then
-            echo "::error::SUPABASE_ACCESS_TOKEN und/oder SUPABASE_DB_PASSWORD fehlen in den Repository-Secrets."
-            exit 1
+            echo "vorhanden=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::SUPABASE_ACCESS_TOKEN und/oder SUPABASE_DB_PASSWORD fehlen — Trockenlauf uebersprungen. Solange die Secrets fehlen, kann der Deploy auf main nicht laufen."
+          else
+            echo "vorhanden=true" >> "$GITHUB_OUTPUT"
           fi
 
       - uses: supabase/setup-cli@v1
+        if: steps.secrets.outputs.vorhanden == 'true'
         with:
           version: latest
 
       - name: Projekt verbinden
+        if: steps.secrets.outputs.vorhanden == 'true'
         run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
 
       - name: Trockenlauf
+        if: steps.secrets.outputs.vorhanden == 'true'
         run: supabase db push --dry-run
 
   # ---------------------------------------------------------------------------

@@ -41,6 +41,12 @@ Unter *Settings → Secrets and variables → Actions*:
 Die Projekt-Referenz (`yejiqenqdzupauddjcyi`) steht direkt im Workflow — sie ist
 kein Geheimnis und liegt ohnehin als Default-URL in `backend/src/lib/supabase.js`.
 
+Solange die Secrets fehlen, überspringt der **Trockenlauf im PR** seine Schritte
+mit einer Warnung (er ist rein informativ und soll keinen PR blockieren).
+**`apply` und die Drift-Kontrolle schlagen dagegen hart fehl** — ein Deploy-Pfad
+ohne Zugangsdaten ist kaputt und soll das sichtbar machen, statt still nichts zu
+tun.
+
 ## Migrationen idempotent schreiben
 
 Der Deploy wendet jede Migration genau einmal an. Trotzdem sollten Migrationen
