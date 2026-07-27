@@ -169,12 +169,12 @@ erfolgreich eingeladenem Freund**. Das Popup rotiert alle 72h (localStorage
   erstmals den **Basic**-Plan, bekommt sein Referrer **10 € Rabatt auf den
   nächsten Ultimate-Kauf** gutgeschrieben — gedeckelt bei 3 Freunden (30 €).
   Gespeichert als `ultimate_discount_cents` in den Referrer-Metadaten, idempotent
-  über `referrals.basic_reward_granted` (Migration `20260721_referral_basic_reward.sql`).
+  über `referrals.basic_reward_granted` (Migration `20260727180343_referral_basic_reward.sql`).
   Der Rabatt wird beim **Stripe-Web-Checkout** (`POST /api/premium/checkout`,
   nur `elite`) vom Preis abgezogen (Mindestbetrag 9,99 €) und bei erfolgreicher
   Ultimate-Aktivierung wieder auf 0 gesetzt. Google Play nutzt feste SKUs → dort
   kein dynamischer Rabatt. Logik in `backend/src/routes/premium.js`.
-- **Migration**: `supabase/migrations/20260719_create_referrals_tables.sql`
+- **Migration**: `supabase/migrations/20260727180333_create_referrals_tables.sql`
   (Tabellen `user_referral_codes` + `referrals`, RLS: nur Lesen der eigenen
   Zeilen, Insert/Update ausschließlich vom Backend über die Service-Role).
 
@@ -197,6 +197,27 @@ Start via `POST /api/events`). Sie ist **nicht** mehr in der Community-Sektion
    zurückliegt, werden per **Soft-Delete** (`is_active=false`) aus der Liste
    ausgeblendet. `GET /api/events` filtert nur `is_active=true`. Kein Hard-Delete —
    `event_participants`/`event_submissions`/Punkte-Historie bleiben erhalten.
+
+## 🗄️ Datenbank-Migrationen (automatisierter Deploy)
+
+Schema-Änderungen gehören **ausschließlich** in `supabase/migrations/` und werden
+vom Workflow `.github/workflows/supabase-migrations.yml` automatisch angewendet:
+PR → Trockenlauf, Merge auf `main` → `supabase db push`, täglich 03:00 UTC →
+Drift-Kontrolle (schlägt fehl, wenn Repo-Migrationen auf der DB fehlen).
+Details in `supabase/README.md`.
+
+- **Dateiname zwingend `<14-stelliger Zeitstempel>_<name>.sql`** (via
+  `npx supabase migration new <name>`). Kürzere Präfixe brechen den Abgleich mit
+  `supabase_migrations.schema_migrations` — die CLI hält die Migration dann für
+  unangewendet und führt sie erneut aus.
+- **Nicht mehr von Hand einspielen** (Dashboard/Management-API vergeben eigene
+  Zeitstempel und erzeugen genau die Drift, die das Referral-System monatelang
+  live lahmgelegt hat).
+- **Idempotent schreiben** (`if not exists`). Ausnahme: `CREATE POLICY` kennt kein
+  `IF NOT EXISTS` → vorher `drop policy if exists`. Bei Indizes prüft
+  `IF NOT EXISTS` nur den **Namen**, nicht die Spalten-Abdeckung.
+- Secrets `SUPABASE_ACCESS_TOKEN` und `SUPABASE_DB_PASSWORD` müssen in den
+  Repository-Secrets gesetzt sein, sonst schlägt der Deploy bewusst fehl.
 
 ## 📱 Device-Features (Pflicht)
 
