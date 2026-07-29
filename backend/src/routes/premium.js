@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, invalidateCachedUser } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
 import { verifyGooglePlayPurchase, verifyStripePayment, createStripeCheckoutSession } from '../lib/purchaseVerification.js';
 import { sendDbError } from '../lib/errorResponse.js';
@@ -60,6 +60,7 @@ async function grantReferralBasicReward(referredUser) {
       user_metadata: { ...refMeta, ultimate_discount_cents: next },
     });
     if (updErr) return;
+    invalidateCachedUser(row.referrer_user_id);
 
     await supabase.from('referrals').update({ basic_reward_granted: true }).eq('id', row.id);
   } catch (e) {
@@ -291,6 +292,10 @@ router.post('/premium/activate', requireAuth, async (req, res) => {
     user_metadata: merged,
   });
   if (error) return sendDbError(res, error);
+  // Token-Cache verwerfen, damit der direkt folgende /premium/status-Aufruf des
+  // Clients (PremiumPlans.finalizeStripeCheckout lädt sofort nach) den neuen
+  // Plan sieht und nicht den gecachten Vor-Kauf-Stand.
+  invalidateCachedUser(req.user.id);
 
   // Referral-Belohnung: Aktiviert ein eingeladener Nutzer erstmals Basic,
   // bekommt sein Referrer 10 € Ultimate-Rabatt gutgeschrieben (best-effort).

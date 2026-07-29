@@ -68,6 +68,39 @@ describe('GET /api/referrals/me', () => {
     expect(supabaseMock.current.auth.admin.updateUserById).not.toHaveBeenCalled();
     expect(fromCallCount).toBeGreaterThanOrEqual(2);
   });
+
+  // Regression: Steht der Code zwar in user_referral_codes, aber (noch) nicht in
+  // den user_metadata, lief jeder der 5 Generierungs-Versuche in die
+  // UNIQUE-Kollision auf user_id (23505) — /referrals/me antwortete dem Nutzer
+  // danach dauerhaft mit 500. Jetzt wird die vorhandene Zeile wiederverwendet.
+  it('uebernimmt einen bereits vergebenen Code aus der Tabelle statt 500 zu werfen', async () => {
+    await bootApp({ authUser: { ...REFERRER, user_metadata: {} } });
+
+    const codesBuilder = createQueryBuilderMock({ data: { code: 'BESTAND1' }, error: null });
+    codesBuilder.insert = vi.fn(() =>
+      codesBuilder.__setResult({ data: null, error: { code: '23505' } }));
+    const countBuilder = createQueryBuilderMock({ count: 0, error: null });
+
+    supabaseMock.current.from = vi.fn((table) => {
+      if (table === 'user_referral_codes') return codesBuilder;
+      if (table === 'referrals') return countBuilder;
+      return createQueryBuilderMock();
+    });
+
+    const res = await request(app)
+      .get('/api/referrals/me')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(res.status).toBe(200);
+    expect(res.body.code).toBe('BESTAND1');
+    // Kein Wuerfeln noetig: die vorhandene Zeile wird direkt uebernommen.
+    expect(codesBuilder.insert).not.toHaveBeenCalled();
+    // Der Code wird in die Metadaten nachgezogen, damit der naechste Aufruf ihn dort findet.
+    expect(supabaseMock.current.auth.admin.updateUserById).toHaveBeenCalledWith(
+      REFERRER.id,
+      { user_metadata: expect.objectContaining({ referral_code: 'BESTAND1' }) },
+    );
+  });
 });
 
 describe('POST /api/referrals/redeem', () => {

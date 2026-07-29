@@ -32,4 +32,28 @@ describe('requireAuth Token-Cache', () => {
     await request(app).get('/api/sync/status').set('Authorization', 'Bearer tok-b');
     expect(supabaseMock.current.auth.getUser).toHaveBeenCalledTimes(2);
   });
+
+  // Ohne Invalidierung lieferte der Cache nach einer Metadaten-Änderung (Kauf,
+  // Referral-Einlösung, Profil-Update) bis zu 60 s lang den alten Nutzer aus.
+  it('holt den Nutzer nach invalidateCachedUser neu von GoTrue', async () => {
+    const { invalidateCachedUser } = await import('./auth.js');
+
+    await request(app).get('/api/sync/status').set('Authorization', 'Bearer tok-x');
+    expect(supabaseMock.current.auth.getUser).toHaveBeenCalledTimes(1);
+
+    invalidateCachedUser('u1');
+
+    await request(app).get('/api/sync/status').set('Authorization', 'Bearer tok-x');
+    expect(supabaseMock.current.auth.getUser).toHaveBeenCalledTimes(2);
+  });
+
+  it('lässt die Einträge anderer Nutzer unangetastet', async () => {
+    const { invalidateCachedUser } = await import('./auth.js');
+
+    await request(app).get('/api/sync/status').set('Authorization', 'Bearer tok-x');
+    invalidateCachedUser('ein-anderer-nutzer');
+
+    await request(app).get('/api/sync/status').set('Authorization', 'Bearer tok-x');
+    expect(supabaseMock.current.auth.getUser).toHaveBeenCalledTimes(1);
+  });
 });

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth, optionalAuth } from '../middleware/auth.js';
+import { requireCronAuth } from '../middleware/cronAuth.js';
 import { supabase } from '../lib/supabase.js';
 import { sendDbError } from '../lib/errorResponse.js';
 import { resolvePlan, PLAN_RANK } from '../lib/planResolver.js';
@@ -420,20 +421,29 @@ router.post('/events/:id/invite', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'invitee_emails erforderlich' });
     }
 
+    // Der Supabase-Query-Builder ist nur ein PromiseLike (implementiert `then`,
+    // aber KEIN `catch`) — ein `.catch(...)` direkt an der Kette warf synchron
+    // "…single(...).catch is not a function" und ließ damit JEDE Einladung im
+    // 500er des äußeren try/catch enden. Deshalb pro Adresse ein await in einem
+    // eigenen try/catch, damit eine fehlgeschlagene Einladung die übrigen nicht
+    // mitreißt.
     const invitations = await Promise.all(
-      invitee_emails.map(email =>
-        supabase
-          .from('event_invitations')
-          .insert({
-            event_id: req.params.id,
-            inviter_id: req.user.email,
-            invitee_id: email,
-            status: 'pending'
-          })
-          .select()
-          .single()
-          .catch(err => ({ error: err }))
-      )
+      invitee_emails.map(async (email) => {
+        try {
+          return await supabase
+            .from('event_invitations')
+            .insert({
+              event_id: req.params.id,
+              inviter_id: req.user.email,
+              invitee_id: email,
+              status: 'pending'
+            })
+            .select()
+            .single();
+        } catch (err) {
+          return { error: err };
+        }
+      })
     );
 
     return res.status(201).json({ invitations: invitations.filter(i => !i.error) });
@@ -612,22 +622,8 @@ router.post('/rewards/claim', requireAuth, async (req, res) => {
 // ADMIN ENDPOINTS (Cron Jobs)
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.get('/admin/leaderboards/monthly/generate', async (req, res) => {
+router.get('/admin/leaderboards/monthly/generate', requireCronAuth, async (req, res) => {
   try {
-    // Vercel Crons senden Authorization: Bearer <CRON_SECRET> Header
-    const secret = process.env.CRON_SECRET || process.env.ADMIN_API_KEY;
-    if (!secret) {
-      return res.status(500).json({ error: 'Cron-Secret nicht konfiguriert' });
-    }
-    const authHeader = req.headers.authorization || '';
-    const headerSecret = authHeader.replace(/^Bearer\s+/, '').trim();
-    const xApiKey = req.headers['x-api-key'] || '';
-
-    const isAuthorized = headerSecret === secret || xApiKey === secret;
-    if (!isAuthorized) {
-      return res.status(403).json({ error: 'Unauthorized' });
-    }
-
     const now = new Date();
     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1);
     const year = lastMonth.getFullYear();
@@ -648,21 +644,8 @@ router.get('/admin/leaderboards/monthly/generate', async (req, res) => {
   }
 });
 
-router.get('/admin/rewards/auto-activate', async (req, res) => {
+router.get('/admin/rewards/auto-activate', requireCronAuth, async (req, res) => {
   try {
-    const secret = process.env.CRON_SECRET || process.env.ADMIN_API_KEY;
-    if (!secret) {
-      return res.status(500).json({ error: 'Cron-Secret nicht konfiguriert' });
-    }
-    const authHeader = req.headers.authorization || '';
-    const headerSecret = authHeader.replace(/^Bearer\s+/, '').trim();
-    const xApiKey = req.headers['x-api-key'] || '';
-
-    const isAuthorized = headerSecret === secret || xApiKey === secret;
-    if (!isAuthorized) {
-      return res.status(403).json({ error: 'Unauthorized' });
-    }
-
     // Auf den Vormonat ausrichten - analog zu /admin/leaderboards/monthly/generate,
     // das die pending Rewards fuer den abgeschlossenen Vormonat erzeugt.
     const now = new Date();
@@ -683,21 +666,8 @@ router.get('/admin/rewards/auto-activate', async (req, res) => {
   }
 });
 
-router.get('/admin/events/auto-archive', async (req, res) => {
+router.get('/admin/events/auto-archive', requireCronAuth, async (req, res) => {
   try {
-    const secret = process.env.CRON_SECRET || process.env.ADMIN_API_KEY;
-    if (!secret) {
-      return res.status(500).json({ error: 'Cron-Secret nicht konfiguriert' });
-    }
-    const authHeader = req.headers.authorization || '';
-    const headerSecret = authHeader.replace(/^Bearer\s+/, '').trim();
-    const xApiKey = req.headers['x-api-key'] || '';
-
-    const isAuthorized = headerSecret === secret || xApiKey === secret;
-    if (!isAuthorized) {
-      return res.status(403).json({ error: 'Unauthorized' });
-    }
-
     const now = new Date();
     const retentionDays = Number(process.env.EVENT_AUTO_DELETE_DAYS) || 3;
 
