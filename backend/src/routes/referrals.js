@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, invalidateCachedUser } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
 import { sendDbError } from '../lib/errorResponse.js';
 import { PLAN_RANK } from '../lib/planResolver.js';
@@ -39,21 +39,58 @@ async function ensureReferralCode(user) {
     return existingCode;
   }
 
+  // Der Nutzer kann bereits eine Zeile in user_referral_codes haben, ohne dass
+  // der Code in seinen Metadaten steht (z. B. wenn das Spiegeln beim letzten
+  // Mal fehlschlug). user_referral_codes.user_id ist UNIQUE — ohne diese
+  // Wiederverwendung liefe JEDER der 5 Generierungs-Versuche unten in dieselbe
+  // 23505-Kollision auf user_id und /referrals/me würde für diesen Nutzer
+  // dauerhaft mit 500 antworten.
+  const existingRow = await findCodeByUserId(user.id);
+  if (existingRow) {
+    await mirrorCodeToMetadata(user, existingRow);
+    return existingRow;
+  }
+
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const candidate = generateCode(8);
     const { error } = await supabase
       .from('user_referral_codes')
       .insert({ code: candidate, user_id: user.id });
     if (!error) {
-      await supabase.auth.admin.updateUserById(user.id, {
-        user_metadata: { ...(user.user_metadata || {}), referral_code: candidate },
-      });
+      await mirrorCodeToMetadata(user, candidate);
       return candidate;
     }
-    // 23505 = unique_violation → Code kollidiert, neu würfeln
+    // 23505 = unique_violation. Das kann der Primärschlüssel `code` sein (dann
+    // neu würfeln) ODER die UNIQUE-Spalte `user_id` — Letzteres heißt, dass
+    // parallel bereits ein Code für diesen Nutzer angelegt wurde; dann diesen
+    // übernehmen statt weiter zu würfeln.
     if (error.code !== '23505') throw error;
+    const raced = await findCodeByUserId(user.id);
+    if (raced) {
+      await mirrorCodeToMetadata(user, raced);
+      return raced;
+    }
   }
   throw new Error('Konnte keinen eindeutigen Referral-Code erzeugen');
+}
+
+async function findCodeByUserId(userId) {
+  const { data, error } = await supabase
+    .from('user_referral_codes')
+    .select('code')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error) return null;
+  return data?.code || null;
+}
+
+// Code in die user_metadata spiegeln (fürs Frontend-Rendering ohne Extra-Call)
+// und den Token-Cache verwerfen, damit der nächste Request den Code sieht.
+async function mirrorCodeToMetadata(user, code) {
+  const { error } = await supabase.auth.admin.updateUserById(user.id, {
+    user_metadata: { ...(user.user_metadata || {}), referral_code: code },
+  });
+  if (!error) invalidateCachedUser(user.id);
 }
 
 router.get('/referrals/me', requireAuth, async (req, res) => {
@@ -174,6 +211,10 @@ router.post('/referrals/redeem', requireAuth, async (req, res) => {
     user_metadata: mergedMeta,
   });
   if (updRefErr) return sendDbError(res, updRefErr);
+  // Beide Nutzer aus dem Token-Cache werfen: der Referrer soll seinen
+  // verlängerten Ultimate-Status sofort sehen, der Eingeladene das gesetzte
+  // referred_by (sonst bietet das Popup das Einlösen erneut an).
+  invalidateCachedUser(referrerUserId);
 
   // Neuen Nutzer als eingelöst markieren, damit er nicht mehrfach einlöst.
   const { error: updSelfErr } = await supabase.auth.admin.updateUserById(req.user.id, {
@@ -184,6 +225,7 @@ router.post('/referrals/redeem', requireAuth, async (req, res) => {
     },
   });
   if (updSelfErr) return sendDbError(res, updSelfErr);
+  invalidateCachedUser(req.user.id);
 
   return res.json({
     ok: true,

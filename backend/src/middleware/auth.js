@@ -60,6 +60,22 @@ export async function optionalAuth(req, res, next) {
   next();
 }
 
+// Verwirft alle gecachten Einträge eines Nutzers. MUSS nach jeder
+// serverseitigen Änderung der user_metadata aufgerufen werden (Plan-Aktivierung,
+// Referral-Einlösung, Profil-Update, Ablauf-Cron). Ohne das liefert der Cache
+// dem Nutzer bis zu TOKEN_CACHE_TTL_MS lang den alten Stand zurück — direkt
+// nach einem Kauf meldete /premium/status z. B. weiter "free", und
+// /referrals/me sah den gerade erzeugten Code nicht und erzeugte einen zweiten.
+// Der Cache ist nach Token indiziert; ein Nutzer kann mehrere gültige Tokens
+// haben (mehrere Geräte), daher der Scan über die Einträge — die Map ist auf
+// TOKEN_CACHE_MAX begrenzt und Mutationen sind selten.
+export function invalidateCachedUser(userId) {
+  if (!userId) return;
+  for (const [token, entry] of tokenCache) {
+    if (entry.user?.id === userId) tokenCache.delete(token);
+  }
+}
+
 // Nur für Tests: Cache leeren, damit sich Testfälle nicht gegenseitig
 // beeinflussen.
 export function __clearTokenCache() {

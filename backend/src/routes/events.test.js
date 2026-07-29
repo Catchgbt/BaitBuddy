@@ -126,3 +126,46 @@ describe('POST /api/events — visibility-Gate', () => {
     expect(inserted.visibility).toBe('friends');
   });
 });
+
+describe('POST /api/events/:id/invite', () => {
+  // Regression: an der Query-Kette hing ein `.catch(...)`. Der Supabase-Builder
+  // ist aber nur ein PromiseLike (nur `then`, kein `catch`) — der Aufruf warf
+  // synchron einen TypeError, sodass JEDE Einladung im 500er des aeusseren
+  // try/catch endete.
+  it('legt die Einladungen an und liefert sie zurueck (kein 500)', async () => {
+    supabaseMock.current = createSupabaseMock({
+      authUser: ME,
+      fromResults: {
+        event_invitations: { data: { id: 'inv-1', invitee_id: 'freund@test.de' }, error: null },
+      },
+    });
+    await buildApp();
+
+    const res = await request(app)
+      .post('/api/events/evt-1/invite')
+      .set('Authorization', 'Bearer tok')
+      .send({ invitee_emails: ['freund@test.de'] });
+
+    expect(res.status).toBe(201);
+    expect(res.body.invitations).toHaveLength(1);
+    const inserted = supabaseMock.current.__builders.event_invitations.insert.mock.calls[0][0];
+    expect(inserted).toMatchObject({
+      event_id: 'evt-1',
+      inviter_id: ME.email,
+      invitee_id: 'freund@test.de',
+      status: 'pending',
+    });
+  });
+
+  it('lehnt einen leeren invitee_emails-Array ab (400)', async () => {
+    supabaseMock.current = createSupabaseMock({ authUser: ME });
+    await buildApp();
+
+    const res = await request(app)
+      .post('/api/events/evt-1/invite')
+      .set('Authorization', 'Bearer tok')
+      .send({ invitee_emails: [] });
+
+    expect(res.status).toBe(400);
+  });
+});

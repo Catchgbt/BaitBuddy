@@ -294,7 +294,12 @@ export default function QuizPage() {
         timerRef.current = null;
       }
     };
-  }, [gameState, answered, currentQuestions.length, questionIndex, handleQuizEnd]);
+    // 'timeLeft' MUSS in den Dependencies stehen: Der Effekt liest den Wert oben
+    // (Ablauf-Zweig). Fehlte er, lief der einmal gestartete Interval mit dem
+    // Ursprungswert weiter, der Effekt wurde nie erneut ausgewertet — die Anzeige
+    // zählte über 0 hinaus ins Negative und eine unbeantwortete Frage wurde nie
+    // automatisch weitergeschaltet.
+  }, [gameState, answered, timeLeft, currentQuestions.length, questionIndex, handleQuizEnd]);
 
   // Memoize current question for efficient rendering
   const currentQuestion = useMemo(() => {

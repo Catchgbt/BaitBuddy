@@ -1,63 +1,77 @@
 import { Router } from 'express';
 import { supabase } from '../lib/supabase.js';
+import { requireCronAuth } from '../middleware/cronAuth.js';
+import { invalidateCachedUser } from '../middleware/auth.js';
 
 const router = Router();
 
-const ADMIN_SECRET = process.env.CRON_SECRET || 'dev-secret';
+// GoTrue liefert die Nutzer seitenweise (Default 50 pro Seite). Ohne
+// Paginierung prüfte der Cron nur die erste Seite und ließ die Pläne aller
+// weiteren Nutzer unbegrenzt "aktiv" stehen.
+const USERS_PER_PAGE = 200;
+const MAX_PAGES = 100; // Sicherheitsnetz gegen eine Endlosschleife
 
-function requireCronAuth(req, res, next) {
-  const secret = req.get('x-cron-secret') || req.query.secret;
-  if (secret !== ADMIN_SECRET) {
-    return res.status(401).json({ error: 'Unauthorised' });
+async function* iterateUsers() {
+  for (let page = 1; page <= MAX_PAGES; page += 1) {
+    const { data, error } = await supabase.auth.admin.listUsers({
+      page,
+      perPage: USERS_PER_PAGE,
+    });
+    if (error) throw error;
+    // listUsers() liefert { data: { users: [...], nextPage, ... } } — `data`
+    // selbst ist ein Objekt und NICHT iterierbar. Ein `for (const u of data)`
+    // warf hier zuvor bei jedem Lauf einen TypeError, sodass der Cron nie einen
+    // einzigen abgelaufenen Plan zurückgesetzt hat.
+    const users = data?.users || [];
+    if (users.length === 0) return;
+    yield* users;
+    if (users.length < USERS_PER_PAGE) return;
   }
-  next();
 }
 
 router.get('/admin/premium/check-expiry', requireCronAuth, async (req, res) => {
   try {
-    const now = new Date().toISOString();
+    const now = Date.now();
 
-    const { data: users, error } = await supabase.auth.admin.listUsers();
-    if (error) {
-      console.error('[admin] listUsers fehlgeschlagen:', error);
-      return res.status(500).json({ error: 'Benutzer-Listing fehlgeschlagen' });
-    }
-
+    let checked = 0;
     let expiredCount = 0;
-    for (const user of users) {
+
+    for await (const user of iterateUsers()) {
+      checked += 1;
       const meta = user.user_metadata || {};
       const expiresAt = meta.premium_expires_at;
       const planId = meta.premium_plan_id;
 
       if (!planId || !expiresAt) continue;
 
-      if (new Date(expiresAt) < new Date(now)) {
-        const currentVersion = meta.premium_check_expiry_version || 0;
-        const nextVersion = currentVersion + 1;
+      const expiresAtMs = new Date(expiresAt).getTime();
+      if (!Number.isFinite(expiresAtMs) || expiresAtMs >= now) continue;
 
-        const { error: updateError } = await supabase.auth.admin.updateUserById(user.id, {
-          user_metadata: {
-            ...meta,
-            premium_plan_id: null,
-            premium_expires_at: null,
-            premium_trial: null,
-            premium_check_expiry_version: nextVersion,
-          },
-        });
+      const currentVersion = meta.premium_check_expiry_version || 0;
 
-        if (!updateError) {
-          expiredCount++;
-          console.log(`[admin] Plan abgelaufen für User ${user.id}: ${planId}`);
-        } else {
-          console.error(`[admin] Fehler beim Reset für User ${user.id}:`, updateError);
-        }
+      const { error: updateError } = await supabase.auth.admin.updateUserById(user.id, {
+        user_metadata: {
+          ...meta,
+          premium_plan_id: null,
+          premium_expires_at: null,
+          premium_trial: null,
+          premium_check_expiry_version: currentVersion + 1,
+        },
+      });
+
+      if (updateError) {
+        console.error(`[admin] Fehler beim Reset für User ${user.id}:`, updateError);
+        continue;
       }
+      invalidateCachedUser(user.id);
+      expiredCount += 1;
+      console.log(`[admin] Plan abgelaufen für User ${user.id}: ${planId}`);
     }
 
     return res.json({
       ok: true,
       message: `${expiredCount} abgelaufene Pläne zurückgesetzt`,
-      checked: users.length,
+      checked,
       expired: expiredCount,
     });
   } catch (e) {
