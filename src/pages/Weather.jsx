@@ -9,6 +9,7 @@ import { useEventActivityTracking } from "@/hooks/useEventActivityTracking";
 import WeatherWarnings from "@/components/weather/WeatherWarnings";
 import { toast } from "sonner";
 import { speakWithFallback, cancelElevenLabs } from "@/components/utils/elevenLabsTTS";
+import { timeoutSignal } from "@/lib/abortCompat";
 import { MapPin, AlertCircle, Thermometer, Wind, Droplets, Eye, Gauge, Cloud, Loader2 } from "lucide-react";
 
 import PremiumGuard from "@/components/premium/PremiumGuard";
@@ -61,7 +62,7 @@ function WeatherInner() {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,cloud_cover,pressure_msl,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m,visibility,dew_point_2m&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,cloud_cover,visibility,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,uv_index_max&timezone=auto`;
       // Hartes 15s-Timeout: ohne Signal konnte der Fetch (z. B. Funkloch am
       // Wasser) minutenlang haengen und die Seite blieb im Lade-Spinner.
-      const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+      const res = await fetch(url, { signal: timeoutSignal(15000) });
       const data = await res.json();
 
       if (data.error) {

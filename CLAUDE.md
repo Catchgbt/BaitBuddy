@@ -125,8 +125,23 @@ Nach jeder erfolgreichen Mutation zeigt die App eine System-Benachrichtigung
 gespeichert, Wetter-Alarme aktualisiert, Gear ergänzt, Event erstellt).
 Zentraler Helfer: `src/lib/actionNotifications.js` mit:
 
-- `notifyAction(title, { body, tag, url })` — sendet über die Web-`Notification`-
-  API (funktioniert auch im Capacitor-Android-WebView, kein Extra-Plugin nötig).
+- `notifyAction(title, { body, tag, url })` — delegiert an
+  `showSystemNotification` in `src/lib/systemNotification.js`.
+- ⚠️ **Regel: Nie `new Notification(...)` direkt aufrufen.** Der Konstruktor ist
+  auf Android (Chrome/WebView) ein *Illegal constructor* und auf iOS gar nicht
+  vorgesehen — beide Plattformen erlauben ausschließlich
+  `ServiceWorkerRegistration.showNotification()`. `showSystemNotification`
+  nimmt deshalb immer zuerst die SW-Registrierung (`/sw.js` wird in
+  `Layout.jsx` registriert) und fällt nur auf Desktop-Browsern ohne Service
+  Worker auf den Konstruktor zurück. Der Klick landet dadurch im
+  `notificationclick`-Handler von `public/sw.js`, der ein offenes App-Fenster
+  fokussiert und zur Route aus `data.url` navigiert.
+- **Bekannte Grenze:** Im Capacitor-Android-WebView gibt es die
+  Web-Notifications-API überhaupt nicht (`'Notification' in window` ist dort
+  `false`) — die Aktions-Benachrichtigungen bleiben in der gepackten App still.
+  Sie funktionieren in Android-Chrome, in der installierten PWA (WebAPK) und in
+  der iOS-Home-Screen-PWA ab 16.4. Für die gepackte App wäre ein natives
+  Notification-Plugin nötig (dann auch `POST_NOTIFICATIONS` im Manifest).
 - `actionMessages.*` — vorgefertigte, konsistent formulierte Texte pro
   Aktion (keine dekorativen Emojis, deutsche Sprache).
 - Beim ersten Aufruf wird die OS-Permission einmal angefragt (`ensurePermission`).
@@ -229,6 +244,36 @@ Die reine Timeout-/Backoff-/Retry-Logik liegt in `src/lib/bleConnection.js`
 (ohne GATT-Import, unit-testbar; Tests in `bleConnection.test.js`).
 
 ---
+
+## 📐 Plattform-Kompatibilität (Android-WebView & Apple/WebKit)
+
+Die App muss auf dem ältesten unterstützten Android-WebView (**90**, siehe
+`capacitor.config.json → android.minWebViewVersion`) und auf iPhones/iPads ab
+**iOS 14** laufen. Daraus folgen drei verbindliche Regeln:
+
+1. **Build-Target ist nicht `esnext`.** `vite.config.js` baut gegen
+   `['es2020', 'chrome90', 'safari14', 'edge90', 'firefox90']`. Mit `esnext`
+   landet moderne Syntax (private Klassenfelder, logische Zuweisungen)
+   unverändert im Bundle — ältere Engines scheitern schon am Parsen und zeigen
+   nur einen weißen Screen.
+2. **Keine jungen Web-APIs ohne Fallback.** Besonders `AbortSignal.timeout`
+   (Chrome 103 / Safari 16) und `AbortSignal.any` (Chrome 116 / Safari 17.4)
+   sind jünger als unsere Zielplattformen. Beide laufen deshalb ausschließlich
+   über `src/lib/abortCompat.js` (`timeoutSignal`, `anySignal`). Gleiches gilt
+   für `crypto.randomUUID` (Chrome 92 / Safari 15.4) — immer mit Guard.
+3. **iOS-Sensoren brauchen eine Nutzer-Geste.** Orientierungs-Events liefert
+   iOS erst nach `DeviceOrientationEvent.requestPermission()` aus einem
+   Tap heraus, und die Nordreferenz steht dort in `webkitCompassHeading`
+   (nicht in `alpha`, `deviceorientationabsolute` gibt es auf iOS nicht).
+   Gekapselt in `src/lib/deviceOrientation.js`.
+
+**Android-Manifest:** Der WebView reicht eine Web-Permission nur weiter, wenn
+die passende Android-Permission deklariert ist. `CAMERA`,
+`ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `RECORD_AUDIO` und
+`ACCESS_NETWORK_STATE` stehen deshalb in `AndroidManifest.xml` (mit
+`uses-feature required="false"`, damit Play keine Geräte ausschließt).
+`allowBackup` ist **aus** (`data_extraction_rules.xml`): Im localStorage liegen
+`bb_token`/`bb_refresh` und die dürfen nicht ins Google-Drive-Backup wandern.
 
 ## ⚡ Performance-Anforderungen
 

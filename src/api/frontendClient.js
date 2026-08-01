@@ -1,6 +1,8 @@
 // src/api/frontendClient.js
 // Eigener BaitBuddy API-Client — ersetzt @base44/sdk vollständig
 
+import { timeoutSignal, anySignal } from '@/lib/abortCompat';
+
 const API_URL = import.meta.env.VITE_API_URL || '';
 const TOKEN_KEY = 'bb_token';
 const REFRESH_KEY = 'bb_refresh';
@@ -123,7 +125,7 @@ class ApiClient {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ refresh_token: this.getRefreshToken() }),
-            signal: AbortSignal.timeout(15000), // 15s timeout for token refresh
+            signal: timeoutSignal(15000), // 15s timeout for token refresh
           });
           const data = await res.json().catch(() => ({}));
           if (!res.ok || !data.token) {
@@ -149,16 +151,13 @@ class ApiClient {
     // kombiniert. `_retried` verhindert Endlos-Refresh-Schleifen bei 401.
     const { signal: externalSignal, _retried = false, _attempt = 0 } = options;
     const token = this.getToken();
-    const timeoutSignal = AbortSignal.timeout(30000); // 30s timeout
     const opts = {
       method,
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      signal: externalSignal
-        ? AbortSignal.any([timeoutSignal, externalSignal])
-        : timeoutSignal,
+      signal: anySignal([timeoutSignal(30000), externalSignal]), // 30s timeout
     };
     if (body !== undefined) opts.body = JSON.stringify(body);
 
@@ -217,10 +216,7 @@ class ApiClient {
     const token = this.getToken();
     // 60s-Timeout: großzügiger als der 30s-Request-Default, weil ein Stream
     // über mehrere Deltas hinweg offen bleibt.
-    const timeoutSignal = AbortSignal.timeout(60000);
-    const combinedSignal = signal
-      ? AbortSignal.any([timeoutSignal, signal])
-      : timeoutSignal;
+    const combinedSignal = anySignal([timeoutSignal(60000), signal]);
 
     const res = await fetch(`${API_URL}${path}`, {
       method: 'POST',

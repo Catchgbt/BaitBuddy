@@ -18,11 +18,23 @@ const COMBO_BONUS = 50;
 const FOUR_LINE_SPECIAL = true;
 const FIVE_BOMB_SPECIAL = true;
 
+// crypto.randomUUID gibt es erst ab Chrome/WebView 92 und Safari 15.4 und nur
+// in sicheren Kontexten — ohne Fallback warf das Aufbauen des Spielfelds auf
+// aelteren Android-WebViews und iPhones einen TypeError.
+let cellCounter = 0;
+const newCellId = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  cellCounter += 1;
+  return `cell_${Date.now().toString(36)}_${cellCounter}`;
+};
+
 const newCell = (avoidColor = null) => {
   let c;
   do c = Math.floor(Math.random() * COLORS.length);
   while (avoidColor !== null && c === avoidColor);
-  return { color: c, id: crypto.randomUUID() };
+  return { color: c, id: newCellId() };
 };
 
 const inBounds = (r, c) => r >= 0 && r < SIZE && c >= 0 && c < SIZE;

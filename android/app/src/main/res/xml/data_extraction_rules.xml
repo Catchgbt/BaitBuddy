@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ (targetSdk 31+) steuert Cloud-Backup und Geräte-Transfer über
+  diese Regeln. Beides ist für BaitBuddy komplett ausgeschlossen: Der WebView
+  legt die Sitzungs-Token (bb_token/bb_refresh) in localStorage ab, die dürfen
+  weder in ein Google-Drive-Backup noch per Device-to-Device-Transfer auf ein
+  anderes Gerät wandern. Inhaltsdaten liegen server-seitig in Supabase und sind
+  nach dem Login sofort wieder da.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </device-transfer>
+</data-extraction-rules>

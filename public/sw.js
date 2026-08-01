@@ -5,7 +5,7 @@
 //  - Statische Same-Origin-Assets (/assets/, /icons/, Bilder, Fonts):
 //    Stale-While-Revalidate (schneller Start + Hintergrund-Update)
 //  - API-Aufrufe (/api/) und Cross-Origin-Requests: immer direkt ans Netzwerk
-const VERSION = 'v4';
+const VERSION = 'v5';
 const SHELL_CACHE = `baitbuddy-shell-${VERSION}`;
 const ASSET_CACHE = `baitbuddy-assets-${VERSION}`;
 
@@ -40,6 +40,31 @@ self.addEventListener('activate', (event) => {
 // Sofortige Aktivierung eines wartenden Workers ermöglichen (Update-Flow im UI)
 self.addEventListener('message', (event) => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
+});
+
+// Klick auf eine Benachrichtigung: bestehendes App-Fenster fokussieren und zur
+// Ziel-Route schicken, sonst ein neues öffnen. Nötig, weil Android und iOS
+// Benachrichtigungen ausschließlich über registration.showNotification()
+// zulassen — der Klick landet damit hier und nicht bei notification.onclick.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const target = event.notification.data && event.notification.data.url;
+  const targetUrl = new URL(target || '/', self.location.origin).href;
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) {
+          if (target && 'navigate' in client) {
+            return client.focus().then((focused) => (focused || client).navigate(targetUrl));
+          }
+          return client.focus();
+        }
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
+      return undefined;
+    })
+  );
 });
 
 // Error handling für Port-Disconnects
