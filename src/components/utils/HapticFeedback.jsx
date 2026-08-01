@@ -1,13 +1,17 @@
 import { useCallback, createContext, useContext } from 'react';
 
-// Detect if we are on an iOS device (iPhone/iPad) with Safari 17.4+
+// Erkennt Apple-Mobilgeraete (iPhone/iPad/iPod).
+// Bewusst OHNE zusaetzliche Safari-Pruefung im User-Agent: Eine vom Homescreen
+// gestartete PWA meldet auf iOS gar kein "Safari" mehr, dort fiel die alte
+// Erkennung durch und landete beim navigator.vibrate-Zweig — den es auf iOS
+// nicht gibt, also gab es in der installierten App ueberhaupt kein Feedback.
+// Auf iOS rendern ohnehin alle Browser mit WebKit; schlaegt der Switch-Trick
+// auf aelteren Versionen fehl, faengt ihn der try/catch still ab.
 const isIOS = () => {
   if (typeof navigator === 'undefined') return false;
-  // Basic iOS device detection
-  const isApple = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  // Safari 17.4 introduced haptics on switches; older versions ignore haptic()
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-  return isApple && isSafari;
+  if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) return true;
+  // iPadOS meldet sich seit Version 13 als "MacIntel" mit Touch-Punkten.
+  return navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
 };
 
 // Embedded ios-haptics implementation (triggers a switch toggle)

@@ -4,6 +4,7 @@
 import TideService from './TideService';
 import SolunarService from './SolunarService';
 import FishPredictionService from './FishPredictionService';
+import { showSystemNotification } from '@/lib/systemNotification';
 
 // Gültige Icon-/Badge-URLs (Notification-API ignoriert Emoji-Strings). Die
 // echten PWA-Icons liegen unter public/icons/.
@@ -233,33 +234,26 @@ class NotificationService {
     }
   }
 
-  // Sende Browser-Notification
+  // Sende System-Notification (Service Worker, wo verfügbar — Pflicht auf
+  // Android und iOS, siehe src/lib/systemNotification.js)
   async sendNotification(title, body, options = {}) {
     try {
+      if (typeof window === 'undefined' || !('Notification' in window)) return;
       const permission = Notification.permission;
       if (permission !== 'granted') {
         console.warn('Notifications nicht genehmigt');
         return;
       }
 
-      const notification = new Notification(title, {
+      return await showSystemNotification(title, {
         body,
         icon: NOTIFICATION_ICON,
         badge: NOTIFICATION_ICON,
         tag: options.tag || 'baitbuddy',
         requireInteraction: false,
         ...options,
+        url: options.url || '/LiveTrip',
       });
-
-      // Klick-Handler
-      notification.onclick = () => {
-        window.focus();
-        window.location.href = '/live-trip';
-        notification.close();
-      };
-
-      console.log(`Notification sent: ${title}`);
-      return notification;
     } catch (error) {
       console.error('Fehler beim Senden von Notification:', error);
     }

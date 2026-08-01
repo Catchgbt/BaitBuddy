@@ -11,7 +11,14 @@ export default defineConfig({
     },
   },
   build: {
-    target: 'esnext',
+    // 'esnext' hiess: gar kein Downleveling. Damit landete moderne Syntax
+    // (private Klassenfelder aus @tanstack/react-query, logische Zuweisungen)
+    // unverändert im Bundle, obwohl capacitor.config.json WebView 90 zulässt
+    // und die Web-App auf iPhones ab iOS 14 läuft — dort scheitert schon das
+    // Parsen des Chunks und die App zeigt nur einen weissen Screen.
+    // Die Ziele decken den ältesten unterstützten Android-WebView (90) und
+    // Safari 14 ab; ES2020 sichert Firefox/Edge mit ab.
+    target: ['es2020', 'chrome90', 'safari14', 'edge90', 'firefox90'],
     minify: 'terser',
     terserOptions: {
       compress: {

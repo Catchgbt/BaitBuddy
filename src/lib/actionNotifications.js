@@ -5,14 +5,18 @@
 // die Aktion passiert lokal, die Bestätigung darf lokal bleiben.
 //
 // Läuft in drei Umgebungen ohne Extra-Plugin:
-//   1. Desktop-Browser / Vercel-Preview: Browser-`Notification`-API.
-//   2. Android-WebView (Capacitor): dieselbe Web-Notifications-API — der
-//      WebView-Prozess zeigt die Notification als Chromium-System-Notification.
+//   1. Android-WebView (Capacitor) und iOS-PWA: über die Service-Worker-
+//      Registrierung (`showSystemNotification`) — der `new Notification(...)`-
+//      Konstruktor ist auf beiden Plattformen ein Illegal Constructor.
+//   2. Desktop-Browser / Vercel-Preview: Konstruktor-Fallback, ebenfalls in
+//      `showSystemNotification` gekapselt.
 //   3. Alte Browser ohne Notification-API: still, kein Fehler.
 //
 // Der User steuert das Feature per Setting `bb_action_notifications_enabled`
 // (default an). Fehlende OS-Permission ist kein Fehler — wir fragen einmal
 // per `ensurePermission()` und geben still auf, wenn abgelehnt.
+
+import { showSystemNotification } from '@/lib/systemNotification';
 
 const STORAGE_KEY_ENABLED = 'bb_action_notifications_enabled';
 const STORAGE_KEY_PROMPTED = 'bb_action_notifications_prompted';
@@ -93,7 +97,7 @@ function isDuplicate(tag) {
  * @param {string} [options.tag]  - Dedupe/Zusammenfassungs-Tag
  * @param {string} [options.url]  - Beim Klick anzusteuernde In-App-Route
  * @param {boolean} [options.requestPermission=true] - Beim ersten Aufruf permission asken
- * @returns {Promise<Notification|null>}
+ * @returns {Promise<import('@/lib/systemNotification').NotificationHandle|null>}
  */
 export async function notifyAction(title, options = {}) {
   if (!title) return null;
@@ -115,31 +119,21 @@ export async function notifyAction(title, options = {}) {
   }
   if (permission !== 'granted') return null;
 
-  try {
-    const notification = new Notification(title, {
-      body: body || '',
-      icon: ICON,
-      badge: ICON,
-      tag: tag || 'bb-action',
-      silent: false,
-      requireInteraction: false,
-    });
-    if (url) {
-      notification.onclick = () => {
-        try { window.focus(); } catch { /* ignore */ }
-        try { window.location.href = url; } catch { /* ignore */ }
-        notification.close();
-      };
-    }
-    // Kompakt loggen (nicht mit Body — der kann Nutzerinhalte enthalten).
-    if (import.meta?.env?.DEV) {
-      console.debug('[action-notification]', title, { tag });
-    }
-    return notification;
-  } catch (error) {
-    console.warn('Notification konnte nicht angezeigt werden:', error);
-    return null;
+  const handle = await showSystemNotification(title, {
+    body: body || '',
+    icon: ICON,
+    badge: ICON,
+    tag: tag || 'bb-action',
+    silent: false,
+    requireInteraction: false,
+    url,
+  });
+
+  // Kompakt loggen (nicht mit Body — der kann Nutzerinhalte enthalten).
+  if (handle && import.meta?.env?.DEV) {
+    console.debug('[action-notification]', title, { tag });
   }
+  return handle;
 }
 
 // Vorgefertigte Message-Bauer für die häufigsten Aktionen, damit die
