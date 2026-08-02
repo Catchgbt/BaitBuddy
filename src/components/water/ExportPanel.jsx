@@ -21,14 +21,17 @@ export default function ExportPanel({ waterData }) {
 
       // Parameter hinzufügen
       Object.entries(waterData.parameters).forEach(([key, param]) => {
-        csv += `${param.description},${param.value.toFixed(2)},${param.unit},${param.quality}\n`;
+        csv += `${param.label},${param.value.toFixed(2)},${param.unit},${param.quality}\n`;
       });
 
-      // KI-Analyse hinzufügen
-      csv += "\nKI-Analyse\n";
-      csv += `Fang-Score,${waterData.aiAnalysis.fishingScore},/100,\n`;
-      csv += `Beste Zeit,${waterData.aiAnalysis.bestTimeToFish},,\n`;
-      csv += `Hotspot-Wahrscheinlichkeit,${waterData.aiAnalysis.hotspotProbability},%,\n`;
+      // Regelbasierte Einschaetzung (kein KI-Ergebnis) samt Herleitung
+      csv += "\nBedingungen (regelbasiert)\n";
+      csv += `Gesamtbewertung,${waterData.assessment.score ?? ''},/100,\n`;
+      csv += `Quelle,${waterData.source},,\n`;
+      csv += "\nHerleitung\nParameter,Wert,Einheit,Bewertung\n";
+      waterData.assessment.reasons.forEach((reason) => {
+        csv += `${reason.label},${reason.value.toFixed(2)},${reason.unit},${reason.score}\n`;
+      });
 
       // Blob erstellen und Download
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -126,7 +129,7 @@ export default function ExportPanel({ waterData }) {
                             param.quality === 'mittel' ? 'quality-medium' : 'quality-bad';
         html += `
     <div class="parameter">
-      <strong>${param.description}</strong>
+      <strong>${param.label}</strong>
       <span>${param.value.toFixed(2)} ${param.unit}</span>
       <span class="${qualityClass}">${param.quality}</span>
     </div>
@@ -134,16 +137,18 @@ export default function ExportPanel({ waterData }) {
       });
 
       html += `
-    <h2>KI-Analyse</h2>
-    <div class="score">${waterData.aiAnalysis.fishingScore}/100</div>
-    <p><strong>Beste Angelzeit:</strong> ${waterData.aiAnalysis.bestTimeToFish}</p>
-    <p><strong>Empfohlene Köder:</strong> ${waterData.aiAnalysis.recommendedBait.join(', ')}</p>
-    <p><strong>Hotspot-Wahrscheinlichkeit:</strong> ${waterData.aiAnalysis.hotspotProbability}%</p>
-    <p><strong>Wetter-Einfluss:</strong> ${waterData.aiAnalysis.weatherImpact}</p>
-    <p><strong>Mondphase-Einfluss:</strong> ${waterData.aiAnalysis.moonPhaseImpact}</p>
-    
+    <h2>Bedingungen (regelbasiert)</h2>
+    <div class="score">${waterData.assessment.score ?? '—'}/100</div>
+    <p>Gewichteter Mittelwert der oben gemessenen Parameter, keine KI-Bewertung.</p>
+    ${waterData.assessment.reasons.map((reason) => `
+    <div class="parameter">
+      <strong>${reason.label}</strong>
+      <span>${reason.value.toFixed(2)} ${reason.unit} (günstig ${reason.optimal})</span>
+      <span>${reason.score}/100</span>
+    </div>`).join('')}
+
     <div class="footer">
-      <p>Generiert von BaitBuddy Satelliten-Gewässeranalyse</p>
+      <p>Generiert von BaitBuddy · Datenquelle: ${waterData.source}</p>
       <p>© ${new Date().getFullYear()} BaitBuddy - Alle Rechte vorbehalten</p>
     </div>
   </div>
@@ -177,7 +182,10 @@ export default function ExportPanel({ waterData }) {
       return;
     }
 
-    const shareText = `Gewässer-Analyse\n\n${waterData.location.name}\nFang-Score: ${waterData.aiAnalysis.fishingScore}/100\nTemperatur: ${waterData.parameters.temperature.value.toFixed(1)}°C\n\nErstellt mit BaitBuddy`;
+    const temp = waterData.parameters.water_temp || waterData.parameters.air_temp;
+    const shareText = `Gewässer-Analyse\n\n${waterData.location.name}\nBedingungen: ${waterData.assessment.score ?? '—'}/100${
+      temp ? `\n${temp.label}: ${temp.value.toFixed(1)} ${temp.unit}` : ''
+    }\n\nErstellt mit BaitBuddy`;
 
     if (navigator.share) {
       try {
