@@ -92,6 +92,13 @@ const StartFishing = lazy(() => import('./pages/StartFishing'));
 const TripPlanner = lazy(() => import('./pages/TripPlanner'));
 const Tutorials = lazy(() => import('./pages/Tutorials'));
 const UsedGear = lazy(() => import('./pages/UsedGear'));
+// VoiceChat und VoiceLecture waren fertig implementiert, aber ohne Route und
+// ohne Importeur — beide Seiten waren damit gar nicht erreichbar, obwohl die
+// Sprachsteuerung (voicePages.js) und die Buddy-Tipps (buddyTips.js) sie als
+// Ziel führen. VoiceChat ist zudem der einzige Aufrufer von
+// POST /api/ai/realtime-session, das im Backend existiert und getestet ist.
+const VoiceChat = lazy(() => import('./pages/VoiceChat'));
+const VoiceLecture = lazy(() => import('./pages/VoiceLecture'));
 const WaterAnalysis = lazy(() => import('./pages/WaterAnalysis'));
 const Weather = lazy(() => import('./pages/Weather'));
 import __Layout from './Layout.jsx';
@@ -138,6 +145,8 @@ export const PAGES = {
     "TripPlanner": TripPlanner,
     "Tutorials": Tutorials,
     "UsedGear": UsedGear,
+    "VoiceChat": VoiceChat,
+    "VoiceLecture": VoiceLecture,
     "WaterAnalysis": WaterAnalysis,
     "Weather": Weather,
 }

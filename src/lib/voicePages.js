@@ -7,7 +7,7 @@
 // Kanonische Seiten-Keys, die als Navigationsziel erlaubt sind.
 export const ALLOWED_PAGES = [
   "Dashboard", "Home", "Logbook", "Map", "Weather",
-  "Community", "Gear", "AIAssistant", "KiBuddyBeta", "TripPlanner",
+  "Community", "Gear", "KiBuddyBeta", "VoiceChat", "TripPlanner",
   "Profile", "Settings", "Rank", "WaterAnalysis",
   "AngelscheinPruefungSchonzeiten", "Quiz", "Licenses", "Events",
   "BaitMixer", "Koeder3D", "CatchStats", "ARKnotenAssistent", "Shop", "Premium",
@@ -35,8 +35,13 @@ const PAGE_ALIASES = {
   ausrüstung: "Gear", ausruestung: "Gear", gear: "Gear",
   equipment: "Gear", tackle: "Gear",
 
-  chat: "AIAssistant", assistent: "AIAssistant", aiassistant: "AIAssistant",
+  // "AIAssistant" war ein toter Routen-Key (die Seite existiert nicht) — jede
+  // Navigation dorthin landete auf der 404-Seite. Kanonisch ist KiBuddyBeta.
+  chat: "KiBuddyBeta", assistent: "KiBuddyBeta", aiassistant: "KiBuddyBeta",
   ki: "KiBuddyBeta", kibuddy: "KiBuddyBeta", buddy: "KiBuddyBeta",
+
+  sprachchat: "VoiceChat", voicechat: "VoiceChat", telefonat: "VoiceChat",
+  livegespräch: "VoiceChat", livegespraech: "VoiceChat",
 
   trip: "TripPlanner", tripplaner: "TripPlanner", tripplanner: "TripPlanner",
   tour: "TripPlanner", tourenplaner: "TripPlanner", trips: "TripPlanner",

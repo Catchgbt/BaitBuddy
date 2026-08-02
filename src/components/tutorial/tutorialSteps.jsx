@@ -42,7 +42,7 @@ export const tutorialSteps = {
     },
     {
       title: "KI Chat-Buddy",
-      route: "AIAssistant",
+      route: "KiBuddyBeta",
       content: "Der KI-Angel-Buddy hilft mit Fisch-Infos zu Hecht, Zander und Karpfen, Wetter-Tipps, Koeder-Empfehlungen, Spot-Strategien und Timing fuer die besten Tageszeiten. Tippe deine Frage ins Eingabefeld 'Frage an den KI-Buddy'.",
       image: "https://media.base44.com/images/public/68bb3d3b9f83dc1f55ef532b/fca8f2aad_Screenshot_20260506_075315_Comet.jpg"
     },
@@ -248,7 +248,7 @@ export const tutorialSteps = {
     },
     {
       title: "AI Chat Buddy",
-      route: "AIAssistant",
+      route: "KiBuddyBeta",
       content: "The AI fishing buddy helps with fish info on pike, zander and carp, weather tips, bait recommendations, spot strategies and timing for the best hours. Type your question in the 'Ask the AI Buddy' field.",
       image: "https://media.base44.com/images/public/68bb3d3b9f83dc1f55ef532b/fca8f2aad_Screenshot_20260506_075315_Comet.jpg"
     },
