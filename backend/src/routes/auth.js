@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { supabase, supabaseUrl, supabaseKey } from '../lib/supabase.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, isAdminEmail } from '../middleware/auth.js';
 import { sendDbError } from '../lib/errorResponse.js';
 import { fetchWithTimeout } from '../lib/fetchWithTimeout.js';
 
@@ -104,6 +104,9 @@ router.get('/auth/me', requireAuth, (req, res) => {
     full_name: req.user.user_metadata?.full_name || '',
     created_at: req.user.created_at,
     ...req.user.user_metadata,
+    // Nach dem Spread, damit die Metadaten den Admin-Status nicht faelschen
+    // koennen (user_metadata ist teilweise vom Client beschreibbar).
+    is_admin: isAdminEmail(req.user.email),
   });
 });
 

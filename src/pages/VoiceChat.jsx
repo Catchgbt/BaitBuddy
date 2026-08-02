@@ -305,7 +305,7 @@ export default function VoiceChat() {
           <p className="text-xs text-gray-500">Echtzeit-Sprache mit deinem KI-Buddy</p>
         </div>
         <button type="button"
-          onClick={() => { hangUp(); navigate(createPageUrl('AIAssistant')); }}
+          onClick={() => { hangUp(); navigate(createPageUrl('KiBuddyBeta')); }}
           className="p-2 text-gray-500 hover:text-white"
           title="Schließen"
         >

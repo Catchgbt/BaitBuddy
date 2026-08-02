@@ -23,7 +23,7 @@ export default function EventCreate() {
       try {
         const user = await auth.me().catch(() => null);
         if (!user) {
-          navigate("/login");
+          navigate("/");
           return;
         }
         setCurrentUser(user);

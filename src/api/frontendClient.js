@@ -451,22 +451,20 @@ const FUNCTION_MAP = {
   calculateTravelTime:    (d) => api.post('/api/fishing/clubs/nearby', d).catch(() => ({})),
   angelspotsGeojson:      ()  => api.get('/api/fishing/hotspots').catch(() => ({})),
   'angelspots-geojson':   ()  => api.get('/api/fishing/hotspots').catch(() => ({})),
-  detectHotspots:         (d) => api.post('/api/fishing/hotspots/detect', d).catch(() => ({ hotspots: [] })),
   createStripeCheckoutSession: (d) => api.post('/api/premium/checkout', d),
   activateDemoMode:       ()  => api.post('/api/premium/activate-demo'),
   activatePlan:           (d) => api.post('/api/premium/activate', d),
-  adminAssignPlan:        (d) => api.post('/api/admin/plans/assign', d).catch(() => ({ ok: true })),
-  adminResetWallet:       (d) => api.post('/api/admin/wallet/reset', d).catch(() => ({ ok: true })),
-  adminSetCredits:        (d) => api.post('/api/admin/credits/set', d).catch(() => ({ ok: true })),
+  // Bewusst OHNE .catch(() => ({ ok: true })): der Fallback meldete jeden
+  // Fehlschlag als Erfolg zurueck. Fehler muessen bis in die Oberflaeche
+  // durchschlagen, sonst sieht ein Admin eine Zuweisung, die nie passiert ist.
+  adminAssignPlan:        (d) => api.post('/api/admin/plans/assign', d),
   deleteAccount:          ()  => api.del('/api/user/account'),
   createClan:             (d) => api.post('/api/community/clans', d),
   joinClan:               (d) => api.post(`/api/community/clans/${d?.clan_id}/join`),
   getClanLeaderboard:     (d) => api.get(`/api/community/clans/leaderboard?competition_id=${d?.competition_id || ''}`).catch(() => ({ leaderboard: [] })),
   checkFeatureAccess:     (d) => api.post('/api/premium/check-feature', d).catch(() => ({ allowed: false })),
-  geocodeFishingClubs:    (d) => api.post('/api/fishing/clubs/geocode', d).catch(() => []),
   addVotingLike:          (d) => api.post(`/api/community/voting/${d?.submission_id}/like`).catch(() => ({ ok: true })),
   getVotingLeaderboard:   ()  => api.get('/api/community/voting/leaderboard').then(r => ({ leaderboard: Array.isArray(r) ? r : (r?.leaderboard || []) })).catch(() => ({ leaderboard: [] })),
-  catchgbtVoices:         ()  => api.get('/api/ai/voices').catch(() => ({ voices: [] })),
   catchgbtPing:           ()  => api.get('/api/health').catch(() => ({ ok: false })),
   generateBathymetricMap: (d) => api.post('/api/water/bathymetric-map', d).catch(() => null),
   bathymetryProxy:        (d) => api.post('/api/water/bathymetry', d).catch(() => null),
@@ -849,8 +847,6 @@ export const fishing = {
   activeRules: ()          => api.get('/api/fishing/rules/active'),
   clubs:       (city)      => api.get(`/api/fishing/clubs${city ? '?city='+city : ''}`),
   nearbyClubs: (lat, lng)  => api.post('/api/fishing/clubs/nearby', { latitude: lat, longitude: lng }),
-  licenses:    ()          => api.get('/api/fishing/licenses'),
-  addLicense:  (data)      => api.post('/api/fishing/licenses', data),
   plans:       ()          => api.get('/api/fishing/plans'),
   createPlan:  (data)      => api.post('/api/fishing/plans', data),
   deletePlan:  (id)        => api.del(`/api/fishing/plans/${id}`),
@@ -903,14 +899,9 @@ export const rewards = {
   claim:             (leaderboardId)   => api.post('/api/rewards/claim', { leaderboard_id: leaderboardId }),
 };
 
-export const gear = {
-  list:       ()      => api.get('/api/gear'),
-  create:     (data)  => api.post('/api/gear', data),
-  update:     (id, d) => api.patch(`/api/gear/${id}`, d),
-  delete:     (id)    => api.del(`/api/gear/${id}`),
-  baits:      ()      => api.get('/api/gear/baits'),
-  createBait: (data)  => api.post('/api/gear/baits', data),
-};
+// Entfernt: der frühere `gear`-Export sprach /api/gear und /api/gear/baits an —
+// beide Pfade gibt es im Backend nicht (die Ausrüstung läuft über
+// entities.GearItem -> /api/gear/items). Er hatte keinen einzigen Aufrufer.
 
 export const water = {
   analyze: (lat, lng, name) => api.post('/api/water', { latitude: lat, longitude: lng, spotName: name }),

@@ -19,7 +19,7 @@ const featureTips = [
   "KI-Koeder-Mischer: Erhalte Rezepte fuer perfekte Boilies und Lockstoffe je nach Zielfisch.",
   "Trip-Planer: Plane deine Angeltour mit KI-Unterstuetzung inklusive Packliste.",
   "Gewaesser-Wasseranalyse: Pruefe Temperatur, Tiefe, Sicht und Wasserqualitaet.",
-  "Satelliten-Analyse: Echtzeit-Satellitendaten zu Chlorophyll, Algen und Truebung.",
+  "Gewaesseranalyse: Wassertemperatur, Luftdruck und Wind fuer deinen Standort.",
   "Hotspot-Erkennung: KI markiert die vielversprechendsten Stellen auf der Karte.",
   "Fangprognose: Berechnet die Beiss-Wahrscheinlichkeit basierend auf Wetter und Daten.",
   "AR-Gewaesser-Ansicht: Tauche per Augmented Reality unter die Wasseroberflaeche.",
