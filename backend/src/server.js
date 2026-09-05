@@ -7,6 +7,7 @@ import 'express-async-errors';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import { logger, requestLogger, errorLogger, initSentry } from './lib/logger.js';
 import authRoutes from './routes/auth.js';
 import aiRoutes from './routes/ai.js';
 import catchesRoutes from './routes/catches.js';
@@ -32,6 +33,7 @@ import { aiRateLimiter, ttsRateLimiter, authRateLimiter } from './middleware/rat
 import { getAnthropicKey } from './lib/llm.js';
 
 const app = express();
+initSentry(app);
 const PORT = process.env.PORT || 3000;
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
@@ -44,6 +46,7 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
+app.use(requestLogger);
 
 // Findet den OpenAI-Key tolerant (OPENAI_API_KEY, Openai_key, …) — nur zur
 // Diagnose, ob Voice serverseitig konfiguriert ist. Gibt KEINEN Wert preis.
@@ -95,22 +98,13 @@ app.use('/api', referralsRoutes);
 app.use('/api', adminRoutes);
 
 app.use((req, res) => res.status(404).json({ error: `Not found: ${req.method} ${req.path}` }));
-app.use((err, req, res, next) => {
-  if (res.headersSent) return next(err);
-  console.error('Unhandled error:', err);
-  // Upstream-Timeouts (Claude, OpenAI, ElevenLabs, open-meteo, GoTrue) sauber als
-  // Gateway-Timeout melden statt als generischen 500.
-  if (err?.timeout || err?.name === 'FetchTimeoutError' || err?.name === 'AbortError') {
-    return res.status(504).json({ error: 'Zeitüberschreitung beim externen Dienst — bitte erneut versuchen' });
-  }
-  res.status(500).json({ error: 'Interner Fehler' });
-});
+app.use(errorLogger);
 
 // NODE_ENV=test (siehe backend/test/setup.js) haelt den Server auch dann vom
 // echten Port-Binding ab, wenn ein Test absichtlich process.env.VERCEL
 // entfernt, um den Nicht-Vercel-Codepfad einzelner Routen zu pruefen.
 if (!process.env.VERCEL && process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {});
-}
 
+}
 export default app;
