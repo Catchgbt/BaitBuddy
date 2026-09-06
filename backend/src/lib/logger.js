@@ -110,7 +110,7 @@ export function errorLogger(err, req, res, next) {
   logger.error(`${req.method} ${req.path}`, err, { statusCode, requestId: context.requestId });
 
   if (!res.headersSent) {
-    res.status(statusCode).json({ error: 'Fehler aufgetreten', requestId: context.requestId });
+    res.status(statusCode).json({ error: 'Interner Fehler', requestId: context.requestId });
   }
 
   next(err);
