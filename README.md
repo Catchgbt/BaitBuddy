@@ -6,6 +6,9 @@ Capacitor-WebView verpackt.
 
 **Live:** https://bait-buddy.vercel.app
 
+**Self-Hosting:** Der komplette Stack (inkl. Supabase) läuft auch per
+`docker compose` auf einem eigenen Rechner, siehe [docs/DOCKER_SELFHOST.md](docs/DOCKER_SELFHOST.md).
+
 ---
 
 ## 🎯 Key Features

@@ -300,6 +300,28 @@ die passende Android-Permission deklariert ist. `CAMERA`,
 > „nur Vercel & Supabase". Fällt der KV-Store aus, blockiert das die App nicht
 > (Fail-Open).
 
+### Self-Hosting per Docker (Alternative zu Vercel + Supabase-Cloud)
+
+Unter `docker/` liegt ein vollständiges `docker compose`-Setup, das den
+**Supabase-Stack selbst** (Postgres, GoTrue, PostgREST, Storage, Kong) plus
+Backend, Frontend (Nginx) und einen Cron-Container auf einem Rechner betreibt.
+Anleitung: `docs/DOCKER_SELFHOST.md`. Bewusste Entscheidung: Supabase wird
+**betrieben, nicht ersetzt** — Auth (`user_metadata` für Plan/Referral),
+Storage-Bucket `catches` und die 25 Backend-Module mit `supabase.from(...)`
+bleiben unverändert; nur `SUPABASE_URL`/`VITE_SUPABASE_URL` zeigen auf Kong.
+
+- `docker/db/init/90-baitbuddy-schema.sql` ist der **vollständige
+  Schema-Snapshot** der Cloud-DB (54 Tabellen, Policies, Trigger) vom
+  2026-09-05 und läuft nur beim ersten `db`-Start. Neue Schemaänderungen
+  weiterhin als Datei nach `supabase/migrations/` (idempotent schreiben) und
+  mit `docker/scripts/apply-migrations.sh` einspielen.
+- `supabase/schema.sql` ist **unvollständig** (26 von 54 Tabellen) — bei
+  Schemafragen den Snapshot als Referenz nehmen.
+- `vercel.json`-Crons ↔ `docker/cron/crontab`: beide Listen bei neuen
+  Cron-Endpunkten **synchron** halten.
+- Vercel-spezifisch bleibt nur `api/[...path].mjs` + `vercel.json`; beide
+  Deploy-Wege nutzen denselben Code.
+
 ---
 
 ## 📦 Build & Release

@@ -1,0 +1,387 @@
+# BaitBuddy Self-Hosting: kompletter Stack auf einem Rechner.
+#
+#   Supabase-Stack (db, auth, rest, storage, imgproxy, kong, meta)
+#   + BaitBuddy-Backend (Express)      -> Port ${BACKEND_PORT}
+#   + BaitBuddy-Frontend (Nginx, SPA)  -> Port ${FRONTEND_PORT}
+#   + Cron-Container (ersetzt vercel.json "crons")
+#   + optional: Redis (Rate-Limit-Store, profile "redis")
+#   + optional: Studio (Supabase-Dashboard, profile "tools")
+#
+# Vorbereitung (einmalig):
+#   cp .env.example .env
+#   node scripts/generate-keys.mjs   # JWT_SECRET, ANON_KEY, SERVICE_ROLE_KEY in .env
+# Start:
+#   docker compose up -d
+# Mit Dashboard:
+#   docker compose --profile tools up -d
+#
+# Doku: docs/DOCKER_SELFHOST.md
+
+name: baitbuddy
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # Supabase: Postgres
+  # ---------------------------------------------------------------------------
+  db:
+    image: supabase/postgres:15.8.1.060
+    container_name: baitbuddy-db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    command:
+      - postgres
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
+      - -c
+      - log_min_messages=fatal
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    environment:
+      POSTGRES_HOST: /var/run/postgresql
+      PGPORT: 5432
+      POSTGRES_PORT: 5432
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: postgres
+      POSTGRES_DB: postgres
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXP: ${JWT_EXPIRY}
+    volumes:
+      - db-data:/var/lib/postgresql/data:Z
+      # Rollen-Passwoerter + JWT-Secret (laufen vor den Migrationen)
+      - ./db/init/99-roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-roles.sql:Z
+      - ./db/init/99-jwt.sql:/docker-entrypoint-initdb.d/init-scripts/99-jwt.sql:Z
+      # BaitBuddy-Schema + Buckets (laufen nach dem Supabase-Basis-Schema)
+      - ./db/init/90-baitbuddy-schema.sql:/docker-entrypoint-initdb.d/migrations/90-baitbuddy-schema.sql:Z
+      - ./db/init/91-baitbuddy-storage.sql:/docker-entrypoint-initdb.d/migrations/91-baitbuddy-storage.sql:Z
+      # Zusaetzliche Repo-Migrationen (idempotent, fuer Aenderungen NACH dem Snapshot)
+      - ../supabase/migrations:/baitbuddy-migrations:ro
+
+  # ---------------------------------------------------------------------------
+  # Supabase: Auth (GoTrue)
+  # ---------------------------------------------------------------------------
+  auth:
+    image: supabase/gotrue:v2.170.0
+    container_name: baitbuddy-auth
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9999/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: ${API_EXTERNAL_URL}
+
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${POSTGRES_PASSWORD}@db:5432/postgres
+
+      GOTRUE_SITE_URL: ${SITE_URL}
+      GOTRUE_URI_ALLOW_LIST: ${ADDITIONAL_REDIRECT_URLS}
+      GOTRUE_DISABLE_SIGNUP: ${DISABLE_SIGNUP}
+
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_EXP: ${JWT_EXPIRY}
+      GOTRUE_JWT_SECRET: ${JWT_SECRET}
+
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: ${ENABLE_EMAIL_SIGNUP}
+      GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED: "false"
+      GOTRUE_MAILER_AUTOCONFIRM: ${ENABLE_EMAIL_AUTOCONFIRM}
+
+      GOTRUE_SMTP_ADMIN_EMAIL: ${SMTP_ADMIN_EMAIL}
+      GOTRUE_SMTP_HOST: ${SMTP_HOST}
+      GOTRUE_SMTP_PORT: ${SMTP_PORT}
+      GOTRUE_SMTP_USER: ${SMTP_USER}
+      GOTRUE_SMTP_PASS: ${SMTP_PASSWORD}
+      GOTRUE_SMTP_SENDER_NAME: ${SMTP_SENDER_NAME}
+      GOTRUE_MAILER_URLPATHS_INVITE: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_CONFIRMATION: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_RECOVERY: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_EMAIL_CHANGE: /auth/v1/verify
+
+      GOTRUE_EXTERNAL_PHONE_ENABLED: "false"
+      GOTRUE_SMS_AUTOCONFIRM: "false"
+
+      # Google-OAuth (Social-Login in Home.jsx). Leer lassen = deaktiviert.
+      GOTRUE_EXTERNAL_GOOGLE_ENABLED: ${GOOGLE_OAUTH_ENABLED}
+      GOTRUE_EXTERNAL_GOOGLE_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID}
+      GOTRUE_EXTERNAL_GOOGLE_SECRET: ${GOOGLE_OAUTH_SECRET}
+      GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI: ${API_EXTERNAL_URL}/auth/v1/callback
+
+      # Passwort-Regeln analog Cloud-Default
+      GOTRUE_PASSWORD_MIN_LENGTH: 6
+      GOTRUE_SECURITY_REFRESH_TOKEN_ROTATION_ENABLED: "true"
+      GOTRUE_SECURITY_REFRESH_TOKEN_REUSE_INTERVAL: 10
+
+  # ---------------------------------------------------------------------------
+  # Supabase: PostgREST
+  # ---------------------------------------------------------------------------
+  rest:
+    image: postgrest/postgrest:v12.2.8
+    container_name: baitbuddy-rest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgres://authenticator:${POSTGRES_PASSWORD}@db:5432/postgres
+      PGRST_DB_SCHEMAS: public,storage,graphql_public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+      PGRST_APP_SETTINGS_JWT_SECRET: ${JWT_SECRET}
+      PGRST_APP_SETTINGS_JWT_EXP: ${JWT_EXPIRY}
+    command: ["postgrest"]
+
+  # ---------------------------------------------------------------------------
+  # Supabase: Storage (Bucket "catches" fuer Fangfotos)
+  # ---------------------------------------------------------------------------
+  storage:
+    image: supabase/storage-api:v1.19.3
+    container_name: baitbuddy-storage
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      rest:
+        condition: service_started
+      imgproxy:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://storage:5000/status"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    environment:
+      ANON_KEY: ${ANON_KEY}
+      SERVICE_KEY: ${SERVICE_ROLE_KEY}
+      POSTGREST_URL: http://rest:3000
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: postgres://supabase_storage_admin:${POSTGRES_PASSWORD}@db:5432/postgres
+      FILE_SIZE_LIMIT: 52428800
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      TENANT_ID: stub
+      REGION: stub
+      GLOBAL_S3_BUCKET: stub
+      ENABLE_IMAGE_TRANSFORMATION: "true"
+      IMGPROXY_URL: http://imgproxy:5001
+    volumes:
+      - storage-data:/var/lib/storage:z
+
+  imgproxy:
+    image: darthsim/imgproxy:v3.8.0
+    container_name: baitbuddy-imgproxy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "imgproxy", "health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    environment:
+      IMGPROXY_BIND: ":5001"
+      IMGPROXY_LOCAL_FILESYSTEM_ROOT: /
+      IMGPROXY_USE_ETAG: "true"
+      IMGPROXY_ENABLE_WEBP_DETECTION: "true"
+    volumes:
+      - storage-data:/var/lib/storage:z
+
+  # ---------------------------------------------------------------------------
+  # Supabase: API-Gateway (Kong) -> das ist die SUPABASE_URL fuer App & Backend
+  # ---------------------------------------------------------------------------
+  kong:
+    image: kong:2.8.1
+    container_name: baitbuddy-kong
+    restart: unless-stopped
+    depends_on:
+      auth:
+        condition: service_healthy
+      rest:
+        condition: service_started
+      storage:
+        condition: service_healthy
+    ports:
+      - "${KONG_HTTP_PORT}:8000"
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /home/kong/kong.yml
+      KONG_DNS_ORDER: LAST,A,CNAME
+      KONG_PLUGINS: request-transformer,cors,key-auth,acl,basic-auth
+      KONG_NGINX_PROXY_PROXY_BUFFER_SIZE: 160k
+      KONG_NGINX_PROXY_PROXY_BUFFERS: 64 160k
+      SUPABASE_ANON_KEY: ${ANON_KEY}
+      SUPABASE_SERVICE_KEY: ${SERVICE_ROLE_KEY}
+      DASHBOARD_USERNAME: ${DASHBOARD_USERNAME}
+      DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD}
+    volumes:
+      - ./kong/kong.yml:/home/kong/temp.yml:ro,z
+    # Platzhalter ($SUPABASE_ANON_KEY usw.) in kong.yml per Shell-Expansion fuellen
+    entrypoint: bash -c 'eval "echo \"$$(cat /home/kong/temp.yml)\"" > /home/kong/kong.yml && /docker-entrypoint.sh kong docker-start'
+
+  # ---------------------------------------------------------------------------
+  # Supabase: postgres-meta (nur fuer Studio noetig)
+  # ---------------------------------------------------------------------------
+  meta:
+    image: supabase/postgres-meta:v0.86.1
+    container_name: baitbuddy-meta
+    restart: unless-stopped
+    profiles: ["tools"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PG_META_PORT: 8080
+      PG_META_DB_HOST: db
+      PG_META_DB_PORT: 5432
+      PG_META_DB_NAME: postgres
+      PG_META_DB_USER: supabase_admin
+      PG_META_DB_PASSWORD: ${POSTGRES_PASSWORD}
+
+  studio:
+    image: supabase/studio:20250317-6955350
+    container_name: baitbuddy-studio
+    restart: unless-stopped
+    profiles: ["tools"]
+    depends_on:
+      meta:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://studio:3000/api/platform/profile').then((r) => {if (r.status !== 200) throw new Error(r.status)})"]
+      timeout: 10s
+      interval: 5s
+      retries: 3
+    environment:
+      STUDIO_PG_META_URL: http://meta:8080
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DEFAULT_ORGANIZATION_NAME: BaitBuddy
+      DEFAULT_PROJECT_NAME: baitbuddy-local
+      SUPABASE_URL: http://kong:8000
+      SUPABASE_PUBLIC_URL: ${API_EXTERNAL_URL}
+      SUPABASE_ANON_KEY: ${ANON_KEY}
+      SUPABASE_SERVICE_KEY: ${SERVICE_ROLE_KEY}
+      AUTH_JWT_SECRET: ${JWT_SECRET}
+      NEXT_PUBLIC_ENABLE_LOGS: "false"
+
+  # ---------------------------------------------------------------------------
+  # BaitBuddy: Express-Backend (bisher Vercel Serverless)
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/backend.Dockerfile
+    image: baitbuddy-backend
+    container_name: baitbuddy-backend
+    restart: unless-stopped
+    depends_on:
+      kong:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "${BACKEND_PORT}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      # Supabase: intern ueber Kong (kein Umweg ueber den Host)
+      SUPABASE_URL: http://kong:8000
+      SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+      # Nach aussen sichtbare URLs (Stripe-Redirects, Share-Links, CORS)
+      APP_BASE_URL: ${SITE_URL}
+      APP_URL: ${SITE_URL}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      # Cron-Endpunkte (siehe Service "cron")
+      CRON_SECRET: ${CRON_SECRET}
+      ADMIN_EMAILS: ${ADMIN_EMAILS}
+      # KI / Stimme
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
+      ELEVENLABS_VOICE_ID: ${ELEVENLABS_VOICE_ID}
+      ELEVENLABS_VOICE_ID_FEMALE: ${ELEVENLABS_VOICE_ID_FEMALE}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # Kaeufe
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${GOOGLE_PLAY_SERVICE_ACCOUNT_JSON}
+      # Support-Mails
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SUPPORT_EMAIL: ${SUPPORT_EMAIL}
+      # Monitoring / Rate-Limit-Store
+      SENTRY_DSN: ${SENTRY_DSN}
+      LOG_LEVEL: ${LOG_LEVEL}
+      KV_URL: ${KV_URL}
+    volumes:
+      # Karten-Downloads (auf Vercel wegen Read-only-FS gesperrt, hier moeglich)
+      - bathymetry-data:/app/backend/bathymetry_data
+
+  # ---------------------------------------------------------------------------
+  # BaitBuddy: Frontend (statischer Vite-Build hinter Nginx, /api -> backend)
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/frontend.Dockerfile
+      args:
+        VITE_SUPABASE_URL: ${API_EXTERNAL_URL}
+        VITE_SUPABASE_ANON_KEY: ${ANON_KEY}
+        # leer = same-origin, Nginx proxyt /api zum Backend
+        VITE_API_URL: ""
+    image: baitbuddy-frontend
+    container_name: baitbuddy-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "${FRONTEND_PORT}:80"
+
+  # ---------------------------------------------------------------------------
+  # Cron: ersetzt "crons" aus vercel.json (gleiche Pfade, gleiche Zeiten UTC)
+  # ---------------------------------------------------------------------------
+  cron:
+    build:
+      context: .
+      dockerfile: cron.Dockerfile
+    image: baitbuddy-cron
+    container_name: baitbuddy-cron
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    environment:
+      CRON_SECRET: ${CRON_SECRET}
+      BACKEND_URL: http://backend:3000
+
+  # ---------------------------------------------------------------------------
+  # Optional: Redis als instanzuebergreifender Rate-Limit-Store (KV_URL)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: baitbuddy-redis
+    restart: unless-stopped
+    profiles: ["redis"]
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    volumes:
+      - redis-data:/data
+
+volumes:
+  db-data:
+  storage-data:
+  bathymetry-data:
+  redis-data:

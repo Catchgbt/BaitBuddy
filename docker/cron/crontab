@@ -1,0 +1,6 @@
+# Zeiten in UTC, identisch zu vercel.json
+# min hour dom mon dow  command
+0 3 * * *   run-job /api/admin/premium/check-expiry
+0 2 * * *   run-job /api/admin/events/auto-archive
+0 1 * * *   run-job /api/admin/rewards/auto-activate
+0 0 1 * *   run-job /api/admin/leaderboards/monthly/generate
