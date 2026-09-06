@@ -42,7 +42,7 @@ export const tutorialSteps = {
     },
     {
       title: "KI Chat-Buddy",
-      route: "AIAssistant",
+      route: "KiBuddyBeta",
       content: "Der KI-Angel-Buddy hilft mit Fisch-Infos zu Hecht, Zander und Karpfen, Wetter-Tipps, Koeder-Empfehlungen, Spot-Strategien und Timing fuer die besten Tageszeiten. Tippe deine Frage ins Eingabefeld 'Frage an den KI-Buddy'.",
       image: "https://media.base44.com/images/public/68bb3d3b9f83dc1f55ef532b/fca8f2aad_Screenshot_20260506_075315_Comet.jpg"
     },
@@ -61,7 +61,7 @@ export const tutorialSteps = {
     {
       title: "Satelliten-Gewaesseranalyse",
       route: "WaterAnalysis",
-      content: "KI-gestuetzte Wasseranalyse mit Echtzeit-Satellitendaten von Sentinel-2, MODIS und Copernicus. Tippe auf 'Standort' fuer GPS und auf 'Analyse', um Wassertemperatur, Chlorophyll, Truebung und Algenrisiko zu berechnen.",
+      content: "Gemessene Wetter- und Wasserwerte fuer deinen Standort aus dem Open-Meteo-Modell. Tippe auf 'Standort' fuer GPS und auf 'Analyse', um Wassertemperatur, Luftdruck, Wind und Wellenhoehe abzurufen. Die Bewertung darunter zeigt, wie sie zustande kommt.",
       image: "https://media.base44.com/images/public/68bb3d3b9f83dc1f55ef532b/1eb0bdeac_Screenshot_20260506_075353_Comet.jpg"
     },
     {
@@ -248,7 +248,7 @@ export const tutorialSteps = {
     },
     {
       title: "AI Chat Buddy",
-      route: "AIAssistant",
+      route: "KiBuddyBeta",
       content: "The AI fishing buddy helps with fish info on pike, zander and carp, weather tips, bait recommendations, spot strategies and timing for the best hours. Type your question in the 'Ask the AI Buddy' field.",
       image: "https://media.base44.com/images/public/68bb3d3b9f83dc1f55ef532b/fca8f2aad_Screenshot_20260506_075315_Comet.jpg"
     },
@@ -267,7 +267,7 @@ export const tutorialSteps = {
     {
       title: "Satellite Water Analysis",
       route: "WaterAnalysis",
-      content: "AI-powered water analysis with real-time satellite data from Sentinel-2, MODIS and Copernicus. Tap 'Location' for GPS and 'Analyze' to compute water temperature, chlorophyll, turbidity and algae risk.",
+      content: "Measured weather and water values for your location from the Open-Meteo model. Tap 'Location' for GPS and 'Analyze' to retrieve water temperature, air pressure, wind and wave height. The rating below shows how it is derived.",
       image: "https://media.base44.com/images/public/68bb3d3b9f83dc1f55ef532b/1eb0bdeac_Screenshot_20260506_075353_Comet.jpg"
     },
     {

@@ -21,18 +21,25 @@
      und die rechte Haelfte lief aus dem Bild ("da fehlt die haelfte"). Diese
      Elemente werden von tailwindcss-animate ohnehin GPU-kompositiert; der
      zusaetzliche translateZ(0)-Hack ist unnoetig und schaedlich (gleiche Klasse
-     Bug wie beim contain: paint auf [role="region"] weiter unten). */
+     Bug wie beim contain: paint auf [role="region"] weiter unten).
+
+     Ebenso raus: .transition-all und [role="region"].
+     .transition-all haengt an rund 100 Stellen quer durch die App (Karten,
+     Buttons, Listenzeilen). Jedes dieser Elemente bekam damit dauerhaft eine
+     eigene GPU-Ebene — auf den anvisierten Geraeten mit <= 2 GB RAM ist das
+     reine Speicherverschwendung, und ein dauerhaftes will-change ist laut
+     Spezifikation ohnehin nur unmittelbar vor einer Animation gedacht.
+     Schwerer wiegt: transform erzeugt einen Containing Block, wodurch
+     position:fixed-Kinder an dem Element statt am Viewport haengen — genau die
+     Bug-Klasse, die weiter oben schon fuer Radix-Overlays dokumentiert ist.
+     [role="region"] ist eine generische Landmark-Rolle (KI-Buddy-Widget,
+     Kartenansicht, Karussell) und war aus demselben Grund gefaehrlich. */
   [data-animated],
-  .transition-all,
   [data-sonner-toast],
-  .toast-animated,
-  [role="status"],
-  [role="alert"],
-  [role="region"] {
+  .toast-animated {
     will-change: transform, opacity;
     transform: translateZ(0);
     backface-visibility: hidden;
-    perspective: 1000px;
   }
   
   /* Optimize transition performance during rapid state changes */

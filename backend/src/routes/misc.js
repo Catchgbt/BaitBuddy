@@ -9,6 +9,7 @@ import { isAllowedFetchUrl } from '../lib/urlSafety.js';
 import { deleteUserAccount } from '../lib/accountDeletion.js';
 import { sendDbError } from '../lib/errorResponse.js';
 import { fetchWithTimeout } from '../lib/fetchWithTimeout.js';
+import { listAllUsers, toAdminUserSummary } from '../lib/adminUsers.js';
 
 const router = Router();
 
@@ -304,8 +305,23 @@ router.post('/user/sessions/:id/end', requireAuth, async (req, res) => {
   return res.json({ ok: true });
 });
 
+// Lieferte bis hierher eine fest verdrahtete leere Liste — die
+// Admin-Nutzerverwaltung zeigte dadurch nie einen einzigen Nutzer an.
+// Optionaler `?search=` filtert über E-Mail und Namen.
 router.get('/admin/users', requireAuth, requireAdmin, async (req, res) => {
-  return res.json([]);
+  const { users, error } = await listAllUsers(supabase);
+  if (error) return sendDbError(res, error);
+
+  const summaries = users.map(toAdminUserSummary);
+  const search = typeof req.query.search === 'string' ? req.query.search.trim().toLowerCase() : '';
+  const filtered = search
+    ? summaries.filter(
+        (u) => u.email.toLowerCase().includes(search) || u.full_name.toLowerCase().includes(search)
+      )
+    : summaries;
+
+  filtered.sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+  return res.json(filtered);
 });
 
 router.get('/exams', optionalAuth, async (req, res) => {

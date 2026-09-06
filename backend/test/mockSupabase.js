@@ -37,8 +37,20 @@ export function createQueryBuilderMock(result = { data: null, error: null }) {
 // `supabase.auth.getUser(token)` zurückgibt (requireAuth/optionalAuth-Middleware);
 // `fromResult` ist der Default für jede `.from(table)`-Kette, überschreibbar
 // pro Tabelle über `fromResults`.
-export function createSupabaseMock({ authUser = null, authError = null, fromResults = {} } = {}) {
+//
+// `adminUsers` speist die Service-Role-API (`supabase.auth.admin.*`). Die
+// Antwortform ist bewusst exakt die echte: `listUsers()` liefert
+// `{ data: { users: [...] } }` und ist seitenweise — beides hatte der
+// Produktivcode falsch angenommen.
+export function createSupabaseMock({
+  authUser = null,
+  authError = null,
+  fromResults = {},
+  adminUsers = [],
+  adminPerPage = 200,
+} = {}) {
   const builders = {};
+  const users = [...adminUsers];
 
   const from = vi.fn((table) => {
     if (!builders[table]) {
@@ -47,14 +59,38 @@ export function createSupabaseMock({ authUser = null, authError = null, fromResu
     return builders[table];
   });
 
+  const listUsers = vi.fn(async ({ page = 1, perPage = adminPerPage } = {}) => {
+    const start = (page - 1) * perPage;
+    return {
+      data: { users: users.slice(start, start + perPage), total: users.length },
+      error: null,
+    };
+  });
+
+  const getUserById = vi.fn(async (id) => {
+    const user = users.find((u) => u.id === id);
+    return user
+      ? { data: { user }, error: null }
+      : { data: { user: null }, error: null };
+  });
+
+  const updateUserById = vi.fn(async (id, attrs) => {
+    const user = users.find((u) => u.id === id);
+    if (!user) return { data: { user: null }, error: { message: 'not found' } };
+    if (attrs?.user_metadata) user.user_metadata = attrs.user_metadata;
+    return { data: { user }, error: null };
+  });
+
   return {
     auth: {
       getUser: vi.fn(async () => ({
         data: { user: authUser },
         error: authError,
       })),
+      admin: { listUsers, getUserById, updateUserById },
     },
     from,
     __builders: builders,
+    __adminUsers: users,
   };
 }

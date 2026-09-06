@@ -68,7 +68,9 @@ function BathymetricCrowdsourcingInner() {
     setGenerating(false);
   };
 
-  const isAdmin = user?.role === 'admin';
+  // /api/auth/me liefert kein `role`-Feld — die Pruefung war immer falsch.
+  // `is_admin` spiegelt die ADMIN_EMAILS-Allowlist des Backends.
+  const isAdmin = user?.is_admin === true;
 
   return (
     <div className="min-h-screen bg-gray-950 p-4 max-w-2xl mx-auto">

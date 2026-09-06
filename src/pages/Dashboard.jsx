@@ -678,7 +678,7 @@ Antworte auf Deutsch, direkt und praxisnah, in max 6 Sätzen.`;
               { name: "Wetter", path: "Weather", offline: true, Icon: Cloud, color: "text-sky-400", bg: "from-sky-500/10 to-sky-600/5" },
               { name: "Fangbuch", path: "Logbook", offline: true, Icon: BookOpen, color: "text-cyan-400", bg: "from-cyan-500/10 to-cyan-600/5" },
               { name: "Statistik", path: "CatchStats", Icon: BarChart2, color: "text-emerald-400", bg: "from-emerald-500/10 to-emerald-600/5" },
-              { name: "KI-Chat", path: "AIAssistant", Icon: MessageCircle, color: "text-purple-400", bg: "from-purple-500/10 to-purple-600/5" },
+              { name: "KI-Chat", path: "KiBuddyBeta", Icon: MessageCircle, color: "text-purple-400", bg: "from-purple-500/10 to-purple-600/5" },
               { name: "KI-Cam", path: "AI", Icon: Camera, color: "text-pink-400", bg: "from-pink-500/10 to-pink-600/5" },
               { name: "Gewässer", path: "WaterAnalysis", offline: true, Icon: Waves, color: "text-teal-400", bg: "from-teal-500/10 to-teal-600/5" },
               { name: "Ausrüstung", path: "GearV1", offline: true, Icon: Wrench, color: "text-orange-400", bg: "from-orange-500/10 to-orange-600/5" },

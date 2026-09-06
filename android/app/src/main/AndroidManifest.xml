@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- allowBackup=false: In localStorage liegen die Sitzungs-Token
+         (bb_token/bb_refresh). Mit aktiviertem Auto-Backup wandern die in die
+         Google-Drive-Sicherung und würden beim Restore auf ein fremdes Gerät
+         mitgenommen. Alle Nutzerdaten liegen ohnehin server-seitig in Supabase
+         und stehen nach dem Login wieder zur Verfügung. -->
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -50,7 +57,39 @@
         </provider>
     </application>
 
-    <!-- Permissions -->
+    <!-- Permissions
+         Die App läuft als WebView über Web-APIs (kein Capacitor-Plugin für
+         Kamera/GPS). Der WebView darf eine Web-Permission erst dann an den
+         Nutzer weiterreichen, wenn die zugehörige Android-Permission hier
+         deklariert ist — ohne diese Einträge scheitern navigator.geolocation,
+         getUserMedia (Fangfoto, KI-Bildanalyse, AR) und die Sprach-Eingabe des
+         KI-Buddys in der gepackten App stillschweigend.
+         Dokumentiert in APP_STORE_PERMISSIONS.md. -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Spot-Tracking, Karte, Wetter am Standort, Live-Trip -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <!-- Fangfotos, Köder-/Spot-Fotos, KI-Fischerkennung, AR-Ansichten -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Sprachsteuerung und Voice-Chat mit dem KI-Buddy -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- Bewusst NICHT deklariert: POST_NOTIFICATIONS. Der Android-WebView
+         implementiert die Web-Notifications-API nicht, in der gepackten App
+         gibt es also keinen Absender. Eine Permission ohne Nutzung würde nur
+         die Play-Datensicherheits-Angabe aufblähen. Sobald ein natives
+         Notification-Plugin dazukommt, gehört sie hierher. -->
+
+    <!-- Als optional markiert, damit Google Play Geräte ohne Kamera/GPS
+         (z. B. Tablets ohne GPS-Chip) nicht vom Download ausschließt. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+    <uses-feature android:name="android.hardware.location" android:required="false" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
 </manifest>

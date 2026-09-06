@@ -319,7 +319,7 @@ export default function PremiumPlans() {
         'CatchCam - KI-Analyse direkt vom Foto',
         'Weibliche KI-Stimme "Matilda" (ElevenLabs)',
         'KI-Buddy Chat & Foto-Analyse unbegrenzt',
-        'KI-Fangprognosen, Hotspots & Satelliten-Analyse',
+        'KI-Fangprognosen & Gewaesseranalyse (Open-Meteo)',
         '3D-Koederfuehrung, AR-Gewaesser & AR-Knotenassistent',
         'Tiefenkarten, Wasseranalyse & KI-Koeder-Mischer',
         'Geraete-Integration (Echolot, Bissanzeiger)',
