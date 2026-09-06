@@ -11,7 +11,8 @@
 //   - 'play-billing-error'    detail: { productId, code, message }
 //   - 'play-billing-restored' detail: { purchases: [{ productId, purchaseToken, orderId }] }
 
-import { functions } from "@/api/frontendClient";
+import { api, functions } from "@/api/frontendClient";
+import { getPlanLevel } from "./planHierarchy";
 
 export const GOOGLE_PLAY_PRODUCT_IDS = {
   basic: 'baitbuddy_basic_monthly',
@@ -54,6 +55,23 @@ async function activatePlanOnServer({ planId, productId, purchaseToken, orderId 
     throw new Error(data?.error || 'Plan-Aktivierung fehlgeschlagen');
   }
   return data;
+}
+
+// Ermittelt aus einer Liste von Play-Käufen den höchstwertigen Plan. Die
+// Rangfolge kommt aus der zentralen Plan-Hierarchie, damit sie nicht an zwei
+// Stellen auseinanderlaufen kann.
+export function pickBestPurchase(purchases) {
+  let best = null;
+  for (const p of purchases || []) {
+    if (!p?.purchaseToken) continue;
+    const planId = getPlanIdFromProductId(p.productId);
+    if (!planId) continue;
+    const rank = getPlanLevel(planId);
+    if (!best || rank > best.rank) {
+      best = { planId, rank, purchase: p };
+    }
+  }
+  return best;
 }
 
 // Startet den Kauf-Flow und wartet auf Native-Callbacks via window-Events.
@@ -146,6 +164,10 @@ export function startGooglePlayPurchase(planId) {
   });
 }
 
+// Läuft gerade eine vom Nutzer angestoßene Wiederherstellung? Dann hält sich
+// der stille Abgleich heraus, damit derselbe Kauf nicht doppelt aktiviert wird.
+let manualRestoreInFlight = false;
+
 // Stellt vorhandene aktive Google Play Käufe wieder her und aktiviert den passenden Plan.
 export function restoreGooglePlayPurchases() {
   return new Promise((resolve) => {
@@ -166,7 +188,9 @@ export function restoreGooglePlayPurchases() {
     }
 
     let settled = false;
+    manualRestoreInFlight = true;
     const cleanup = () => {
+      manualRestoreInFlight = false;
       window.removeEventListener('play-billing-restored', onRestored);
       window.removeEventListener('play-billing-error', onError);
       clearTimeout(timeoutId);
@@ -188,17 +212,7 @@ export function restoreGooglePlayPurchases() {
       }
 
       // Höchsten Plan ermitteln und aktivieren
-      const planRank = { basic: 1, pro: 2, ultimate: 3, elite: 3, friends_monthly: 3, friends: 4 };
-      let best = null;
-
-      for (const p of purchases) {
-        const planId = getPlanIdFromProductId(p.productId);
-        if (!planId) continue;
-        const rank = planRank[planId] || 0;
-        if (!best || rank > best.rank) {
-          best = { planId, rank, purchase: p };
-        }
-      }
+      const best = pickBestPurchase(purchases);
 
       if (!best) {
         finish({ success: true, restored: 0, message: 'Keine passenden Pläne gefunden.' });
@@ -245,4 +259,88 @@ export function restoreGooglePlayPurchases() {
       finish({ success: false, error: e?.message || 'Google Play Billing Fehler' });
     }
   });
+}
+
+// ── Automatischer Kauf-Abgleich ─────────────────────────────────────────────
+// Zwischen "in Play bezahlt" und "serverseitig freigeschaltet" liegt ein
+// Netzwerk-Aufruf. Bricht der ab (App geschlossen, Funkloch, abgelaufene
+// Sitzung), hat der Nutzer bezahlt und trotzdem keinen Plan — bisher half nur
+// der manuelle Knopf "Käufe wiederherstellen" auf der Premium-Seite.
+// Zusätzlich verlängert Play Abos automatisch weiter, ohne dass die App etwas
+// davon mitbekommt. Beides löst dieser stille Abgleich: Bei jedem Start und
+// jedem Wiedereinstieg in den Vordergrund werden die aktiven Play-Käufe
+// abgefragt und an den Server gemeldet. Der Server ist idempotent und schreibt
+// die Laufzeit nur fort, wenn Play ein späteres Ablaufdatum bestätigt.
+const RECONCILE_THROTTLE_MS = 60 * 1000;
+let reconcileListenersAttached = false;
+let lastReconcileAt = 0;
+
+async function handleReconcileEvent(event) {
+  if (manualRestoreInFlight) return;
+  const best = pickBestPurchase(event.detail?.purchases);
+  if (!best) return;
+
+  try {
+    const data = await activatePlanOnServer({
+      planId: best.planId,
+      productId: best.purchase.productId,
+      purchaseToken: best.purchase.purchaseToken,
+      orderId: best.purchase.orderId
+    });
+    // Nur bei echter Änderung neu laden — sonst würde jeder Wiedereinstieg
+    // einen überflüssigen Plan-Reload auslösen.
+    if (data?.updated) {
+      window.dispatchEvent(new CustomEvent('plan-updated'));
+    }
+  } catch (error) {
+    // Stiller Abgleich: kein Toast, der Nutzer hat nichts angestoßen. Beim
+    // nächsten Wiedereinstieg wird es erneut versucht.
+    console.warn('[Billing] Kauf-Abgleich fehlgeschlagen:', error?.message || error);
+  }
+}
+
+function triggerReconcile() {
+  if (manualRestoreInFlight) return;
+  if (!isGooglePlayBillingAvailable()) return;
+  // Ohne Sitzung würde die Aktivierung nur mit 401 abgewiesen.
+  if (!api.getToken()) return;
+  if (typeof window.AndroidBilling.restorePurchases !== 'function') return;
+
+  const now = Date.now();
+  if (now - lastReconcileAt < RECONCILE_THROTTLE_MS) return;
+  lastReconcileAt = now;
+
+  try {
+    window.AndroidBilling.restorePurchases();
+  } catch (e) {
+    console.warn('[Billing] Kauf-Abfrage fehlgeschlagen:', e?.message || e);
+  }
+}
+
+// Startet den Abgleich. Mehrfachaufrufe sind unschädlich (die Listener werden
+// nur einmal registriert). Gibt eine Aufräumfunktion zurück.
+export function startGooglePlayReconciliation() {
+  if (!isGooglePlayBillingAvailable()) return () => {};
+  if (reconcileListenersAttached) {
+    triggerReconcile();
+    return () => {};
+  }
+
+  const onVisibility = () => {
+    if (document.visibilityState === 'visible') triggerReconcile();
+  };
+
+  // Die native Seite meldet aktive Käufe auch von sich aus (onResume,
+  // Verbindungsaufbau) — der Listener bleibt deshalb dauerhaft aktiv.
+  window.addEventListener('play-billing-restored', handleReconcileEvent);
+  document.addEventListener('visibilitychange', onVisibility);
+  reconcileListenersAttached = true;
+
+  triggerReconcile();
+
+  return () => {
+    window.removeEventListener('play-billing-restored', handleReconcileEvent);
+    document.removeEventListener('visibilitychange', onVisibility);
+    reconcileListenersAttached = false;
+  };
 }

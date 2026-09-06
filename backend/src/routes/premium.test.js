@@ -93,6 +93,140 @@ describe('POST /api/premium/activate', () => {
   });
 });
 
+describe('POST /api/premium/activate (Google-Play-Laufzeit)', () => {
+  async function playApp(userMetadata = {}) {
+    process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON = '{"type":"service_account"}';
+    supabaseMock.current = createSupabaseMock({
+      authUser: { ...TEST_USER, user_metadata: userMetadata },
+    });
+    supabaseMock.current.auth.admin = {
+      updateUserById: vi.fn(async () => ({ data: {}, error: null })),
+    };
+    vi.resetModules();
+    return (await import('../server.js')).default;
+  }
+
+  const daysFromNow = (days) => Date.now() + days * 24 * 3600 * 1000;
+
+  it('uebernimmt das von Play gemeldete Ablaufdatum statt pauschal 30 Tage', async () => {
+    const playExpiry = daysFromNow(45);
+    const configuredApp = await playApp();
+    purchaseVerificationMock.verifyGooglePlayPurchase.mockResolvedValue({
+      valid: true,
+      raw: { expiryTimeMillis: String(playExpiry) },
+    });
+
+    const res = await request(configuredApp)
+      .post('/api/premium/activate')
+      .set('Authorization', 'Bearer test-token')
+      .send({ plan_id: 'elite', purchase_token: 'play-token', product_id: 'baitbuddy_ultimate_monthly' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.expires_at).toBe(new Date(playExpiry).toISOString());
+  });
+
+  it('verlaengert das Abo, wenn Play denselben Token mit spaeterem Ablauf meldet', async () => {
+    const renewedExpiry = daysFromNow(30);
+    const configuredApp = await playApp({
+      premium_plan_id: 'elite',
+      premium_expires_at: new Date(daysFromNow(1)).toISOString(),
+      premium_purchase_token: 'play-token',
+    });
+    purchaseVerificationMock.verifyGooglePlayPurchase.mockResolvedValue({
+      valid: true,
+      raw: { expiryTimeMillis: String(renewedExpiry) },
+    });
+
+    const res = await request(configuredApp)
+      .post('/api/premium/activate')
+      .set('Authorization', 'Bearer test-token')
+      .send({ plan_id: 'elite', purchase_token: 'play-token', product_id: 'baitbuddy_ultimate_monthly' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.updated).toBe(true);
+    expect(res.body.expires_at).toBe(new Date(renewedExpiry).toISOString());
+    expect(supabaseMock.current.auth.admin.updateUserById).toHaveBeenCalled();
+  });
+
+  it('schreibt nichts fort, wenn Play kein spaeteres Ablaufdatum meldet', async () => {
+    const expiryMs = daysFromNow(20);
+    const storedExpiry = new Date(expiryMs).toISOString();
+    const configuredApp = await playApp({
+      premium_plan_id: 'elite',
+      premium_expires_at: storedExpiry,
+      premium_purchase_token: 'play-token',
+    });
+    // Unveraendertes Ablaufdatum: Play hat nicht verlaengert.
+    purchaseVerificationMock.verifyGooglePlayPurchase.mockResolvedValue({
+      valid: true,
+      raw: { expiryTimeMillis: String(expiryMs) },
+    });
+
+    const res = await request(configuredApp)
+      .post('/api/premium/activate')
+      .set('Authorization', 'Bearer test-token')
+      .send({ plan_id: 'elite', purchase_token: 'play-token', product_id: 'baitbuddy_ultimate_monthly' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.updated).toBe(false);
+    expect(res.body.expires_at).toBe(storedExpiry);
+    expect(supabaseMock.current.auth.admin.updateUserById).not.toHaveBeenCalled();
+  });
+
+  it('gibt dem 10-Tage-Einmalprodukt 10 Tage Laufzeit auf Ultimate-Niveau', async () => {
+    const configuredApp = await playApp();
+    // Einmalprodukte liefern kein expiryTimeMillis — der Server rechnet selbst.
+    purchaseVerificationMock.verifyGooglePlayPurchase.mockResolvedValue({
+      valid: true,
+      raw: { purchaseState: 0 },
+    });
+
+    const res = await request(configuredApp)
+      .post('/api/premium/activate')
+      .set('Authorization', 'Bearer test-token')
+      .send({ plan_id: 'trial_10_10', purchase_token: 'play-token', product_id: 'baitbuddy_trial_10_10' });
+
+    expect(res.status).toBe(200);
+    const days = (new Date(res.body.expires_at).getTime() - Date.now()) / (24 * 3600 * 1000);
+    expect(days).toBeGreaterThan(9.9);
+    expect(days).toBeLessThan(10.1);
+  });
+
+  it('behandelt trial_10_10 als Ultimate-Plan beim Feature-Check', async () => {
+    const configuredApp = await playApp({
+      premium_plan_id: 'trial_10_10',
+      premium_expires_at: new Date(daysFromNow(5)).toISOString(),
+    });
+
+    const res = await request(configuredApp)
+      .post('/api/premium/check-feature')
+      .set('Authorization', 'Bearer test-token')
+      .send({ feature: 'offline' });
+
+    expect(res.body.allowed).toBe(true);
+  });
+});
+
+describe('GET /api/premium/config', () => {
+  it('meldet nicht konfigurierte Zahlungswege, damit die UI vorher sperren kann', async () => {
+    const res = await request(app).get('/api/premium/config');
+
+    expect(res.status).toBe(200);
+    expect(res.body.payment_methods).toEqual({ google_play: false, stripe: false });
+  });
+
+  it('meldet konfigurierte Zahlungswege', async () => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+    process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON = '{"type":"service_account"}';
+    vi.resetModules();
+    const configuredApp = (await import('../server.js')).default;
+
+    const res = await request(configuredApp).get('/api/premium/config');
+
+    expect(res.body.payment_methods).toEqual({ google_play: true, stripe: true });
+  });
+});
+
 describe('POST /api/premium/checkout', () => {
   async function stripeApp() {
     process.env.STRIPE_SECRET_KEY = 'sk_test_123';

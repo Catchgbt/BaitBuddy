@@ -158,6 +158,59 @@ Bestätigung darf lokal bleiben — das erspart FCM/APNS und passt zur
 Vercel-/Supabase-only-Regel. Für zeitversetzte Warnungen (Solunar, Tide,
 Wetter) bleibt `src/services/NotificationService.js` zuständig.
 
+## 💳 Plan-Kauf (Premium)
+
+Zwei Kaufwege, je nach Umgebung — die Premium-Seite (`src/pages/PremiumPlans.jsx`)
+zeigt immer nur den passenden:
+
+- **Android-App**: Google Play Billing über die native Brücke
+  (`android/.../BillingManager.java` + `AndroidBillingBridge.java`, im WebView
+  als `window.AndroidBilling`). Play-Pflicht für digitale Güter.
+- **Browser**: Stripe-Checkout (`POST /api/premium/checkout` →
+  `createStripeCheckoutSession`, `mode: 'payment'`), Rücksprung auf
+  `/PremiumPlans?checkout=success&plan_id=…&session_id=…`.
+
+Beide Wege enden bei **`POST /api/premium/activate`**, das die Zahlung
+serverseitig beim Anbieter verifiziert (`backend/src/lib/purchaseVerification.js`)
+und erst dann den Plan in die User-Metadaten schreibt. Preise sind
+ausschließlich serverseitig (`CHECKOUT_PLANS`); der Client sendet nur die
+`plan_id`.
+
+### Regeln, die beim Anfassen dieses Pfads gelten
+
+- **Google-Play-Abos bestimmen ihr Ablaufdatum selbst.** `/premium/activate`
+  übernimmt `expiryTimeMillis` aus der Play-Verifikation als
+  `premium_expires_at`; nur ohne dieses Feld (Stripe, Einmalprodukte) rechnet
+  der Server selbst (`PLAN_DURATION_DAYS`, Default 30 Tage). Play verlängert Abos
+  automatisch **unter demselben purchaseToken** — ein reiner Token-Replay-Schutz
+  würde die Verlängerung verschlucken und zahlende Nutzer aussperren. Deshalb
+  darf ein erneuter Aufruf die Laufzeit fortschreiben, wenn der Anbieter ein
+  späteres Ablaufdatum bestätigt (`extendsRuntime`). Die Antwort trägt
+  `updated: true|false`.
+- **Bezahlt ≠ freigeschaltet.** Zwischen Zahlung und Aktivierung liegt ein
+  API-Aufruf, der scheitern kann. Beide Wege heilen sich selbst:
+  - Play: `startGooglePlayReconciliation()` (`googlePlayBilling.jsx`, gestartet
+    im `PlanProvider`) fragt bei Start und bei jedem Foreground-Resume die
+    aktiven Käufe ab und meldet sie still an den Server. Nativ liefert
+    `MainActivity.onResume` → `queryActivePurchases(true)` dieselben Daten.
+  - Stripe: Der Kauf wird vor der Aktivierung in `localStorage.bb_pending_checkout`
+    festgehalten und beim nächsten Öffnen der Premium-Seite erneut aktiviert —
+    bis der Server bestätigt oder endgültig ablehnt (400/403).
+- **Vor dem Kauf prüfen, ob der Server verifizieren kann.** `GET /api/premium/config`
+  (öffentlich) meldet, welche Zahlungswege konfiguriert sind
+  (`STRIPE_SECRET_KEY` / `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`). Fehlt das Secret,
+  sperrt die UI den Kauf-Button — sonst zahlt der Nutzer erst und bekommt danach
+  einen 501. Schlägt die Abfrage fehl, wird **nicht** gesperrt (fail-open).
+- **Plan-Rangfolge an zwei Stellen spiegeln:** `backend/src/lib/planResolver.js`
+  (`PLAN_RANK`) und `src/components/premium/planHierarchy.jsx`
+  (`PLAN_HIERARCHY`). Laufen sie auseinander, schaltet der Server etwas frei,
+  das die UI sperrt (oder umgekehrt). Das bezahlte Einmalprodukt `trial_10_10`
+  (10 Tage Vollzugriff) liegt auf Ultimate-Niveau.
+- **Kauf direkt nach App-Start:** Play Billing verbindet sich asynchron. Ein
+  Kaufwunsch, der auf Verbindung/Produktdetails wartet, wird in
+  `BillingManager` gepuffert und ausgeführt, sobald die Details da sind
+  (Timeout 15 s) — kein sofortiger „Billing service not ready"-Fehler.
+
 ## 🎁 Freundschafts-Empfehlung (Login-Popup)
 
 Nach dem Einloggen erscheint auf dem Dashboard das `ReferralInvitePopup`
