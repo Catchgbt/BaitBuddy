@@ -41,7 +41,24 @@ export default defineConfig({
           }
           if (id.includes('/three/')) return 'three';
           if (id.includes('leaflet')) return 'leaflet';
-          if (id.includes('recharts') || id.includes('/d3-') || id.includes('/victory-')) return 'charts';
+          // recharts NICHT mit den generischen d3-Paketen zusammenlegen: sobald
+          // irgendein eager geladenes Modul ein d3-Hilfspaket nutzt, landet der
+          // gemeinsame Chunk im statischen Import-Graph des Entry — und Vite
+          // preloadet dann die kompletten ~105 KB (gzip) recharts beim ersten
+          // Seitenaufruf, obwohl Diagramme nur auf Statistik-Seiten vorkommen.
+          // ZUERST die winzigen Class-Name-Utilities beanspruchen. recharts
+          // bringt eigene, verschachtelte Kopien davon mit
+          // (node_modules/recharts/node_modules/clsx/...). Ohne diese Regel
+          // greift die recharts-Regel unten auch für die verschachtelte Kopie,
+          // Rollup legt das von der App eager genutzte clsx in den
+          // charts-Chunk — und Vite preloadet daraufhin das komplette recharts
+          // beim ersten Seitenaufruf, obwohl Diagramme nur auf
+          // Statistik-Seiten vorkommen.
+          if (/node_modules\/(clsx|class-variance-authority|tailwind-merge)\//.test(id)) {
+            return 'ui-utils';
+          }
+          if (id.includes('recharts')) return 'charts';
+          if (id.includes('/d3-') || id.includes('/victory-')) return 'd3';
           if (id.includes('jspdf') || id.includes('html2canvas')) return 'pdf';
           if (id.includes('framer-motion')) return 'framer';
           if (id.includes('@radix-ui')) return 'radix';

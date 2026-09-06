@@ -1,21 +1,12 @@
 import { Router } from 'express';
 import { supabase } from '../lib/supabase.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
+import { requireCronAuth } from '../middleware/cronAuth.js';
 import { listAllUsers } from '../lib/adminUsers.js';
 import { PLAN_RANK } from '../lib/planResolver.js';
 import { sendDbError } from '../lib/errorResponse.js';
 
 const router = Router();
-
-const ADMIN_SECRET = process.env.CRON_SECRET || 'dev-secret';
-
-function requireCronAuth(req, res, next) {
-  const secret = req.get('x-cron-secret') || req.query.secret;
-  if (secret !== ADMIN_SECRET) {
-    return res.status(401).json({ error: 'Unauthorised' });
-  }
-  next();
-}
 
 router.get('/admin/premium/check-expiry', requireCronAuth, async (req, res) => {
   try {
