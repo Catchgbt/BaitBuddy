@@ -1,6 +1,9 @@
 #env
 .env
 .env.*
+# Vorlagen ohne Geheimnisse bleiben versioniert
+!.env.example
+!backend/.env.example
 
 # Logs
 logs
