@@ -1,0 +1,17 @@
+node_modules
+backend/node_modules
+dist
+android
+.git
+.github
+docs
+e2e
+load-tests
+playwright-report
+test-results
+coverage
+docker/export
+docker/.env
+*.log
+*.aab
+*.apk

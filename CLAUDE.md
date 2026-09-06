@@ -125,8 +125,23 @@ Nach jeder erfolgreichen Mutation zeigt die App eine System-Benachrichtigung
 gespeichert, Wetter-Alarme aktualisiert, Gear ergänzt, Event erstellt).
 Zentraler Helfer: `src/lib/actionNotifications.js` mit:
 
-- `notifyAction(title, { body, tag, url })` — sendet über die Web-`Notification`-
-  API (funktioniert auch im Capacitor-Android-WebView, kein Extra-Plugin nötig).
+- `notifyAction(title, { body, tag, url })` — delegiert an
+  `showSystemNotification` in `src/lib/systemNotification.js`.
+- ⚠️ **Regel: Nie `new Notification(...)` direkt aufrufen.** Der Konstruktor ist
+  auf Android (Chrome/WebView) ein *Illegal constructor* und auf iOS gar nicht
+  vorgesehen — beide Plattformen erlauben ausschließlich
+  `ServiceWorkerRegistration.showNotification()`. `showSystemNotification`
+  nimmt deshalb immer zuerst die SW-Registrierung (`/sw.js` wird in
+  `Layout.jsx` registriert) und fällt nur auf Desktop-Browsern ohne Service
+  Worker auf den Konstruktor zurück. Der Klick landet dadurch im
+  `notificationclick`-Handler von `public/sw.js`, der ein offenes App-Fenster
+  fokussiert und zur Route aus `data.url` navigiert.
+- **Bekannte Grenze:** Im Capacitor-Android-WebView gibt es die
+  Web-Notifications-API überhaupt nicht (`'Notification' in window` ist dort
+  `false`) — die Aktions-Benachrichtigungen bleiben in der gepackten App still.
+  Sie funktionieren in Android-Chrome, in der installierten PWA (WebAPK) und in
+  der iOS-Home-Screen-PWA ab 16.4. Für die gepackte App wäre ein natives
+  Notification-Plugin nötig (dann auch `POST_NOTIFICATIONS` im Manifest).
 - `actionMessages.*` — vorgefertigte, konsistent formulierte Texte pro
   Aktion (keine dekorativen Emojis, deutsche Sprache).
 - Beim ersten Aufruf wird die OS-Permission einmal angefragt (`ensurePermission`).
@@ -142,6 +157,59 @@ Bewusst KEINE Server-Push-Infrastruktur: die Aktionen laufen lokal, die
 Bestätigung darf lokal bleiben — das erspart FCM/APNS und passt zur
 Vercel-/Supabase-only-Regel. Für zeitversetzte Warnungen (Solunar, Tide,
 Wetter) bleibt `src/services/NotificationService.js` zuständig.
+
+## 💳 Plan-Kauf (Premium)
+
+Zwei Kaufwege, je nach Umgebung — die Premium-Seite (`src/pages/PremiumPlans.jsx`)
+zeigt immer nur den passenden:
+
+- **Android-App**: Google Play Billing über die native Brücke
+  (`android/.../BillingManager.java` + `AndroidBillingBridge.java`, im WebView
+  als `window.AndroidBilling`). Play-Pflicht für digitale Güter.
+- **Browser**: Stripe-Checkout (`POST /api/premium/checkout` →
+  `createStripeCheckoutSession`, `mode: 'payment'`), Rücksprung auf
+  `/PremiumPlans?checkout=success&plan_id=…&session_id=…`.
+
+Beide Wege enden bei **`POST /api/premium/activate`**, das die Zahlung
+serverseitig beim Anbieter verifiziert (`backend/src/lib/purchaseVerification.js`)
+und erst dann den Plan in die User-Metadaten schreibt. Preise sind
+ausschließlich serverseitig (`CHECKOUT_PLANS`); der Client sendet nur die
+`plan_id`.
+
+### Regeln, die beim Anfassen dieses Pfads gelten
+
+- **Google-Play-Abos bestimmen ihr Ablaufdatum selbst.** `/premium/activate`
+  übernimmt `expiryTimeMillis` aus der Play-Verifikation als
+  `premium_expires_at`; nur ohne dieses Feld (Stripe, Einmalprodukte) rechnet
+  der Server selbst (`PLAN_DURATION_DAYS`, Default 30 Tage). Play verlängert Abos
+  automatisch **unter demselben purchaseToken** — ein reiner Token-Replay-Schutz
+  würde die Verlängerung verschlucken und zahlende Nutzer aussperren. Deshalb
+  darf ein erneuter Aufruf die Laufzeit fortschreiben, wenn der Anbieter ein
+  späteres Ablaufdatum bestätigt (`extendsRuntime`). Die Antwort trägt
+  `updated: true|false`.
+- **Bezahlt ≠ freigeschaltet.** Zwischen Zahlung und Aktivierung liegt ein
+  API-Aufruf, der scheitern kann. Beide Wege heilen sich selbst:
+  - Play: `startGooglePlayReconciliation()` (`googlePlayBilling.jsx`, gestartet
+    im `PlanProvider`) fragt bei Start und bei jedem Foreground-Resume die
+    aktiven Käufe ab und meldet sie still an den Server. Nativ liefert
+    `MainActivity.onResume` → `queryActivePurchases(true)` dieselben Daten.
+  - Stripe: Der Kauf wird vor der Aktivierung in `localStorage.bb_pending_checkout`
+    festgehalten und beim nächsten Öffnen der Premium-Seite erneut aktiviert —
+    bis der Server bestätigt oder endgültig ablehnt (400/403).
+- **Vor dem Kauf prüfen, ob der Server verifizieren kann.** `GET /api/premium/config`
+  (öffentlich) meldet, welche Zahlungswege konfiguriert sind
+  (`STRIPE_SECRET_KEY` / `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`). Fehlt das Secret,
+  sperrt die UI den Kauf-Button — sonst zahlt der Nutzer erst und bekommt danach
+  einen 501. Schlägt die Abfrage fehl, wird **nicht** gesperrt (fail-open).
+- **Plan-Rangfolge an zwei Stellen spiegeln:** `backend/src/lib/planResolver.js`
+  (`PLAN_RANK`) und `src/components/premium/planHierarchy.jsx`
+  (`PLAN_HIERARCHY`). Laufen sie auseinander, schaltet der Server etwas frei,
+  das die UI sperrt (oder umgekehrt). Das bezahlte Einmalprodukt `trial_10_10`
+  (10 Tage Vollzugriff) liegt auf Ultimate-Niveau.
+- **Kauf direkt nach App-Start:** Play Billing verbindet sich asynchron. Ein
+  Kaufwunsch, der auf Verbindung/Produktdetails wartet, wird in
+  `BillingManager` gepuffert und ausgeführt, sobald die Details da sind
+  (Timeout 15 s) — kein sofortiger „Billing service not ready"-Fehler.
 
 ## 🎁 Freundschafts-Empfehlung (Login-Popup)
 
@@ -251,6 +319,36 @@ Die reine Timeout-/Backoff-/Retry-Logik liegt in `src/lib/bleConnection.js`
 
 ---
 
+## 📐 Plattform-Kompatibilität (Android-WebView & Apple/WebKit)
+
+Die App muss auf dem ältesten unterstützten Android-WebView (**90**, siehe
+`capacitor.config.json → android.minWebViewVersion`) und auf iPhones/iPads ab
+**iOS 14** laufen. Daraus folgen drei verbindliche Regeln:
+
+1. **Build-Target ist nicht `esnext`.** `vite.config.js` baut gegen
+   `['es2020', 'chrome90', 'safari14', 'edge90', 'firefox90']`. Mit `esnext`
+   landet moderne Syntax (private Klassenfelder, logische Zuweisungen)
+   unverändert im Bundle — ältere Engines scheitern schon am Parsen und zeigen
+   nur einen weißen Screen.
+2. **Keine jungen Web-APIs ohne Fallback.** Besonders `AbortSignal.timeout`
+   (Chrome 103 / Safari 16) und `AbortSignal.any` (Chrome 116 / Safari 17.4)
+   sind jünger als unsere Zielplattformen. Beide laufen deshalb ausschließlich
+   über `src/lib/abortCompat.js` (`timeoutSignal`, `anySignal`). Gleiches gilt
+   für `crypto.randomUUID` (Chrome 92 / Safari 15.4) — immer mit Guard.
+3. **iOS-Sensoren brauchen eine Nutzer-Geste.** Orientierungs-Events liefert
+   iOS erst nach `DeviceOrientationEvent.requestPermission()` aus einem
+   Tap heraus, und die Nordreferenz steht dort in `webkitCompassHeading`
+   (nicht in `alpha`, `deviceorientationabsolute` gibt es auf iOS nicht).
+   Gekapselt in `src/lib/deviceOrientation.js`.
+
+**Android-Manifest:** Der WebView reicht eine Web-Permission nur weiter, wenn
+die passende Android-Permission deklariert ist. `CAMERA`,
+`ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `RECORD_AUDIO` und
+`ACCESS_NETWORK_STATE` stehen deshalb in `AndroidManifest.xml` (mit
+`uses-feature required="false"`, damit Play keine Geräte ausschließt).
+`allowBackup` ist **aus** (`data_extraction_rules.xml`): Im localStorage liegen
+`bb_token`/`bb_refresh` und die dürfen nicht ins Google-Drive-Backup wandern.
+
 ## ⚡ Performance-Anforderungen
 
 - **App-Start:** < 3 Sekunden (Tap → UI bereit)
@@ -275,6 +373,28 @@ Die reine Timeout-/Backoff-/Retry-Logik liegt in `src/lib/bleConnection.js`
 > In-Memory-Store zurück (lokal/Dev/Tests unverändert). Vercel KV bleibt innerhalb
 > „nur Vercel & Supabase". Fällt der KV-Store aus, blockiert das die App nicht
 > (Fail-Open).
+
+### Self-Hosting per Docker (Alternative zu Vercel + Supabase-Cloud)
+
+Unter `docker/` liegt ein vollständiges `docker compose`-Setup, das den
+**Supabase-Stack selbst** (Postgres, GoTrue, PostgREST, Storage, Kong) plus
+Backend, Frontend (Nginx) und einen Cron-Container auf einem Rechner betreibt.
+Anleitung: `docs/DOCKER_SELFHOST.md`. Bewusste Entscheidung: Supabase wird
+**betrieben, nicht ersetzt** — Auth (`user_metadata` für Plan/Referral),
+Storage-Bucket `catches` und die 25 Backend-Module mit `supabase.from(...)`
+bleiben unverändert; nur `SUPABASE_URL`/`VITE_SUPABASE_URL` zeigen auf Kong.
+
+- `docker/db/init/90-baitbuddy-schema.sql` ist der **vollständige
+  Schema-Snapshot** der Cloud-DB (54 Tabellen, Policies, Trigger) vom
+  2026-09-05 und läuft nur beim ersten `db`-Start. Neue Schemaänderungen
+  weiterhin als Datei nach `supabase/migrations/` (idempotent schreiben) und
+  mit `docker/scripts/apply-migrations.sh` einspielen.
+- `supabase/schema.sql` ist **unvollständig** (26 von 54 Tabellen) — bei
+  Schemafragen den Snapshot als Referenz nehmen.
+- `vercel.json`-Crons ↔ `docker/cron/crontab`: beide Listen bei neuen
+  Cron-Endpunkten **synchron** halten.
+- Vercel-spezifisch bleibt nur `api/[...path].mjs` + `vercel.json`; beide
+  Deploy-Wege nutzen denselben Code.
 
 ---
 

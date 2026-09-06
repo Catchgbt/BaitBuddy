@@ -3,9 +3,9 @@ import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Crown, Zap, Star, Sparkles, Mail, Loader2, ShoppingBag, Smartphone, RefreshCw } from "lucide-react";
+import { Check, Crown, Zap, Star, Sparkles, Mail, Loader2, ShoppingBag, Smartphone, RefreshCw, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { functions } from "@/api/frontendClient";
+import { functions, premium } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import {
   startGooglePlayPurchase,
@@ -14,6 +14,51 @@ import {
 } from "@/components/premium/googlePlayBilling";
 import WebCheckoutButton from "@/components/premium/WebCheckoutButton";
 
+// Offener Stripe-Kauf, dessen Aktivierung noch nicht bestätigt ist. Zwischen
+// "bei Stripe bezahlt" und "serverseitig freigeschaltet" liegt ein API-Aufruf;
+// scheitert der (Funkloch, Server kurz weg), wäre das Geld weg und der Plan
+// nicht aktiv. Deshalb wird der Kauf lokal gemerkt und bei jedem Öffnen der
+// Seite erneut aktiviert, bis der Server ihn bestätigt oder eindeutig ablehnt.
+const PENDING_CHECKOUT_KEY = 'bb_pending_checkout';
+const PENDING_CHECKOUT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+function readPendingCheckout() {
+  try {
+    const raw = localStorage.getItem(PENDING_CHECKOUT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed?.planId || !parsed?.sessionId) return null;
+    if (Date.now() - (parsed.createdAt || 0) > PENDING_CHECKOUT_MAX_AGE_MS) {
+      localStorage.removeItem(PENDING_CHECKOUT_KEY);
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writePendingCheckout(planId, sessionId) {
+  try {
+    localStorage.setItem(PENDING_CHECKOUT_KEY, JSON.stringify({
+      planId, sessionId, createdAt: Date.now()
+    }));
+  } catch { /* Ohne localStorage bleibt nur der direkte Versuch */ }
+}
+
+function clearPendingCheckout() {
+  try {
+    localStorage.removeItem(PENDING_CHECKOUT_KEY);
+  } catch { /* ignore */ }
+}
+
+// 400/403 sind endgültige Ablehnungen (Zahlung gehört zu anderem Plan/Konto) —
+// ein erneuter Versuch würde daran nichts ändern. Alles andere (Netzfehler,
+// 402 noch nicht verbucht, 5xx) darf und soll wiederholt werden.
+function isPermanentActivationRejection(error) {
+  return error?.status === 400 || error?.status === 403;
+}
+
 export default function PremiumPlans() {
   const [user, setUser] = useState(null);
   const [currentPlan, setCurrentPlan] = useState(null);
@@ -21,10 +66,12 @@ export default function PremiumPlans() {
   const [processingPlan, setProcessingPlan] = useState(null);
   const [billingAvailable, setBillingAvailable] = useState(false);
   const [restoring, setRestoring] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     loadData();
+    loadPaymentMethods();
     setBillingAvailable(isGooglePlayBillingAvailable());
   }, []);
 
@@ -34,7 +81,13 @@ export default function PremiumPlans() {
   // Aktivierung nicht erneut anstößt (der Server ist zusätzlich idempotent).
   useEffect(() => {
     const checkout = searchParams.get('checkout');
-    if (!checkout) return;
+    if (!checkout) {
+      // Kein Rücksprung, aber evtl. ein Kauf, dessen Aktivierung beim letzten
+      // Mal nicht durchkam: still nachholen.
+      const pending = readPendingCheckout();
+      if (pending) finalizeStripeCheckout(pending.planId, pending.sessionId, { silent: true });
+      return;
+    }
     const planId = searchParams.get('plan_id');
     const sessionId = searchParams.get('session_id');
     setSearchParams({}, { replace: true });
@@ -48,7 +101,10 @@ export default function PremiumPlans() {
     }
   }, []);
 
-  const finalizeStripeCheckout = async (planId, sessionId) => {
+  const finalizeStripeCheckout = async (planId, sessionId, { silent = false } = {}) => {
+    // Zuerst merken, dann aktivieren: bricht der Aufruf ab, ist der bezahlte
+    // Kauf trotzdem festgehalten.
+    writePendingCheckout(planId, sessionId);
     setProcessingPlan(planId);
     try {
       const response = await functions.invoke('activatePlan', {
@@ -60,20 +116,41 @@ export default function PremiumPlans() {
       if (!data?.ok) {
         throw new Error(data?.error || 'Plan-Aktivierung fehlgeschlagen');
       }
+      clearPendingCheckout();
       toast.success('Plan aktiviert', {
         description: 'Deine Zahlung wurde bestätigt. Dein Premium-Plan ist jetzt aktiv.'
       });
       await loadData();
       window.dispatchEvent(new CustomEvent('plan-updated'));
     } catch (error) {
-      toast.error('Aktivierung fehlgeschlagen', {
-        description: error?.message
-          ? `${error.message} — falls die Zahlung abgebucht wurde, kontaktiere den Support.`
-          : 'Falls die Zahlung abgebucht wurde, kontaktiere den Support.',
-        duration: 10000
-      });
+      if (isPermanentActivationRejection(error)) {
+        clearPendingCheckout();
+        toast.error('Aktivierung fehlgeschlagen', {
+          description: `${error.message} — bitte kontaktiere den Support.`,
+          duration: 10000
+        });
+      } else if (!silent) {
+        // Der Kauf bleibt gespeichert und wird beim nächsten Öffnen erneut
+        // versucht — das muss der Nutzer wissen, damit er nicht doppelt zahlt.
+        toast.error('Aktivierung noch nicht bestätigt', {
+          description: 'Deine Zahlung ist bei Stripe eingegangen. Die Freischaltung wird automatisch erneut versucht, sobald du die Premium-Seite öffnest.',
+          duration: 10000
+        });
+      }
     } finally {
       setProcessingPlan(null);
+    }
+  };
+
+  // Welche Zahlungswege der Server verifizieren kann. Bei einem Fehler bleibt
+  // der Wert null und die Kauf-Schaltflächen werden nicht gesperrt (fail-open):
+  // ein Ausfall dieser Abfrage darf keinen Verkauf verhindern.
+  const loadPaymentMethods = async () => {
+    try {
+      const config = await premium.config();
+      if (config?.payment_methods) setPaymentMethods(config.payment_methods);
+    } catch (error) {
+      console.error('[PremiumPlans] Zahlungswege konnten nicht geladen werden:', error);
     }
   };
 
@@ -242,7 +319,7 @@ export default function PremiumPlans() {
         'CatchCam - KI-Analyse direkt vom Foto',
         'Weibliche KI-Stimme "Matilda" (ElevenLabs)',
         'KI-Buddy Chat & Foto-Analyse unbegrenzt',
-        'KI-Fangprognosen, Hotspots & Satelliten-Analyse',
+        'KI-Fangprognosen & Gewaesseranalyse (Open-Meteo)',
         '3D-Koederfuehrung, AR-Gewaesser & AR-Knotenassistent',
         'Tiefenkarten, Wasseranalyse & KI-Koeder-Mischer',
         'Geraete-Integration (Echolot, Bissanzeiger)',
@@ -276,6 +353,14 @@ export default function PremiumPlans() {
       ]
     }
   ];
+
+  // Kann der Server den hier angebotenen Zahlungsweg überhaupt verifizieren?
+  // Wenn nicht, würde der Nutzer erst bezahlen und danach eine Fehlermeldung
+  // bekommen — dann lieber vorher sperren. null = noch unbekannt/Abfrage
+  // fehlgeschlagen: dann nicht sperren.
+  const purchasesEnabled = paymentMethods === null
+    ? true
+    : Boolean(billingAvailable ? paymentMethods.google_play : paymentMethods.stripe);
 
   if (loading) {
     return (
@@ -331,7 +416,19 @@ export default function PremiumPlans() {
           )}
         </div>
 
-        {!billingAvailable && (
+        {!purchasesEnabled && (
+          <div className="max-w-3xl mx-auto mb-8 p-4 rounded-xl border border-amber-700/50 bg-amber-900/20 flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-amber-100">
+              <strong className="block mb-1">Kauf derzeit nicht moeglich</strong>
+              {billingAvailable
+                ? 'Die Kaufabwicklung ueber Google Play ist gerade nicht verfuegbar. Bitte versuche es spaeter erneut oder kontaktiere den Support.'
+                : 'Die Bezahlung im Browser ist gerade nicht verfuegbar. Bitte versuche es spaeter erneut oder kontaktiere den Support.'}
+            </div>
+          </div>
+        )}
+
+        {!billingAvailable && purchasesEnabled && (
           <div className="max-w-3xl mx-auto mb-8 p-4 rounded-xl border border-cyan-700/50 bg-cyan-900/20 flex items-start gap-3">
             <Smartphone className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-cyan-100">
@@ -438,7 +535,7 @@ export default function PremiumPlans() {
                       {billingAvailable && (
                         <Button
                           onClick={() => handlePlayStorePurchase(plan.id)}
-                          disabled={isProcessing}
+                          disabled={isProcessing || !purchasesEnabled}
                           className={`w-full bg-gradient-to-r ${plan.color} hover:opacity-90 flex items-center justify-center gap-2 disabled:opacity-50`}
                         >
                           {isProcessing ? (
@@ -455,7 +552,7 @@ export default function PremiumPlans() {
                         </Button>
                       )}
                       {!billingAvailable && (
-                        <WebCheckoutButton planId={plan.id} disabled={isProcessing} />
+                        <WebCheckoutButton planId={plan.id} disabled={isProcessing || !purchasesEnabled} />
                       )}
                     </div>
                   )}

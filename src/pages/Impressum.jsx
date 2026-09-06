@@ -1,35 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Mail, Check, AlertTriangle } from 'lucide-react';
-import { toast } from 'sonner';
+import { Mail, AlertTriangle } from 'lucide-react';
+
+// Steht auch im Text oben ("Angaben gemaess § 5 TMG") — hier einmal zentral,
+// damit Anzeige und mailto-Link nicht auseinanderlaufen koennen.
+const OPERATOR_EMAIL = 'S.s.Bedburg@gmail.com';
 
 export default function Impressum() {
-  const [email, setEmail] = useState('');
-  const [requested, setRequested] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const handleRequest = async () => {
-    if (!email || !email.includes('@')) {
-      toast.error('Bitte geben Sie eine gültige E-Mail-Adresse ein');
-      return;
-    }
-
-    setLoading(true);
-    
-    try {
-      // Simuliere E-Mail-Versand (in Produktion würde hier eine echte E-Mail gesendet)
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setRequested(true);
-      toast.success('Impressum wurde an Ihre E-Mail-Adresse gesendet!');
-    } catch (error) {
-      toast.error('Fehler beim Versenden. Bitte kontaktieren Sie uns direkt.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -49,7 +27,6 @@ export default function Impressum() {
             </div>
           </div>
 
-          {!requested ? (
             <div className="space-y-6">
               <div className="prose prose-invert max-w-none">
                 <h2 className="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">
@@ -57,7 +34,7 @@ export default function Impressum() {
                 </h2>
                 <p>
                   <strong>Betreiber:</strong> Sebastian Schorn<br />
-                  <strong>E-Mail:</strong> S.s.Bedburg@gmail.com
+                  <strong>E-Mail:</strong> {OPERATOR_EMAIL}
                 </p>
 
                 <p className="text-gray-400 text-sm mt-4">
@@ -65,49 +42,41 @@ export default function Impressum() {
                 </p>
               </div>
 
-              {/* E-Mail Anfrage Formular */}
+              {/* Anfrage per E-Mail.
+                  Hier stand zuvor ein Formular, das mit einem 1-Sekunden-Timeout
+                  einen Versand simulierte und danach "Impressum wurde an Ihre
+                  E-Mail-Adresse gesendet!" meldete — es wurde nie eine E-Mail
+                  verschickt und die Anfrage erreichte den Betreiber nicht.
+                  Der mailto-Link geht direkt an dieselbe Adresse, die oben
+                  steht, und funktioniert ohne Konto und ohne Backend. */}
               <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
                 <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                   <Mail className="w-5 h-5 text-cyan-400" />
                   Vollständiges Impressum anfordern
                 </h3>
-                
+
                 <div className="space-y-4">
-                  <div>
-                    <label className="text-sm text-gray-400 mb-2 block">
-                      Ihre E-Mail-Adresse
-                    </label>
-                    <Input
-                      type="email"
-                      placeholder="ihre@email.de"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="bg-gray-900/50 border-gray-700 text-white"
-                      disabled={loading}
-                    />
-                  </div>
+                  <p className="text-sm text-gray-300">
+                    Schreiben Sie uns kurz – Sie erhalten das vollständige Impressum
+                    mit postalischer Adresse per Antwort-E-Mail.
+                  </p>
 
                   <Button
-                    onClick={handleRequest}
-                    disabled={loading || !email}
+                    asChild
                     className="w-full bg-cyan-600 hover:bg-cyan-700"
                   >
-                    {loading ? (
-                      <span className="flex items-center gap-2">
-                        
-                        Wird gesendet...
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-2">
-                        <Mail className="w-4 h-4" />
-                        Impressum per E-Mail anfordern
-                      </span>
-                    )}
+                    <a
+                      href={`mailto:${OPERATOR_EMAIL}?subject=${encodeURIComponent('Anfrage: Vollständiges Impressum')}&body=${encodeURIComponent('Guten Tag,\n\nbitte senden Sie mir das vollständige Impressum mit postalischer Adresse.\n\nVielen Dank')}`}
+                      className="flex items-center gap-2"
+                    >
+                      <Mail className="w-4 h-4" />
+                      E-Mail an {OPERATOR_EMAIL}
+                    </a>
                   </Button>
 
                   <p className="text-xs text-gray-500">
-                    Sie erhalten das vollständige Impressum umgehend per E-Mail. 
-                    Ihre E-Mail-Adresse wird nur für diese Anfrage verwendet.
+                    Der Link öffnet Ihr E-Mail-Programm mit vorbereitetem Text.
+                    Es werden keine Daten an uns übertragen, bevor Sie selbst senden.
                   </p>
                 </div>
               </div>
@@ -143,22 +112,6 @@ export default function Impressum() {
                 </p>
               </div>
             </div>
-          ) : (
-            <div className="text-center py-12">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500/20 border-2 border-green-500 mb-4">
-                <Check className="w-8 h-8 text-green-400" />
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">
-                Impressum versendet!
-              </h3>
-              <p className="text-gray-400 mb-6">
-                Das vollständige Impressum wurde an <strong>{email}</strong> gesendet.
-              </p>
-              <p className="text-sm text-gray-500">
-                Bitte überprüfen Sie auch Ihren Spam-Ordner, falls Sie die E-Mail nicht sehen.
-              </p>
-            </div>
-          )}
 
         </CardContent>
       </Card>

@@ -23,7 +23,11 @@ export default function AdminUsers() {
     const init = async () => {
       const me = await auth.me();
       setCurrentUser(me);
-      if (me.role !== "admin") {
+      // is_admin kommt aus /api/auth/me und spiegelt dieselbe
+      // ADMIN_EMAILS-Allowlist, die das Backend durchsetzt. Das frueher
+      // gepruefte "role"-Feld liefert der Server gar nicht — die Seite
+      // sperrte damit jeden aus, auch echte Admins.
+      if (!me.is_admin) {
         toast.error("Kein Zugriff. Nur Admins erlaubt.");
         return;
       }
@@ -57,13 +61,13 @@ export default function AdminUsers() {
         duration_days: parseInt(durationDays) || 30
       });
 
-      if (result?.data?.ok) {
+      if (result?.ok) {
         toast.success(`Plan ${selectedPlan} erfolgreich an ${selectedUser.email} zugewiesen`);
         setSelectedUser(null);
         setSelectedPlan("");
         loadUsers();
       } else {
-        toast.error(result?.data?.error || "Fehler beim Zuweisen");
+        toast.error(result?.error || "Fehler beim Zuweisen");
       }
     } catch (error) {
       toast.error("Fehler: " + error.message);

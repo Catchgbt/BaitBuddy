@@ -35,6 +35,7 @@ beforeEach(() => {
 
 afterEach(() => {
   delete globalThis.Notification;
+  if ('serviceWorker' in navigator) delete navigator.serviceWorker;
 });
 
 describe("actionNotifications helper", () => {
@@ -67,6 +68,32 @@ describe("actionNotifications helper", () => {
     expect(title).toBe("Trip gespeichert");
     expect(opts.tag).toBe("trip-created");
     expect(opts.icon).toBe("/icons/icon-192.png");
+  });
+
+  it("stellt auf Android/iOS ueber den Service Worker zu, nicht ueber den Konstruktor", async () => {
+    installNotification("granted");
+    const showNotification = vi.fn(async () => {});
+    Object.defineProperty(navigator, "serviceWorker", {
+      value: {
+        getRegistration: vi.fn(async () => ({
+          showNotification,
+          getNotifications: vi.fn(async () => []),
+        })),
+      },
+      configurable: true,
+      writable: true,
+    });
+
+    const result = await notifyAction("Fang gespeichert", {
+      body: "Hecht, 82 cm",
+      tag: "catch-logged",
+      url: "/Logbook",
+    });
+
+    expect(result?.via).toBe("serviceworker");
+    expect(showNotification).toHaveBeenCalledTimes(1);
+    expect(NotificationCtor).not.toHaveBeenCalled();
+    expect(showNotification.mock.calls[0][1].data).toEqual({ url: "/Logbook" });
   });
 
   it("dedupliziert doppelte Aufrufe mit demselben Tag innerhalb des Fensters", async () => {

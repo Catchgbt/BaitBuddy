@@ -3,11 +3,10 @@ import { auth } from "@/api/auth";
 import PremiumGuard from "@/components/premium/PremiumGuard";
 import WaterAnalysisPanel from "@/components/water/WaterAnalysisPanel";
 import WaterRadarChart from "@/components/water/WaterRadarChart";
-import HotspotDetection from "@/components/water/HotspotDetection";
 import ExportPanel from "@/components/water/ExportPanel";
 import SpotComparison from "@/components/water/SpotComparison";
 import WaterAnalysisTutorial from "@/components/water/WaterAnalysisTutorial";
-import { Loader2, Satellite } from "lucide-react";
+import { Loader2, Waves } from "lucide-react";
 import { useRef } from "react";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
 
@@ -57,30 +56,30 @@ export default function WaterAnalysisPage() {
     <PremiumGuard 
       user={user} 
       requiredPlan="basic"
-      feature="Satelliten-Gewässeranalyse"
+      feature="Gewässeranalyse"
     >
       <div className="min-h-screen bg-gray-950 p-4 pb-32">
         <div className="max-w-7xl mx-auto">
-          {/* Header */}
+          {/* Header.
+              Hiess frueher "Satelliten-Gewaesseranalyse" und nannte Sentinel-2,
+              MODIS und Copernicus als Quellen — angezeigt wurden aber
+              ausschliesslich per Math.random() erzeugte Werte. Titel und
+              Quellenangabe benennen jetzt das, was tatsaechlich abgefragt
+              wird. */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-3 mb-2">
-              <Satellite className="w-10 h-10 text-cyan-400 animate-pulse" />
+              <Waves className="w-10 h-10 text-cyan-400" />
               <h1 className="text-4xl font-bold text-cyan-400 drop-shadow-[0_0_20px_rgba(34,211,238,0.8)]">
-                Satelliten-Gewässeranalyse
+                Gewässeranalyse
               </h1>
             </div>
             <p className="text-gray-400 text-sm">
-              KI-gestützte Wasseranalyse mit Echtzeit-Satellitendaten
+              Gemessene Wetter- und Wasserwerte für deinen Standort
             </p>
             <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
-              <div className="inline-block px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30">
-                <span className="text-amber-400 text-xs font-semibold">
-                  BETA - Mock-Daten Modus
-                </span>
-              </div>
               <div className="inline-block px-3 py-1 rounded-full bg-blue-500/20 border border-blue-500/30">
                 <span className="text-blue-400 text-xs font-semibold">
-                  Sentinel-2 - MODIS - Copernicus
+                  Open-Meteo Forecast &amp; Marine
                 </span>
               </div>
             </div>
@@ -119,11 +118,6 @@ export default function WaterAnalysisPage() {
                 <WaterRadarChart parameters={waterData.parameters} />
               </div>
 
-              {/* Hotspot Detection */}
-              <div className="lg:col-span-2">
-                <HotspotDetection waterData={waterData} />
-              </div>
-
               {/* Spot Comparison */}
               <div className="lg:col-span-2">
                 <SpotComparison />
@@ -140,21 +134,21 @@ export default function WaterAnalysisPage() {
           {/* Info Footer */}
           <div className="mt-12 p-6 rounded-xl bg-gray-800/50 border border-gray-700">
             <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
-              <Satellite className="w-5 h-5 text-cyan-400" />
-              Satelliten-Datenquellen
+              <Waves className="w-5 h-5 text-cyan-400" />
+              Datenquellen
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div>
-                <p className="text-cyan-400 font-semibold mb-1">Sentinel-2/3</p>
-                <p className="text-gray-400">Multispektrale Wasseranalyse, 10m Auflösung</p>
+                <p className="text-cyan-400 font-semibold mb-1">Open-Meteo Forecast</p>
+                <p className="text-gray-400">Luft- und Bodentemperatur, Luftdruck, Wind, Feuchte</p>
               </div>
               <div>
-                <p className="text-emerald-400 font-semibold mb-1">MODIS Aqua/Terra</p>
-                <p className="text-gray-400">Oberflächentemperatur, täglich aktualisiert</p>
+                <p className="text-emerald-400 font-semibold mb-1">Open-Meteo Marine</p>
+                <p className="text-gray-400">Wasseroberflächen-Temperatur und Wellenhöhe an Küsten</p>
               </div>
               <div>
-                <p className="text-blue-400 font-semibold mb-1">Copernicus Marine</p>
-                <p className="text-gray-400">Ozeanografische Daten, hochauflösend</p>
+                <p className="text-blue-400 font-semibold mb-1">Bewertung</p>
+                <p className="text-gray-400">Regelbasiert aus den Messwerten, Herleitung wird angezeigt</p>
               </div>
             </div>
           </div>

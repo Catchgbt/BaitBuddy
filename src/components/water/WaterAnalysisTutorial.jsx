@@ -10,30 +10,34 @@ export default function WaterAnalysisTutorial() {
   const sections = [
     {
       id: 'grundlagen',
-      title: 'Grundlagen der Satellitenanalyse',
+      title: 'Woher die Daten kommen',
       content: (
         <div className="space-y-4">
           <p className="text-gray-300 leading-relaxed">
-            Die Satelliten-Gewässeranalyse nutzt multispektrale Daten von verschiedenen 
-            Erdbeobachtungssatelliten, um wichtige Wassereigenschaften zu bestimmen.
+            Die Gewässeranalyse fragt für deine Position das Open-Meteo-Modell ab und
+            zeigt ausschließlich Werte, die dafür tatsächlich vorliegen.
           </p>
-          
+
           <div className="bg-gray-800/50 rounded-lg p-4 space-y-3">
-            <h4 className="font-semibold text-white">Verwendete Satellitensysteme:</h4>
+            <h4 className="font-semibold text-white">Verwendete Quellen:</h4>
             <ul className="space-y-2 text-sm text-gray-300">
               <li className="flex gap-2">
-                <span className="text-cyan-400 flex-shrink-0">Sentinel-2/3:</span>
-                <span>Optische Multispektralanalyse mit 10-60m Auflösung für Chlorophyll und Trübung</span>
+                <span className="text-cyan-400 flex-shrink-0">Open-Meteo Forecast:</span>
+                <span>Luft- und Bodentemperatur, Luftdruck, Wind und Luftfeuchte</span>
               </li>
               <li className="flex gap-2">
-                <span className="text-emerald-400 flex-shrink-0">MODIS Aqua/Terra:</span>
-                <span>Tägliche Oberflächentemperatur-Messungen mit globaler Abdeckung</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-blue-400 flex-shrink-0">Copernicus Marine:</span>
-                <span>Hochauflösende ozeanografische Daten und Wellenmodelle</span>
+                <span className="text-emerald-400 flex-shrink-0">Open-Meteo Marine:</span>
+                <span>Wasseroberflächen-Temperatur und Wellenhöhe — nur an Küsten verfügbar</span>
               </li>
             </ul>
+          </div>
+
+          <div className="bg-amber-900/20 border border-amber-700/30 rounded-lg p-4">
+            <p className="text-sm text-gray-300 leading-relaxed">
+              Im Binnenland liefert das Marine-Modell keine Werte. Wassertemperatur und
+              Wellenhöhe fehlen dort deshalb in der Anzeige — als Anhaltspunkt für die
+              Wassertemperatur dient die Bodentemperatur.
+            </p>
           </div>
         </div>
       )
@@ -55,20 +59,22 @@ export default function WaterAnalysisTutorial() {
             </div>
 
             <div className="bg-emerald-900/20 border border-emerald-700/30 rounded-lg p-4">
-              <h4 className="font-semibold text-emerald-400 mb-2">Chlorophyll-a Konzentration</h4>
+              <h4 className="font-semibold text-emerald-400 mb-2">Luftdruck</h4>
               <p className="text-sm text-gray-300 leading-relaxed">
-                Misst die Menge an Phytoplankton im Wasser. Hohe Werte bedeuten viel Nahrung 
-                für Kleinfische, was wiederum Raubfische anzieht. Werte über 20 mg/m³ deuten auf 
-                Algenblüten hin, was problematisch sein kann.
+                Einer der verlässlichsten Beiß-Indikatoren. Hoher, stabiler Druck
+                (1012-1025 hPa) steht für ruhiges Wetter und gleichmäßige Aktivität.
+                Ein rasch fallender Druck vor einer Front kurbelt die Fressaktivität
+                oft kurzzeitig stark an, danach folgt meist eine Flaute.
               </p>
             </div>
 
             <div className="bg-blue-900/20 border border-blue-700/30 rounded-lg p-4">
-              <h4 className="font-semibold text-blue-400 mb-2">Trübung (Turbidity)</h4>
+              <h4 className="font-semibold text-blue-400 mb-2">Bodentemperatur</h4>
               <p className="text-sm text-gray-300 leading-relaxed">
-                Gemessen in NTU (Nephelometric Turbidity Units). Beeinflusst die Sichtweite unter 
-                Wasser und das Jagdverhalten der Fische. Bei hoher Trübung (über 50 NTU) verlassen 
-                sich Raubfische mehr auf Vibrationen und Geruch.
+                Wo das Marine-Modell keine Wasserwerte liefert, ist die Temperatur des
+                Substrats der beste verfügbare Anhaltspunkt: Sie folgt der
+                Wassertemperatur flacher Gewässer mit etwas Verzögerung und zeigt
+                Erwärmungs- und Abkühlungsphasen zuverlässig an.
               </p>
             </div>
 
@@ -97,20 +103,18 @@ export default function WaterAnalysisTutorial() {
             <div>
               <h4 className="font-semibold text-emerald-400 mb-2">Optimale Bedingungen:</h4>
               <ul className="space-y-1 text-sm text-gray-300 ml-4">
-                <li>Temperatur: 15-20°C</li>
-                <li>Chlorophyll: 5-15 mg/m³</li>
-                <li>Trübung: 10-30 NTU</li>
-                <li>Wind: 5-15 km/h</li>
-                <li>Wellenhöhe: 0.2-0.5m</li>
+                <li>Wassertemperatur: 12-22°C</li>
+                <li>Luftdruck: 1012-1025 hPa</li>
+                <li>Wind: 4-18 km/h</li>
+                <li>Wellenhöhe: bis 0.4m</li>
               </ul>
             </div>
 
             <div>
               <h4 className="font-semibold text-amber-400 mb-2">Herausfordernde Bedingungen:</h4>
               <ul className="space-y-1 text-sm text-gray-300 ml-4">
-                <li>Temperatur unter 8°C oder über 24°C</li>
-                <li>Chlorophyll über 25 mg/m³ (Algenblüte)</li>
-                <li>Trübung über 60 NTU (sehr trüb)</li>
+                <li>Wassertemperatur unter 8°C oder über 24°C</li>
+                <li>Luftdruck unter 1000 hPa (Tief im Anmarsch)</li>
                 <li>Wind über 25 km/h</li>
                 <li>Wellenhöhe über 1.0m</li>
               </ul>
@@ -128,44 +132,6 @@ export default function WaterAnalysisTutorial() {
               <li>40-59: Durchschnittlich, Geduld erforderlich</li>
               <li>20-39: Schwierig, erfahrene Angler gefragt</li>
               <li>0-19: Sehr schwierig, Alternative Spots erwägen</li>
-            </ul>
-          </div>
-        </div>
-      )
-    },
-    {
-      id: 'hotspots',
-      title: 'Hotspot-Erkennung nutzen',
-      content: (
-        <div className="space-y-4">
-          <p className="text-gray-300 leading-relaxed">
-            Die KI-gestützte Hotspot-Erkennung analysiert Satellitendaten im Umkreis von 5km 
-            um deinen gewählten Spot und identifiziert die vielversprechendsten Bereiche.
-          </p>
-
-          <div className="bg-gray-800/50 rounded-lg p-4 space-y-3">
-            <h4 className="font-semibold text-white mb-2">So funktioniert es:</h4>
-            <ol className="space-y-2 text-sm text-gray-300 list-decimal ml-5">
-              <li>Analyse von Temperaturgradienten (Fische sammeln sich an Übergängen)</li>
-              <li>Chlorophyll-Verteilung (zeigt Nahrungskonzentration)</li>
-              <li>Bathymetrie-Daten (Tiefenstrukturen und Drop-offs)</li>
-              <li>Strömungsmuster (wo sich Nahrung sammelt)</li>
-              <li>Historische Fangdaten (wenn verfügbar)</li>
-            </ol>
-          </div>
-
-          <div className="bg-emerald-900/20 border border-emerald-700/30 rounded-lg p-4">
-            <h4 className="font-semibold text-emerald-400 mb-2">Hotspot-Kategorien:</h4>
-            <ul className="space-y-2 text-sm text-gray-300">
-              <li>
-                <span className="font-semibold text-emerald-400">Premium Hotspot:</span> Beste Kombination aller Faktoren, höchste Priorität
-              </li>
-              <li>
-                <span className="font-semibold text-cyan-400">Guter Hotspot:</span> Mehrere positive Indikatoren, empfehlenswert
-              </li>
-              <li>
-                <span className="font-semibold text-blue-400">Potenzieller Hotspot:</span> Einige positive Faktoren, Versuch wert
-              </li>
             </ul>
           </div>
         </div>
@@ -195,11 +161,10 @@ export default function WaterAnalysisTutorial() {
           <div className="bg-cyan-900/20 border border-cyan-700/30 rounded-lg p-4">
             <h4 className="font-semibold text-cyan-400 mb-2">Vergleichskriterien:</h4>
             <ul className="space-y-1 text-sm text-gray-300 ml-4">
-              <li>Quality Score Gesamt</li>
+              <li>Gesamtbewertung der Bedingungen</li>
               <li>Wassertemperatur und Trend</li>
-              <li>Nahrungsverfügbarkeit (Chlorophyll)</li>
+              <li>Luftdruck</li>
               <li>Wetterstabilität (Wind, Wellen)</li>
-              <li>Sichtbedingungen (Trübung)</li>
               <li>Entfernung zu deinem Standort</li>
             </ul>
           </div>
@@ -274,7 +239,7 @@ export default function WaterAnalysisTutorial() {
             <div className="space-y-2 text-sm text-gray-300">
               <p className="font-semibold text-white">Raubfische (Hecht, Zander, Barsch):</p>
               <ul className="ml-4 space-y-1">
-                <li>Bevorzugen moderate Trübung (20-40 NTU)</li>
+                <li>Bevorzugen leicht getrübtes Wasser</li>
                 <li>Aktiv bei Temperaturen 12-18°C</li>
                 <li>Jagen bei leichtem Wellengang</li>
               </ul>
@@ -282,7 +247,7 @@ export default function WaterAnalysisTutorial() {
               <p className="font-semibold text-white mt-3">Friedfische (Karpfen, Brassen):</p>
               <ul className="ml-4 space-y-1">
                 <li>Tolerieren höhere Temperaturen (bis 24°C)</li>
-                <li>Weniger Trübungs-empfindlich</li>
+                <li>Kommen auch mit trübem Wasser gut zurecht</li>
                 <li>Bevorzugen ruhigere Bedingungen</li>
               </ul>
             </div>

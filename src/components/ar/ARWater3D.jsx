@@ -7,6 +7,12 @@ import { Slider } from '@/components/ui/slider';
 import { motion } from 'framer-motion'; // Added motion import
 import ARTutorial from './ARTutorial'; // Added ARTutorial import
 import { SimpleOrbitControls } from '@/lib/three/SimpleOrbitControls';
+import {
+  needsOrientationPermission,
+  requestOrientationPermission,
+  orientationEventName,
+  headingFromOrientationEvent,
+} from '@/lib/deviceOrientation';
 
 // ========== SENSOR-FUSION ==========
 class SensorFusion {
@@ -23,7 +29,14 @@ class SensorFusion {
   }
 
   start() {
-    if ('geolocation' in navigator) {
+    this.startGeolocation();
+    // iOS liefert ohne vorherige Nutzer-Freigabe keine Orientierungs-Events.
+    // Dort übernimmt die Komponente den Start per Button (startOrientation).
+    if (!needsOrientationPermission()) this.startOrientation();
+  }
+
+  startGeolocation() {
+    if (this._geoWatchId === null && 'geolocation' in navigator) {
       this._geoWatchId = navigator.geolocation.watchPosition(
         (p) => {
           const nlat = p.coords.latitude;
@@ -38,27 +51,36 @@ class SensorFusion {
         { enableHighAccuracy: true, maximumAge: 1000, timeout: 5000 }
       );
     }
+  }
 
-    this._evtName = 'deviceorientationabsolute' in window ? 'deviceorientationabsolute' : 'deviceorientation';
+  startOrientation() {
+    if (this._evtName) return; // bereits aktiv
+    this._evtName = orientationEventName();
     window.addEventListener(this._evtName, this._boundOrientation, true);
   }
 
   stop() {
-    if (this._geoWatchId !== null) navigator.geolocation.clearWatch(this._geoWatchId);
-    if (this._evtName) window.removeEventListener(this._evtName, this._boundOrientation);
+    if (this._geoWatchId !== null) {
+      navigator.geolocation.clearWatch(this._geoWatchId);
+      this._geoWatchId = null;
+    }
+    if (this._evtName) {
+      window.removeEventListener(this._evtName, this._boundOrientation, true);
+      this._evtName = null;
+    }
   }
 
   _onOrientation(e) {
-    if (e.absolute === true || e.alpha !== null) {
-      const a = e.alpha || 0;
-      const b = e.beta || 0;
-      const g = e.gamma || 0;
-      this.orientation.alpha = this.orientation.alpha + (a - this.orientation.alpha) * this.headingFilter;
-      this.orientation.beta = this.orientation.beta + (b - this.orientation.beta) * this.headingFilter;
-      this.orientation.gamma = this.orientation.gamma + (g - this.orientation.gamma) * this.headingFilter;
-      this.heading = this.heading === 0 ? a : this.heading + (a - this.heading) * this.headingFilter;
-      this._emit();
-    }
+    // Auf iOS steckt die Nordreferenz in webkitCompassHeading, nicht in alpha.
+    const a = headingFromOrientationEvent(e);
+    if (a === null) return;
+    const b = e.beta || 0;
+    const g = e.gamma || 0;
+    this.orientation.alpha = this.orientation.alpha + (a - this.orientation.alpha) * this.headingFilter;
+    this.orientation.beta = this.orientation.beta + (b - this.orientation.beta) * this.headingFilter;
+    this.orientation.gamma = this.orientation.gamma + (g - this.orientation.gamma) * this.headingFilter;
+    this.heading = this.heading === 0 ? a : this.heading + (a - this.heading) * this.headingFilter;
+    this._emit();
   }
 
   _emit() {
@@ -390,6 +412,9 @@ export default function ARWater3D() {
   const [heightScale, setHeightScale] = useState(0.5);
   const [showControls, setShowControls] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false); // Added showTutorial state
+  // iOS 13+ gibt Orientierungs-Events erst nach einer Freigabe frei, die nur
+  // aus einer Nutzer-Geste heraus angefordert werden darf.
+  const [needsCompassUnlock, setNeedsCompassUnlock] = useState(false);
   const sensorRef = useRef(null);
   const sceneRef = useRef(null);
   const lodManagerRef = useRef(null);
@@ -467,6 +492,7 @@ export default function ARWater3D() {
         setStatus(`GPS: ${pose.pos.lat.toFixed(5)}, ${pose.pos.lon.toFixed(5)} | Kompass: ${pose.heading.toFixed(0)} Grad`);
       };
       sensor.start();
+      setNeedsCompassUnlock(needsOrientationPermission());
 
       const proxyFn = async (z, x, y) => {
         // bathymetryProxy liefert bei Fehler null (siehe frontendClient.js) und
@@ -550,6 +576,19 @@ export default function ARWater3D() {
     });
   };
 
+  // Muss direkt am Klick hängen: iOS lehnt requestPermission() ab, sobald der
+  // Aufruf nicht mehr zur Nutzer-Geste gehört.
+  const enableCompass = async () => {
+    const result = await requestOrientationPermission();
+    if (result === 'granted' || result === 'not-required') {
+      sensorRef.current?.startOrientation();
+      setNeedsCompassUnlock(false);
+      setStatus('Kompass aktiv');
+    } else {
+      setStatus('Kompass nicht freigegeben - in den iOS-Einstellungen unter Safari > Bewegung & Ausrichtung erlauben');
+    }
+  };
+
   const loadRealBathymetry = async () => {
     if (!sensorRef.current || !sceneRef.current || !lodManagerRef.current) {
       setStatus('Warte auf Initialisierung...');
@@ -599,6 +638,19 @@ export default function ARWater3D() {
       
       {/* Tutorial Modal */}
       <ARTutorial isOpen={showTutorial} onClose={() => setShowTutorial(false)} />
+
+      {/* iOS: Kompass-Freigabe muss aus einer Nutzer-Geste kommen */}
+      {needsCompassUnlock && (
+        <div className="absolute bottom-6 left-4 right-4 sm:left-6 sm:right-6 z-20">
+          <Button
+            onClick={enableCompass}
+            className="w-full bg-cyan-600 active:scale-95 active:bg-cyan-700 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+            aria-label="Kompass und Neigungssensor fuer die AR-Ansicht freigeben"
+          >
+            Kompass freigeben
+          </Button>
+        </div>
+      )}
 
       {/* Info Button - Top Right */}
       <motion.button

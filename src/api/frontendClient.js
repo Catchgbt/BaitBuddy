@@ -1,6 +1,8 @@
 // src/api/frontendClient.js
 // Eigener BaitBuddy API-Client — ersetzt @base44/sdk vollständig
 
+import { timeoutSignal, anySignal } from '@/lib/abortCompat';
+
 const API_URL = import.meta.env.VITE_API_URL || '';
 const TOKEN_KEY = 'bb_token';
 const REFRESH_KEY = 'bb_refresh';
@@ -123,7 +125,7 @@ class ApiClient {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ refresh_token: this.getRefreshToken() }),
-            signal: AbortSignal.timeout(15000), // 15s timeout for token refresh
+            signal: timeoutSignal(15000), // 15s timeout for token refresh
           });
           const data = await res.json().catch(() => ({}));
           if (!res.ok || !data.token) {
@@ -149,16 +151,13 @@ class ApiClient {
     // kombiniert. `_retried` verhindert Endlos-Refresh-Schleifen bei 401.
     const { signal: externalSignal, _retried = false, _attempt = 0 } = options;
     const token = this.getToken();
-    const timeoutSignal = AbortSignal.timeout(30000); // 30s timeout
     const opts = {
       method,
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      signal: externalSignal
-        ? AbortSignal.any([timeoutSignal, externalSignal])
-        : timeoutSignal,
+      signal: anySignal([timeoutSignal(30000), externalSignal]), // 30s timeout
     };
     if (body !== undefined) opts.body = JSON.stringify(body);
 
@@ -217,10 +216,7 @@ class ApiClient {
     const token = this.getToken();
     // 60s-Timeout: großzügiger als der 30s-Request-Default, weil ein Stream
     // über mehrere Deltas hinweg offen bleibt.
-    const timeoutSignal = AbortSignal.timeout(60000);
-    const combinedSignal = signal
-      ? AbortSignal.any([timeoutSignal, signal])
-      : timeoutSignal;
+    const combinedSignal = anySignal([timeoutSignal(60000), signal]);
 
     const res = await fetch(`${API_URL}${path}`, {
       method: 'POST',
@@ -455,22 +451,20 @@ const FUNCTION_MAP = {
   calculateTravelTime:    (d) => api.post('/api/fishing/clubs/nearby', d).catch(() => ({})),
   angelspotsGeojson:      ()  => api.get('/api/fishing/hotspots').catch(() => ({})),
   'angelspots-geojson':   ()  => api.get('/api/fishing/hotspots').catch(() => ({})),
-  detectHotspots:         (d) => api.post('/api/fishing/hotspots/detect', d).catch(() => ({ hotspots: [] })),
   createStripeCheckoutSession: (d) => api.post('/api/premium/checkout', d),
   activateDemoMode:       ()  => api.post('/api/premium/activate-demo'),
   activatePlan:           (d) => api.post('/api/premium/activate', d),
-  adminAssignPlan:        (d) => api.post('/api/admin/plans/assign', d).catch(() => ({ ok: true })),
-  adminResetWallet:       (d) => api.post('/api/admin/wallet/reset', d).catch(() => ({ ok: true })),
-  adminSetCredits:        (d) => api.post('/api/admin/credits/set', d).catch(() => ({ ok: true })),
+  // Bewusst OHNE .catch(() => ({ ok: true })): der Fallback meldete jeden
+  // Fehlschlag als Erfolg zurueck. Fehler muessen bis in die Oberflaeche
+  // durchschlagen, sonst sieht ein Admin eine Zuweisung, die nie passiert ist.
+  adminAssignPlan:        (d) => api.post('/api/admin/plans/assign', d),
   deleteAccount:          ()  => api.del('/api/user/account'),
   createClan:             (d) => api.post('/api/community/clans', d),
   joinClan:               (d) => api.post(`/api/community/clans/${d?.clan_id}/join`),
   getClanLeaderboard:     (d) => api.get(`/api/community/clans/leaderboard?competition_id=${d?.competition_id || ''}`).catch(() => ({ leaderboard: [] })),
   checkFeatureAccess:     (d) => api.post('/api/premium/check-feature', d).catch(() => ({ allowed: false })),
-  geocodeFishingClubs:    (d) => api.post('/api/fishing/clubs/geocode', d).catch(() => []),
   addVotingLike:          (d) => api.post(`/api/community/voting/${d?.submission_id}/like`).catch(() => ({ ok: true })),
   getVotingLeaderboard:   ()  => api.get('/api/community/voting/leaderboard').then(r => ({ leaderboard: Array.isArray(r) ? r : (r?.leaderboard || []) })).catch(() => ({ leaderboard: [] })),
-  catchgbtVoices:         ()  => api.get('/api/ai/voices').catch(() => ({ voices: [] })),
   catchgbtPing:           ()  => api.get('/api/health').catch(() => ({ ok: false })),
   generateBathymetricMap: (d) => api.post('/api/water/bathymetric-map', d).catch(() => null),
   bathymetryProxy:        (d) => api.post('/api/water/bathymetry', d).catch(() => null),
@@ -843,6 +837,8 @@ export const community = {
 export const premium = {
   status:       ()          => api.get('/api/premium/status'),
   products:     ()          => api.get('/api/premium/products'),
+  // Welche Zahlungswege der Server verifizieren kann (öffentlich, ohne Auth).
+  config:       ()          => api.get('/api/premium/config'),
   checkFeature: (feature)   => api.post('/api/premium/check-feature', { feature }),
   checkout:     (plan_id)   => api.post('/api/premium/checkout', { plan_id }),
   activateDemo: ()          => api.post('/api/premium/activate-demo'),
@@ -853,8 +849,6 @@ export const fishing = {
   activeRules: ()          => api.get('/api/fishing/rules/active'),
   clubs:       (city)      => api.get(`/api/fishing/clubs${city ? '?city='+city : ''}`),
   nearbyClubs: (lat, lng)  => api.post('/api/fishing/clubs/nearby', { latitude: lat, longitude: lng }),
-  licenses:    ()          => api.get('/api/fishing/licenses'),
-  addLicense:  (data)      => api.post('/api/fishing/licenses', data),
   plans:       ()          => api.get('/api/fishing/plans'),
   createPlan:  (data)      => api.post('/api/fishing/plans', data),
   deletePlan:  (id)        => api.del(`/api/fishing/plans/${id}`),
@@ -907,14 +901,9 @@ export const rewards = {
   claim:             (leaderboardId)   => api.post('/api/rewards/claim', { leaderboard_id: leaderboardId }),
 };
 
-export const gear = {
-  list:       ()      => api.get('/api/gear'),
-  create:     (data)  => api.post('/api/gear', data),
-  update:     (id, d) => api.patch(`/api/gear/${id}`, d),
-  delete:     (id)    => api.del(`/api/gear/${id}`),
-  baits:      ()      => api.get('/api/gear/baits'),
-  createBait: (data)  => api.post('/api/gear/baits', data),
-};
+// Entfernt: der frühere `gear`-Export sprach /api/gear und /api/gear/baits an —
+// beide Pfade gibt es im Backend nicht (die Ausrüstung läuft über
+// entities.GearItem -> /api/gear/items). Er hatte keinen einzigen Aufrufer.
 
 export const water = {
   analyze: (lat, lng, name) => api.post('/api/water', { latitude: lat, longitude: lng, spotName: name }),

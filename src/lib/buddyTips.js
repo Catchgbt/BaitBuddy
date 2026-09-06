@@ -124,11 +124,14 @@ export const BUDDY_TIPS = {
     question: 'Wir sind startklar – was möchtest du mich fragen?',
     suggestions: ['Schnelle Frage', 'Live-Sprechen', 'Tutorial starten'],
   },
-  AIAssistant: {
-    title: 'KI-Assistent',
-    message: 'Dein vollständiger Angel-Copilot – Text oder Voice, ich helfe bei allem!',
-    question: 'Was möchtest du wissen? Ich helfe per Text oder Sprache.',
-    suggestions: ['Schnelle Frage', 'Live-Sprechen', 'Meine Fänge analysieren'],
+  // Ersetzt den frueheren AIAssistant-Eintrag: eine Seite dieses Namens gibt es
+  // nicht, der Tipp war also nie erreichbar. Der Live-Sprachchat laeuft ueber
+  // die VoiceChat-Seite.
+  VoiceChat: {
+    title: 'Live-Sprachchat',
+    message: 'Sprich direkt mit mir – wie am Telefon, ohne Tippen.',
+    question: 'Sollen wir loslegen? Tippe auf Anrufen und leg einfach los.',
+    suggestions: ['Gespräch starten', 'Köder-Tipp erfragen', 'Zurück zum Chat'],
   },
   Tutorials: {
     title: 'Tutorials',

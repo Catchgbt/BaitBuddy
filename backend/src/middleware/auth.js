@@ -69,12 +69,20 @@ export function __clearTokenCache() {
 // Muss NACH requireAuth in der Middleware-Kette stehen (braucht req.user).
 // Admin-Status ist eine Allowlist per E-Mail statt eines DB-Flags — es gibt
 // aktuell keine Rollen-Spalte, die vom Backend gepflegt wird.
-export function requireAdmin(req, res, next) {
+// Auch von /api/auth/me genutzt, damit die Oberfläche denselben Maßstab
+// anlegt wie das Gate hier. Vorher prüfte AdminUsers.jsx ein `role`-Feld, das
+// es nirgends gibt — die Seite sperrte damit auch echte Admins aus.
+export function isAdminEmail(email) {
+  if (!email) return false;
   const adminEmails = (process.env.ADMIN_EMAILS || '')
     .split(',')
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
-  if (!req.user?.email || !adminEmails.includes(req.user.email.toLowerCase())) {
+  return adminEmails.includes(String(email).toLowerCase());
+}
+
+export function requireAdmin(req, res, next) {
+  if (!isAdminEmail(req.user?.email)) {
     return res.status(403).json({ error: 'Admin-Berechtigung erforderlich' });
   }
   next();

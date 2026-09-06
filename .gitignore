@@ -50,3 +50,7 @@ android/app/*.jks
 *.aab
 *.apkbathymetry_data/
 *.log
+
+# Self-Hosting (docker/)
+docker/.env
+docker/export/

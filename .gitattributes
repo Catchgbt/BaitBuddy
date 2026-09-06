@@ -6,3 +6,9 @@ __pycache__/ export-ignore
 .turbo/ export-ignore
 coverage/ export-ignore
 .nyc_output/ export-ignore
+docker/**/*.sh text eol=lf
+docker/cron/crontab text eol=lf
+docker/**/*.sql text eol=lf
+docker/**/*.yml text eol=lf
+docker/**/*.mjs text eol=lf
+docker/*.Dockerfile text eol=lf

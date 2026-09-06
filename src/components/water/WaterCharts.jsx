@@ -1,240 +1,125 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
-export default function WaterCharts({ data, type }) {
-  const isHistory = type === "history";
-  const title = isHistory ? "30-Tage Verlauf" : "7-Tage Prognose";
+// Zeigt die tatsaechlich gemessene Zeitreihe der letzten 24 Stunden.
+// Frueher standen hier ein "30-Tage Verlauf" und eine "7-Tage Prognose", deren
+// Werte samt Fang-Score und Algenbluete-Risiko per Math.random() erzeugt
+// wurden. Das Open-Meteo-Modell liefert stuendliche Werte fuer die
+// zurueckliegenden 24 Stunden — mehr wird hier deshalb auch nicht behauptet.
 
-  if (!data || data.length === 0) {
+const SERIES = [
+  { key: "water_temp", name: "Wassertemperatur", color: "hsl(var(--chart-1))", unit: "°C" },
+  { key: "ground_temp", name: "Bodentemperatur", color: "hsl(var(--chart-2))", unit: "°C" },
+  { key: "air_temp", name: "Lufttemperatur", color: "hsl(var(--chart-3))", unit: "°C" },
+];
+
+const tooltipStyle = {
+  backgroundColor: "hsl(var(--card))",
+  border: "1px solid hsl(var(--border))",
+  borderRadius: "8px",
+  color: "hsl(var(--foreground))",
+};
+
+export default function WaterCharts({ series }) {
+  const data = Array.isArray(series) ? series : [];
+
+  if (data.length === 0) {
     return (
-      <div 
-        className="text-center py-8 text-gray-400"
-        role="status"
-        aria-live="polite"
-      >
-        Keine Daten verfuegbar
+      <div className="text-center py-8 text-gray-400" role="status" aria-live="polite">
+        Keine Messreihe verfügbar
       </div>
     );
   }
 
-  return (
-    <div 
-      className="space-y-6"
-      role="region"
-      aria-live="polite"
-      aria-atomic="false"
-      aria-label={`Gewaesser-Daten ${title}`}
-    >
-      
-      {/* Fishing Score Chart */}
-      <Card className="glass-morphism border-gray-800" role="region" aria-label="Fang-Score Diagramm">
-        <CardHeader>
-          <CardTitle className="text-cyan-400">Fang-Score {isHistory ? "Verlauf" : "Prognose"}</CardTitle>
-          <p className="text-xs text-gray-400 mt-1">Zeitliche Entwicklung der Fang-Erfolgswahrscheinlichkeit im Bereich 0-100</p>
-        </CardHeader>
-        <CardContent aria-live="polite" aria-atomic="true">
-          <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={data}>
-              <defs>
-                 <linearGradient id="fishingScoreGradient" x1="0" y1="0" x2="0" y2="1">
-                   <stop offset="5%" stopColor="#0284c7" stopOpacity={0.8}/>
-                   <stop offset="95%" stopColor="#0284c7" stopOpacity={0}/>
-                 </linearGradient>
-               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis 
-                dataKey="date" 
-                stroke="hsl(var(--muted-foreground))"
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-              />
-              <YAxis 
-                stroke="hsl(var(--muted-foreground))"
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                domain={[0, 100]}
-              />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'hsl(var(--card))', 
-                  border: `1px solid hsl(var(--border))`,
-                  borderRadius: '8px',
-                  color: 'hsl(var(--foreground))'
-                }}
-                labelStyle={{ color: 'hsl(var(--chart-1))' }}
-              />
-              <Area 
-                type="monotone" 
-                dataKey="fishingScore" 
-                stroke="#0284c7" 
-                fillOpacity={1} 
-                fill="url(#fishingScoreGradient)"
-                name="Fang-Score"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+  // Nur Reihen zeichnen, für die es an mindestens einem Zeitpunkt Werte gibt.
+  const available = SERIES.filter((s) => data.some((point) => typeof point[s.key] === "number"));
+  const hasWaves = data.some((point) => typeof point.wave_height === "number");
 
-      {/* Temperature & Chlorophyll */}
-      <Card className="glass-morphism border-gray-800" role="region" aria-label="Temperatur und Chlorophyll Diagramm">
+  return (
+    <div className="space-y-6" role="region" aria-label="Gemessener Verlauf der letzten 24 Stunden">
+      <Card className="glass-morphism border-gray-800">
         <CardHeader>
-          <CardTitle className="text-cyan-400">Temperatur & Chlorophyll</CardTitle>
-          <p className="text-xs text-gray-400 mt-1">Temperatur in Grad Celsius (linke Achse) und Chlorophyll-a in mg/m³ (rechte Achse)</p>
+          <CardTitle className="text-cyan-400">Temperaturverlauf (24 h)</CardTitle>
+          <p className="text-xs text-gray-400 mt-1">
+            Stündliche Messwerte des Open-Meteo-Modells
+          </p>
         </CardHeader>
-        <CardContent aria-live="polite" aria-atomic="true">
+        <CardContent>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={data}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis 
-                dataKey="date" 
+              <XAxis
+                dataKey="label"
                 stroke="hsl(var(--muted-foreground))"
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
               />
-              <YAxis 
-                yAxisId="left"
+              <YAxis
                 stroke="hsl(var(--muted-foreground))"
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                label={{ value: '°C', position: 'insideLeft', fill: 'hsl(var(--muted-foreground))' }}
+                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                unit=" °C"
+                width={60}
               />
-              <YAxis 
-                yAxisId="right"
-                orientation="right"
-                stroke="hsl(var(--muted-foreground))"
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                label={{ value: 'mg/m³', position: 'insideRight', fill: 'hsl(var(--muted-foreground))' }}
+              <Tooltip
+                contentStyle={tooltipStyle}
+                formatter={(value, name) => [`${Number(value).toFixed(1)} °C`, name]}
               />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'hsl(var(--card))', 
-                  border: `1px solid hsl(var(--border))`,
-                  borderRadius: '8px',
-                  color: 'hsl(var(--foreground))'
-                }}
-                labelStyle={{ color: 'hsl(var(--chart-1))' }}
-              />
-              <Legend wrapperStyle={{ color: 'hsl(var(--muted-foreground))' }} />
-              <Line 
-                yAxisId="left"
-                type="monotone" 
-                dataKey="temperature" 
-                stroke="hsl(var(--chart-4))" 
-                strokeWidth={2}
-                name="Temperatur (°C)"
-                dot={{ fill: 'hsl(var(--chart-4))' }}
-              />
-              <Line 
-                yAxisId="right"
-                type="monotone" 
-                dataKey="chlorophyll" 
-                stroke="hsl(var(--chart-2))" 
-                strokeWidth={2}
-                name="Chlorophyll (mg/m³)"
-                dot={{ fill: 'hsl(var(--chart-2))' }}
-              />
+              <Legend wrapperStyle={{ color: "hsl(var(--muted-foreground))" }} />
+              {available.map((s) => (
+                <Line
+                  key={s.key}
+                  type="monotone"
+                  dataKey={s.key}
+                  name={s.name}
+                  stroke={s.color}
+                  strokeWidth={2}
+                  dot={false}
+                  connectNulls
+                />
+              ))}
             </LineChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
 
-      {/* Turbidity & Oxygen (nur History) */}
-      {isHistory && (
-        <Card className="glass-morphism border-gray-800" role="region" aria-label="Truebung und Sauerstoff Diagramm">
+      {hasWaves && (
+        <Card className="glass-morphism border-gray-800">
           <CardHeader>
-            <CardTitle className="text-cyan-400">Trübung & Sauerstoff</CardTitle>
-            <p className="text-xs text-gray-400 mt-1">Wasserklarheit in NTU (linke Achse) und Sauerstoffgehalt in mg/L (rechte Achse)</p>
+            <CardTitle className="text-cyan-400">Wellenhöhe (24 h)</CardTitle>
           </CardHeader>
-          <CardContent aria-live="polite" aria-atomic="true">
-            <ResponsiveContainer width="100%" height={300}>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={220}>
               <LineChart data={data}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis 
-                  dataKey="date" 
+                <XAxis
+                  dataKey="label"
                   stroke="hsl(var(--muted-foreground))"
-                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
                 />
-                <YAxis 
-                  yAxisId="left"
+                <YAxis
                   stroke="hsl(var(--muted-foreground))"
-                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                  label={{ value: 'NTU', position: 'insideLeft', fill: 'hsl(var(--muted-foreground))' }}
+                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                  unit=" m"
+                  width={60}
                 />
-                <YAxis 
-                  yAxisId="right"
-                  orientation="right"
-                  stroke="hsl(var(--muted-foreground))"
-                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                  label={{ value: 'mg/L', position: 'insideRight', fill: 'hsl(var(--muted-foreground))' }}
+                <Tooltip
+                  contentStyle={tooltipStyle}
+                  formatter={(value) => [`${Number(value).toFixed(2)} m`, "Wellenhöhe"]}
                 />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))', 
-                    border: `1px solid hsl(var(--border))`,
-                    borderRadius: '8px',
-                    color: 'hsl(var(--foreground))'
-                  }}
-                  labelStyle={{ color: 'hsl(var(--chart-1))' }}
-                />
-                <Legend wrapperStyle={{ color: 'hsl(var(--muted-foreground))' }} />
-                <Line 
-                  yAxisId="left"
-                  type="monotone" 
-                  dataKey="turbidity" 
-                  stroke="hsl(var(--chart-3))" 
+                <Line
+                  type="monotone"
+                  dataKey="wave_height"
+                  name="Wellenhöhe"
+                  stroke="hsl(var(--chart-4))"
                   strokeWidth={2}
-                  name="Trübung (NTU)"
-                  dot={{ fill: 'hsl(var(--chart-3))' }}
-                />
-                <Line 
-                  yAxisId="right"
-                  type="monotone" 
-                  dataKey="oxygen" 
-                  stroke="hsl(var(--chart-1))" 
-                  strokeWidth={2}
-                  name="Sauerstoff (mg/L)"
-                  dot={{ fill: 'hsl(var(--chart-1))' }}
+                  dot={false}
+                  connectNulls
                 />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
       )}
-
-      {/* Algae Bloom Risk (nur Forecast) */}
-      {!isHistory && (
-        <Card className="glass-morphism border-gray-800" role="region" aria-label="Algenblüte-Risiko Prognose">
-          <CardHeader>
-            <CardTitle className="text-cyan-400">Algenblüte-Risiko Prognose</CardTitle>
-            <p className="text-xs text-gray-400 mt-1">Geschaetztes Risiko für schädliche Algenblüten basierend auf Chlorophyll-Konzentration</p>
-          </CardHeader>
-          <CardContent aria-live="polite" aria-atomic="false">
-            <div className="space-y-3">
-              {data.map((item, idx) => (
-                <div 
-                  key={idx} 
-                  className="flex items-center justify-between p-3 rounded-lg bg-gray-800/50"
-                  role="status"
-                  aria-label={`${item.date}: Algenrisiko ${item.algaeBloomRisk}`}
-                >
-                  <span className="text-gray-300">{item.date}</span>
-                  <div className="flex items-center gap-4">
-                    <span className="text-white text-sm">
-                      Chlorophyll: {item.chlorophyll.toFixed(1)} mg/m³
-                    </span>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      item.algaeBloomRisk === 'hoch' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
-                      item.algaeBloomRisk === 'mittel' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
-                      'bg-green-500/20 text-green-400 border border-green-500/30'
-                    }`}>
-                      Risiko: {item.algaeBloomRisk.toUpperCase()}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
     </div>
   );
 }

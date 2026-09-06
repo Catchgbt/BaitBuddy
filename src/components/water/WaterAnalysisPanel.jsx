@@ -1,162 +1,85 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, MapPin, RefreshCw } from "lucide-react";
 import { useLocation } from "@/components/location/LocationManager";
+import { api, entities } from "@/api/frontendClient";
+import { buildWaterAnalysis } from "@/lib/waterAnalysis";
 import WaterDataDisplay from "./WaterDataDisplay";
 import WaterCharts from "./WaterCharts";
 import { toast } from "sonner";
 
-// Mock-Daten Generator für Satelliten-Parameter
-const generateMockWaterData = (location) => {
-  const baseTemp = 15 + Math.random() * 10; // 15-25°C
-  const baseChlorophyll = 5 + Math.random() * 15; // 5-20 mg/m³
-  
-  return {
-    timestamp: new Date().toISOString(),
-    location: {
-      lat: location?.lat || 52.52,
-      lon: location?.lon || 13.405,
-      name: location?.name || "Aktueller Standort"
-    },
-    parameters: {
-      chlorophyll: {
-        value: baseChlorophyll,
-        unit: "mg/m³",
-        quality: baseChlorophyll < 10 ? "gut" : baseChlorophyll < 20 ? "mittel" : "schlecht",
-        description: "Algengehalt"
-      },
-      temperature: {
-        value: baseTemp,
-        unit: "°C",
-        quality: baseTemp >= 12 && baseTemp <= 22 ? "optimal" : "suboptimal",
-        description: "Wassertemperatur"
-      },
-      turbidity: {
-        value: 10 + Math.random() * 40, // 10-50 NTU
-        unit: "NTU",
-        quality: "mittel",
-        description: "Trübung"
-      },
-      cyanobacteria: {
-        value: Math.random() * 5, // 0-5 Index
-        unit: "Index",
-        quality: "niedrig",
-        description: "Blaualgen"
-      },
-      oxygen: {
-        value: 6 + Math.random() * 6, // 6-12 mg/L
-        unit: "mg/L",
-        quality: "gut",
-        description: "Sauerstoffgehalt"
-      },
-      ph: {
-        value: 6.5 + Math.random() * 2, // 6.5-8.5
-        unit: "pH",
-        quality: "neutral",
-        description: "pH-Wert"
-      }
-    },
-    aiAnalysis: {
-      fishingScore: Math.floor(60 + Math.random() * 40), // 60-100
-      bestTimeToFish: "06:00 - 09:00 Uhr",
-      recommendedBait: ["Würmer", "Mais", "Boilies"],
-      hotspotProbability: Math.floor(40 + Math.random() * 60), // 40-100%
-      weatherImpact: "Stabil, gute Bedingungen",
-      moonPhaseImpact: "Zunehmender Mond - erhöhte Aktivität"
-    },
-    historicalTrend: generateHistoricalData(baseTemp, baseChlorophyll),
-    forecast: generateForecast(baseTemp, baseChlorophyll)
-  };
-};
-
-const generateHistoricalData = (baseTemp, baseChlorophyll) => {
-  const data = [];
-  const now = new Date();
-  
-  for (let i = 30; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i);
-    
-    data.push({
-      date: date.toISOString().split('T')[0],
-      temperature: baseTemp + (Math.random() - 0.5) * 4,
-      chlorophyll: baseChlorophyll + (Math.random() - 0.5) * 8,
-      turbidity: 20 + (Math.random() - 0.5) * 20,
-      oxygen: 8 + (Math.random() - 0.5) * 3,
-      fishingScore: 60 + Math.random() * 40
-    });
-  }
-  
-  return data;
-};
-
-const generateForecast = (baseTemp, baseChlorophyll) => {
-  const forecast = [];
-  const now = new Date();
-  
-  for (let i = 1; i <= 7; i++) {
-    const date = new Date(now);
-    date.setDate(date.getDate() + i);
-    
-    forecast.push({
-      date: date.toISOString().split('T')[0],
-      temperature: baseTemp + (Math.random() - 0.5) * 3,
-      chlorophyll: baseChlorophyll + (Math.random() - 0.5) * 6,
-      fishingScore: 60 + Math.random() * 40,
-      algaeBloomRisk: Math.random() < 0.3 ? "hoch" : Math.random() < 0.6 ? "mittel" : "niedrig"
-    });
-  }
-  
-  return forecast;
-};
+// Diese Komponente erzeugte ihre Werte vorher komplett per Math.random() und
+// gab sie als Satellitenmessung aus. Jetzt kommt jeder angezeigte Wert aus
+// POST /api/water-data/fetch (Open-Meteo Forecast + Marine) — die Aufbereitung
+// steckt in src/lib/waterAnalysis.js und ist dort einzeln getestet.
 
 export default function WaterAnalysisPanel({ onDataUpdate }) {
   const { currentLocation, requestGpsLocation } = useLocation();
   const [waterData, setWaterData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [selectedTab, setSelectedTab] = useState("current"); // current, history, forecast
+  const [errorMsg, setErrorMsg] = useState(null);
+  const [selectedTab, setSelectedTab] = useState("current"); // current | history
 
-  useEffect(() => {
-    if (currentLocation) {
-      analyzeWater();
+  const analyzeWater = useCallback(async (location) => {
+    const target = location || currentLocation;
+    if (!target || typeof target.lat !== "number" || typeof target.lon !== "number") {
+      toast.error("Kein Standort verfügbar", {
+        description: "Standort freigeben oder auf der Karte einen Spot wählen.",
+      });
+      return;
     }
-  }, [currentLocation]);
 
-  const analyzeWater = async () => {
     setLoading(true);
-    
+    setErrorMsg(null);
+
     try {
-      // Simuliere API-Delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const data = generateMockWaterData(currentLocation);
-      setWaterData(data);
-      
-      // Notify parent component
-      if (onDataUpdate) {
-        onDataUpdate(data);
+      const scene = await api.post("/api/water-data/fetch", {
+        latitude: target.lat,
+        longitude: target.lon,
+        quality: "high",
+      });
+
+      const analysis = buildWaterAnalysis(scene, target);
+      if (Object.keys(analysis.parameters).length === 0) {
+        throw new Error("Für diesen Standort liegen keine Messwerte vor");
       }
-      
-      toast.success("Gewässeranalyse abgeschlossen", {
-        description: `Analyse-Score: ${data.aiAnalysis.fishingScore}/100`,
-        duration: 3000
+
+      setWaterData(analysis);
+      onDataUpdate?.(analysis);
+
+      // Verlauf mitschreiben — MiniWaterAnalysis auf der Startseite,
+      // WaterAnalysisMapLayer und SpotComparison lesen genau diese Tabelle
+      // und blieben bisher dauerhaft leer, weil sie nie befüllt wurde.
+      entities.WaterAnalysisHistory.create({
+        latitude: analysis.location.lat,
+        longitude: analysis.location.lon,
+        spot_name: analysis.location.name,
+        analysis_data: analysis,
+      }).catch(() => { /* Verlauf ist Beiwerk, nicht das Ergebnis */ });
+
+      toast.success("Gewässeranalyse aktualisiert", {
+        description: analysis.assessment.score !== null
+          ? `Bedingungen: ${analysis.assessment.score}/100`
+          : "Messwerte geladen",
+        duration: 3000,
       });
     } catch (error) {
-      console.error("Water analysis error:", error);
-      toast.error("Fehler bei der Analyse");
+      const msg = error?.message || "Analyse fehlgeschlagen";
+      setErrorMsg(msg);
+      toast.error("Analyse fehlgeschlagen", { description: msg });
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
-  };
+  }, [currentLocation, onDataUpdate]);
 
-  const handleRefresh = () => {
-    analyzeWater();
-  };
-
-  const handleLocationUpdate = async () => {
-    await requestGpsLocation();
-  };
+  useEffect(() => {
+    if (currentLocation) analyzeWater(currentLocation);
+    // Bewusst nur an currentLocation gebunden: analyzeWater wird bei jedem
+    // Standortwechsel neu gebaut, als Dependency wuerde es die Analyse
+    // doppelt ausloesen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentLocation]);
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -167,7 +90,7 @@ export default function WaterAnalysisPanel({ onDataUpdate }) {
             <CardTitle className="text-sm sm:text-base text-cyan-400">Analyse-Steuerung</CardTitle>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button
-                onClick={handleLocationUpdate}
+                onClick={requestGpsLocation}
                 variant="outline"
                 size="sm"
                 className="border-cyan-600/50 hover:bg-cyan-600/20 text-xs sm:text-sm flex-1 sm:flex-none"
@@ -176,7 +99,7 @@ export default function WaterAnalysisPanel({ onDataUpdate }) {
                 Standort
               </Button>
               <Button
-                onClick={handleRefresh}
+                onClick={() => analyzeWater()}
                 disabled={loading}
                 size="sm"
                 className="bg-cyan-600 hover:bg-cyan-700 text-xs sm:text-sm flex-1 sm:flex-none"
@@ -192,10 +115,15 @@ export default function WaterAnalysisPanel({ onDataUpdate }) {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex items-start gap-2 text-xs sm:text-sm text-gray-400" role="status" aria-live="polite" aria-label="Aktueller Standort Koordinaten">
+          <div
+            className="flex items-start gap-2 text-xs sm:text-sm text-gray-400"
+            role="status"
+            aria-live="polite"
+            aria-label="Aktueller Standort Koordinaten"
+          >
             <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
             <span className="break-words">
-              {currentLocation?.name || "Kein Standort ausgewählt"} 
+              {currentLocation?.name || "Kein Standort ausgewählt"}
               {currentLocation && ` (${currentLocation.lat.toFixed(4)}°, ${currentLocation.lon.toFixed(4)}°)`}
             </span>
           </div>
@@ -206,11 +134,16 @@ export default function WaterAnalysisPanel({ onDataUpdate }) {
       {loading && (
         <Card className="glass-morphism border-gray-800">
           <CardContent className="py-8 sm:py-12">
-            <div className="flex flex-col items-center gap-3 sm:gap-4" role="status" aria-live="assertive" aria-label="Analyse wird durchgefuehrt">
+            <div
+              className="flex flex-col items-center gap-3 sm:gap-4"
+              role="status"
+              aria-live="assertive"
+              aria-label="Analyse wird durchgefuehrt"
+            >
               <Loader2 className="w-8 h-8 sm:w-12 sm:h-12 animate-spin text-cyan-400" />
               <div className="text-center">
-                <p className="text-sm sm:text-base text-white font-semibold mb-1">Satellitendaten werden analysiert...</p>
-                <p className="text-gray-400 text-xs sm:text-sm">Sentinel-2, MODIS & Copernicus Marine</p>
+                <p className="text-sm sm:text-base text-white font-semibold mb-1">Messwerte werden geladen...</p>
+                <p className="text-gray-400 text-xs sm:text-sm">Open-Meteo Wetter- und Marine-Modell</p>
               </div>
             </div>
           </CardContent>
@@ -220,36 +153,26 @@ export default function WaterAnalysisPanel({ onDataUpdate }) {
       {/* Results */}
       {waterData && !loading && (
         <div role="region" aria-live="polite" aria-atomic="true" aria-label="Gewaesseranalyseergebnisse">
-          {/* Tabs */}
           <div className="flex flex-wrap gap-1 sm:gap-2">
             <Button
               onClick={() => setSelectedTab("current")}
               variant={selectedTab === "current" ? "default" : "outline"}
               className={`text-xs sm:text-sm ${selectedTab === "current" ? "bg-cyan-600" : "border-gray-700"}`}
             >
-              Aktuelle
+              Aktuell
             </Button>
             <Button
               onClick={() => setSelectedTab("history")}
               variant={selectedTab === "history" ? "default" : "outline"}
               className={`text-xs sm:text-sm ${selectedTab === "history" ? "bg-cyan-600" : "border-gray-700"}`}
             >
-              30-Tage
-            </Button>
-            <Button
-              onClick={() => setSelectedTab("forecast")}
-              variant={selectedTab === "forecast" ? "default" : "outline"}
-              className={`text-xs sm:text-sm ${selectedTab === "forecast" ? "bg-cyan-600" : "border-gray-700"}`}
-            >
-              7-Tage
+              Verlauf 24 h
             </Button>
           </div>
 
-          {/* Content */}
           <div className="mt-4">
             {selectedTab === "current" && <WaterDataDisplay data={waterData} />}
-            {selectedTab === "history" && <WaterCharts data={waterData.historicalTrend} type="history" />}
-            {selectedTab === "forecast" && <WaterCharts data={waterData.forecast} type="forecast" />}
+            {selectedTab === "history" && <WaterCharts series={waterData.series} />}
           </div>
         </div>
       )}
@@ -259,12 +182,14 @@ export default function WaterAnalysisPanel({ onDataUpdate }) {
         <Card className="glass-morphism border-gray-800">
           <CardContent className="py-8 sm:py-12">
             <div className="text-center text-gray-400 space-y-3">
-              <p className="text-sm sm:text-base">Keine Analyse verfügbar</p>
-              <Button 
-                onClick={analyzeWater} 
+              <p className="text-sm sm:text-base">
+                {errorMsg || "Noch keine Analyse für diesen Standort"}
+              </p>
+              <Button
+                onClick={() => analyzeWater()}
                 className="bg-cyan-600 hover:bg-cyan-700 text-xs sm:text-sm w-full sm:w-auto"
               >
-                Erste Analyse starten
+                Analyse starten
               </Button>
             </div>
           </CardContent>

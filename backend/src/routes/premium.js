@@ -27,6 +27,37 @@ const ULTIMATE_DISCOUNT_PER_REFERRAL_CENTS = 1000;
 const ULTIMATE_DISCOUNT_MAX_CENTS = 3000;
 const ULTIMATE_MIN_CHECKOUT_CENTS = 999;
 
+// Laufzeit je Plan in Tagen, wenn der Zahlungsanbieter kein eigenes Ablaufdatum
+// liefert (Stripe-Einmalzahlung, Play-Einmalprodukt). Google-Play-ABOS bringen
+// ihr echtes Ablaufdatum mit — das hat immer Vorrang, siehe verifiedExpiryFrom().
+const PLAN_DURATION_DAYS = {
+  trial_10_10: 10, // Einmalprodukt: 10 Tage Vollzugriff
+  friends: 365,    // Jahresabo (friends_monthly bleibt monatlich)
+};
+const DEFAULT_PLAN_DURATION_DAYS = 30;
+
+const PLAN_DISPLAY_NAMES = {
+  free: 'Free',
+  basic: 'Basic',
+  pro: 'Pro',
+  elite: 'Ultimate',
+  ultimate: 'Ultimate',
+  friends: 'Freundschaft',
+  friends_monthly: 'Freundschaft',
+  trial_10_10: '10-Tage-Zugang',
+};
+
+// Google-Play-Abos tragen ihr echtes Ablaufdatum (expiryTimeMillis). Das ist die
+// einzige Wahrheit über die Laufzeit: Play verlängert automatisch weiter, ohne
+// dass sich der purchaseToken ändert. Würde der Server stattdessen stur
+// +30 Tage rechnen, verlöre ein zahlender Abonnent nach einem Monat den Zugang,
+// obwohl Play weiter abbucht.
+function verifiedExpiryFrom(verification) {
+  const ms = Number(verification?.raw?.expiryTimeMillis);
+  if (!Number.isFinite(ms) || ms <= Date.now()) return null;
+  return new Date(ms).toISOString();
+}
+
 function readDiscountCents(user) {
   const raw = Number(user?.user_metadata?.ultimate_discount_cents);
   if (!Number.isFinite(raw) || raw <= 0) return 0;
@@ -74,7 +105,7 @@ router.get('/premium/status', requireAuth, async (req, res) => {
     ok: true,
     plan: {
       id: effectiveId,
-      name: { free: 'Free', basic: 'Basic', pro: 'Pro', elite: 'Ultimate', ultimate: 'Ultimate', friends: 'Freundschaft', friends_monthly: 'Freundschaft' }[effectiveId] || 'Free',
+      name: PLAN_DISPLAY_NAMES[effectiveId] || 'Free',
       is_active: isActive,
       is_trial: isTrial && isActive,
       expires_at: expiresAt,
@@ -98,10 +129,27 @@ const PRODUCTS = [
   { id: 'basic', name: 'Basic', price: 8.99, features: ['Werbefrei', 'KI-Buddy unbegrenzt', 'Fangbuch', 'Spots', 'Wetter'] },
   { id: 'pro', name: 'Pro', price: 18, features: ['Alles in Basic', 'KI-Fangprognosen', 'AR & 3D', 'Community'] },
   { id: 'elite', name: 'Ultimate', price: 36, features: ['Alles in Pro', 'Live-Bissanzeiger', 'CatchCam', 'Priorisierte KI'] },
+  { id: 'friends', name: 'Freundschaft', price: 150, yearly: true, features: ['Alles in Ultimate (12 Monate)', 'Freundes-Einladungen', 'Geteilte Spot-Gruppen', 'Gruppen-Ranking'] },
 ];
 
 router.get('/premium/products', async (req, res) => {
   return res.json(PRODUCTS);
+});
+
+// Öffentlich (kein Auth): Das Frontend muss VOR dem Kauf wissen, ob der Server
+// den jeweiligen Zahlungsweg überhaupt verifizieren kann. Fehlt das Secret,
+// bezahlt der Nutzer sonst erst und bekommt danach einen 501 zurück — Geld
+// abgebucht, kein Plan. Mit dieser Info kann die Kauf-Schaltfläche vorher
+// gesperrt werden. Es werden ausschließlich Boolean-Flags veröffentlicht,
+// niemals die Secrets selbst.
+router.get('/premium/config', (req, res) => {
+  return res.json({
+    ok: true,
+    payment_methods: {
+      google_play: GOOGLE_PLAY_VERIFICATION_CONFIGURED,
+      stripe: STRIPE_PAYMENT_VERIFICATION_CONFIGURED,
+    },
+  });
 });
 
 // Mindest-Plan je Feature-Key, abgeleitet aus den Produktbeschreibungen oben
@@ -239,32 +287,50 @@ router.post('/premium/activate', requireAuth, async (req, res) => {
 
   const current = req.user.user_metadata || {};
 
+  // Ablaufdatum: Bei Google-Play-Abos gilt das von Play gelieferte
+  // expiryTimeMillis, sonst rechnet der Server die Laufzeit selbst.
+  const verifiedExpiresAt = verifiedExpiryFrom(verification);
+  const durationDays = PLAN_DURATION_DAYS[plan_id] ?? DEFAULT_PLAN_DURATION_DAYS;
+  const expiresAt = verifiedExpiresAt
+    || new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString();
+
+  // Play verlängert Abos automatisch und behält dabei denselben purchaseToken
+  // bei — nur das Ablaufdatum wandert nach vorne. Ein reiner Replay-Schutz über
+  // den Token würde die Verlängerung deshalb verschlucken und den Nutzer nach
+  // einem Monat aussperren, obwohl er weiter zahlt. Ein erneuter Aufruf darf die
+  // Laufzeit also genau dann fortschreiben, wenn der Anbieter selbst ein
+  // späteres Ablaufdatum bestätigt hat.
+  const extendsRuntime = !!verifiedExpiresAt && (
+    !current.premium_expires_at ||
+    new Date(verifiedExpiresAt).getTime() > new Date(current.premium_expires_at).getTime()
+  );
+
   // Replay-Schutz: Dieselbe Transaktion darf die Laufzeit nicht mehrfach
   // verlängern (z.B. wiederholtes Aufrufen der Stripe-Success-URL oder
   // "Käufe wiederherstellen" mit einem bereits verarbeiteten Play-Token).
   const alreadyProcessed =
     (transaction_id && current.premium_transaction_id === transaction_id) ||
     (purchase_token && current.premium_purchase_token === purchase_token);
-  if (alreadyProcessed && current.premium_plan_id === plan_id) {
+  if (alreadyProcessed && current.premium_plan_id === plan_id && !extendsRuntime) {
     return res.json({
       ok: true,
       plan_id,
       expires_at: current.premium_expires_at,
+      updated: false,
       note: 'Transaktion bereits verarbeitet'
     });
   }
-  const isYearly = /friends$/.test(plan_id);
-  const durationMs = (isYearly ? 365 : 30) * 24 * 60 * 60 * 1000;
   const previousActivatedAt = current.premium_activated_at;
 
   // Idempotenz: Wenn gleicher Plan in letzten 5 Sekunden aktiviert wurde, skip update
-  if (previousActivatedAt) {
+  if (previousActivatedAt && !extendsRuntime) {
     const timeSinceLastActivation = Date.now() - new Date(previousActivatedAt).getTime();
     if (timeSinceLastActivation < 5000 && current.premium_plan_id === plan_id) {
       return res.json({
         ok: true,
         plan_id,
         expires_at: current.premium_expires_at,
+        updated: false,
         note: 'Plan bereits aktiviert (Idempotenz)'
       });
     }
@@ -275,7 +341,7 @@ router.post('/premium/activate', requireAuth, async (req, res) => {
   const merged = {
     ...current,
     premium_plan_id: plan_id,
-    premium_expires_at: new Date(Date.now() + durationMs).toISOString(),
+    premium_expires_at: expiresAt,
     premium_trial: false,
     premium_payment_method: payment_method || 'unknown',
     premium_product_id: product_id,
@@ -302,6 +368,9 @@ router.post('/premium/activate', requireAuth, async (req, res) => {
     ok: true,
     plan_id,
     expires_at: merged.premium_expires_at,
+    // `updated` unterscheidet eine echte Änderung von einem no-op (Replay).
+    // Der Client stößt nur bei einer echten Änderung ein Plan-Reload an.
+    updated: true,
     note: 'Plan aktiviert mit Transaktionsdaten gespeichert für Audit'
   });
 });

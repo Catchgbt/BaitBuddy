@@ -5,6 +5,9 @@
 // Rangfolge der Pläne, niedrig -> hoch. 'free' ist implizit Rang 0.
 // 'ultimate' ist der UI-Name von 'elite'; die Friends-Pläne liegen auf
 // Ultimate-Level (Spiegel der Frontend-Hierarchie in planHierarchy.jsx).
+// 'trial_10_10' ist der 10-Tage-Vollzugang (Google-Play-Einmalprodukt) und
+// schaltet deshalb Ultimate-Funktionen frei — ohne diesen Rang hätte ein
+// bezahlter Trial denselben Zugriff wie 'free'.
 export const PLAN_RANK = {
   free: 0,
   basic: 1,
@@ -12,6 +15,7 @@ export const PLAN_RANK = {
   elite: 3,
   ultimate: 3,
   friends_monthly: 3,
+  trial_10_10: 3,
   friends: 4,
 };
 
