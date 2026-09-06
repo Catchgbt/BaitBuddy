@@ -81,12 +81,12 @@
 - ✅ Rabatt-Tracking: `ultimate_discount_cents` in user_metadata
   - Pro Basic-Kauf eines Referrals: +10€ (maximal 3 Freunde = 30€)
 - ✅ Google Play Limitation beachtet: Nur Web-Checkout Rabatt (feste SKUs)
-- ✅ Migration: `supabase/migrations/20260721_referral_basic_reward.sql`
+- ✅ Migration: `supabase/migrations/20260727180343_referral_basic_reward.sql`
 
 **Code-Locations:**
 - `backend/src/routes/referrals.js`
 - `backend/src/routes/premium.js` (Rabatt-Logik in Checkout/Activate)
-- `supabase/migrations/20260721_referral_basic_reward.sql`
+- `supabase/migrations/20260727180343_referral_basic_reward.sql`
 
 **Tests:** `backend/src/routes/referrals.test.js` (existierend)
 
