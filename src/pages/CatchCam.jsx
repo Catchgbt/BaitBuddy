@@ -25,13 +25,13 @@ import {
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
-import PremiumGuard from "@/components/premium/PremiumGuard";
+import ToolGuard from "@/components/progression/ToolGuard";
 
 export default function CatchCam() {
   return (
-    <PremiumGuard requiredPlan="elite" feature="CatchCam – KI-Analyse vom Foto">
+    <ToolGuard toolId="catch-cam">
       <CatchCamInner />
-    </PremiumGuard>
+    </ToolGuard>
   );
 }
 

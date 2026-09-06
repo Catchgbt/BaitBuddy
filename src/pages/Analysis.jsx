@@ -2,13 +2,13 @@ import React from "react";
 import AnalysisSection from "@/components/analysis/AnalysisSection";
 import { useRef } from "react";
 
-import PremiumGuard from "@/components/premium/PremiumGuard";
+import ToolGuard from "@/components/progression/ToolGuard";
 
 export default function Analysis() {
   return (
-    <PremiumGuard requiredPlan="elite" feature="Profi-Analyse: Zeitreihen & Trends">
+    <ToolGuard toolId="pro-analytics">
       <AnalysisInner />
-    </PremiumGuard>
+    </ToolGuard>
   );
 }
 

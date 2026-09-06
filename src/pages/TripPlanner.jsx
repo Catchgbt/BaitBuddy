@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { User } from "@/entities/User";
 import { analytics, events } from "@/api/frontendClient";
 import { useEventActivityTracking } from "@/hooks/useEventActivityTracking";
-import PremiumGuard from "@/components/premium/PremiumGuard";
+import ToolGuard from "@/components/progression/ToolGuard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -503,8 +503,8 @@ export default function TripPlanner() {
   }
 
   return (
-    <PremiumGuard user={user} requiredPlan="basic" feature="Der Trip-Planer">
+    <ToolGuard toolId="trip-planner">
       <TripPlannerContent />
-    </PremiumGuard>
+    </ToolGuard>
   );
 }

@@ -11,13 +11,13 @@ const SectionSkeleton = () => (
   </div>
 );
 
-import PremiumGuard from "@/components/premium/PremiumGuard";
+import ToolGuard from "@/components/progression/ToolGuard";
 
 export default function AI() {
   return (
-    <PremiumGuard requiredPlan="elite" feature="KI-Echtzeit-Kamera & Live-Bissanzeiger">
+    <ToolGuard toolId="ai-camera">
       <AIInner />
-    </PremiumGuard>
+    </ToolGuard>
   );
 }
 

@@ -8,6 +8,7 @@ import SolunarWidget from '../components/LiveTrip/SolunarWidget';
 import PredictionWidget from '../components/LiveTrip/PredictionWidget';
 import NotificationSettings from '../components/LiveTrip/NotificationSettings';
 import TripHistory from '../components/LiveTrip/TripHistory';
+import ToolGuard from '@/components/progression/ToolGuard';
 
 /**
  * LiveTripPage - Live-Angeltour mit GPS-Tracking
@@ -634,4 +635,10 @@ function CatchLoggerModal({ onClose, onSave }) {
   );
 }
 
-export default LiveTripPage;
+export default function LiveTripPageWithGuard(props) {
+  return (
+    <ToolGuard toolId="live-trip">
+      <LiveTripPage {...props} />
+    </ToolGuard>
+  );
+}

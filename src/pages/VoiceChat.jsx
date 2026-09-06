@@ -7,6 +7,7 @@ import { speakWithFallback, cancelElevenLabs } from '@/components/utils/elevenLa
 import BuddyAvatar from '@/components/ai/BuddyAvatar';
 import { createPageUrl } from '@/utils';
 import { toast } from 'sonner';
+import ToolGuard from "@/components/progression/ToolGuard";
 
 // Status-Phasen des Gesprächs
 const PHASE = {
@@ -18,7 +19,16 @@ const PHASE = {
   ERROR: 'error',
 };
 
-export default function VoiceChat() {
+
+export default function VoiceChat(props) {
+  return (
+    <ToolGuard toolId="voice-control">
+      <VoiceChatInner {...props} />
+    </ToolGuard>
+  );
+}
+
+function VoiceChatInner() {
   const navigate = useNavigate();
   const [phase, setPhase] = useState(PHASE.IDLE);
   const [errorMsg, setErrorMsg] = useState('');

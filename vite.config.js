@@ -8,6 +8,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve('./src'),
+      // Gemeinsame, importfreie Logik für Frontend UND Backend (shared/).
+      '@shared': resolve('./shared'),
     },
   },
   build: {

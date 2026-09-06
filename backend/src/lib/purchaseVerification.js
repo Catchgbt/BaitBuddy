@@ -1,5 +1,6 @@
 import { google } from 'googleapis';
 import Stripe from 'stripe';
+import { GOOGLE_PLAY_TOOL_SKU_PREFIX } from '../../../shared/toolUnlocks.js';
 
 // ACHTUNG — UNGETESTET GEGEN ECHTE APIS: Dieses Modul wurde nach offizieller
 // Google-Play- und Stripe-API-Dokumentation implementiert, aber in dieser
@@ -31,6 +32,15 @@ function getAndroidPublisherClient() {
 // deshalb über die products-API statt der subscriptions-API verifiziert.
 const ONE_TIME_PRODUCT_IDS = new Set(['baitbuddy_trial_10_10']);
 
+// Die Tool-Sofortfreischaltungen (0,99 €) sind ebenfalls Einmalprodukte
+// (INAPP, nicht konsumierbar — die Freischaltung gilt dauerhaft). Sie teilen
+// sich das SKU-Präfix aus shared/toolUnlocks.js, damit für jedes neue Tool
+// keine Liste nachgepflegt werden muss.
+function isOneTimeProduct(productId) {
+  if (ONE_TIME_PRODUCT_IDS.has(productId)) return true;
+  return typeof productId === 'string' && productId.startsWith(GOOGLE_PLAY_TOOL_SKU_PREFIX);
+}
+
 // Verifiziert einen Google-Play-Kauf. Abos gehen über die subscriptions-API,
 // das Trial-Einmalprodukt über die products-API. BaitBuddy berechnet die
 // Laufzeit anschließend selbst (siehe premium.js).
@@ -39,7 +49,7 @@ export async function verifyGooglePlayPurchase({ productId, purchaseToken }) {
   if (!client) return { valid: false, reason: 'Google Play Verifikation nicht konfiguriert' };
   if (!productId || !purchaseToken) return { valid: false, reason: 'productId und purchaseToken erforderlich' };
 
-  return ONE_TIME_PRODUCT_IDS.has(productId)
+  return isOneTimeProduct(productId)
     ? verifyGooglePlayOneTimeProduct(client, productId, purchaseToken)
     : verifyGooglePlaySubscription(client, productId, purchaseToken);
 }
@@ -102,7 +112,7 @@ function getStripeClient() {
 // premium.js. Die Session trägt user_id/plan_id als Metadata, damit
 // /premium/activate die Zahlung dem richtigen Konto und Plan zuordnen kann.
 // https://docs.stripe.com/api/checkout/sessions/create
-export async function createStripeCheckoutSession({ planId, planName, amountCents, userId, userEmail, successUrl, cancelUrl }) {
+export async function createStripeCheckoutSession({ planId, planName, amountCents, userId, userEmail, successUrl, cancelUrl, metadata = {} }) {
   const client = getStripeClient();
   if (!client) return { ok: false, reason: 'Stripe ist serverseitig nicht konfiguriert' };
 
@@ -119,7 +129,14 @@ export async function createStripeCheckoutSession({ planId, planName, amountCent
       }],
       client_reference_id: userId,
       customer_email: userEmail || undefined,
-      metadata: { plan_id: planId, user_id: userId },
+      // Stripe akzeptiert nur String-Werte in Metadata. plan_id entfällt bei
+      // Käufen, die keinen Plan betreffen (z. B. Tool-Sofortfreischaltung);
+      // die zusätzlichen Felder kommen über `metadata` vom Aufrufer.
+      metadata: {
+        ...(planId ? { plan_id: String(planId) } : {}),
+        user_id: String(userId),
+        ...metadata,
+      },
       success_url: successUrl,
       cancel_url: cancelUrl,
     });

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { speakWithFallback, cancelElevenLabs } from '@/components/utils/elevenLabsTTS';
+import ToolGuard from "@/components/progression/ToolGuard";
 
 const KNOTS = {
   "Palomar": {
@@ -98,7 +99,16 @@ const CMDS = {
   "schneller":["schneller","faster"],
 };
 
-export default function ARKnotenAssistent() {
+
+export default function ARKnotenAssistent(props) {
+  return (
+    <ToolGuard toolId="ar-knots">
+      <ARKnotenAssistentInner {...props} />
+    </ToolGuard>
+  );
+}
+
+function ARKnotenAssistentInner() {
   const [currentKnot, setCurrentKnot] = useState("Palomar");
   const [currentStep, setCurrentStep] = useState(0);
   const [ttsSpeed, setTtsSpeed] = useState(1.0);

@@ -5,7 +5,7 @@ import { Compass, Fish, MapPin, RefreshCcw, Wand2, Search, CloudSun, Loader2 } f
 import { toast, Toaster } from "sonner";
 import { catchgbtChat } from "@/functions/catchgbtChat";
 import { useHaptic } from "@/components/utils/HapticFeedback";
-import PremiumGuard from "@/components/premium/PremiumGuard";
+import ToolGuard from "@/components/progression/ToolGuard";
 import { auth } from "@/api/auth";
 import { MobileSelect } from "@/components/ui/mobile-select";
 import { TackleManager } from "@/components/gear/TackleManager";
@@ -654,12 +654,8 @@ export default function Gear() {
   }
 
   return (
-    <PremiumGuard
-      user={user}
-      requiredPlan="basic"
-      feature="Die Ausrüstungsanalyse ist ein Basic-Feature"
-    >
+    <ToolGuard toolId="tackle-management">
       <GearContent user={user} />
-    </PremiumGuard>
+    </ToolGuard>
   );
 }

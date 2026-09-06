@@ -8,6 +8,7 @@ import {
   PieChart, Pie, Cell
 } from "recharts";
 import { Fish, Weight, Trophy, Hash } from "lucide-react";
+import ToolGuard from "@/components/progression/ToolGuard";
 
 const COLORS = [
   "#22d3ee", "#10b981", "#f59e0b", "#a78bfa", "#f87171",
@@ -247,7 +248,16 @@ function CatchStatsContent() {
   );
 }
 
-export default function CatchStats() {
+
+export default function CatchStats(props) {
+  return (
+    <ToolGuard toolId="catch-stats">
+      <CatchStatsInner {...props} />
+    </ToolGuard>
+  );
+}
+
+function CatchStatsInner() {
   return (
     <div className="min-h-screen bg-gray-950 p-4 sm:p-6">
       {/* Fang-Statistiken sind laut Plan eine Free-Funktion. */}

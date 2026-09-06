@@ -18,6 +18,8 @@ import { SoundProvider } from "@/components/utils/SoundManager";
 import { Toaster } from "sonner";
 import { LanguageProvider } from "@/components/i18n/LanguageContext";
 import { PlanProvider } from "@/components/premium/PlanContext";
+import { ProgressionProvider } from "@/components/progression/ProgressionContext";
+import LevelUpOverlay from "@/components/progression/LevelUpOverlay";
 import TrialBanner from "@/components/premium/TrialBanner";
 import { AnimatePresence } from "framer-motion";
 import PageTransition from "@/lib/PageTransitionEnhanced";
@@ -370,6 +372,7 @@ function LayoutContent({ children, currentPageName }) {
     <>
       <BackButtonHandler />
       <PlanProvider>
+        <ProgressionProvider>
         <LanguageProvider>
           <HapticProvider>
             <SoundProvider>
@@ -409,6 +412,10 @@ function LayoutContent({ children, currentPageName }) {
                     <FirstLoginTutorialPrompt />
                   </SuspenseWithErrorBoundary>
                 )}
+
+                {/* Level-Up-Feier inkl. neu freigeschalteter Tools. Zeigt sich
+                    selbst nur, wenn der Server ein unquittiertes Level meldet. */}
+                {user && <LevelUpOverlay />}
 
                 <SuspenseWithErrorBoundary>
                   <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} currentPageName={currentPageName} user={user} loading={authLoading} />
@@ -728,6 +735,7 @@ function LayoutContent({ children, currentPageName }) {
             </SoundProvider>
           </HapticProvider>
           </LanguageProvider>
+        </ProgressionProvider>
         </PlanProvider>
         </>
       );

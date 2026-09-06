@@ -27,7 +27,10 @@ describe('Async-Fehlerbehandlung im Backend', () => {
       .post('/api/auth/login')
       .send({ email: 'a@b.de', password: 'geheim' });
     expect(res.status).toBe(500);
-    expect(res.body.error).toBe('Interner Fehler');
+    // Generische Meldung aus dem zentralen errorLogger (lib/logger.js) — der
+    // echte Fehler wird nur serverseitig geloggt, nie an den Client gereicht.
+    expect(res.body.error).toBe('Fehler aufgetreten');
+    expect(res.body.requestId).toBeTruthy();
   });
 
   it('liefert 504, wenn ein Upstream-Timeout durchgereicht wird', async () => {

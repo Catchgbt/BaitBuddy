@@ -4,13 +4,13 @@ import SwipeToRefresh from "@/components/utils/SwipeToRefresh";
 import RankSection from "@/components/rank/RankSection";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
 
-import PremiumGuard from "@/components/premium/PremiumGuard";
+import ToolGuard from "@/components/progression/ToolGuard";
 
 export default function Rank() {
   return (
-    <PremiumGuard requiredPlan="pro" feature="Community-Ranking">
+    <ToolGuard toolId="community-rank">
       <RankInner />
-    </PremiumGuard>
+    </ToolGuard>
   );
 }
 

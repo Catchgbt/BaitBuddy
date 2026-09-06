@@ -10,13 +10,13 @@ import BathymetricMapCard from "@/components/depth/BathymetricMapCard";
 import MyDepthDataList from "@/components/depth/MyDepthDataList";
 import { toast } from "sonner";
 
-import PremiumGuard from "@/components/premium/PremiumGuard";
+import ToolGuard from "@/components/progression/ToolGuard";
 
 export default function BathymetricCrowdsourcing() {
   return (
-    <PremiumGuard requiredPlan="pro" feature="Tiefenkarten & Bathymetrie-Crowdsourcing">
+    <ToolGuard toolId="bathymetry">
       <BathymetricCrowdsourcingInner />
-    </PremiumGuard>
+    </ToolGuard>
   );
 }
 

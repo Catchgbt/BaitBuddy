@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { auth } from "@/api/auth";
-import PremiumGuard from "@/components/premium/PremiumGuard";
+import ToolGuard from "@/components/progression/ToolGuard";
 import WaterAnalysisPanel from "@/components/water/WaterAnalysisPanel";
 import WaterRadarChart from "@/components/water/WaterRadarChart";
 import ExportPanel from "@/components/water/ExportPanel";
@@ -53,11 +53,7 @@ export default function WaterAnalysisPage() {
   }
 
   return (
-    <PremiumGuard 
-      user={user} 
-      requiredPlan="basic"
-      feature="Gewässeranalyse"
-    >
+    <ToolGuard toolId="water-analysis">
       <div className="min-h-screen bg-gray-950 p-4 pb-32">
         <div className="max-w-7xl mx-auto">
           {/* Header.
@@ -155,6 +151,6 @@ export default function WaterAnalysisPage() {
 
         </div>
       </div>
-    </PremiumGuard>
+    </ToolGuard>
   );
 }

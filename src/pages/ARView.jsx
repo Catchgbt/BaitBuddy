@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ARWater3D from '@/components/ar/ARWater3D';
 import ARTutorial from '@/components/ar/ARTutorial';
 import { auth } from "@/api/auth";
-import PremiumGuard from "@/components/premium/PremiumGuard";
+import ToolGuard from "@/components/progression/ToolGuard";
 
 export default function ARView() {
   const [user, setUser] = useState(null);
@@ -20,15 +20,11 @@ export default function ARView() {
   }, []);
 
   return (
-    <PremiumGuard 
-      user={user} 
-      requiredPlan="pro"
-      feature="AR-Gewässer-Ansicht 3D"
-    >
+    <ToolGuard toolId="ar-water">
       <div className="min-h-screen bg-gray-950">
         <ARWater3D />
         <ARTutorial />
       </div>
-    </PremiumGuard>
+    </ToolGuard>
   );
 }
