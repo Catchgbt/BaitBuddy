@@ -52,6 +52,9 @@ create unique index if not exists uniq_user_tool_unlocks_purchase_token
 
 alter table user_tool_unlocks enable row level security;
 
+-- CREATE POLICY kennt kein IF NOT EXISTS — vorher droppen, damit ein erneuter
+-- Lauf der Migration nicht an einer bereits vorhandenen Policy scheitert.
+drop policy if exists "own_tool_unlocks_read" on user_tool_unlocks;
 create policy "own_tool_unlocks_read"
   on user_tool_unlocks for select
   using (auth.uid() = user_id);

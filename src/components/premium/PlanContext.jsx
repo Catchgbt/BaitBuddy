@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { functions } from "@/api/frontendClient";
 import { planMeetsRequirement, getPlanLevel } from './planHierarchy';
+import { startGooglePlayReconciliation } from './googlePlayBilling';
 
 const PlanContext = createContext();
 
@@ -58,6 +59,11 @@ export function PlanProvider({ children }) {
     window.addEventListener('plan-updated', loadPlan);
     return () => window.removeEventListener('plan-updated', loadPlan);
   }, [loadPlan]);
+
+  // Bezahlte Google-Play-Käufe, die den Server nie erreicht haben, sowie
+  // automatische Abo-Verlängerungen still nachziehen. Im Browser ohne
+  // Play-Billing ist das ein No-op.
+  useEffect(() => startGooglePlayReconciliation(), []);
 
   const hasFeature = (requiredPlan = 'basic') => {
     const currentPlanId = plan?.id || 'free';

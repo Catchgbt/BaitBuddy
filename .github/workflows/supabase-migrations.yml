@@ -1,0 +1,149 @@
+name: Supabase Migrations
+
+# Automatisierter Deploy-Pfad fuer Datenbank-Migrationen.
+#
+# Hintergrund: Die Migrationen unter supabase/migrations/ wurden bisher von Hand
+# eingespielt. Dabei sind zwei Migrationen (Referral-System) nie auf der
+# Produktions-Datenbank gelandet — das Feature war live defekt, ohne dass es
+# jemand bemerkt hat. Dieser Workflow schliesst die Luecke:
+#
+#   * Pull Request  -> Trockenlauf, zeigt im Log was der Merge anwenden wuerde
+#   * Push auf main -> wendet neue Migrationen tatsaechlich an
+#   * taeglich      -> Drift-Kontrolle: schlaegt fehl, wenn das Repo Migrationen
+#                      enthaelt, die auf der Datenbank fehlen
+#
+# Benoetigte Repository-Secrets (Settings -> Secrets and variables -> Actions):
+#   SUPABASE_ACCESS_TOKEN  Personal Access Token (Supabase Dashboard -> Account -> Access Tokens)
+#   SUPABASE_DB_PASSWORD   Datenbank-Passwort des Projekts
+# Die Projekt-Referenz ist kein Geheimnis (steht bereits als Default-URL im
+# Backend) und liegt deshalb direkt hier.
+
+on:
+  push:
+    branches: [main]
+    paths: ['supabase/migrations/**']
+  pull_request:
+    paths: ['supabase/migrations/**']
+  schedule:
+    # Taeglich 03:00 UTC — versetzt zum Event-Auto-Archive-Cron (02:00 UTC).
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  # Nie zwei Migrations-Laeufe gleichzeitig gegen dieselbe Datenbank.
+  group: supabase-migrations
+  cancel-in-progress: false
+
+env:
+  SUPABASE_PROJECT_REF: yejiqenqdzupauddjcyi
+  SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+  SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Pull Request: reiner Trockenlauf. Ausstehende Migrationen sind hier der
+  # Normalfall (der PR fuegt sie ja gerade hinzu) — deshalb bricht dieser Job
+  # nur ab, wenn die CLI selbst einen Fehler meldet, etwa bei kaputtem SQL oder
+  # einer Versionsnummer, die aus der Reihe faellt.
+  # ---------------------------------------------------------------------------
+  dry-run:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Fehlende Secrets sind hier bewusst KEIN harter Fehler: sonst blockiert
+      # dieser Job jeden PR, solange die Secrets noch nicht hinterlegt sind —
+      # inklusive des PRs, der diesen Workflow ueberhaupt erst einfuehrt. Der
+      # Trockenlauf ist rein informativ; scharf gestellt sind `apply` und
+      # `drift-check`, die weiterhin hart fehlschlagen.
+      - name: Secrets pruefen
+        id: secrets
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ] || [ -z "$SUPABASE_DB_PASSWORD" ]; then
+            echo "vorhanden=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::SUPABASE_ACCESS_TOKEN und/oder SUPABASE_DB_PASSWORD fehlen — Trockenlauf uebersprungen. Solange die Secrets fehlen, kann der Deploy auf main nicht laufen."
+          else
+            echo "vorhanden=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: supabase/setup-cli@v1
+        if: steps.secrets.outputs.vorhanden == 'true'
+        with:
+          version: latest
+
+      - name: Projekt verbinden
+        if: steps.secrets.outputs.vorhanden == 'true'
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Trockenlauf
+        if: steps.secrets.outputs.vorhanden == 'true'
+        run: supabase db push --dry-run
+
+  # ---------------------------------------------------------------------------
+  # Merge auf main: Migrationen anwenden. Das ist der eigentliche Deploy-Schritt,
+  # der die frueher noetige Handarbeit ersetzt.
+  # ---------------------------------------------------------------------------
+  apply:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Secrets pruefen
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ] || [ -z "$SUPABASE_DB_PASSWORD" ]; then
+            echo "::error::SUPABASE_ACCESS_TOKEN und/oder SUPABASE_DB_PASSWORD fehlen in den Repository-Secrets."
+            exit 1
+          fi
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Projekt verbinden
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Anstehende Migrationen anzeigen
+        run: supabase db push --dry-run
+
+      - name: Migrationen anwenden
+        run: supabase db push --yes
+
+  # ---------------------------------------------------------------------------
+  # Taegliche Drift-Kontrolle: Faengt genau den Fehler ab, der das Referral-
+  # System lahmgelegt hat — eine Migration liegt im Repo, ist aber nie auf der
+  # Datenbank angekommen (z. B. weil sie von Hand am Workflow vorbei eingespielt
+  # wurde oder ein Deploy fehlgeschlagen ist).
+  # ---------------------------------------------------------------------------
+  drift-check:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Secrets pruefen
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ] || [ -z "$SUPABASE_DB_PASSWORD" ]; then
+            echo "::error::SUPABASE_ACCESS_TOKEN und/oder SUPABASE_DB_PASSWORD fehlen in den Repository-Secrets."
+            exit 1
+          fi
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Projekt verbinden
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Auf nicht angewendete Migrationen pruefen
+        run: |
+          set -o pipefail
+          ausgabe="$(supabase db push --dry-run 2>&1)"
+          echo "$ausgabe"
+          if echo "$ausgabe" | grep -qiE "up to date|no migrations to apply"; then
+            echo "Datenbank ist auf dem Stand des Repos."
+          else
+            echo "::error::Drift erkannt — es gibt Migrationen im Repo, die auf der Datenbank fehlen. Workflow 'Supabase Migrations' manuell starten (workflow_dispatch), um sie anzuwenden."
+            exit 1
+          fi

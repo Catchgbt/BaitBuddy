@@ -446,6 +446,7 @@ export const PLAN_RANK = {
   elite: 3,
   ultimate: 3,
   friends_monthly: 3,
+  trial_10_10: 3, // Bezahltes 10-Tage-Einmalprodukt = Ultimate-Niveau
   friends: 4,
 };
 

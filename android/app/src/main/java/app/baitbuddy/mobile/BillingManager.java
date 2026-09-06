@@ -1,6 +1,8 @@
 package app.baitbuddy.mobile;
 
 import android.app.Activity;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -24,9 +26,9 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Kapselt die Google Play Billing Library Logik fuer die Capacitor-WebView-App.
@@ -56,11 +58,28 @@ public class BillingManager implements PurchasesUpdatedListener, BillingClientSt
             TRIAL_PRODUCT_ID
     );
 
+    /**
+     * Wie lange ein Kaufwunsch auf eine bereite Billing-Verbindung wartet, bevor
+     * er als Fehler zurueckgemeldet wird.
+     */
+    private static final long PURCHASE_READY_TIMEOUT_MS = 15_000L;
+
     private final Activity activity;
     private final Emitter emitter;
     private final BillingClient billingClient;
-    private final Map<String, ProductDetails> productDetailsCache = new HashMap<>();
-    private boolean isConnected = false;
+    // Wird aus dem Billing-Callback-Thread befuellt und aus dem Main-Thread
+    // gelesen — deshalb nebenlaeufigkeitssicher.
+    private final Map<String, ProductDetails> productDetailsCache = new ConcurrentHashMap<>();
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+
+    // isReady() wird auch vom JavaScript-Bridge-Thread gelesen.
+    private volatile boolean isConnected = false;
+    private volatile boolean isConnecting = false;
+
+    // Kaufwunsch, der auf die Billing-Verbindung/Produktdetails wartet.
+    // Nur auf dem Main-Thread anfassen.
+    private String pendingPurchaseProductId = null;
+    private Runnable pendingPurchaseTimeout = null;
 
     public BillingManager(Activity activity, Emitter emitter) {
         this.activity = activity;
@@ -73,6 +92,12 @@ public class BillingManager implements PurchasesUpdatedListener, BillingClientSt
                                 .build()
                 )
                 .build();
+        connect();
+    }
+
+    private void connect() {
+        if (isConnecting || billingClient.isReady()) return;
+        isConnecting = true;
         billingClient.startConnection(this);
     }
 
@@ -87,6 +112,7 @@ public class BillingManager implements PurchasesUpdatedListener, BillingClientSt
     }
 
     public void destroy() {
+        mainHandler.post(this::cancelPendingPurchase);
         if (billingClient.isReady()) billingClient.endConnection();
     }
 
@@ -94,13 +120,19 @@ public class BillingManager implements PurchasesUpdatedListener, BillingClientSt
 
     @Override
     public void onBillingSetupFinished(@NonNull BillingResult billingResult) {
+        isConnecting = false;
         if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
             isConnected = true;
             Log.i(TAG, "Billing connected");
             queryProductDetails();
-            queryActivePurchases(false);
+            queryActivePurchases(true);
         } else {
+            isConnected = false;
             Log.e(TAG, "Billing setup failed: " + billingResult.getDebugMessage());
+            // Ein wartender Kaufwunsch kann jetzt nicht mehr erfuellt werden —
+            // sofort melden, statt den Nutzer bis zum Timeout warten zu lassen.
+            mainHandler.post(() -> failPendingPurchase(billingResult.getResponseCode(),
+                    "Google Play Billing nicht verfuegbar: " + billingResult.getDebugMessage()));
             emitError(null, billingResult.getResponseCode(),
                     "Billing setup failed: " + billingResult.getDebugMessage());
         }
@@ -109,8 +141,9 @@ public class BillingManager implements PurchasesUpdatedListener, BillingClientSt
     @Override
     public void onBillingServiceDisconnected() {
         isConnected = false;
+        isConnecting = false;
         Log.w(TAG, "Billing disconnected - reconnecting...");
-        billingClient.startConnection(this);
+        connect();
     }
 
     // -------- Product Details --------
@@ -131,7 +164,8 @@ public class BillingManager implements PurchasesUpdatedListener, BillingClientSt
                 .build();
 
         billingClient.queryProductDetailsAsync(params, (result, productDetailsList) -> {
-            if (result.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+            boolean ok = result.getResponseCode() == BillingClient.BillingResponseCode.OK;
+            if (ok) {
                 for (ProductDetails pd : productDetailsList) {
                     productDetailsCache.put(pd.getProductId(), pd);
                 }
@@ -139,23 +173,102 @@ public class BillingManager implements PurchasesUpdatedListener, BillingClientSt
             } else {
                 Log.e(TAG, "queryProductDetails failed: " + result.getDebugMessage());
             }
+            // Ein Kaufwunsch, der auf genau diese Details gewartet hat, wird
+            // jetzt ausgefuehrt (oder mit klarer Ursache abgelehnt).
+            final String debugMessage = result.getDebugMessage();
+            mainHandler.post(() -> {
+                if (ok) {
+                    flushPendingPurchase();
+                } else {
+                    failPendingPurchase(result.getResponseCode(),
+                            "Produktdaten konnten nicht geladen werden: " + debugMessage);
+                }
+            });
         });
     }
 
     // -------- Purchase --------
 
+    /**
+     * Startet den Kauf. Aufruf kommt aus dem JavaScript-Bridge-Thread, die
+     * Kauf-Logik laeuft deshalb komplett auf dem Main-Thread.
+     */
     public void startPurchase(String productId) {
-        if (!isReady()) {
-            emitError(productId, -1, "Billing service not ready");
+        mainHandler.post(() -> startPurchaseOnMain(productId));
+    }
+
+    private void startPurchaseOnMain(String productId) {
+        ProductDetails productDetails = isReady() ? productDetailsCache.get(productId) : null;
+        if (productDetails != null) {
+            launchPurchase(productId, productDetails);
             return;
         }
+
+        // Billing verbindet sich asynchron und laedt die Produktdetails erst
+        // danach. Tippt der Nutzer direkt nach dem App-Start auf "Kaufen", ist
+        // beides noch nicht da — ein sofortiger Fehler waere reines Timing und
+        // wuerde einen kaufwilligen Nutzer grundlos abweisen. Der Kaufwunsch
+        // wird deshalb gemerkt und ausgefuehrt, sobald die Details vorliegen.
+        queuePurchase(productId);
+
+        if (isReady()) {
+            queryProductDetails();
+        } else {
+            connect();
+        }
+    }
+
+    private void queuePurchase(String productId) {
+        // Tippt der Nutzer waehrenddessen einen anderen Plan an, wird der alte
+        // Kaufwunsch verworfen — die wartende Web-Seite muss das erfahren,
+        // sonst dreht sich dort bis zum Timeout ein Spinner.
+        if (pendingPurchaseProductId != null && !pendingPurchaseProductId.equals(productId)) {
+            emitCancel(pendingPurchaseProductId);
+        }
+        cancelPendingPurchase();
+        pendingPurchaseProductId = productId;
+        pendingPurchaseTimeout = () -> {
+            pendingPurchaseTimeout = null;
+            failPendingPurchase(-1,
+                    "Google Play ist gerade nicht bereit. Bitte in ein paar Sekunden erneut versuchen.");
+        };
+        mainHandler.postDelayed(pendingPurchaseTimeout, PURCHASE_READY_TIMEOUT_MS);
+    }
+
+    private void cancelPendingPurchase() {
+        if (pendingPurchaseTimeout != null) {
+            mainHandler.removeCallbacks(pendingPurchaseTimeout);
+            pendingPurchaseTimeout = null;
+        }
+        pendingPurchaseProductId = null;
+    }
+
+    /** Fuehrt einen wartenden Kaufwunsch aus, sobald die Produktdetails da sind. */
+    private void flushPendingPurchase() {
+        String productId = pendingPurchaseProductId;
+        if (productId == null) return;
 
         ProductDetails productDetails = productDetailsCache.get(productId);
         if (productDetails == null) {
-            emitError(productId, -1, "Product " + productId + " not found");
+            // Details erfolgreich geladen, dieses Produkt war nicht dabei: die
+            // Produkt-ID existiert in der Play Console nicht (oder ist inaktiv).
+            failPendingPurchase(-1, "Produkt " + productId + " ist im Play Store nicht verfuegbar.");
             return;
         }
+        if (!isReady()) return; // Timeout greift, falls die Verbindung ausbleibt
 
+        cancelPendingPurchase();
+        launchPurchase(productId, productDetails);
+    }
+
+    private void failPendingPurchase(int code, String message) {
+        String productId = pendingPurchaseProductId;
+        if (productId == null) return;
+        cancelPendingPurchase();
+        emitError(productId, code, message);
+    }
+
+    private void launchPurchase(String productId, ProductDetails productDetails) {
         BillingFlowParams.ProductDetailsParams.Builder paramsBuilder =
                 BillingFlowParams.ProductDetailsParams.newBuilder()
                         .setProductDetails(productDetails);
@@ -228,7 +341,12 @@ public class BillingManager implements PurchasesUpdatedListener, BillingClientSt
     // -------- Restore / Active Purchases --------
 
     public void queryActivePurchases(boolean notifyWeb) {
-        if (!billingClient.isReady()) return;
+        if (!billingClient.isReady()) {
+            // Nach dem Verbindungsaufbau wird ohnehin erneut abgefragt
+            // (onBillingSetupFinished) — hier nur den Aufbau anstossen.
+            connect();
+            return;
+        }
 
         QueryPurchasesParams subsParams = QueryPurchasesParams.newBuilder()
                 .setProductType(BillingClient.ProductType.SUBS)

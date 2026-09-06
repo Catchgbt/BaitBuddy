@@ -29,7 +29,7 @@ describe('Async-Fehlerbehandlung im Backend', () => {
     expect(res.status).toBe(500);
     // Generische Meldung aus dem zentralen errorLogger (lib/logger.js) — der
     // echte Fehler wird nur serverseitig geloggt, nie an den Client gereicht.
-    expect(res.body.error).toBe('Fehler aufgetreten');
+    expect(res.body.error).toBe('Interner Fehler');
     expect(res.body.requestId).toBeTruthy();
   });
 

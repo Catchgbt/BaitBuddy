@@ -158,6 +158,59 @@ Bestätigung darf lokal bleiben — das erspart FCM/APNS und passt zur
 Vercel-/Supabase-only-Regel. Für zeitversetzte Warnungen (Solunar, Tide,
 Wetter) bleibt `src/services/NotificationService.js` zuständig.
 
+## 💳 Plan-Kauf (Premium)
+
+Zwei Kaufwege, je nach Umgebung — die Premium-Seite (`src/pages/PremiumPlans.jsx`)
+zeigt immer nur den passenden:
+
+- **Android-App**: Google Play Billing über die native Brücke
+  (`android/.../BillingManager.java` + `AndroidBillingBridge.java`, im WebView
+  als `window.AndroidBilling`). Play-Pflicht für digitale Güter.
+- **Browser**: Stripe-Checkout (`POST /api/premium/checkout` →
+  `createStripeCheckoutSession`, `mode: 'payment'`), Rücksprung auf
+  `/PremiumPlans?checkout=success&plan_id=…&session_id=…`.
+
+Beide Wege enden bei **`POST /api/premium/activate`**, das die Zahlung
+serverseitig beim Anbieter verifiziert (`backend/src/lib/purchaseVerification.js`)
+und erst dann den Plan in die User-Metadaten schreibt. Preise sind
+ausschließlich serverseitig (`CHECKOUT_PLANS`); der Client sendet nur die
+`plan_id`.
+
+### Regeln, die beim Anfassen dieses Pfads gelten
+
+- **Google-Play-Abos bestimmen ihr Ablaufdatum selbst.** `/premium/activate`
+  übernimmt `expiryTimeMillis` aus der Play-Verifikation als
+  `premium_expires_at`; nur ohne dieses Feld (Stripe, Einmalprodukte) rechnet
+  der Server selbst (`PLAN_DURATION_DAYS`, Default 30 Tage). Play verlängert Abos
+  automatisch **unter demselben purchaseToken** — ein reiner Token-Replay-Schutz
+  würde die Verlängerung verschlucken und zahlende Nutzer aussperren. Deshalb
+  darf ein erneuter Aufruf die Laufzeit fortschreiben, wenn der Anbieter ein
+  späteres Ablaufdatum bestätigt (`extendsRuntime`). Die Antwort trägt
+  `updated: true|false`.
+- **Bezahlt ≠ freigeschaltet.** Zwischen Zahlung und Aktivierung liegt ein
+  API-Aufruf, der scheitern kann. Beide Wege heilen sich selbst:
+  - Play: `startGooglePlayReconciliation()` (`googlePlayBilling.jsx`, gestartet
+    im `PlanProvider`) fragt bei Start und bei jedem Foreground-Resume die
+    aktiven Käufe ab und meldet sie still an den Server. Nativ liefert
+    `MainActivity.onResume` → `queryActivePurchases(true)` dieselben Daten.
+  - Stripe: Der Kauf wird vor der Aktivierung in `localStorage.bb_pending_checkout`
+    festgehalten und beim nächsten Öffnen der Premium-Seite erneut aktiviert —
+    bis der Server bestätigt oder endgültig ablehnt (400/403).
+- **Vor dem Kauf prüfen, ob der Server verifizieren kann.** `GET /api/premium/config`
+  (öffentlich) meldet, welche Zahlungswege konfiguriert sind
+  (`STRIPE_SECRET_KEY` / `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`). Fehlt das Secret,
+  sperrt die UI den Kauf-Button — sonst zahlt der Nutzer erst und bekommt danach
+  einen 501. Schlägt die Abfrage fehl, wird **nicht** gesperrt (fail-open).
+- **Plan-Rangfolge an zwei Stellen spiegeln:** `backend/src/lib/planResolver.js`
+  (`PLAN_RANK`) und `src/components/premium/planHierarchy.jsx`
+  (`PLAN_HIERARCHY`). Laufen sie auseinander, schaltet der Server etwas frei,
+  das die UI sperrt (oder umgekehrt). Das bezahlte Einmalprodukt `trial_10_10`
+  (10 Tage Vollzugriff) liegt auf Ultimate-Niveau.
+- **Kauf direkt nach App-Start:** Play Billing verbindet sich asynchron. Ein
+  Kaufwunsch, der auf Verbindung/Produktdetails wartet, wird in
+  `BillingManager` gepuffert und ausgeführt, sobald die Details da sind
+  (Timeout 15 s) — kein sofortiger „Billing service not ready"-Fehler.
+
 ## 🏅 Angel-Level & Tool-Freischaltung
 
 Zehn Angel-Level schalten Werkzeuge frei. Die Regeln leben **einmal** in
@@ -202,7 +255,7 @@ Level-Freischaltungen einmalig in `user_tool_unlocks` fest (`source='level'`).
 ### Sofortfreischaltung 0,99 €
 Einmalkauf, kein Abo, kontogebunden, überlebt Neuinstallation
 (`user_tool_unlocks`, `UNIQUE(user_id, tool_id)`, Migration
-`20260906_create_tool_unlocks.sql`). Zwei Wege:
+`20260906150000_create_tool_unlocks.sql`). Zwei Wege:
 - **Web/PWA**: Stripe-Checkout, Rücksprung auf `/Tools?unlock=success&…`
 - **Android-App**: Google-Play-Einmalprodukt (INAPP, nicht konsumierbar),
   SKU-Schema `baitbuddy_tool_<tool_id mit _>` — Play-Richtlinie verlangt IAP
@@ -255,12 +308,12 @@ erfolgreich eingeladenem Freund**. Das Popup rotiert alle 72h (localStorage
   erstmals den **Basic**-Plan, bekommt sein Referrer **10 € Rabatt auf den
   nächsten Ultimate-Kauf** gutgeschrieben — gedeckelt bei 3 Freunden (30 €).
   Gespeichert als `ultimate_discount_cents` in den Referrer-Metadaten, idempotent
-  über `referrals.basic_reward_granted` (Migration `20260721_referral_basic_reward.sql`).
+  über `referrals.basic_reward_granted` (Migration `20260727180343_referral_basic_reward.sql`).
   Der Rabatt wird beim **Stripe-Web-Checkout** (`POST /api/premium/checkout`,
   nur `elite`) vom Preis abgezogen (Mindestbetrag 9,99 €) und bei erfolgreicher
   Ultimate-Aktivierung wieder auf 0 gesetzt. Google Play nutzt feste SKUs → dort
   kein dynamischer Rabatt. Logik in `backend/src/routes/premium.js`.
-- **Migration**: `supabase/migrations/20260719_create_referrals_tables.sql`
+- **Migration**: `supabase/migrations/20260727180333_create_referrals_tables.sql`
   (Tabellen `user_referral_codes` + `referrals`, RLS: nur Lesen der eigenen
   Zeilen, Insert/Update ausschließlich vom Backend über die Service-Role).
 
@@ -283,6 +336,27 @@ Start via `POST /api/events`). Sie ist **nicht** mehr in der Community-Sektion
    zurückliegt, werden per **Soft-Delete** (`is_active=false`) aus der Liste
    ausgeblendet. `GET /api/events` filtert nur `is_active=true`. Kein Hard-Delete —
    `event_participants`/`event_submissions`/Punkte-Historie bleiben erhalten.
+
+## 🗄️ Datenbank-Migrationen (automatisierter Deploy)
+
+Schema-Änderungen gehören **ausschließlich** in `supabase/migrations/` und werden
+vom Workflow `.github/workflows/supabase-migrations.yml` automatisch angewendet:
+PR → Trockenlauf, Merge auf `main` → `supabase db push`, täglich 03:00 UTC →
+Drift-Kontrolle (schlägt fehl, wenn Repo-Migrationen auf der DB fehlen).
+Details in `supabase/README.md`.
+
+- **Dateiname zwingend `<14-stelliger Zeitstempel>_<name>.sql`** (via
+  `npx supabase migration new <name>`). Kürzere Präfixe brechen den Abgleich mit
+  `supabase_migrations.schema_migrations` — die CLI hält die Migration dann für
+  unangewendet und führt sie erneut aus.
+- **Nicht mehr von Hand einspielen** (Dashboard/Management-API vergeben eigene
+  Zeitstempel und erzeugen genau die Drift, die das Referral-System monatelang
+  live lahmgelegt hat).
+- **Idempotent schreiben** (`if not exists`). Ausnahme: `CREATE POLICY` kennt kein
+  `IF NOT EXISTS` → vorher `drop policy if exists`. Bei Indizes prüft
+  `IF NOT EXISTS` nur den **Namen**, nicht die Spalten-Abdeckung.
+- Secrets `SUPABASE_ACCESS_TOKEN` und `SUPABASE_DB_PASSWORD` müssen in den
+  Repository-Secrets gesetzt sein, sonst schlägt der Deploy bewusst fehl.
 
 ## 📱 Device-Features (Pflicht)
 
@@ -370,6 +444,28 @@ die passende Android-Permission deklariert ist. `CAMERA`,
 > In-Memory-Store zurück (lokal/Dev/Tests unverändert). Vercel KV bleibt innerhalb
 > „nur Vercel & Supabase". Fällt der KV-Store aus, blockiert das die App nicht
 > (Fail-Open).
+
+### Self-Hosting per Docker (Alternative zu Vercel + Supabase-Cloud)
+
+Unter `docker/` liegt ein vollständiges `docker compose`-Setup, das den
+**Supabase-Stack selbst** (Postgres, GoTrue, PostgREST, Storage, Kong) plus
+Backend, Frontend (Nginx) und einen Cron-Container auf einem Rechner betreibt.
+Anleitung: `docs/DOCKER_SELFHOST.md`. Bewusste Entscheidung: Supabase wird
+**betrieben, nicht ersetzt** — Auth (`user_metadata` für Plan/Referral),
+Storage-Bucket `catches` und die 25 Backend-Module mit `supabase.from(...)`
+bleiben unverändert; nur `SUPABASE_URL`/`VITE_SUPABASE_URL` zeigen auf Kong.
+
+- `docker/db/init/90-baitbuddy-schema.sql` ist der **vollständige
+  Schema-Snapshot** der Cloud-DB (54 Tabellen, Policies, Trigger) vom
+  2026-09-05 und läuft nur beim ersten `db`-Start. Neue Schemaänderungen
+  weiterhin als Datei nach `supabase/migrations/` (idempotent schreiben) und
+  mit `docker/scripts/apply-migrations.sh` einspielen.
+- `supabase/schema.sql` ist **unvollständig** (26 von 54 Tabellen) — bei
+  Schemafragen den Snapshot als Referenz nehmen.
+- `vercel.json`-Crons ↔ `docker/cron/crontab`: beide Listen bei neuen
+  Cron-Endpunkten **synchron** halten.
+- Vercel-spezifisch bleibt nur `api/[...path].mjs` + `vercel.json`; beide
+  Deploy-Wege nutzen denselben Code.
 
 ---
 
