@@ -420,6 +420,29 @@ bleiben unverändert; nur `SUPABASE_URL`/`VITE_SUPABASE_URL` zeigen auf Kong.
 > `version_code` muss höher sein als der zuletzt in der Play Console
 > hochgeladene.
 
+### ⚠️ `npm audit fix --force` bricht den Android-Build
+
+`npm audit` meldet zwei offene Lücken in **`tar` 6.2.1**. Diese Version zieht
+ausschließlich `@capacitor/cli` (devDependency, `dist/util/template.js`) und sie
+läuft nur bei `cap add`/`cap update`/`cap migrate`, wo Capacitors **eigenes**
+Plattform-Template aus dem npm-Paket entpackt wird — kein Nutzer-Input, kein
+Laufzeitpfad der App, nichts davon landet im Bundle oder im AAB.
+
+**Nicht "wegfixen".** Beide angebotenen Wege sind teurer als die Lücke:
+
+- **`overrides: { "tar": "^7" }`** — verifiziert kaputt. tar 7 ist ESM mit
+  `__esModule`-Flag und ohne Default-Export, deshalb liefert das
+  `tslib.__importDefault(require("tar"))` in `template.js` ein Objekt, dessen
+  `.default` `undefined` ist: `TypeError: Cannot read properties of undefined
+  (reading 'extract')`. `cap add android` stirbt daran.
+- **`@capacitor/cli@8`** — `6.2.2` ist die letzte 6er-CLI und verlangt
+  `tar ^6.1.11`; die tar-6-Linie endet bei `6.2.1`, ein Fix existiert dort nicht.
+  Ein CLI-Sprung auf 8 zwingt `@capacitor/core`, `@capacitor/android` und die
+  drei Plugins mit — ein eigenes Vorhaben, kein Audit-Aufräumen.
+
+Wer das dennoch angeht, verifiziert es gegen einen **echten Android-Build**
+(SDK + `bundleRelease`), nicht nur gegen `npm audit`.
+
 ---
 
 ## 🎁 App Store Compliance
