@@ -79,6 +79,11 @@
     <!-- Sprachsteuerung und Voice-Chat mit dem KI-Buddy -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
+    <!-- Bluetooth-Konnektivität für Device Hub (Herzfrequenz-Sensoren, Waagen, Echolote, Umwelt-Sensoren) -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+                     android:usesPermissionFlags="neverForLocation" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
     <!-- Bewusst NICHT deklariert: POST_NOTIFICATIONS. Der Android-WebView
          implementiert die Web-Notifications-API nicht, in der gepackten App
          gibt es also keinen Absender. Eine Permission ohne Nutzung würde nur
