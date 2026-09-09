@@ -83,9 +83,17 @@ class ApiClient {
   constructor() {
     // Token wird bei jeder Request aus localStorage gelesen, nicht gecacht
     this._refreshPromise = null;
+    // In-memory token cache mit Sentinel (undefined = nicht initialisiert).
+    // Vermeidet wiederholte localStorage-Reads pro Request (Performance).
+    // Cache wird invalidiert, wenn Tokens gesetzt/geleert werden.
+    // Trade-off: Ein Logout aus anderem Tab wird nicht live registriert (Tokens
+    // sind session-specific, nicht user-specific, daher kein Cross-Tab-Issue).
+    this._tokenCache = undefined;
+    this._refreshTokenCache = undefined;
   }
 
   setToken(token) {
+    this._tokenCache = token || null; // null wenn token leer, sonst der token
     if (typeof localStorage !== 'undefined') {
       if (token) localStorage.setItem(TOKEN_KEY, token);
       else localStorage.removeItem(TOKEN_KEY);
@@ -93,13 +101,21 @@ class ApiClient {
   }
 
   getToken() {
+    // Cache prüfen: undefined = nicht initialisiert, sonst verwend cached Wert
+    if (this._tokenCache !== undefined) {
+      return this._tokenCache;
+    }
+    // Cache-Miss: Aus localStorage laden
     if (typeof localStorage !== 'undefined') {
-      return localStorage.getItem(TOKEN_KEY);
+      const token = localStorage.getItem(TOKEN_KEY);
+      this._tokenCache = token || null; // Cache setzen (null, wenn kein token)
+      return token;
     }
     return null;
   }
 
   setRefreshToken(token) {
+    this._refreshTokenCache = token || null; // null wenn token leer, sonst der token
     if (typeof localStorage !== 'undefined') {
       if (token) localStorage.setItem(REFRESH_KEY, token);
       else localStorage.removeItem(REFRESH_KEY);
@@ -107,8 +123,15 @@ class ApiClient {
   }
 
   getRefreshToken() {
+    // Cache prüfen: undefined = nicht initialisiert, sonst verwend cached Wert
+    if (this._refreshTokenCache !== undefined) {
+      return this._refreshTokenCache;
+    }
+    // Cache-Miss: Aus localStorage laden
     if (typeof localStorage !== 'undefined') {
-      return localStorage.getItem(REFRESH_KEY);
+      const token = localStorage.getItem(REFRESH_KEY);
+      this._refreshTokenCache = token || null; // Cache setzen (null, wenn kein token)
+      return token;
     }
     return null;
   }
