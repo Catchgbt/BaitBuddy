@@ -1,8 +1,10 @@
 package app.baitbuddy.mobile;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.webkit.WebView;
 
+import androidx.core.view.WindowCompat;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
@@ -12,6 +14,11 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Android 16: Edge-to-Edge Enforcement — WebView muss bis zum Displayrand reichen
+        if (Build.VERSION.SDK_INT >= 35) {
+            WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        }
 
         billingManager = new BillingManager(this, (eventName, jsonPayload) -> {
             WebView webView = getBridge() != null ? getBridge().getWebView() : null;
