@@ -845,4 +845,35 @@ router.post('/ai/realtime-session', requireAuth, async (req, res) => {
   }
 });
 
+router.post('/ai/vision', requireAuth, async (req, res) => {
+  try {
+    const { image_base64 } = req.body;
+    if (!image_base64) {
+      return res.status(400).json({ error: 'image_base64 erforderlich' });
+    }
+
+    const analysis = await invokeLLM({
+      prompt: `Du bist ein erfahrener Angel-Experte. Analysiere dieses Foto für Angler:
+
+AUFGABE:
+1. Erkenne sichtbare Fischarten im oder aus dem Wasser
+2. Beschreibe die Wasserqualität (Klarheit, Farbe, Pflanzen)
+3. Nenne günstige Köder für erkannte Arten
+4. Gib Tipps zum Angelplatz
+
+ANTWORT-FORMAT (Deutsch, natürlich, hilfreiche Sätze):
+- Beginne mit der Hauptentdeckung
+- Kurze Begründung
+- Praktischer Tipp
+
+Antworte prägnant (3-5 Sätze), als würdest du einem Freund am Wasser helfen.`,
+      imageBase64: image_base64
+    });
+
+    return res.json({ ok: true, analysis });
+  } catch (e) {
+    return sendDbError(res, e);
+  }
+});
+
 export default router;
