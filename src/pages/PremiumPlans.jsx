@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Crown, Zap, Star, Sparkles, Mail, Loader2, ShoppingBag, Smartphone, RefreshCw, AlertTriangle } from "lucide-react";
+import { Check, Crown, Zap, Star, Sparkles, Mail, Loader2, ShoppingBag, Smartphone, RefreshCw, AlertTriangle, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { functions, premium } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
@@ -13,51 +13,11 @@ import {
   restoreGooglePlayPurchases
 } from "@/components/premium/googlePlayBilling";
 import WebCheckoutButton from "@/components/premium/WebCheckoutButton";
-
-// Offener Stripe-Kauf, dessen Aktivierung noch nicht bestätigt ist. Zwischen
-// "bei Stripe bezahlt" und "serverseitig freigeschaltet" liegt ein API-Aufruf;
-// scheitert der (Funkloch, Server kurz weg), wäre das Geld weg und der Plan
-// nicht aktiv. Deshalb wird der Kauf lokal gemerkt und bei jedem Öffnen der
-// Seite erneut aktiviert, bis der Server ihn bestätigt oder eindeutig ablehnt.
-const PENDING_CHECKOUT_KEY = 'bb_pending_checkout';
-const PENDING_CHECKOUT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
-
-function readPendingCheckout() {
-  try {
-    const raw = localStorage.getItem(PENDING_CHECKOUT_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed?.planId || !parsed?.sessionId) return null;
-    if (Date.now() - (parsed.createdAt || 0) > PENDING_CHECKOUT_MAX_AGE_MS) {
-      localStorage.removeItem(PENDING_CHECKOUT_KEY);
-      return null;
-    }
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
-function writePendingCheckout(planId, sessionId) {
-  try {
-    localStorage.setItem(PENDING_CHECKOUT_KEY, JSON.stringify({
-      planId, sessionId, createdAt: Date.now()
-    }));
-  } catch { /* Ohne localStorage bleibt nur der direkte Versuch */ }
-}
-
-function clearPendingCheckout() {
-  try {
-    localStorage.removeItem(PENDING_CHECKOUT_KEY);
-  } catch { /* ignore */ }
-}
-
-// 400/403 sind endgültige Ablehnungen (Zahlung gehört zu anderem Plan/Konto) —
-// ein erneuter Versuch würde daran nichts ändern. Alles andere (Netzfehler,
-// 402 noch nicht verbucht, 5xx) darf und soll wiederholt werden.
-function isPermanentActivationRejection(error) {
-  return error?.status === 400 || error?.status === 403;
-}
+import {
+  PendingCheckoutManager,
+  isPermanentActivationError,
+  logCheckoutError,
+} from "@/lib/pendingCheckoutRecovery";
 
 export default function PremiumPlans() {
   const [user, setUser] = useState(null);
@@ -68,11 +28,18 @@ export default function PremiumPlans() {
   const [restoring, setRestoring] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [stuckCheckout, setStuckCheckout] = useState(null);
 
   useEffect(() => {
     loadData();
     loadPaymentMethods();
     setBillingAvailable(isGooglePlayBillingAvailable());
+
+    // Prüfe auf nicht bestätigte Checkouts und zeige UI-Feedback
+    const pending = PendingCheckoutManager.read();
+    if (pending && PendingCheckoutManager.getRetryCount() > 0) {
+      setStuckCheckout(pending);
+    }
   }, []);
 
   // Rücksprung vom Stripe-Checkout: /PremiumPlans?checkout=success&plan_id=...
@@ -84,7 +51,7 @@ export default function PremiumPlans() {
     if (!checkout) {
       // Kein Rücksprung, aber evtl. ein Kauf, dessen Aktivierung beim letzten
       // Mal nicht durchkam: still nachholen.
-      const pending = readPendingCheckout();
+      const pending = PendingCheckoutManager.read();
       if (pending) finalizeStripeCheckout(pending.planId, pending.sessionId, { silent: true });
       return;
     }
@@ -104,7 +71,7 @@ export default function PremiumPlans() {
   const finalizeStripeCheckout = async (planId, sessionId, { silent = false } = {}) => {
     // Zuerst merken, dann aktivieren: bricht der Aufruf ab, ist der bezahlte
     // Kauf trotzdem festgehalten.
-    writePendingCheckout(planId, sessionId);
+    PendingCheckoutManager.write(planId, sessionId);
     setProcessingPlan(planId);
     try {
       const response = await functions.invoke('activatePlan', {
@@ -116,19 +83,32 @@ export default function PremiumPlans() {
       if (!data?.ok) {
         throw new Error(data?.error || 'Plan-Aktivierung fehlgeschlagen');
       }
-      clearPendingCheckout();
+      PendingCheckoutManager.clear();
       toast.success('Plan aktiviert', {
         description: 'Deine Zahlung wurde bestätigt. Dein Premium-Plan ist jetzt aktiv.'
       });
       await loadData();
       window.dispatchEvent(new CustomEvent('plan-updated'));
     } catch (error) {
-      if (isPermanentActivationRejection(error)) {
-        clearPendingCheckout();
+      const retryCount = PendingCheckoutManager.recordRetryAttempt(error);
+      logCheckoutError(error, { silent, attemptNumber: retryCount });
+
+      if (isPermanentActivationError(error)) {
+        PendingCheckoutManager.clear();
         toast.error('Aktivierung fehlgeschlagen', {
           description: `${error.message} — bitte kontaktiere den Support.`,
           duration: 10000
         });
+      } else if (PendingCheckoutManager.isMaxRetriesExceeded()) {
+        // Zu viele Versuche: gib auf, aber behalte die Checkout-Info für Support
+        toast.error('Aktivierung konnte nicht abgeschlossen werden', {
+          description: 'Nach mehreren Versuchen konnte deine Zahlung nicht aktiviert werden. Bitte kontaktiere den Support mit deiner Sitzungs-ID.',
+          duration: 10000
+        });
+        if (!silent) {
+          // Zumindest im nicht-silent Fall die Sitzungs-ID anzeigen für Support
+          console.log(`Stuck checkout (max retries): sessionId=${sessionId}, planId=${planId}`);
+        }
       } else if (!silent) {
         // Der Kauf bleibt gespeichert und wird beim nächsten Öffnen erneut
         // versucht — das muss der Nutzer wissen, damit er nicht doppelt zahlt.
@@ -234,6 +214,21 @@ export default function PremiumPlans() {
     } finally {
       setRestoring(false);
     }
+  };
+
+  const handleRetryStuckCheckout = async () => {
+    if (!stuckCheckout) return;
+    setProcessingPlan(stuckCheckout.planId);
+    try {
+      await finalizeStripeCheckout(stuckCheckout.planId, stuckCheckout.sessionId, { silent: false });
+      setStuckCheckout(null);
+    } finally {
+      setProcessingPlan(null);
+    }
+  };
+
+  const handleDismissStuckCheckout = () => {
+    setStuckCheckout(null);
   };
 
   // Pläne bewusst nach Funktionswert priorisiert: Free ist werbefinanziert und
@@ -415,6 +410,47 @@ export default function PremiumPlans() {
             </div>
           )}
         </div>
+
+        {stuckCheckout && (
+          <div className="max-w-3xl mx-auto mb-8 p-4 rounded-xl border border-orange-700/50 bg-orange-900/20 flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <strong className="block mb-1 text-orange-100">Zahlung wird verarbeitet</strong>
+              <p className="text-sm text-orange-100 mb-3">
+                Deine Zahlung fuer den <strong>{stuckCheckout.planId}</strong>-Plan wird noch verarbeitet.
+                {PendingCheckoutManager.getRetryCount() > 0 && ` (${PendingCheckoutManager.getRetryCount()} Versuche)`}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={handleRetryStuckCheckout}
+                  disabled={processingPlan === stuckCheckout.planId}
+                  className="bg-orange-600 hover:bg-orange-700 text-white"
+                >
+                  {processingPlan === stuckCheckout.planId ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Wird verarbeitet...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Jetzt erneut versuchen
+                    </>
+                  )}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleDismissStuckCheckout}
+                  className="text-orange-100 hover:bg-orange-800/50"
+                >
+                  Schließen
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {!purchasesEnabled && (
           <div className="max-w-3xl mx-auto mb-8 p-4 rounded-xl border border-amber-700/50 bg-amber-900/20 flex items-start gap-3">
