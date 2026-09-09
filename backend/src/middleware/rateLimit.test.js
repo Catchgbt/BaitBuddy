@@ -8,18 +8,19 @@ const { redisState } = vi.hoisted(() => ({ redisState: { incrValue: 1 } }));
 // Der Client selbst wird im Modul-Scope nur erzeugt, wenn KV_URL gesetzt ist;
 // hier reicht ein Stub mit on(), call() und den von checkChatRateLimit
 // genutzten incr()/expire().
-vi.mock('ioredis', () => ({
-  default: vi.fn().mockImplementation(() => ({
-    on: vi.fn(),
+vi.mock('ioredis', () => {
+  class RedisMock {
+    on = vi.fn();
     // SCRIPT LOAD (von RedisStore.init) muss einen SHA-String liefern, sonst
     // wirft rate-limit-redis "unexpected reply". Alles andere: numerischer Count.
-    call: vi.fn(async (cmd) =>
+    call = vi.fn(async (cmd) =>
       String(cmd).toUpperCase() === 'SCRIPT' ? 'test-sha' : 1
-    ),
-    incr: vi.fn(async () => redisState.incrValue),
-    expire: vi.fn(async () => 1),
-  })),
-}));
+    );
+    incr = vi.fn(async () => redisState.incrValue);
+    expire = vi.fn(async () => 1);
+  }
+  return { default: RedisMock };
+});
 
 const ORIGINAL_KV_URL = process.env.KV_URL;
 const ORIGINAL_REDIS_URL = process.env.REDIS_URL;

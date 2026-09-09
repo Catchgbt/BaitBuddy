@@ -58,7 +58,7 @@ export function useActionQueue() {
     failedItems: [],
   });
 
-  const processQueueRef = useRef<NodeJS.Timeout | null>(null);
+  const processQueueRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const enqueue = useCallback((action: () => Promise<void>, maxRetries = 3) => {
     const item: ActionQueueItem = {
