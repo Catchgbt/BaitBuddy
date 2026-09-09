@@ -20,9 +20,14 @@ vi.mock('googleapis', () => ({
   },
 }));
 
-vi.mock('stripe', () => ({
-  default: vi.fn(() => stripeInstanceMock),
-}));
+vi.mock('stripe', () => {
+  class StripeMock {
+    constructor() {
+      return stripeInstanceMock;
+    }
+  }
+  return { default: StripeMock };
+});
 
 let verifyGooglePlayPurchase;
 let verifyStripePayment;
