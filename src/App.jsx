@@ -15,6 +15,7 @@ import PageNotFound from './lib/PageNotFound';
 
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { ThemeProvider } from '@/lib/ThemeContext';
+import { GuidedTourProvider } from '@/contexts/GuidedTourContext';
 import SplashIntro from '@/components/intro/SplashIntro';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ErrorBoundary from '@/lib/ErrorBoundary';
@@ -159,17 +160,19 @@ function App() {
       <SplashIntro />
       <AuthProvider>
         <ThemeProvider>
-          <QueryClientProvider client={queryClientInstance}>
-              <Router>
-                <NavigationProvider>
-                  <NavigationTracker />
-                  <PageViewTracker />
-                  <AuthenticatedApp />
-                </NavigationProvider>
-              </Router>
-            <Toaster />
-            <VisualEditAgent />
-          </QueryClientProvider>
+          <GuidedTourProvider>
+            <QueryClientProvider client={queryClientInstance}>
+                <Router>
+                  <NavigationProvider>
+                    <NavigationTracker />
+                    <PageViewTracker />
+                    <AuthenticatedApp />
+                  </NavigationProvider>
+                </Router>
+              <Toaster />
+              <VisualEditAgent />
+            </QueryClientProvider>
+          </GuidedTourProvider>
         </ThemeProvider>
       </AuthProvider>
     </ErrorBoundary>

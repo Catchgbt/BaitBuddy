@@ -39,6 +39,7 @@ const EnhancedTicker = lazy(() => import("@/components/layout/TipTicker"));
 const FeedbackManager = lazy(() => import("@/components/feedback/FeedbackManager"));
 const AIBuddyWidgetStub = lazy(() => import("@/components/layout/AIBuddyWidgetStub"));
 const FirstLoginTutorialPrompt = lazy(() => import("@/components/tutorial/FirstLoginTutorialPrompt"));
+const GuidedTourController = lazy(() => import("@/components/guidedTour/GuidedTourController"));
 
 const LazyFallback = () => null;
 
@@ -447,6 +448,10 @@ function LayoutContent({ children, currentPageName }) {
 
                 <SuspenseWithErrorBoundary>
                   <AIBuddyWidgetStub />
+                </SuspenseWithErrorBoundary>
+
+                <SuspenseWithErrorBoundary>
+                  <GuidedTourController />
                 </SuspenseWithErrorBoundary>
 
                 <Toaster 
