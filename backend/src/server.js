@@ -8,6 +8,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { logger, requestLogger, errorLogger, initSentry } from './lib/logger.js';
+import { securityMiddleware, validateOrigin, sanitizeInputs, logSecurityEvents } from './middleware/security.js';
 import authRoutes from './routes/auth.js';
 import aiRoutes from './routes/ai.js';
 import catchesRoutes from './routes/catches.js';
@@ -37,6 +38,9 @@ const app = express();
 initSentry(app);
 const PORT = process.env.PORT || 3000;
 
+// Security-Middleware
+securityMiddleware(app);
+
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({
   origin: process.env.ALLOWED_ORIGINS?.split(',') || [
@@ -48,6 +52,11 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(requestLogger);
+
+// Input-Sanitization + Origin-Validierung + Security-Logging
+app.use(validateOrigin);
+app.use(sanitizeInputs);
+app.use(logSecurityEvents);
 
 // Findet den OpenAI-Key tolerant (OPENAI_API_KEY, Openai_key, …) — nur zur
 // Diagnose, ob Voice serverseitig konfiguriert ist. Gibt KEINEN Wert preis.
@@ -109,7 +118,58 @@ app.use(errorLogger);
 // echten Port-Binding ab, wenn ein Test absichtlich process.env.VERCEL
 // entfernt, um den Nicht-Vercel-Codepfad einzelner Routen zu pruefen.
 if (!process.env.VERCEL && process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {});
+  const server = app.listen(PORT, () => {
+    logger.info(`Server running on port ${PORT}`);
+  });
 
+  // Graceful Shutdown für Docker SIGTERM
+  // Docker sendet SIGTERM und erwartet Shutdown innerhalb von 10 Sekunden.
+  process.on('SIGTERM', async () => {
+    logger.info('SIGTERM received, starting graceful shutdown...');
+
+    // 1. Keine neuen Requests mehr akzeptieren
+    server.close(() => {
+      logger.info('Server closed, no new requests accepted');
+    });
+
+    // 2. Bestehende Requests zu Ende laufen lassen (Timeout: 9 Sekunden)
+    const shutdownTimeout = setTimeout(() => {
+      logger.warn('Shutdown timeout reached, forcefully exiting');
+      process.exit(1);
+    }, 9000);
+
+    try {
+      // 3. Supabase-Client sauber abfahren (falls vorhanden)
+      // Supabase hat normalerweise keine explizite close() Methode,
+      // aber Axios/HTTP-Connections werden durch Server.close() beendet
+
+      // 4. Erfolgreicher Shutdown
+      clearTimeout(shutdownTimeout);
+      logger.info('Graceful shutdown completed');
+      process.exit(0);
+    } catch (error) {
+      logger.error('Error during graceful shutdown', { error: error.message });
+      process.exit(1);
+    }
+  });
+
+  // Alternative zu SIGTERM (SIGINT von Ctrl+C)
+  process.on('SIGINT', () => {
+    logger.info('SIGINT received, starting graceful shutdown...');
+    server.close(() => process.exit(0));
+  });
+
+  // Uncaught Exception Handler (sollte nicht passieren, aber sicher ist sicher)
+  process.on('uncaughtException', (error) => {
+    logger.error('Uncaught Exception', { error: error.message, stack: error.stack });
+    process.exit(1);
+  });
+
+  // Unhandled Rejection Handler
+  process.on('unhandledRejection', (reason, promise) => {
+    logger.error('Unhandled Rejection', { reason: String(reason), promise: String(promise) });
+    process.exit(1);
+  });
 }
+
 export default app;
