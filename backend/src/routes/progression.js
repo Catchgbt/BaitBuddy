@@ -256,6 +256,79 @@ router.post('/progression/level-seen', requireAuth, async (req, res) => {
   return res.json({ ok: true, seen_level: next });
 });
 
+// ── Geführte Tour ────────────────────────────────────────────────────────────
+// Der Tour-Zustand gehört in dieselben User-Metadaten wie der übrige
+// Fortschritt. Die Tour lag ursprünglich auf public.users und griff per
+// Anon-Key direkt aus dem Frontend darauf zu — das konnte nicht funktionieren:
+// auf der Tabelle ist RLS aktiv und es existiert keine einzige Policy, also
+// verweigert Postgres Lesen UND Schreiben. `tutorial_completed` wurde damit nie
+// wahr und die Tour startete bei jedem Dashboard-Besuch erneut. Ausserdem ist
+// public.users nicht die Wahrheit der App (Plan, Referral und Level leben in
+// user_metadata), und das Frontend spricht sonst nirgends direkt mit Supabase.
+
+const TOUR_STEP_KEY = 'guided_tour_step';
+const TOUR_COMPLETED_KEY = 'guided_tour_completed';
+const TOUR_LEVEL_KEY = 'tour_user_level';
+
+const TOUR_LEVELS = new Set(['beginner', 'experienced', 'professional']);
+
+function readTourState(user) {
+  const meta = user?.user_metadata || {};
+  const step = Number(meta[TOUR_STEP_KEY]);
+  const level = meta[TOUR_LEVEL_KEY];
+  return {
+    step: Number.isFinite(step) && step >= 0 ? Math.trunc(step) : 0,
+    completed: meta[TOUR_COMPLETED_KEY] === true,
+    user_level: TOUR_LEVELS.has(level) ? level : 'beginner',
+  };
+}
+
+router.get('/progression/tour', requireAuth, async (req, res) => {
+  return res.json({ ok: true, ...readTourState(req.user) });
+});
+
+// Teil-Update: nur mitgeschickte Felder werden geändert, damit ein Fortschritt
+// den Abschluss nicht überschreibt und umgekehrt.
+router.patch('/progression/tour', requireAuth, async (req, res) => {
+  const { step, completed, user_level: userLevel } = req.body || {};
+  const current = req.user.user_metadata || {};
+  const patch = {};
+
+  if (step !== undefined) {
+    const parsed = Number(step);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      return res.status(400).json({ error: 'step muss eine Zahl >= 0 sein' });
+    }
+    patch[TOUR_STEP_KEY] = Math.trunc(parsed);
+  }
+
+  if (completed !== undefined) {
+    if (typeof completed !== 'boolean') {
+      return res.status(400).json({ error: 'completed muss ein Boolean sein' });
+    }
+    patch[TOUR_COMPLETED_KEY] = completed;
+  }
+
+  if (userLevel !== undefined) {
+    if (!TOUR_LEVELS.has(userLevel)) {
+      return res.status(400).json({ error: `user_level muss eines von ${[...TOUR_LEVELS].join(', ')} sein` });
+    }
+    patch[TOUR_LEVEL_KEY] = userLevel;
+  }
+
+  if (Object.keys(patch).length === 0) {
+    return res.status(400).json({ error: 'Kein Feld zum Aktualisieren angegeben' });
+  }
+
+  const merged = { ...current, ...patch };
+  const { error } = await supabase.auth.admin.updateUserById(req.user.id, {
+    user_metadata: merged,
+  });
+  if (error) return sendDbError(res, error);
+
+  return res.json({ ok: true, ...readTourState({ user_metadata: merged }) });
+});
+
 // ── Sofortfreischaltung (0,99 €) ─────────────────────────────────────────────
 
 // Web-Kauf: Stripe-Checkout-Session für genau ein Tool. Der Preis kommt

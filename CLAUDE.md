@@ -282,31 +282,50 @@ Nie als Bezahlschranke formulieren. „Noch nicht freigeschaltet“, „ab Level
 kostenlos“, „möchtest du früher ran? 0,99 €“. Profil und Einstellungen sind
 `alwaysAvailable` und dürfen nie in den Katalog-Gate wandern.
 
-## 🎓 App-Tutorial
+## 🎓 Geführte Tour (Sabrina)
 
-33 Schritte (jetzt 34 mit dem Angel-Level), zweisprachig, mit Vorlesefunktion —
-`src/components/tutorial/tutorialSteps.jsx` + `TutorialModal.jsx`.
+Die Tour hebt echte Bedienelemente hervor und lässt Sabrina erklären, was sie
+tun — `src/contexts/GuidedTourContext.jsx`, `src/components/guidedTour/`
+(`GuidedTourController`, `TourSpotlight`, `SabrinaTourTooltip`) und der
+Feature-Katalog `src/lib/tourFeatures.js` (DE/EN, je Nutzer-Level).
 
-**Einstiege** (vorher gab es für Angemeldete faktisch keinen):
-- `FirstLoginTutorialPrompt` — bietet die Tour neuen Nutzern **einmal** an.
-  War lange ein leerer Stub (`return null`), der in `Layout.jsx` gerendert
-  wurde: das Tutorial existierte vollständig, wurde aber niemandem angeboten.
-- `TutorialRestartCard` im Profil — „Tutorial erneut starten", jederzeit.
-- `TutorialButton` auf Home und Einstellungen.
+Das frühere 34-Schritt-Modal (`components/tutorial/`, `tutorialSteps.jsx`) ist
+**entfernt** — es beschrieb die App per Screenshot-Diashow, während die Tour
+auf die Oberfläche selbst zeigt. Übrig bleibt die Seite `Tutorials.jsx`
+(Anleitungen für Ausgeloggte); der „Tutorial"-Knopf der Landingpage führt
+dorthin, weil die Tour einen angemeldeten Nutzer braucht.
 
-**Merkzustand**: `src/lib/tutorialState.js` mit zwei getrennten Flags
-(`bb_tutorial_prompted`, `bb_tutorial_completed`). Jeder localStorage-Zugriff
-ist gekapselt — im WebView und in privaten Fenstern kann er werfen.
+### Zustand liegt in den User-Metadaten, nicht in public.users
+`GET`/`PATCH /api/progression/tour` lesen und schreiben
+`guided_tour_step`, `guided_tour_completed` und `tour_user_level`.
 
-⚠️ **Regel: einmal fragen, nie nachfassen.** „Später" setzt denselben
-`prompted`-Merker wie „Tour starten". Es gibt bewusst keine wiederholte
-Erinnerung und keine Zwangsführung; wer die Tour will, findet sie im Profil.
+⚠️ **Regel: kein `supabase.from(...)` im Frontend.** Die Tour kam ursprünglich
+mit einem direkten Anon-Key-Zugriff auf `public.users`. Das konnte nicht
+funktionieren: auf der Tabelle ist RLS aktiv und es existiert **keine einzige
+Policy**, also verweigert Postgres Lesen und Schreiben — `tutorial_completed`
+wurde nie wahr und die Tour startete bei jedem Dashboard-Besuch erneut.
+Ausserdem führt die App ihre Nutzerdaten in den Auth-Metadaten (Plan,
+Referral, Angel-Level), und der Datenzugriff läuft sonst ausnahmslos über
+`frontendClient` gegen das Backend. Die Spalten aus
+`20260910120000_add_guided_tour_fields.sql` sind dadurch ungenutzt.
 
-**Beim Ergänzen von Schritten**: `de` und `en` müssen dieselbe Länge und
-dieselbe Reihenfolge der `route`-Ziele haben, und jede `route` muss eine
-existierende Seite sein — `tutorialSteps.test.js` prüft beides (ein Tippfehler
-schickte den Nutzer vorher auf die 404-Seite). `image` ist optional; fehlt es
-oder ist der Link tot, blendet das Modal den Rahmen aus.
+`PATCH` ist ein Teil-Update: nur mitgeschickte Felder ändern sich, damit ein
+Fortschritt den Abschluss nicht überschreibt.
+
+### Einstiege
+- **Auto-Start** auf dem Dashboard, solange die Tour nicht abgeschlossen ist
+  (`GuidedTourController`); `localStorage.bb_tour_skipped` unterdrückt ihn.
+- **`GuidedTourRestartCard`** im Profil — setzt den Abschluss zurück und
+  startet neu. Nach dem Abschluss der einzige Weg zurück.
+
+Schlägt der Abruf fehl (offline, Serverfehler), gilt die Tour als
+abgeschlossen: sie soll bei einem Verbindungsproblem nicht ungefragt loslaufen.
+
+### Beim Anfassen
+`src/contexts/**` ist erst seit Kurzem von ESLint erfasst — vorher rutschte
+dort ein Import auf eine nicht existierende Datei bis in `main` und zerlegte
+den Build. Tests: `backend/src/routes/progression.test.js` (Tour-Endpunkte),
+`src/contexts/GuidedTourContext.test.jsx`.
 
 ## 🎁 Freundschafts-Empfehlung (Login-Popup)
 

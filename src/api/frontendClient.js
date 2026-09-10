@@ -920,6 +920,10 @@ export const progression = {
   markLevelSeen: (level)      => api.post('/api/progression/level-seen', { level }),
   checkout: (toolId)          => api.post('/api/progression/tools/checkout', { tool_id: toolId }),
   purchase: (payload)         => api.post('/api/progression/tools/purchase', payload),
+  // Geführte Tour: Fortschritt, Abschluss und Nutzer-Level liegen in den
+  // User-Metadaten, nicht in public.users (dort greift RLS ohne Policy).
+  tour:       ()              => api.get('/api/progression/tour'),
+  updateTour: (patch)         => api.patch('/api/progression/tour', patch),
 };
 
 export const user = {

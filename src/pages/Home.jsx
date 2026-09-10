@@ -4,7 +4,6 @@ import { auth } from "@/api/auth";
 import { createPageUrl } from '@/utils';
 import LanguageSwitcher from '@/components/i18n/LanguageSwitcher';
 import { LanguageProvider } from '@/components/i18n/LanguageContext';
-import TutorialModal from '@/components/tutorial/TutorialModal';
 import DeleteAccountSection from '@/components/settings/DeleteAccountSection';
 import WaterScene from '@/components/home/WaterScene';
 import LandingAuthPanel from '@/components/home/LandingAuthPanel';
@@ -231,7 +230,6 @@ function SideLinks() {
 }
 
 function LandingPageContent() {
-    const [tutorialOpen, setTutorialOpen] = useState(false);
     const [userName, setUserName] = useState(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [showDeleteAccount, setShowDeleteAccount] = useState(false);
@@ -303,7 +301,8 @@ function LandingPageContent() {
 
             <div className="fixed top-4 left-4 sm:top-8 sm:left-8 z-50 flex flex-col items-start gap-2">
                 <motion.button
-                    onClick={() => setTutorialOpen(true)}
+                    onClick={() => { window.location.href = createPageUrl('Tutorials'); }}
+                    aria-label="Tutorials öffnen"
                     animate={{
                         scale: [1, 1.08, 1],
                         opacity: [0.9, 1, 0.9],
@@ -476,7 +475,6 @@ function LandingPageContent() {
                 </div>
             )}
 
-            <TutorialModal isOpen={tutorialOpen} onClose={() => setTutorialOpen(false)} />
 
             <style>{`
                 @keyframes gradient-wave {

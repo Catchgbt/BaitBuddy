@@ -463,3 +463,77 @@ describe('POST /api/progression/tools/purchase', () => {
     expect(res.status).toBe(409);
   });
 });
+
+describe('Geführte Tour', () => {
+  it('liefert Startwerte für einen Nutzer ohne Tour-Metadaten', async () => {
+    await bootApp();
+    const res = await authed(request(app).get('/api/progression/tour'));
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ ok: true, step: 0, completed: false, user_level: 'beginner' });
+  });
+
+  it('liest einen gespeicherten Stand aus den User-Metadaten', async () => {
+    await bootApp({
+      user: {
+        ...USER,
+        user_metadata: {
+          guided_tour_step: 4,
+          guided_tour_completed: true,
+          tour_user_level: 'experienced',
+        },
+      },
+    });
+    const res = await authed(request(app).get('/api/progression/tour'));
+    expect(res.body).toMatchObject({ step: 4, completed: true, user_level: 'experienced' });
+  });
+
+  it('speichert den Fortschritt', async () => {
+    await bootApp();
+    const res = await authed(request(app).patch('/api/progression/tour')).send({ step: 3 });
+    expect(res.status).toBe(200);
+    expect(res.body.step).toBe(3);
+    const [, attrs] = supabaseMock.current.auth.admin.updateUserById.mock.calls[0];
+    expect(attrs.user_metadata.guided_tour_step).toBe(3);
+  });
+
+  it('ändert nur die mitgeschickten Felder', async () => {
+    // Sonst würde ein Fortschritts-Update den Abschluss zurücksetzen.
+    await bootApp({
+      user: { ...USER, user_metadata: { guided_tour_completed: true, tour_user_level: 'professional' } },
+    });
+    const res = await authed(request(app).patch('/api/progression/tour')).send({ step: 2 });
+    expect(res.body).toMatchObject({ step: 2, completed: true, user_level: 'professional' });
+  });
+
+  it('behält übrige Metadaten beim Schreiben', async () => {
+    await bootApp({ user: { ...USER, user_metadata: { premium_plan_id: 'basic', referral_code: 'ABC12345' } } });
+    await authed(request(app).patch('/api/progression/tour')).send({ completed: true });
+    const [, attrs] = supabaseMock.current.auth.admin.updateUserById.mock.calls[0];
+    expect(attrs.user_metadata.premium_plan_id).toBe('basic');
+    expect(attrs.user_metadata.referral_code).toBe('ABC12345');
+  });
+
+  it('akzeptiert nur bekannte Nutzer-Level', async () => {
+    await bootApp();
+    const ok = await authed(request(app).patch('/api/progression/tour')).send({ user_level: 'professional' });
+    expect(ok.status).toBe(200);
+    expect(ok.body.user_level).toBe('professional');
+
+    const bad = await authed(request(app).patch('/api/progression/tour')).send({ user_level: 'halbgott' });
+    expect(bad.status).toBe(400);
+  });
+
+  it('weist unsinnige Werte ab', async () => {
+    await bootApp();
+    for (const payload of [{ step: -1 }, { step: 'drei' }, { completed: 'ja' }, {}]) {
+      const res = await authed(request(app).patch('/api/progression/tour')).send(payload);
+      expect(res.status, JSON.stringify(payload)).toBe(400);
+    }
+  });
+
+  it('verlangt Authentifizierung', async () => {
+    await bootApp();
+    expect((await request(app).get('/api/progression/tour')).status).toBe(401);
+    expect((await request(app).patch('/api/progression/tour').send({ step: 1 })).status).toBe(401);
+  });
+});

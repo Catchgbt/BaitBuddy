@@ -18,6 +18,9 @@ export default [
       "src/components/**/*.{js,mjs,cjs,jsx}",
       "src/pages/**/*.{js,mjs,cjs,jsx}",
       "src/lib/**/*.{js,mjs,cjs,jsx}",
+      // src/contexts/ war nicht erfasst — dort ist ein Import auf eine nicht
+      // existierende Datei bis in main durchgerutscht und hat den Build zerlegt.
+      "src/contexts/**/*.{js,mjs,cjs,jsx}",
       "src/hooks/**/*.{js,mjs,cjs,jsx}",
       "src/api/**/*.{js,mjs,cjs,jsx}",
       "src/Layout.jsx",

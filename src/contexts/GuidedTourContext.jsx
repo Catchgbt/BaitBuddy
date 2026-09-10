@@ -1,6 +1,20 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useAuth } from './AuthContext';
-import { supabase } from '@/api/supabaseClient';
+// Der AuthContext liegt in src/lib/, nicht neben dieser Datei — src/contexts/
+// enthaelt sonst nichts. Der relative Import './AuthContext' liess den Build
+// scheitern ("Could not resolve ./AuthContext").
+import { useAuth } from '@/lib/AuthContext';
+import { progression } from '@/api/frontendClient';
+
+// Der Tour-Zustand laeuft ueber das Backend (GET/PATCH /api/progression/tour),
+// nicht ueber einen direkten supabase.from('users')-Zugriff.
+//
+// Der urspruengliche Weg konnte nicht funktionieren: auf public.users ist RLS
+// aktiv und es existiert keine einzige Policy, also verweigert Postgres Lesen
+// und Schreiben. `tutorial_completed` wurde damit nie wahr und die Tour startete
+// bei jedem Dashboard-Besuch von vorn. Dazu kommt, dass die App ihre
+// Nutzerdaten in den Auth-Metadaten fuehrt (Plan, Referral, Angel-Level) und
+// das Frontend sonst nirgends direkt mit Supabase spricht — der Datenzugriff
+// laeuft ueber frontendClient gegen das Backend.
 
 const GuidedTourContext = createContext();
 
@@ -21,24 +35,16 @@ export function GuidedTourProvider({ children }) {
 
     const loadUserTourStatus = async () => {
       try {
-        const { data, error } = await supabase
-          .from('users')
-          .select('user_level,tutorial_completed,guided_tour_step')
-          .eq('id', user.id)
-          .single();
-
-        if (error) {
-          console.error('[GuidedTourContext] Error loading status:', error);
-          return;
-        }
-
-        if (data) {
-          setUserLevel(data.user_level || 'beginner');
-          setTutorialCompleted(data.tutorial_completed || false);
-          setCurrentStep(data.guided_tour_step || 0);
-        }
+        const data = await progression.tour();
+        setUserLevel(data?.user_level || 'beginner');
+        setTutorialCompleted(data?.completed === true);
+        setCurrentStep(data?.step || 0);
       } catch (err) {
-        console.error('[GuidedTourContext] Fetch failed:', err);
+        // Offline oder Serverfehler: Startwerte behalten. Die Tour dann NICHT
+        // automatisch anzustossen ist die freundlichere Annahme — sonst laeuft
+        // sie bei jedem Verbindungsproblem erneut los.
+        console.error('[GuidedTourContext] Tour-Status nicht ladbar:', err?.message || err);
+        setTutorialCompleted(true);
       } finally {
         setIsLoading(false);
       }
@@ -51,21 +57,11 @@ export function GuidedTourProvider({ children }) {
   const updateTourStatus = useCallback(
     async (step, completed = false) => {
       if (!user) return;
-
       try {
-        const { error } = await supabase
-          .from('users')
-          .update({
-            guided_tour_step: step,
-            tutorial_completed: completed,
-          })
-          .eq('id', user.id);
-
-        if (error) {
-          console.error('[GuidedTourContext] Update failed:', error);
-        }
+        await progression.updateTour({ step, completed });
       } catch (err) {
-        console.error('[GuidedTourContext] Update error:', err);
+        // Ein verlorener Fortschritt darf die laufende Tour nicht abbrechen.
+        console.error('[GuidedTourContext] Tour-Status nicht speicherbar:', err?.message || err);
       }
     },
     [user]
@@ -113,16 +109,9 @@ export function GuidedTourProvider({ children }) {
 
       setUserLevel(level);
       try {
-        const { error } = await supabase
-          .from('users')
-          .update({ user_level: level })
-          .eq('id', user.id);
-
-        if (error) {
-          console.error('[GuidedTourContext] Level update failed:', error);
-        }
+        await progression.updateTour({ user_level: level });
       } catch (err) {
-        console.error('[GuidedTourContext] Level update error:', err);
+        console.error('[GuidedTourContext] Level nicht speicherbar:', err?.message || err);
       }
     },
     [user]

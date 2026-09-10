@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import ProfileProgressionCard from '@/components/progression/ProfileProgressionCard';
-import TutorialRestartCard from '@/components/tutorial/TutorialRestartCard';
+import GuidedTourRestartCard from '@/components/guidedTour/GuidedTourRestartCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -351,7 +351,7 @@ export default function ProfilePage() {
       <ProfileProgressionCard />
 
       {/* Tour jederzeit neu startbar (Produktvorgabe: Profil bleibt immer offen) */}
-      <TutorialRestartCard />
+      <GuidedTourRestartCard />
 
       <div className="grid md:grid-cols-2 gap-6">
         
