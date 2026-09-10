@@ -8,8 +8,15 @@ import { useLanguage } from '@/components/i18n/LanguageContext';
 import { speakWithFallback, cancelElevenLabs } from '@/components/utils/elevenLabsTTS';
 import { tutorialSteps } from './tutorialSteps';
 
-export default function TutorialModal({ isOpen, onClose }) {
+export default function TutorialModal({ isOpen, onClose, onComplete }) {
   const { language } = useLanguage();
+  const isEnglish = language === 'en';
+  // Die Bedienelemente waren fest deutsch beschriftet, obwohl die Schritte
+  // zweisprachig vorliegen — in der englischen Fassung stand mitten in der
+  // Tour "Zurueck"/"Weiter".
+  const labels = isEnglish
+    ? { back: 'Back', next: 'Next', finish: 'Finish tutorial', openPage: 'Open this page', read: 'Read aloud' }
+    : { back: 'Zurück', next: 'Weiter', finish: 'Tutorial beenden', openPage: 'Diese Seite öffnen', read: 'Text vorlesen' };
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playingStep, setPlayingStep] = useState(null);
@@ -103,13 +110,19 @@ export default function TutorialModal({ isOpen, onClose }) {
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className="mb-3 rounded-xl overflow-hidden shadow-lg bg-gray-950 border border-gray-800">
-                  <img
-                    src={currentStepData.image}
-                    alt={currentStepData.title}
-                    className="w-full h-44 object-cover"
-                  />
-                </div>
+                {/* Bild ist optional. Ein Schritt ohne image (oder mit totem
+                    Link) blendet den Rahmen aus, statt einen kaputten
+                    Platzhalter zu zeigen. */}
+                {currentStepData.image && (
+                  <div className="mb-3 rounded-xl overflow-hidden shadow-lg bg-gray-950 border border-gray-800">
+                    <img
+                      src={currentStepData.image}
+                      alt={currentStepData.title}
+                      className="w-full h-44 object-cover"
+                      onError={(e) => { e.currentTarget.parentElement.hidden = true; }}
+                    />
+                  </div>
+                )}
 
                 {currentStepData.route && (
                   <Link
@@ -121,7 +134,7 @@ export default function TutorialModal({ isOpen, onClose }) {
                     className="inline-flex items-center gap-1.5 text-xs text-cyan-400 hover:text-cyan-300 underline underline-offset-4 decoration-cyan-500/40 mb-2"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
-                    {language === 'en' ? 'Open this page' : 'Diese Seite oeffnen'}
+                    {labels.openPage}
                   </Link>
                 )}
 
@@ -133,7 +146,7 @@ export default function TutorialModal({ isOpen, onClose }) {
                     onClick={() => handlePlayAudio(currentStep)}
                     disabled={isPlaying}
                     className="ml-3 p-2 rounded-full bg-cyan-600/20 hover:bg-cyan-600/30 transition-all disabled:opacity-50 border border-cyan-500/30 flex-shrink-0"
-                    title="Text vorlesen"
+                    title={labels.read}
                   >
                     {isPlaying && playingStep === currentStep ? (
                       <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
@@ -176,22 +189,22 @@ export default function TutorialModal({ isOpen, onClose }) {
                 className="flex-1 h-9 text-sm border-gray-700 hover:bg-gray-800 disabled:opacity-30"
               >
                 <ChevronLeft className="w-4 h-4 mr-1" />
-                Zurück
+                {labels.back}
               </Button>
 
               {currentStep === steps.length - 1 ? (
                 <Button
-                  onClick={onClose}
+                  onClick={() => { onComplete?.(); onClose(); }}
                   className="flex-1 h-9 text-sm bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 shadow-lg"
                 >
-                  Tutorial beenden
+                  {labels.finish}
                 </Button>
               ) : (
                 <Button
                   onClick={handleNext}
                   className="flex-1 h-9 text-sm bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-700 hover:to-emerald-700 shadow-lg"
                 >
-                  Weiter
+                  {labels.next}
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
               )}

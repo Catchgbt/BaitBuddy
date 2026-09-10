@@ -203,6 +203,11 @@ export const tutorialSteps = {
       image: "https://media.base44.com/images/public/68bb3d3b9f83dc1f55ef532b/2a663230d_generated_image.png"
     },
     {
+      title: "Angel-Level und Tools",
+      route: "Tools",
+      content: "Unter 'Meine Tools' siehst du alle Werkzeuge der App und dein Angel-Level. XP bekommst du fuers echte Angeln: Faenge eintragen, verschiedene Fischarten fangen, Spots anlegen, Touren planen, Ausruestung pflegen und an Events teilnehmen. Jedes Level schaltet zwei weitere Tools kostenlos frei - vom Angelkueken bis zum Meisterangler. Gesperrte Tools bleiben sichtbar und zeigen dir, ab welchem Level sie kommen."
+    },
+    {
       title: "Viel Erfolg",
       route: "Dashboard",
       content: "Du kennst jetzt jede wichtige Seite der App. Starte am besten mit dem Dashboard, logge deinen ersten Fang und probier den KI-Buddy aus. Petri Heil und tight lines.",
@@ -407,6 +412,11 @@ export const tutorialSteps = {
       route: "FunctionRatings",
       content: "Rate individual app features with stars and a comment. Your feedback helps us improve BaitBuddy where it matters most.",
       image: "https://media.base44.com/images/public/68bb3d3b9f83dc1f55ef532b/2a663230d_generated_image.png"
+    },
+    {
+      title: "Fishing Level and Tools",
+      route: "Tools",
+      content: "'My Tools' shows every tool in the app along with your fishing level. You earn XP by actually fishing: logging catches, landing different species, saving spots, planning trips, tracking gear and joining events. Every level unlocks two more tools for free, from Fledgling Angler up to Master Angler. Locked tools stay visible and tell you which level unlocks them."
     },
     {
       title: "Good Luck",

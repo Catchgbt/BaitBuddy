@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { GraduationCap } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function TutorialButton({ onClick }) {
@@ -26,7 +26,7 @@ export default function TutorialButton({ onClick }) {
         
         {/* Icon im Zentrum */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/4">
-          <AlertTriangle className="w-8 h-8 text-amber-400 group-hover:text-amber-300 transition-colors animate-pulse" />
+          <GraduationCap className="w-8 h-8 text-amber-400 group-hover:text-amber-300 transition-colors animate-pulse" />
         </div>
       </div>
     </motion.button>

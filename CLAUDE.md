@@ -282,6 +282,32 @@ Nie als Bezahlschranke formulieren. „Noch nicht freigeschaltet“, „ab Level
 kostenlos“, „möchtest du früher ran? 0,99 €“. Profil und Einstellungen sind
 `alwaysAvailable` und dürfen nie in den Katalog-Gate wandern.
 
+## 🎓 App-Tutorial
+
+33 Schritte (jetzt 34 mit dem Angel-Level), zweisprachig, mit Vorlesefunktion —
+`src/components/tutorial/tutorialSteps.jsx` + `TutorialModal.jsx`.
+
+**Einstiege** (vorher gab es für Angemeldete faktisch keinen):
+- `FirstLoginTutorialPrompt` — bietet die Tour neuen Nutzern **einmal** an.
+  War lange ein leerer Stub (`return null`), der in `Layout.jsx` gerendert
+  wurde: das Tutorial existierte vollständig, wurde aber niemandem angeboten.
+- `TutorialRestartCard` im Profil — „Tutorial erneut starten", jederzeit.
+- `TutorialButton` auf Home und Einstellungen.
+
+**Merkzustand**: `src/lib/tutorialState.js` mit zwei getrennten Flags
+(`bb_tutorial_prompted`, `bb_tutorial_completed`). Jeder localStorage-Zugriff
+ist gekapselt — im WebView und in privaten Fenstern kann er werfen.
+
+⚠️ **Regel: einmal fragen, nie nachfassen.** „Später" setzt denselben
+`prompted`-Merker wie „Tour starten". Es gibt bewusst keine wiederholte
+Erinnerung und keine Zwangsführung; wer die Tour will, findet sie im Profil.
+
+**Beim Ergänzen von Schritten**: `de` und `en` müssen dieselbe Länge und
+dieselbe Reihenfolge der `route`-Ziele haben, und jede `route` muss eine
+existierende Seite sein — `tutorialSteps.test.js` prüft beides (ein Tippfehler
+schickte den Nutzer vorher auf die 404-Seite). `image` ist optional; fehlt es
+oder ist der Link tot, blendet das Modal den Rahmen aus.
+
 ## 🎁 Freundschafts-Empfehlung (Login-Popup)
 
 Nach dem Einloggen erscheint auf dem Dashboard das `ReferralInvitePopup`
