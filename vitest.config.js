@@ -9,6 +9,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve('./src'),
+      '@shared': resolve('./shared'),
     },
   },
   test: {
@@ -18,7 +19,7 @@ export default defineConfig({
       reportsDirectory: './coverage',
       // Nur eigener Quellcode; Tests, Setup, Vendor-UI und generierte Artefakte
       // verwässern die Aussage sonst.
-      include: ['src/**/*.{js,jsx}', 'backend/src/**/*.js'],
+      include: ['src/**/*.{js,jsx}', 'backend/src/**/*.js', 'shared/**/*.js'],
       exclude: [
         '**/*.test.{js,jsx}',
         'src/test/**',
@@ -35,6 +36,16 @@ export default defineConfig({
           environment: 'jsdom',
           include: ['src/**/*.test.{js,jsx,ts,tsx}'],
           setupFiles: ['src/test/setup.js'],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          // Geteilte, umgebungsfreie Logik (shared/) — läuft in Node, weil sie
+          // weder DOM noch Node-APIs braucht.
+          name: 'shared',
+          environment: 'node',
+          include: ['shared/**/*.test.js'],
         },
       },
       {

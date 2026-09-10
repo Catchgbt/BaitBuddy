@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth, optionalAuth } from '../middleware/auth.js';
+import { requireCronAuth } from '../middleware/cronAuth.js';
 import { supabase } from '../lib/supabase.js';
 import { sendDbError } from '../lib/errorResponse.js';
 import { resolvePlan, PLAN_RANK } from '../lib/planResolver.js';
@@ -612,21 +613,8 @@ router.post('/rewards/claim', requireAuth, async (req, res) => {
 // ADMIN ENDPOINTS (Cron Jobs)
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.get('/admin/leaderboards/monthly/generate', async (req, res) => {
+router.get('/admin/leaderboards/monthly/generate', requireCronAuth, async (req, res) => {
   try {
-    // Vercel Crons senden Authorization: Bearer <CRON_SECRET> Header
-    const secret = process.env.CRON_SECRET || process.env.ADMIN_API_KEY;
-    if (!secret) {
-      return res.status(500).json({ error: 'Cron-Secret nicht konfiguriert' });
-    }
-    const authHeader = req.headers.authorization || '';
-    const headerSecret = authHeader.replace(/^Bearer\s+/, '').trim();
-    const xApiKey = req.headers['x-api-key'] || '';
-
-    const isAuthorized = headerSecret === secret || xApiKey === secret;
-    if (!isAuthorized) {
-      return res.status(403).json({ error: 'Unauthorized' });
-    }
 
     const now = new Date();
     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1);
@@ -648,20 +636,8 @@ router.get('/admin/leaderboards/monthly/generate', async (req, res) => {
   }
 });
 
-router.get('/admin/rewards/auto-activate', async (req, res) => {
+router.get('/admin/rewards/auto-activate', requireCronAuth, async (req, res) => {
   try {
-    const secret = process.env.CRON_SECRET || process.env.ADMIN_API_KEY;
-    if (!secret) {
-      return res.status(500).json({ error: 'Cron-Secret nicht konfiguriert' });
-    }
-    const authHeader = req.headers.authorization || '';
-    const headerSecret = authHeader.replace(/^Bearer\s+/, '').trim();
-    const xApiKey = req.headers['x-api-key'] || '';
-
-    const isAuthorized = headerSecret === secret || xApiKey === secret;
-    if (!isAuthorized) {
-      return res.status(403).json({ error: 'Unauthorized' });
-    }
 
     // Auf den Vormonat ausrichten - analog zu /admin/leaderboards/monthly/generate,
     // das die pending Rewards fuer den abgeschlossenen Vormonat erzeugt.
@@ -683,20 +659,8 @@ router.get('/admin/rewards/auto-activate', async (req, res) => {
   }
 });
 
-router.get('/admin/events/auto-archive', async (req, res) => {
+router.get('/admin/events/auto-archive', requireCronAuth, async (req, res) => {
   try {
-    const secret = process.env.CRON_SECRET || process.env.ADMIN_API_KEY;
-    if (!secret) {
-      return res.status(500).json({ error: 'Cron-Secret nicht konfiguriert' });
-    }
-    const authHeader = req.headers.authorization || '';
-    const headerSecret = authHeader.replace(/^Bearer\s+/, '').trim();
-    const xApiKey = req.headers['x-api-key'] || '';
-
-    const isAuthorized = headerSecret === secret || xApiKey === secret;
-    if (!isAuthorized) {
-      return res.status(403).json({ error: 'Unauthorized' });
-    }
 
     const now = new Date();
     const retentionDays = Number(process.env.EVENT_AUTO_DELETE_DAYS) || 3;

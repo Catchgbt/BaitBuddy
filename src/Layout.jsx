@@ -18,6 +18,8 @@ import { SoundProvider } from "@/components/utils/SoundManager";
 import { Toaster } from "sonner";
 import { LanguageProvider } from "@/components/i18n/LanguageContext";
 import { PlanProvider } from "@/components/premium/PlanContext";
+import { ProgressionProvider } from "@/components/progression/ProgressionContext";
+import LevelUpOverlay from "@/components/progression/LevelUpOverlay";
 import TrialBanner from "@/components/premium/TrialBanner";
 import { AnimatePresence } from "framer-motion";
 import PageTransition from "@/lib/PageTransitionEnhanced";
@@ -36,7 +38,6 @@ const QuickCatchDialog = lazy(() => import("@/components/log/QuickCatchDialog"))
 const EnhancedTicker = lazy(() => import("@/components/layout/TipTicker"));
 const FeedbackManager = lazy(() => import("@/components/feedback/FeedbackManager"));
 const AIBuddyWidgetStub = lazy(() => import("@/components/layout/AIBuddyWidgetStub"));
-const FirstLoginTutorialPrompt = lazy(() => import("@/components/tutorial/FirstLoginTutorialPrompt"));
 const GuidedTourController = lazy(() => import("@/components/guidedTour/GuidedTourController"));
 
 const LazyFallback = () => null;
@@ -371,6 +372,7 @@ function LayoutContent({ children, currentPageName }) {
     <>
       <BackButtonHandler />
       <PlanProvider>
+        <ProgressionProvider>
         <LanguageProvider>
           <HapticProvider>
             <SoundProvider>
@@ -405,11 +407,9 @@ function LayoutContent({ children, currentPageName }) {
                   <FeedbackManager />
                 </SuspenseWithErrorBoundary>
 
-                {user && (
-                  <SuspenseWithErrorBoundary>
-                    <FirstLoginTutorialPrompt />
-                  </SuspenseWithErrorBoundary>
-                )}
+                {/* Level-Up-Feier inkl. neu freigeschalteter Tools. Zeigt sich
+                    selbst nur, wenn der Server ein unquittiertes Level meldet. */}
+                {user && <LevelUpOverlay />}
 
                 <SuspenseWithErrorBoundary>
                   <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} currentPageName={currentPageName} user={user} loading={authLoading} />
@@ -733,6 +733,7 @@ function LayoutContent({ children, currentPageName }) {
             </SoundProvider>
           </HapticProvider>
           </LanguageProvider>
+        </ProgressionProvider>
         </PlanProvider>
         </>
       );

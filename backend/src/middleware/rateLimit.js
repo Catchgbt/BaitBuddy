@@ -144,3 +144,17 @@ export const authRateLimiter = rateLimit({
   store: createRateLimitStore(),
   message: { error: 'Zu viele Anmeldeversuche — bitte später erneut versuchen' },
 });
+
+// Bezahl-Endpunkte (/premium/checkout, /progression/tools/checkout). Jeder
+// Aufruf erzeugt eine Stripe-Checkout-Session — ohne Limit kann ein Konto den
+// Endpunkt in einer Schleife aufrufen und Stripe-Kontingent verbrennen. Der
+// Kauf selbst ist selten, das Limit darf also eng sein.
+export const checkoutRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 10,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  keyGenerator: rateLimitKeyGenerator,
+  store: createRateLimitStore(),
+  message: { error: 'Zu viele Kaufanfragen — bitte kurz warten' },
+});

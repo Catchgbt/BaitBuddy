@@ -29,8 +29,9 @@ import backupRoutes from './routes/backups.js';
 import notesRoutes from './routes/notes.js';
 import functionsRoutes from './routes/functions.js';
 import referralsRoutes from './routes/referrals.js';
+import progressionRoutes from './routes/progression.js';
 import adminRoutes from './routes/admin.js';
-import { aiRateLimiter, ttsRateLimiter, authRateLimiter } from './middleware/rateLimit.js';
+import { aiRateLimiter, ttsRateLimiter, authRateLimiter, checkoutRateLimiter } from './middleware/rateLimit.js';
 import { getAnthropicKey } from './lib/llm.js';
 
 const app = express();
@@ -82,6 +83,9 @@ if (process.env.NODE_ENV !== 'test') {
   app.use('/api/auth/login', authRateLimiter);
   app.use('/api/auth/register', authRateLimiter);
   app.use('/api/auth/refresh', authRateLimiter);
+  // Beide Checkout-Pfade erzeugen Stripe-Sessions — siehe checkoutRateLimiter.
+  app.use('/api/premium/checkout', checkoutRateLimiter);
+  app.use('/api/progression/tools/checkout', checkoutRateLimiter);
 }
 
 app.use('/api', authRoutes);
@@ -104,6 +108,7 @@ app.use('/api', backupRoutes);
 app.use('/api', notesRoutes);
 app.use('/api', functionsRoutes);
 app.use('/api', referralsRoutes);
+app.use('/api', progressionRoutes);
 app.use('/api', adminRoutes);
 
 app.use((req, res) => res.status(404).json({ error: `Not found: ${req.method} ${req.path}` }));

@@ -30,6 +30,7 @@ const EventDetails = lazy(() => import('@/pages/EventDetails'));
 const EventCreate = lazy(() => import('@/pages/EventCreate'));
 const MonthlyLeaderboard = lazy(() => import('@/pages/MonthlyLeaderboard'));
 const Koeder3D = lazy(() => import('@/pages/Koeder3D'));
+const Tools = lazy(() => import('@/pages/Tools'));
 import PageViewTracker from '@/components/utils/PageViewTracker';
 
 const LazyPageFallback = () => (
@@ -119,6 +120,9 @@ const AnimatedRoutes = () => {
           } />
           <Route path="/Koeder3D" element={
             <ErrorBoundary><Koeder3D /></ErrorBoundary>
+          } />
+          <Route path="/Tools" element={
+            <ErrorBoundary><Tools /></ErrorBoundary>
           } />
           <Route path="*" element={<PageNotFound />} />
         </Routes>

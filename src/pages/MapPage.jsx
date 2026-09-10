@@ -23,6 +23,7 @@ import SunriseSunsetPanel from "@/components/map/SunriseSunsetPanel";
 import PublicSpotsClusterLayer from "@/components/map/PublicSpotsClusterLayer";
 import { PERMIT_LOCATIONS, CATEGORY_LABELS, GERMAN_STATES } from "@/data/permitLocations";
 import angelparksExport from "@/data/angelparks-export.json";
+import ToolGuard from "@/components/progression/ToolGuard";
 
 // Statische Angelvereine & Parks (~700). Diese Standorte liegen als Datendatei
 // vor (nicht in der DB) und werden in die öffentlichen Spots gemerged, damit die
@@ -110,7 +111,16 @@ function MapClickHandler({ onMapClick }) {
   return null;
 }
 
-export default function MapPage() {
+
+export default function MapPage(props) {
+  return (
+    <ToolGuard toolId="fishing-map">
+      <MapPageInner {...props} />
+    </ToolGuard>
+  );
+}
+
+function MapPageInner() {
   useFeatureTracking("map");
   const { currentLocation, gpsLocation, requestGpsLocation } = useLocation();
   const [spots, setSpots] = useState([]);

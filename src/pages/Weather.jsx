@@ -12,14 +12,14 @@ import { speakWithFallback, cancelElevenLabs } from "@/components/utils/elevenLa
 import { timeoutSignal } from "@/lib/abortCompat";
 import { MapPin, AlertCircle, Thermometer, Wind, Droplets, Eye, Gauge, Cloud, Loader2 } from "lucide-react";
 
-import PremiumGuard from "@/components/premium/PremiumGuard";
+import ToolGuard from "@/components/progression/ToolGuard";
 import WeatherRadarMap from "@/components/weather/WeatherRadarMap";
 
 export default function Weather() {
   return (
-    <PremiumGuard requiredPlan="basic" feature="Wetter 5-Tage">
+    <ToolGuard toolId="weather">
       <WeatherInner />
-    </PremiumGuard>
+    </ToolGuard>
   );
 }
 

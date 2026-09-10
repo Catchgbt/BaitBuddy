@@ -18,6 +18,9 @@ export default [
       "src/components/**/*.{js,mjs,cjs,jsx}",
       "src/pages/**/*.{js,mjs,cjs,jsx}",
       "src/lib/**/*.{js,mjs,cjs,jsx}",
+      // src/contexts/ war nicht erfasst — dort ist ein Import auf eine nicht
+      // existierende Datei bis in main durchgerutscht und hat den Build zerlegt.
+      "src/contexts/**/*.{js,mjs,cjs,jsx}",
       "src/hooks/**/*.{js,mjs,cjs,jsx}",
       "src/api/**/*.{js,mjs,cjs,jsx}",
       "src/Layout.jsx",
@@ -77,7 +80,7 @@ export default [
     // in Produktion lahmgelegt, ohne dass die Vitest-Tests es zeigten (Vitest stellt
     // in ESM ein require-Shim bereit). Diese Regel macht künftiges require() im
     // Backend zum harten Lint-Fehler (CI "quality"), Tests hin oder her.
-    files: ["backend/**/*.{js,mjs,cjs}", "api/**/*.{js,mjs,cjs}"],
+    files: ["backend/**/*.{js,mjs,cjs}", "api/**/*.{js,mjs,cjs}", "shared/**/*.{js,mjs,cjs}"],
     languageOptions: {
       globals: globals.node,
       parserOptions: { ecmaVersion: 2022, sourceType: "module" },

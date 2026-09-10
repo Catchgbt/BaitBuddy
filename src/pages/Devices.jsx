@@ -21,7 +21,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import BiteDetectorSection from "@/components/ai/BiteDetectorSection";
 import DeviceHub from "@/components/devices/DeviceHub";
-import PremiumGuard from "@/components/premium/PremiumGuard";
+import ToolGuard from "@/components/progression/ToolGuard";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
 
 export default function DevicesPage() {
@@ -382,12 +382,8 @@ export default function DevicesPage() {
   }
 
   return (
-    <PremiumGuard 
-      user={user} 
-      requiredPlan="pro"
-      feature="Die Geräteintegration ist ein Pro-Feature"
-    >
+    <ToolGuard toolId="device-hub">
       {mainContent}
-    </PremiumGuard>
+    </ToolGuard>
   );
 }

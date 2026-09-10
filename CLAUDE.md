@@ -211,6 +211,122 @@ ausschließlich serverseitig (`CHECKOUT_PLANS`); der Client sendet nur die
   `BillingManager` gepuffert und ausgeführt, sobald die Details da sind
   (Timeout 15 s) — kein sofortiger „Billing service not ready"-Fehler.
 
+## 🏅 Angel-Level & Tool-Freischaltung
+
+Zehn Angel-Level schalten Werkzeuge frei. Die Regeln leben **einmal** in
+`shared/toolUnlocks.js` (importfreies ESM, Alias `@shared`) — genutzt von
+Frontend *und* Backend, damit Client-Anzeige und Server-Entscheidung nicht
+auseinanderlaufen. Tests: `shared/toolUnlocks.test.js` prüft die Kurve, die
+Katalog-Invarianten und den Gleichlauf mit `planResolver.js`/`planHierarchy.jsx`.
+
+### Gating-Regel (ODER-Logik)
+Ein Tool ist frei, wenn **Level erreicht ODER Tool gekauft ODER Plan deckt es
+ab**. Die dritte Bedingung ist entscheidend: Abonnenten dürfen durch das
+Level-System keinen Zugriff verlieren, den sie bereits bezahlt haben
+(`evaluateToolAccess` liefert dann `reason: 'plan'`). Weil das Level ein
+*kostenloser* Zugangsweg sein soll, **ersetzt** `ToolGuard` auf den 18
+Katalog-Seiten das frühere `PremiumGuard` — beide zu stapeln würde den
+Level-Weg für Free-Nutzer wertlos machen. Der jeweilige Mindest-Plan lebt
+weiter als `requiredPlan` im Katalog.
+
+### XP: abgeleitet, nicht gezählt
+`backend/src/lib/xpEngine.js` rechnet die XP bei jedem Abruf aus den echten
+Nutzerdaten (Fänge, verschiedene Fischarten, Spots, geplante Touren,
+Ausrüstung, Event-Punkte, Community-Beiträge). Kein Ledger, kein Backfill,
+keine Doppelbuchung bei Offline-Sync; löscht ein Nutzer Daten, korrigiert sich
+der Stand. Eine unlesbare Quelle steuert 0 XP bei und landet in
+`incomplete_sources` — die UI weist darauf hin, statt einen zu niedrigen Stand
+als Wahrheit zu verkaufen. Prozess-Cache: 45 s (`MemoryCache`).
+
+Damit eine Freischaltung nicht wieder verschwindet, wenn der abgeleitete Stand
+sinkt, schreibt `POST`-freies `GET /api/progression/me` erreichte
+Level-Freischaltungen einmalig in `user_tool_unlocks` fest (`source='level'`).
+
+### Endpunkte (`backend/src/routes/progression.js`)
+- `GET /api/progression/me` — XP, Level, Katalog-Status, offenes Level-Up
+- `GET /api/progression/catalog` — statische Level-/Tool-Kurve (ohne Auth)
+- `GET /api/progression/tools` — Katalog mit Nutzer-Status
+- `POST /api/progression/tools/access` — verbindliche Zugriffsprüfung
+- `POST /api/progression/level-seen` — quittiert die Level-Up-Animation
+  (`user_metadata.progression_seen_level`, wird nie zurückgesetzt)
+- `POST /api/progression/tools/checkout` — Stripe-Einmal-Checkout (0,99 €)
+- `POST /api/progression/tools/purchase` — trägt den Kauf **nach** Verifikation ein
+
+### Sofortfreischaltung 0,99 €
+Einmalkauf, kein Abo, kontogebunden, überlebt Neuinstallation
+(`user_tool_unlocks`, `UNIQUE(user_id, tool_id)`, Migration
+`20260906150000_create_tool_unlocks.sql`). Zwei Wege:
+- **Web/PWA**: Stripe-Checkout, Rücksprung auf `/Tools?unlock=success&…`
+- **Android-App**: Google-Play-Einmalprodukt (INAPP, nicht konsumierbar),
+  SKU-Schema `baitbuddy_tool_<tool_id mit _>` — Play-Richtlinie verlangt IAP
+  für digitale Güter. **Die SKUs müssen in der Play Console angelegt werden**,
+  sonst schlägt der Kauf in der App fehl (der Level-Weg bleibt unberührt).
+  Ohne Billing-Bridge im Capacitor-WebView wird gar kein Kauf angeboten
+  (`isToolPurchaseAvailable`) — ein Stripe-Checkout in der App wäre ein
+  Richtlinienverstoß.
+
+Preis und Produktzuordnung sind serverseitig; der Client sendet nur die
+`tool_id`. Replay-Schutz über partielle Unique-Indizes auf `transaction_id`
+und `purchase_token` sowie eine Metadata-Prüfung (Konto **und** Tool).
+
+### Frontend
+`ProgressionProvider` (in `Layout.jsx` innerhalb `PlanProvider`) hält den
+Zustand; `ToolGuard` sperrt Seiten, `ToolLockPanel`/`ToolLockModal` erklären
+den Weg, `LevelUpOverlay` feiert Level-Ups (Rang zuerst, dann alle neuen
+Tools), `Tools.jsx` ist die Übersicht, `ProfileProgressionCard` sitzt im
+Profil. Gesperrte Menüeinträge in der `Sidebar` bleiben sichtbar (ausgegraut
+mit Schloss + Ziel-Level) statt zu verschwinden.
+
+### Ton
+Nie als Bezahlschranke formulieren. „Noch nicht freigeschaltet“, „ab Level X
+kostenlos“, „möchtest du früher ran? 0,99 €“. Profil und Einstellungen sind
+`alwaysAvailable` und dürfen nie in den Katalog-Gate wandern.
+
+## 🎓 Geführte Tour (Sabrina)
+
+Die Tour hebt echte Bedienelemente hervor und lässt Sabrina erklären, was sie
+tun — `src/contexts/GuidedTourContext.jsx`, `src/components/guidedTour/`
+(`GuidedTourController`, `TourSpotlight`, `SabrinaTourTooltip`) und der
+Feature-Katalog `src/lib/tourFeatures.js` (DE/EN, je Nutzer-Level).
+
+Das frühere 34-Schritt-Modal (`components/tutorial/`, `tutorialSteps.jsx`) ist
+**entfernt** — es beschrieb die App per Screenshot-Diashow, während die Tour
+auf die Oberfläche selbst zeigt. Übrig bleibt die Seite `Tutorials.jsx`
+(Anleitungen für Ausgeloggte); der „Tutorial"-Knopf der Landingpage führt
+dorthin, weil die Tour einen angemeldeten Nutzer braucht.
+
+### Zustand liegt in den User-Metadaten, nicht in public.users
+`GET`/`PATCH /api/progression/tour` lesen und schreiben
+`guided_tour_step`, `guided_tour_completed` und `tour_user_level`.
+
+⚠️ **Regel: kein `supabase.from(...)` im Frontend.** Die Tour kam ursprünglich
+mit einem direkten Anon-Key-Zugriff auf `public.users`. Das konnte nicht
+funktionieren: auf der Tabelle ist RLS aktiv und es existiert **keine einzige
+Policy**, also verweigert Postgres Lesen und Schreiben — `tutorial_completed`
+wurde nie wahr und die Tour startete bei jedem Dashboard-Besuch erneut.
+Ausserdem führt die App ihre Nutzerdaten in den Auth-Metadaten (Plan,
+Referral, Angel-Level), und der Datenzugriff läuft sonst ausnahmslos über
+`frontendClient` gegen das Backend. Die Spalten aus
+`20260910120000_add_guided_tour_fields.sql` sind dadurch ungenutzt.
+
+`PATCH` ist ein Teil-Update: nur mitgeschickte Felder ändern sich, damit ein
+Fortschritt den Abschluss nicht überschreibt.
+
+### Einstiege
+- **Auto-Start** auf dem Dashboard, solange die Tour nicht abgeschlossen ist
+  (`GuidedTourController`); `localStorage.bb_tour_skipped` unterdrückt ihn.
+- **`GuidedTourRestartCard`** im Profil — setzt den Abschluss zurück und
+  startet neu. Nach dem Abschluss der einzige Weg zurück.
+
+Schlägt der Abruf fehl (offline, Serverfehler), gilt die Tour als
+abgeschlossen: sie soll bei einem Verbindungsproblem nicht ungefragt loslaufen.
+
+### Beim Anfassen
+`src/contexts/**` ist erst seit Kurzem von ESLint erfasst — vorher rutschte
+dort ein Import auf eine nicht existierende Datei bis in `main` und zerlegte
+den Build. Tests: `backend/src/routes/progression.test.js` (Tour-Endpunkte),
+`src/contexts/GuidedTourContext.test.jsx`.
+
 ## 🎁 Freundschafts-Empfehlung (Login-Popup)
 
 Nach dem Einloggen erscheint auf dem Dashboard das `ReferralInvitePopup`

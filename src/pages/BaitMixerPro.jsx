@@ -5,7 +5,7 @@ import { integrations, events } from "@/api/frontendClient";
 import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
 import { useEventActivityTracking } from "@/hooks/useEventActivityTracking";
-import PremiumGuard from "@/components/premium/PremiumGuard";
+import ToolGuard from "@/components/progression/ToolGuard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -397,7 +397,7 @@ Exportiert: ${exportData.exportDate}
   }
 
   return (
-    <PremiumGuard user={user} requiredPlan="basic" feature="KI-Köder-Mischer">
+    <ToolGuard toolId="bait-mixer">
       <div className="min-h-screen bg-gray-950 px-3 py-4 sm:p-6 pb-32">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
@@ -757,6 +757,6 @@ Exportiert: ${exportData.exportDate}
           )}
         </div>
       </div>
-    </PremiumGuard>
+    </ToolGuard>
   );
 }

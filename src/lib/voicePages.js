@@ -13,7 +13,7 @@ export const ALLOWED_PAGES = [
   "BaitMixer", "Koeder3D", "CatchStats", "ARKnotenAssistent", "Shop", "Premium",
   "PremiumPlans", "Help", "Tutorials", "Devices", "DeviceIntegration",
   "StartFishing", "UsedGear", "BathymetricCrowdsourcing",
-  "VoiceLecture"
+  "VoiceLecture", "Tools", "LiveTrip"
 ];
 
 // Aliase (immer kleingeschrieben) kanonischer Key.
@@ -29,6 +29,13 @@ const PAGE_ALIASES = {
   karte: "Map", map: "Map", gewässerkarte: "Map", gewaesserkarte: "Map",
 
   wetter: "Weather", weather: "Weather",
+
+  tools: "Tools", werkzeuge: "Tools", "meine tools": "Tools",
+  toolübersicht: "Tools", tooluebersicht: "Tools",
+  freischaltung: "Tools", freischaltungen: "Tools",
+  angellevel: "Tools", "angel level": "Tools", level: "Tools",
+
+  livetour: "LiveTrip", "live tour": "LiveTrip", livetrip: "LiveTrip",
 
   community: "Community", forum: "Community", feed: "Community",
 

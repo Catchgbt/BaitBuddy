@@ -10,12 +10,19 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   X,
   LogOut,
+  Lock,
 } from "lucide-react";
+import { useProgression } from "@/components/progression/ProgressionContext";
+import ToolLockModal from "@/components/progression/ToolLockModal";
 
 export default function Sidebar({ isOpen, setIsOpen, currentPageName, user, loading }) {
   const { triggerHaptic } = useHaptic();
   const { playSound } = useSound();
   const { t } = useLanguage();
+  // Gesperrte Tools werden ausgegraut angezeigt statt versteckt — sie sind das
+  // sichtbare Ziel des Angel-Levels.
+  const { isPageUnlocked, getToolForPage } = useProgression();
+  const [lockedToolId, setLockedToolId] = React.useState(null);
 
   const mainItems = [
     { name: "Dashboard", path: "Dashboard", key: "nav.dashboard" },
@@ -37,6 +44,7 @@ export default function Sidebar({ isOpen, setIsOpen, currentPageName, user, load
   ];
 
   const moreItems = [
+    { name: "Meine Tools", path: "Tools", key: "nav.tools" },
     { name: "Ausrüstung", path: "Gear", key: "nav.gear" },
     { name: "Meine Trips", path: "TripPlanner", key: "nav.trips" },
     { name: "Community", path: "Community", key: "nav.community" },
@@ -97,6 +105,30 @@ export default function Sidebar({ isOpen, setIsOpen, currentPageName, user, load
       const translated = t(item.key);
       // Fallback auf item.name, wenn Key nicht übersetzt wurde
       displayText = (translated && translated !== item.key) ? translated : item.name;
+    }
+
+    const locked = !isPageUnlocked(item.path);
+    if (locked) {
+      const tool = getToolForPage(item.path);
+      return (
+        <button
+          key={item.path}
+          type="button"
+          onClick={() => {
+            triggerHaptic('selection');
+            playSound('selection');
+            setLockedToolId(tool?.id || null);
+          }}
+          aria-label={`${displayText} — freischaltbar ab Level ${tool?.requiredLevel ?? ''}`}
+          className="flex items-center justify-between gap-1 px-2.5 py-1.5 rounded-lg transition-all text-xs leading-tight min-h-[38px] active:scale-95 focus:ring-2 focus:ring-cyan-400 text-gray-500 active:bg-gray-800 text-left"
+        >
+          <span className="truncate">{displayText}</span>
+          <span className="flex-shrink-0 flex items-center gap-1 text-[9px] font-semibold text-amber-500/80">
+            <Lock className="w-3 h-3" aria-hidden="true" />
+            {tool?.requiredLevel ?? ''}
+          </span>
+        </button>
+      );
     }
 
     return (
@@ -236,6 +268,13 @@ export default function Sidebar({ isOpen, setIsOpen, currentPageName, user, load
           </div>
         </div>
       </div>
+
+      <ToolLockModal
+        toolId={lockedToolId}
+        open={!!lockedToolId}
+        onOpenChange={(open) => !open && setLockedToolId(null)}
+        onUnlocked={() => setIsOpen(false)}
+      />
     </>
   );
 }

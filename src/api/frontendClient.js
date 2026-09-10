@@ -910,6 +910,22 @@ export const water = {
   history: ()               => api.get('/api/water/history'),
 };
 
+// Angel-Level, XP und Tool-Freischaltung. Der Server ist die Autorität —
+// `access` ist die verbindliche Prüfung, alles andere dient der Anzeige.
+export const progression = {
+  me:       (refresh = false) => api.get(`/api/progression/me${refresh ? '?refresh=1' : ''}`),
+  catalog:  ()                => api.get('/api/progression/catalog'),
+  tools:    ()                => api.get('/api/progression/tools'),
+  access:   (toolId)          => api.post('/api/progression/tools/access', { tool_id: toolId }),
+  markLevelSeen: (level)      => api.post('/api/progression/level-seen', { level }),
+  checkout: (toolId)          => api.post('/api/progression/tools/checkout', { tool_id: toolId }),
+  purchase: (payload)         => api.post('/api/progression/tools/purchase', payload),
+  // Geführte Tour: Fortschritt, Abschluss und Nutzer-Level liegen in den
+  // User-Metadaten, nicht in public.users (dort greift RLS ohne Policy).
+  tour:       ()              => api.get('/api/progression/tour'),
+  updateTour: (patch)         => api.patch('/api/progression/tour', patch),
+};
+
 export const user = {
   deleteAccount: () => api.del('/api/user/account'),
   startSession:  (feature) => api.post('/api/user/sessions/start', { feature }),

@@ -35,7 +35,9 @@ vi.mock('@/components/location/LocationManager', () => ({
   useLocation: () => ({ currentLocation: null }),
 }));
 
-vi.mock('@/components/premium/PremiumGuard', () => ({
+// Der Trip-Planer hängt seit dem Tool-Unlock-System am ToolGuard (Level 3).
+// Für diesen Test zählt nur das Formular-Verhalten, nicht die Freischaltung.
+vi.mock('@/components/progression/ToolGuard', () => ({
   default: ({ children }) => <>{children}</>,
 }));
 

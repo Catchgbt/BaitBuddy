@@ -6,6 +6,7 @@ import LureControls from '@/components/lures3d/LureControls';
 import LureInfoPanel from '@/components/lures3d/LureInfoPanel';
 import { useFeatureTracking } from '@/hooks/useFeatureTracking';
 import { PHASE } from '@/components/lures3d/lureAnimator';
+import ToolGuard from "@/components/progression/ToolGuard";
 
 // Status-Text zur aktuellen Animationsphase — erklärt beim Zuschauen,
 // was der Köder gerade macht und wann der Biss zu erwarten ist.
@@ -31,7 +32,16 @@ function phaseLabel(phaseInfo, styleParams) {
   return 'Pause';
 }
 
-export default function Koeder3D() {
+
+export default function Koeder3D(props) {
+  return (
+    <ToolGuard toolId="lure-3d">
+      <Koeder3DInner {...props} />
+    </ToolGuard>
+  );
+}
+
+function Koeder3DInner() {
   useFeatureTracking('lure_3d');
 
   const [lureId, setLureId] = useState(LURES[0].id);

@@ -764,7 +764,12 @@ create policy exam_questions_allow_read on public.exam_questions for select usin
 create policy public_monthly_leaderboard on public.monthly_leaderboards for select using (true);
 create policy own_referrals_read on public.referrals for select using (auth.uid() = referrer_user_id or auth.uid() = referred_user_id);
 create policy own_rewards on public.reward_activations for select using (user_id = (auth.jwt() ->> 'email'));
-create policy "Allow all to read their own tickets" on public.support_tickets for select using (true);
+-- Korrigiert (siehe supabase/migrations/20260909120000_fix_support_tickets_rls.sql):
+-- die urspruengliche Cloud-Policy hiess "Allow all to read their own tickets",
+-- pruefte aber `using (true)` und gab damit jedem Inhaber des Anon-Keys alle
+-- Tickets inkl. Klarname, E-Mail und Nachrichtentext frei. Ein frisch
+-- aufgesetzter Docker-Stack darf nicht mit dieser Luecke starten.
+create policy support_tickets_owner_select on public.support_tickets for select to authenticated using (user_email = (auth.jwt() ->> 'email'));
 create policy user_backups_owner_modify on public.user_backups for all using (created_by = (auth.jwt() ->> 'email')) with check (created_by = (auth.jwt() ->> 'email'));
 create policy user_backups_owner_select on public.user_backups for select using (created_by = (auth.jwt() ->> 'email'));
 create policy own_referral_code_read on public.user_referral_codes for select using (auth.uid() = user_id);
