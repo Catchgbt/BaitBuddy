@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { GraduationCap, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,11 @@ import {
   markTutorialPrompted,
   shouldOfferTutorial,
 } from '@/lib/tutorialState';
-import TutorialModal from './TutorialModal';
+// Lazy: diese Komponente wird von Layout.jsx eager gerendert. Ein statischer
+// Import zoege tutorialSteps und die TTS-Utility in den Start-Pfad jedes
+// Seitenaufrufs — messbar am Prefetch der Seiten-Chunks (der Offline-E2E-Test
+// lief dadurch in ein nicht geladenes Logbook-Chunk).
+const TutorialModal = lazy(() => import('./TutorialModal'));
 
 // Bietet neuen Nutzern die App-Tour genau einmal an.
 // =============================================================================
@@ -120,11 +124,15 @@ export default function FirstLoginTutorialPrompt() {
         )}
       </AnimatePresence>
 
-      <TutorialModal
-        isOpen={tutorialOpen}
-        onClose={() => setTutorialOpen(false)}
-        onComplete={markTutorialCompleted}
-      />
+      {tutorialOpen && (
+        <Suspense fallback={null}>
+          <TutorialModal
+            isOpen
+            onClose={() => setTutorialOpen(false)}
+            onComplete={markTutorialCompleted}
+          />
+        </Suspense>
+      )}
     </>
   );
 }

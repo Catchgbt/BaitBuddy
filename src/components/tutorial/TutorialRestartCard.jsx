@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import { GraduationCap } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/components/i18n/LanguageContext';
 import { isTutorialCompleted, markTutorialCompleted } from '@/lib/tutorialState';
-import TutorialModal from './TutorialModal';
+const TutorialModal = lazy(() => import('./TutorialModal'));
 
 // Wiedereinstieg ins Tutorial aus dem Profil.
 // =============================================================================
@@ -56,14 +56,18 @@ export default function TutorialRestartCard() {
         </Button>
       </CardContent>
 
-      <TutorialModal
-        isOpen={open}
-        onClose={() => setOpen(false)}
-        onComplete={() => {
-          markTutorialCompleted();
-          setCompleted(true);
-        }}
-      />
+      {open && (
+        <Suspense fallback={null}>
+          <TutorialModal
+            isOpen
+            onClose={() => setOpen(false)}
+            onComplete={() => {
+              markTutorialCompleted();
+              setCompleted(true);
+            }}
+          />
+        </Suspense>
+      )}
     </Card>
   );
 }

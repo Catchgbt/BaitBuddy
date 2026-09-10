@@ -52,7 +52,9 @@ describe('FirstLoginTutorialPrompt', () => {
 
     await user.click(screen.getByRole('button', { name: 'Tour starten' }));
 
-    expect(screen.getByTestId('tutorial-modal')).toBeInTheDocument();
+    // findBy*, weil TutorialModal lazy geladen wird (Suspense loest den
+    // dynamischen Import erst im naechsten Microtask auf).
+    expect(await screen.findByTestId('tutorial-modal')).toBeInTheDocument();
     expect(wasTutorialPrompted()).toBe(true);
   });
 
@@ -89,7 +91,7 @@ describe('FirstLoginTutorialPrompt', () => {
     await passDelay();
 
     await user.click(screen.getByRole('button', { name: 'Tour starten' }));
-    await user.click(screen.getByRole('button', { name: 'fertig' }));
+    await user.click(await screen.findByRole('button', { name: 'fertig' }));
 
     expect(isTutorialCompleted()).toBe(true);
   });

@@ -58,7 +58,13 @@ export function useActionQueue() {
     failedItems: [],
   });
 
-  const processQueueRef = useRef<NodeJS.Timeout | null>(null);
+  // ReturnType<typeof setTimeout> statt NodeJS.Timeout: `NodeJS` ist ein
+  // Ambient-Namespace aus @types/node, und jsconfig.json setzt bewusst
+  // "types": [] — dieser Browser-Code darf sich nicht darauf verlassen, dass
+  // Node-Typen zufaellig ueber eine transitive .d.ts hereinkommen. Genau daran
+  // ist der Typecheck in CI gescheitert, waehrend er lokal durchlief.
+  // Im Browser liefert setTimeout ohnehin eine number, kein Timeout-Objekt.
+  const processQueueRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const enqueue = useCallback((action: () => Promise<void>, maxRetries = 3) => {
     const item: ActionQueueItem = {
