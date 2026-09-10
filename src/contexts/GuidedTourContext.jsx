@@ -1,5 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useAuth } from './AuthContext';
+// Der AuthContext liegt in src/lib/, nicht neben dieser Datei — src/contexts/
+// enthaelt sonst nichts. Der relative Import './AuthContext' liess den Build
+// scheitern ("Could not resolve ./AuthContext").
+import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/api/supabaseClient';
 
 const GuidedTourContext = createContext();

@@ -15,13 +15,23 @@ const { googleAuthMock, androidPublisherMock, stripeInstanceMock } = vi.hoisted(
 
 vi.mock('googleapis', () => ({
   google: {
-    auth: { GoogleAuth: googleAuthMock },
+    // Ebenfalls ein Konstruktor (`new google.auth.GoogleAuth(...)`).
+    auth: { GoogleAuth: class GoogleAuthMock {
+      constructor(...args) { googleAuthMock(...args); }
+    } },
     androidpublisher: vi.fn(() => androidPublisherMock),
   },
 }));
 
 vi.mock('stripe', () => ({
-  default: vi.fn(() => stripeInstanceMock),
+  // Konstruktor-Mock als class: eine Pfeilfunktion hat kein [[Construct]],
+  // `new Stripe(key)` in purchaseVerification.js wirft damit
+  // "is not a constructor".
+  default: class StripeMock {
+    constructor() {
+      return stripeInstanceMock;
+    }
+  },
 }));
 
 let verifyGooglePlayPurchase;
