@@ -6,11 +6,11 @@ on:
       version_code:
         description: 'Android versionCode (muss hoeher sein als der zuletzt in der Play Console hochgeladene)'
         required: false
-        default: '30'
+        default: '31'
       version_name:
         description: 'Android versionName'
         required: false
-        default: '2.117899.0'
+        default: '2.117899.1'
   push:
     tags:
       - 'v*'
@@ -54,9 +54,10 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x android/gradlew
 
-      # FIX 1: Gradle auf 8.9 anheben (8.2.1 verursacht "Failed to create Jar file"
-      #        und ist zu alt fuer SDK/Build-Tools 36)
-      - name: Upgrade Gradle wrapper to 8.9
+      # Gradle-Wrapper steht bereits auf 8.9 (siehe gradle-wrapper.properties).
+      # Dieser sed stellt nur sicher, dass ein versehentliches Downgrade durch
+      # andere Tools rückgängig gemacht wird – er ist idempotent.
+      - name: Ensure Gradle 8.9
         run: |
           sed -i 's|gradle-[0-9.]*-all.zip|gradle-8.9-all.zip|' android/gradle/wrapper/gradle-wrapper.properties
           sed -i 's|gradle-[0-9.]*-bin.zip|gradle-8.9-bin.zip|' android/gradle/wrapper/gradle-wrapper.properties
@@ -102,8 +103,8 @@ jobs:
             -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
             -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
             -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }} \
-            -PappVersionCode=${{ github.event.inputs.version_code || '30' }} \
-            -PappVersionName=${{ github.event.inputs.version_name || '2.117899.0' }}
+            -PappVersionCode=${{ github.event.inputs.version_code || '31' }} \
+            -PappVersionName=${{ github.event.inputs.version_name || '2.117899.1' }}
         env:
           ANDROID_HOME: ${{ env.ANDROID_SDK_ROOT }}
 
