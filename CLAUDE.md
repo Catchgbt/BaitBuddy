@@ -300,6 +300,53 @@ die passende Android-Permission deklariert ist. `CAMERA`,
 > „nur Vercel & Supabase". Fällt der KV-Store aus, blockiert das die App nicht
 > (Fail-Open).
 
+### Self-Hosting per Docker (Alternative zu Vercel + Supabase-Cloud)
+
+Unter `docker/` liegt ein vollständiges `docker compose`-Setup, das den
+**Supabase-Stack selbst** (Postgres, GoTrue, PostgREST, Storage, Kong) plus
+Backend, Frontend (Nginx) und einen Cron-Container auf einem Rechner betreibt.
+Anleitung: `docs/DOCKER_SELFHOST.md`. Bewusste Entscheidung: Supabase wird
+**betrieben, nicht ersetzt** — Auth (`user_metadata` für Plan/Referral),
+Storage-Bucket `catches` und die 25 Backend-Module mit `supabase.from(...)`
+bleiben unverändert; nur `SUPABASE_URL`/`VITE_SUPABASE_URL` zeigen auf Kong.
+
+- `docker/db/init/90-baitbuddy-schema.sql` ist der **vollständige
+  Schema-Snapshot** der Cloud-DB (54 Tabellen, Policies, Trigger) vom
+  2026-09-05 und läuft nur beim ersten `db`-Start. Neue Schemaänderungen
+  weiterhin als Datei nach `supabase/migrations/` (idempotent schreiben) und
+  mit `docker/scripts/apply-migrations.sh` einspielen.
+- `supabase/schema.sql` ist **unvollständig** (26 von 54 Tabellen) — bei
+  Schemafragen den Snapshot als Referenz nehmen.
+- `vercel.json`-Crons ↔ `docker/cron/crontab`: beide Listen bei neuen
+  Cron-Endpunkten **synchron** halten.
+- Vercel-spezifisch bleibt nur `api/[...path].mjs` + `vercel.json`; beide
+  Deploy-Wege nutzen denselben Code.
+
+#### ⚠️ Regel: Der geteilte Supabase-Client darf NIE eine User-Session bekommen
+
+`backend/src/lib/supabase.js` exportiert **einen prozessweit geteilten**
+Service-Role-Client. supabase-js baut den `Authorization`-Header pro Request aus
+`auth.getSession() ?? supabaseKey`. Jeder Aufruf, der auf diesem Client eine
+Session anlegt (`signInWithPassword`, `setSession`, `verifyOtp` …), schaltet das
+**gesamte Backend** dauerhaft von `service_role` auf `authenticated` um — ab da
+greift RLS auch fürs Backend: Lesen liefert leere Ergebnisse, Schreiben
+scheitert mit „violates row-level security policy". Der Fehler ist
+zustandsabhängig und tritt erst nach dem ersten Login einer Instanz auf.
+
+Deshalb sprechen `POST /api/auth/login` und `POST /api/auth/register` GoTrue
+**direkt per `fetchWithTimeout`** an (`passwordGrant()` in `routes/auth.js`),
+genau wie `POST /api/auth/refresh`. `supabase.auth.admin.*` und
+`supabase.auth.getUser(token)` sind unbedenklich — die setzen keine Session.
+
+#### Storage-URLs beim Self-Hosting: `SUPABASE_PUBLIC_URL`
+
+`getPublicUrl()` baut Links immer aus `SUPABASE_URL`. Im Docker-Setup ist das
+die containerinterne Adresse (`http://kong:8000`), die kein Browser auflösen
+kann. `backend/src/lib/supabase.js` exportiert daher `toPublicStorageUrl()`,
+das die Basis-URL durch `SUPABASE_PUBLIC_URL` ersetzt (ohne diese Env-Variable
+unverändert, also identisches Cloud-Verhalten). Neue Storage-Links **immer**
+durch diese Funktion schicken.
+
 ---
 
 ## 📦 Build & Release

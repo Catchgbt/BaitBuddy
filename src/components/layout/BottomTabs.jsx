@@ -1,121 +1,39 @@
-import React from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import {
-  Home,
-  Map,
-  BookOpen,
-  User,
-  Brain,
-  Cloud,
-  Users,
-  Trophy,
-  Crown,
-  Settings,
-  Award,
-  GraduationCap,
-  Calendar,
-  Wrench,
-  Beaker,
-  Anchor,
-  ShoppingBag,
-  Compass,
-  ScrollText,
-  Sparkles,
-} from "lucide-react";
-import { useNavigationContext } from "@/lib/NavigationContext";
-import { trackFeatureClick } from "@/components/utils/tracker";
-
-const tabs = [
-  { name: "Dashboard", path: "Dashboard", icon: Home },
-  { name: "Map", path: "Map", icon: Map },
-  { name: "Logbook", path: "Logbook", icon: BookOpen },
-  { name: "KI-Buddy", path: "KiBuddyBeta", icon: Brain },
-  { name: "Wetter", path: "Weather", icon: Cloud },
-  { name: "Wasser", path: "WaterAnalysis", icon: Compass },
-  { name: "Tripplan", path: "TripPlanner", icon: Calendar },
-  { name: "Köder", path: "BaitMixer", icon: Beaker },
-  { name: "Geräte", path: "Devices", icon: Wrench },
-  { name: "AR Knoten", path: "ARKnotenAssistent", icon: Anchor },
-  { name: "Quiz", path: "Quiz", icon: GraduationCap },
-  { name: "Prüfung", path: "AngelscheinPruefungSchonzeiten", icon: ScrollText },
-  { name: "Lizenzen", path: "Licenses", icon: Award },
-  { name: "Community", path: "Community", icon: Users },
-  { name: "Events", path: "Events", icon: Sparkles },
-  { name: "Rang", path: "Rank", icon: Trophy },
-  { name: "Shop", path: "Shop", icon: ShoppingBag },
-  { name: "Premium", path: "PremiumPlans", icon: Crown },
-  { name: "Profil", path: "Profile", icon: User },
-  { name: "Settings", path: "Settings", icon: Settings },
-];
-
+import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Plus, Fish, MapPin, Calendar, Brain } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { useNavigationContext } from '@/lib/NavigationContext';
+import { useBuddyPreferences } from '@/lib/BuddyPreferencesContext';
+import { navigationItems } from '@/components/navigation/navigationItems';
+import { trackFeatureClick } from '@/components/utils/tracker';
 export default function BottomTabs() {
+  const { navigation } = useBuddyPreferences();
+  const { switchTab, getTabStack } = useNavigationContext();
   const location = useLocation();
   const navigate = useNavigate();
-  const { switchTab, getTabStack } = useNavigationContext();
-
-  const currentSegment = location.pathname.replace(/^\//, '').split('/')[0] || 'Dashboard';
-  const isActive = (path) => currentSegment === path;
-
-  const handleTabClick = (e, tab) => {
-    e.preventDefault();
-    trackFeatureClick(tab.path, { source: "bottom_tabs" });
-    switchTab(tab.path);
-    const tabStack = getTabStack(tab.path);
-    if (tabStack.length > 0) {
-      navigate(tabStack[tabStack.length - 1]);
-    } else {
-      navigate(createPageUrl(tab.path));
-    }
+  const [open, setOpen] = useState(false);
+  const activePage = location.pathname.split('/')[1] || 'Dashboard';
+  const follow = (event, path) => {
+    event.preventDefault(); trackFeatureClick(path, { source: 'bottom_tabs' }); switchTab(path);
+    const stack = getTabStack(path); navigate(stack.length ? stack[stack.length - 1] : `/${path}`);
   };
-
-  return (
-    <nav
-      aria-label="Hauptnavigation"
-      className="md:hidden fixed bottom-0 left-0 right-0 bg-gray-950/75 backdrop-blur-xl border-t border-gray-800 z-50"
-      style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0px)' }}
-      role="tablist"
-    >
-      <div
-        className="flex items-stretch overflow-x-auto overflow-y-hidden scroll-smooth snap-x snap-mandatory min-h-[56px]"
-        style={{
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          WebkitOverflowScrolling: 'touch',
-        }}
-      >
-        <style>{`
-          nav[aria-label="Hauptnavigation"] > div::-webkit-scrollbar { display: none; }
-        `}</style>
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const active = isActive(tab.path);
-
-          return (
-            <Link
-              key={tab.path}
-              to={createPageUrl(tab.path)}
-              onClick={(e) => handleTabClick(e, tab)}
-              aria-label={tab.name}
-              aria-current={active ? 'page' : undefined}
-              aria-selected={active}
-              role="tab"
-              className="flex flex-col items-center justify-center min-w-[68px] px-3 py-1.5 snap-start touch-target transition-colors"
-            >
-              <Icon
-                aria-hidden="true"
-                className={`w-6 h-6 mb-1 transition-colors ${active ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]' : 'text-gray-400'}`}
-              />
-              <span
-                className={`text-[11px] font-medium whitespace-nowrap transition-colors ${active ? 'text-cyan-400' : 'text-gray-400'}`}
-                aria-hidden="true"
-              >
-                {tab.name}
-              </span>
-            </Link>
-          );
-        })}
+  const renderLink = path => {
+    const { name, icon: Icon } = navigationItems[path];
+    return <Link key={path} to={`/${path}`} onClick={e => follow(e, path)} className="bb-bottom-link" aria-current={activePage === path ? 'page' : undefined}><Icon size={22} aria-hidden="true"/><span>{name}</span></Link>;
+  };
+  const split = Math.ceil(navigation.length / 2);
+  return <>
+    <nav className="bb-bottom" aria-label="Hauptnavigation"><div className="bb-bottom-items">
+      {navigation.slice(0, split).map(renderLink)}
+      <button type="button" className="bb-bottom-plus" aria-label="Schnellaktionen öffnen" onClick={() => setOpen(true)}><Plus size={28}/></button>
+      {navigation.slice(split).map(renderLink)}
+    </div></nav>
+    <Sheet open={open} onOpenChange={setOpen}><SheetContent side="bottom" className="bb-app rounded-t-3xl border-0 pb-[calc(24px+env(safe-area-inset-bottom))] [&>button]:h-11 [&>button]:w-11">
+      <SheetHeader><SheetTitle className="text-white">Was möchtest du machen?</SheetTitle><SheetDescription className="bb-muted">Dein nächster Schritt am Wasser.</SheetDescription></SheetHeader>
+      <div className="grid gap-3 mt-6 max-w-xl mx-auto">
+        <button type="button" className="bb-secondary" onClick={() => { setOpen(false); window.dispatchEvent(new CustomEvent('openCatchDialog')); }}><Fish size={20}/>Fang hinzufügen</button>
+        {[[Calendar, 'Ausflug planen', '/TripPlanner?new=1'], [Brain, 'KI-Buddy', '/KiBuddyBeta'], [MapPin, 'Spot speichern', '/Map?addSpot=1']].map(([Icon, label, to]) => <Link key={to} className="bb-secondary" to={to} onClick={() => setOpen(false)}><Icon size={20}/>{label}</Link>)}
       </div>
-    </nav>
-  );
+    </SheetContent></Sheet>
+  </>;
 }

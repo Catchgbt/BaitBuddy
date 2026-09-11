@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { requireAuth, optionalAuth, requireAdmin } from '../middleware/auth.js';
-import { supabase } from '../lib/supabase.js';
+import { supabase, toPublicStorageUrl } from '../lib/supabase.js';
 import { Buffer } from 'buffer';
 import path from 'path';
 import { parseDepthFile } from '../lib/depthParser.js';
@@ -385,7 +385,9 @@ router.post('/files/upload', requireAuth, async (req, res) => {
       return res.status(500).json({ error: 'Konnte öffentliche URL nicht generieren' });
     }
 
-    return res.json({ file_url: urlData.publicUrl });
+    // Beim Self-Hosting zeigt getPublicUrl auf die containerinterne Adresse
+    // (z. B. http://kong:8000) — für den Browser auf die öffentliche umschreiben.
+    return res.json({ file_url: toPublicStorageUrl(urlData.publicUrl) });
   } catch (err) {
     console.error('Upload error:', err);
     return res.status(500).json({ error: 'Unerwarteter Fehler beim Upload' });

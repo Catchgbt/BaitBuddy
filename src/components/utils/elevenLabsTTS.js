@@ -10,7 +10,7 @@
 // und der Text steht weiterhin im Chat.
 
 import { functions } from "@/api/frontendClient";
-import { getPreferredTtsVoice } from "@/lib/ttsVoice";
+import { getPreferredTtsVoice, getActiveBuddyAudio } from "@/lib/ttsVoice";
 
 // Modul-globaler Singleton: Es spielt bewusst immer nur EINE Stimme gleichzeitig.
 // Konsequenz: Gleichzeitiges TTS aus dem KI-Buddy (KiBuddyBeta) und dem schwebenden Widget
@@ -68,6 +68,8 @@ function base64ToBlob(audioBase64, contentType) {
  *   nichts abgespielt und keiner der Callbacks feuert).
  */
 export async function speakWithElevenLabs(text, callbacks = {}, options = {}) {
+  if (!getActiveBuddyAudio().voiceEnabled) return null;
+  options = { ...options, rate: (options.rate || 1) * getActiveBuddyAudio().speed };
   if (!text || typeof text !== "string" || text.trim().length === 0) {
     throw new Error("Kein Text für TTS");
   }
@@ -272,6 +274,7 @@ export function splitIntoSentences(text, opts = {}) {
 // wenn die Queue zwischenzeitlich abgelöst/abgebrochen wurde bzw. kein Audio
 // kam). Wirft bei Netzwerkfehlern — die Queue überspringt den Satz dann still.
 async function fetchSentenceBlob(text, myGeneration) {
+  if (!getActiveBuddyAudio().voiceEnabled) return null;
   const response = await functions.invoke("textToSpeech", { text, voice: getPreferredTtsVoice() });
   if (myGeneration !== generation) return null;
   const payload = response?.audioBase64 ? response : response?.data;
@@ -319,7 +322,8 @@ function playSentenceBlob(blob, myGeneration, rate) {
  * @returns {{ push: (chunk: string) => void, flush: () => void, cancel: () => void }}
  */
 export function createSpeechQueue(options = {}) {
-  const { rate = 1.0, onDrain } = options;
+  const { onDrain } = options;
+  const rate = (options.rate || 1) * getActiveBuddyAudio().speed;
 
   // Wie speakWithElevenLabs: laufende Wiedergabe abbrechen und eigene
   // Generation beanspruchen. Ein späterer speak-/cancel-/Queue-Aufruf bumpt

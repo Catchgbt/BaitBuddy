@@ -1,6 +1,8 @@
 import React, { Suspense, lazy, useEffect } from 'react'
 import './App.css'
 import './globals.css'
+import './styles/baitbuddy-v2.css'
+import { BuddyPreferencesProvider } from '@/lib/BuddyPreferencesContext';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
@@ -154,6 +156,7 @@ function App() {
     <ErrorBoundary>
       <SplashIntro />
       <AuthProvider>
+        <BuddyPreferencesProvider>
         <ThemeProvider>
           <QueryClientProvider client={queryClientInstance}>
               <Router>
@@ -167,6 +170,7 @@ function App() {
             <VisualEditAgent />
           </QueryClientProvider>
         </ThemeProvider>
+        </BuddyPreferencesProvider>
       </AuthProvider>
     </ErrorBoundary>
   )

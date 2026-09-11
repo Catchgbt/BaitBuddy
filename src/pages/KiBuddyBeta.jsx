@@ -1,3 +1,6 @@
+import { Link, useSearchParams } from 'react-router-dom';
+import { Settings2 } from 'lucide-react';
+import { useBuddyPreferences } from '@/lib/BuddyPreferencesContext';
 import { useState, useRef, useEffect } from "react";
 import { catchgbtChat } from "@/functions/catchgbtChat";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
@@ -21,14 +24,17 @@ export default function KiBuddyBeta() {
 }
 
 function KiBuddyBetaInner() {
+  const { buddy, activeBuddy } = useBuddyPreferences();
+  const [searchParams] = useSearchParams();
   useFeatureTracking("ai_buddy");
   const { trackAIChat } = useEventActivityTracking();
   // Begrüßung variiert bei jedem Öffnen (Tageszeit, Stimmung, gelegentlich ein
   // Funktions-Tipp) statt eines immer gleichen statischen Textes.
   const [messages, setMessages] = useState(() => [{ role: "system", text: buildGreeting({}) }]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(() => searchParams.get("question") || "");
   const [status, setStatus] = useState("");
-  const [tonAn, setTonAn] = useState(true);
+  const [tonAn, setTonAn] = useState(buddy.voiceEnabled);
+  useEffect(() => setTonAn(buddy.voiceEnabled), [buddy.voiceEnabled]);
   const [recording, setRecording] = useState(false);
   const [waveBars, setWaveBars] = useState([4, 4, 4, 4, 4]);
   const [interimTranscript, setInterimTranscript] = useState("");
@@ -448,12 +454,15 @@ function KiBuddyBetaInner() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
+    <div className="bb-app bb-voice-page min-h-screen flex items-start justify-center p-4 pb-32">
       <style>{`@keyframes bbDot { 0%,80%,100% { opacity: 0.3; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }`}</style>
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-2xl">
         <div style={{ background: "#060d1a", borderRadius: 16, overflow: "hidden", fontFamily: "'Inter',sans-serif", border: "1px solid #1a2a3a", display: "flex", flexDirection: "column" }}>
 
           {/* Header */}
+          <div className="p-5 flex items-center justify-between"><div><p className="bb-eyebrow">KI-Buddy</p><h1 className="text-2xl font-semibold mt-1">Mit {activeBuddy.name} ans Wasser.</h1><p className="bb-muted">Frag mich alles rund ums Angeln.</p></div><Link className="bb-secondary" to="/Settings?tab=buddy" aria-label="KI-Buddy einstellen"><Settings2 size={20}/></Link></div>
+          <img src={activeBuddy.portrait} alt={activeBuddy.name + ', dein KI-Buddy'} className="w-full h-56 sm:h-72 object-cover object-[center_28%]"/>
+          <div className="p-4 grid sm:grid-cols-2 gap-2">{['Wo finde ich passende Spots und gutes Wetter?', 'Welche Köder passen zu meinen letzten Fängen?', 'Was brauche ich für meinen nächsten Angelausflug?', 'Wann ist heute die beste Angelzeit?'].map(question => <button type="button" key={question} className="bb-secondary text-left text-sm" onClick={() => setInput(question)}>{question}</button>)}</div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px 10px", borderBottom: "1px solid #111e2e" }}>
             <div>
               <span style={{ fontSize: 16, fontWeight: 600, color: "#22d3c8", letterSpacing: 0.3 }}>KI Voice-Buddy</span>
@@ -473,7 +482,7 @@ function KiBuddyBetaInner() {
             {!conversationActive ? (
               <button type="button"
                 onClick={startConversation}
-                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "linear-gradient(135deg,#7c3aed,#4f46e5)", border: "none", borderRadius: 12, padding: "12px 16px", color: "#ffffff", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "#0891b2", border: "none", borderRadius: 12, padding: "12px 16px", color: "#ffffff", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
               >
                 Gespräch starten
               </button>
@@ -501,7 +510,7 @@ function KiBuddyBetaInner() {
 
           {/* Status hint */}
           <div style={{ padding: "6px 16px 10px", fontSize: 11, color: "#445566", fontStyle: "italic", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-            <span>{statusLabels[status] || statusLabels[""]}</span>
+            <span role="status" aria-live="polite">{statusLabels[status] || statusLabels[""]}</span>
             {confidence !== null && (
               <span style={{ color: "#22d3c8", fontStyle: "normal", fontWeight: 500 }}>Erkennung: {confidence}%</span>
             )}

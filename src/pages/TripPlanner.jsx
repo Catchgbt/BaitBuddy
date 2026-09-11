@@ -67,7 +67,7 @@ function TripPlannerContent() {
   const { currentLocation } = useLocation();
   const [offlineNotes, setOfflineNotes] = useState({});
   const [editingNotes, setEditingNotes] = useState({});
-  const [formOpen, setFormOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(() => new URLSearchParams(window.location.search).get("new") === "1");
   const [editingPlan, setEditingPlan] = useState(null);
   const [activeEventId, setActiveEventId] = useState(null);
 

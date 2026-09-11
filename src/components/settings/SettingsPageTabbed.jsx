@@ -10,12 +10,19 @@ import TickerSettings from './TickerSettings';
 import ActionNotificationSettings from './ActionNotificationSettings';
 import DeleteAccountSection from './DeleteAccountSection';
 import { useTheme } from '@/lib/ThemeContext';
+import { useSearchParams } from 'react-router-dom';
+import BuddySettings from './BuddySettings';
+import NavigationSettings from './NavigationSettings';
 
 export default function SettingsPageTabbed() {
-  const [activeTab, setActiveTab] = useState('general');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'general';
+  const setActiveTab = tab => setSearchParams({ tab }, { replace: true });
   const { animationsEnabled } = useTheme();
 
   const tabs = [
+    { id: 'buddy', label: 'KI-Buddy', icon: Volume2, component: BuddySettings },
+    { id: 'navigation', label: 'Navigation', icon: Settings, component: NavigationSettings },
     {
       id: 'general',
       label: 'Allgemein',
@@ -95,7 +102,7 @@ export default function SettingsPageTabbed() {
                   >
                     <Icon className={`w-4 h-4 ${isActive ? '' : ''}`} />
                     <span className="hidden sm:inline text-sm font-medium">{tab.label}</span>
-                    <span className="sm:hidden text-sm font-medium">{tab.label.slice(0, 3)}</span>
+                    <span className="sm:hidden text-sm font-medium">{tab.label}</span>
                   </button>
                 );
               })}

@@ -6,16 +6,42 @@ import { fetchWithTimeout } from '../lib/fetchWithTimeout.js';
 
 const router = Router();
 
+// Passwort-Login als direkter GoTrue-REST-Call — bewusst NICHT über
+// supabase.auth.signInWithPassword().
+//
+// Grund: `supabase` ist ein prozessweit geteilter Service-Role-Client.
+// signInWithPassword legt die entstehende User-Session AUF DIESEM CLIENT ab,
+// und supabase-js baut den Authorization-Header pro Request aus der Session
+// (getSession() ?? supabaseKey). Ab dem ersten Login sprechen deshalb alle
+// PostgREST-Aufrufe des Backends nur noch als `authenticated` statt als
+// `service_role` — RLS greift dann auch fürs Backend: Lesen liefert leere
+// Ergebnisse, Schreiben scheitert mit "violates row-level security policy".
+// Der Fehler ist zustandsabhängig (erst nach dem ersten Login einer Instanz)
+// und trifft jede lang laufende Instanz gleichermaßen.
+// /auth/refresh umgeht das aus demselben Grund bereits.
+async function passwordGrant(email, password) {
+  const r = await fetchWithTimeout(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', apikey: supabaseKey },
+    body: JSON.stringify({ email, password }),
+  }, 10000);
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok || !data.access_token) {
+    return { error: data.error_description || data.msg || 'Anmeldung fehlgeschlagen' };
+  }
+  return { data };
+}
+
 router.post('/auth/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'E-Mail und Passwort sind erforderlich' });
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return res.status(401).json({ error: error.message });
+  const { data, error } = await passwordGrant(email, password);
+  if (error) return res.status(401).json({ error });
 
   return res.json({
-    token: data.session.access_token,
-    refresh_token: data.session.refresh_token,
+    token: data.access_token,
+    refresh_token: data.refresh_token,
     user: {
       id: data.user.id,
       email: data.user.email,
@@ -83,12 +109,13 @@ router.post('/auth/register', async (req, res) => {
   }
 
   // Frisch angelegten (bestätigten) Nutzer direkt einloggen, um ein Token zu liefern.
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return res.status(401).json({ error: error.message });
+  // Auch hier der direkte GoTrue-Call, siehe Kommentar bei passwordGrant().
+  const { data, error } = await passwordGrant(email, password);
+  if (error) return res.status(401).json({ error });
 
   return res.json({
-    token: data.session.access_token,
-    refresh_token: data.session.refresh_token,
+    token: data.access_token,
+    refresh_token: data.refresh_token,
     user: {
       id: data.user.id,
       email: data.user.email,
