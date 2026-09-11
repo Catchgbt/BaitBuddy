@@ -837,6 +837,8 @@ export const community = {
 export const premium = {
   status:       ()          => api.get('/api/premium/status'),
   products:     ()          => api.get('/api/premium/products'),
+  // Welche Zahlungswege der Server verifizieren kann (öffentlich, ohne Auth).
+  config:       ()          => api.get('/api/premium/config'),
   checkFeature: (feature)   => api.post('/api/premium/check-feature', { feature }),
   checkout:     (plan_id)   => api.post('/api/premium/checkout', { plan_id }),
   activateDemo: ()          => api.post('/api/premium/activate-demo'),

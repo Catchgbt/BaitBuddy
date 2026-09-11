@@ -357,6 +357,54 @@ services:
       BACKEND_URL: http://backend:3000
 
   # ---------------------------------------------------------------------------
+  # Nginx: Reverse Proxy für öffentliche Domain mit SSL/TLS
+  # (Port 80/443 → Backend:3000, Let's Encrypt Terminierung)
+  # ---------------------------------------------------------------------------
+  nginx-reverse-proxy:
+    image: nginx:alpine
+    container_name: baitbuddy-nginx-reverse-proxy
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx-reverse-proxy.conf:/etc/nginx/nginx.conf:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - baitbuddy-net
+
+  # ---------------------------------------------------------------------------
+  # Certbot: Let's Encrypt Zertifikat-Verwaltung (automatische Verlängerung)
+  # ---------------------------------------------------------------------------
+  certbot:
+    image: certbot/certbot:latest
+    container_name: baitbuddy-certbot
+    restart: unless-stopped
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: >
+      /bin/sh -c "
+      echo 'Certbot Renewal Service startet...';
+      while true; do
+        echo \"Zertifikat-Erneuerer: Prüfe auf Zertifikate die erneuert werden müssen...\";
+        certbot renew --webroot -w /var/www/certbot --quiet 2>&1 | grep -v 'No renewals were attempted' || true;
+        sleep 86400;
+      done
+      "
+    networks:
+      - baitbuddy-net
+
+  # ---------------------------------------------------------------------------
   # Optional: Redis als instanzuebergreifender Rate-Limit-Store (KV_URL)
   # ---------------------------------------------------------------------------
   redis:
@@ -373,3 +421,7 @@ volumes:
   storage-data:
   bathymetry-data:
   redis-data:
+
+networks:
+  baitbuddy-net:
+    driver: bridge
