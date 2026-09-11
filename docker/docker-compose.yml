@@ -25,7 +25,10 @@ services:
   # Supabase: Postgres
   # ---------------------------------------------------------------------------
   db:
-    image: supabase/postgres:15.8.1.060
+    # Images bewusst aus public.ecr.aws (dieselbe Quelle wie die Supabase-CLI):
+    # Postgres 17.6.1 entspricht der Cloud-Version, damit passen die pg_dump-Dateien
+    # ohne Versionskonflikt.
+    image: public.ecr.aws/supabase/postgres:17.6.1.165
     container_name: baitbuddy-db
     restart: unless-stopped
     healthcheck:
@@ -52,7 +55,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXP: ${JWT_EXPIRY}
     volumes:
-      - db-data:/var/lib/postgresql/data:Z
+      - db-data:/var/lib/postgresql/data
       # Rollen-Passwoerter + JWT-Secret (laufen vor den Migrationen)
       - ./db/init/99-roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-roles.sql:Z
       - ./db/init/99-jwt.sql:/docker-entrypoint-initdb.d/init-scripts/99-jwt.sql:Z
@@ -66,7 +69,7 @@ services:
   # Supabase: Auth (GoTrue)
   # ---------------------------------------------------------------------------
   auth:
-    image: supabase/gotrue:v2.170.0
+    image: public.ecr.aws/supabase/gotrue:v2.196.0
     container_name: baitbuddy-auth
     restart: unless-stopped
     depends_on:
@@ -128,7 +131,7 @@ services:
   # Supabase: PostgREST
   # ---------------------------------------------------------------------------
   rest:
-    image: postgrest/postgrest:v12.2.8
+    image: public.ecr.aws/supabase/postgrest:v16.1
     container_name: baitbuddy-rest
     restart: unless-stopped
     depends_on:
@@ -148,15 +151,13 @@ services:
   # Supabase: Storage (Bucket "catches" fuer Fangfotos)
   # ---------------------------------------------------------------------------
   storage:
-    image: supabase/storage-api:v1.19.3
+    image: public.ecr.aws/supabase/storage-api:v1.70.3
     container_name: baitbuddy-storage
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
       rest:
-        condition: service_started
-      imgproxy:
         condition: service_started
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://storage:5000/status"]
@@ -175,33 +176,17 @@ services:
       TENANT_ID: stub
       REGION: stub
       GLOBAL_S3_BUCKET: stub
-      ENABLE_IMAGE_TRANSFORMATION: "true"
-      IMGPROXY_URL: http://imgproxy:5001
+      # Aus: Die App liefert Fotos ueber getPublicUrl() ohne Transformationen,
+      # damit entfaellt der zusaetzliche imgproxy-Container.
+      ENABLE_IMAGE_TRANSFORMATION: "false"
     volumes:
-      - storage-data:/var/lib/storage:z
-
-  imgproxy:
-    image: darthsim/imgproxy:v3.8.0
-    container_name: baitbuddy-imgproxy
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "imgproxy", "health"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    environment:
-      IMGPROXY_BIND: ":5001"
-      IMGPROXY_LOCAL_FILESYSTEM_ROOT: /
-      IMGPROXY_USE_ETAG: "true"
-      IMGPROXY_ENABLE_WEBP_DETECTION: "true"
-    volumes:
-      - storage-data:/var/lib/storage:z
+      - storage-data:/var/lib/storage
 
   # ---------------------------------------------------------------------------
   # Supabase: API-Gateway (Kong) -> das ist die SUPABASE_URL fuer App & Backend
   # ---------------------------------------------------------------------------
   kong:
-    image: kong:2.8.1
+    image: public.ecr.aws/supabase/kong:2.8.1
     container_name: baitbuddy-kong
     restart: unless-stopped
     depends_on:
@@ -233,7 +218,7 @@ services:
   # Supabase: postgres-meta (nur fuer Studio noetig)
   # ---------------------------------------------------------------------------
   meta:
-    image: supabase/postgres-meta:v0.86.1
+    image: public.ecr.aws/supabase/postgres-meta:v0.98.0
     container_name: baitbuddy-meta
     restart: unless-stopped
     profiles: ["tools"]
@@ -249,7 +234,7 @@ services:
       PG_META_DB_PASSWORD: ${POSTGRES_PASSWORD}
 
   studio:
-    image: supabase/studio:20250317-6955350
+    image: public.ecr.aws/supabase/studio:2026.08.17-sha-0c1da8f
     container_name: baitbuddy-studio
     restart: unless-stopped
     profiles: ["tools"]
@@ -299,6 +284,9 @@ services:
       # Supabase: intern ueber Kong (kein Umweg ueber den Host)
       SUPABASE_URL: http://kong:8000
       SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+      # Basis-URL fuer Storage-Links, die im BROWSER geoeffnet werden.
+      # Ohne das landen Foto-URLs mit dem internen Hostnamen "kong" in der DB.
+      SUPABASE_PUBLIC_URL: ${API_EXTERNAL_URL}
       # Nach aussen sichtbare URLs (Stripe-Redirects, Share-Links, CORS)
       APP_BASE_URL: ${SITE_URL}
       APP_URL: ${SITE_URL}

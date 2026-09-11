@@ -1,9 +1,20 @@
 -- Setzt die Passwoerter der internen Supabase-Rollen auf POSTGRES_PASSWORD.
--- Entspricht volumes/db/roles.sql aus dem offiziellen Self-Hosting-Setup.
+--
+-- Wichtig: nur Rollen anfassen, die es in diesem Image wirklich gibt.
+-- Der Rollenbestand unterscheidet sich je nach Postgres-Version (z. B. gibt es
+-- supabase_functions_admin in 17.x nicht mehr). migrate.sh bricht beim ersten
+-- Fehler ab — ein hartes "alter user" auf eine fehlende Rolle wuerde also das
+-- gesamte Schema-Init verhindern. Deshalb ueber pg_roles filtern und die
+-- Statements per \gexec erzeugen.
 \set pgpass `echo "$POSTGRES_PASSWORD"`
 
-alter user authenticator with password :'pgpass';
-alter user pgbouncer with password :'pgpass';
-alter user supabase_auth_admin with password :'pgpass';
-alter user supabase_functions_admin with password :'pgpass';
-alter user supabase_storage_admin with password :'pgpass';
+select format('alter user %I with password %L', rolname, :'pgpass')
+from pg_roles
+where rolname in (
+  'authenticator',
+  'pgbouncer',
+  'supabase_auth_admin',
+  'supabase_functions_admin',
+  'supabase_storage_admin'
+)
+\gexec

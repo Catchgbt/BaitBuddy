@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom';
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { functions } from "@/api/frontendClient";
 import { Spot } from "@/entities/Spot";
@@ -111,6 +112,7 @@ function MapClickHandler({ onMapClick }) {
 }
 
 export default function MapPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   useFeatureTracking("map");
   const { currentLocation, gpsLocation, requestGpsLocation } = useLocation();
   const [spots, setSpots] = useState([]);
@@ -140,6 +142,15 @@ export default function MapPage() {
   const [mapView, setMapView] = useState("spots");
   const [showDetails, setShowDetails] = useState(false);
   const radar = useRainviewerRadar(mapView === "radar");
+  useEffect(() => {
+    if (searchParams.get('addSpot') === '1' && currentLocation?.lat != null) {
+      setClickedCoords({ lat: currentLocation.lat, lng: currentLocation.lon });
+      setShowAddModal(true);
+      setSearchParams({}, { replace: true });
+    }
+    const selected = spots.find(spot => String(spot.id) === searchParams.get('spot'));
+    if (selected) { setSelectedLocation({ ...selected, type: 'spot' }); setMapCenter([Number(selected.latitude), Number(selected.longitude)]); setMapZoom(14); }
+  }, [searchParams, setSearchParams, currentLocation, spots]);
 
   useEffect(() => {
     loadMapData();

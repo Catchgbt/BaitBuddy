@@ -10,6 +10,9 @@
 // TTS-Aufrufer (Widget, Stub, KiBuddyBeta, AIAssistant) sie automatisch nutzen.
 
 export const TTS_VOICE_KEY = 'buddy-tts-voice';
+let activeAudio = { voiceEnabled: true, speed: 1 };
+export function setActiveBuddyAudio(settings) { activeAudio = { voiceEnabled: settings.voiceEnabled !== false, speed: settings.speed || 1 }; }
+export function getActiveBuddyAudio() { return activeAudio; }
 
 export function getPreferredTtsVoice() {
   try {

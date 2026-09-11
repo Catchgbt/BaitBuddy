@@ -50,7 +50,22 @@ docker compose up -d --build
 ```
 
 Beim ersten Start legt `db` das komplette Schema aus `docker/db/init/` an
-(54 Tabellen, Indizes, Policies, Trigger, Bucket). Das dauert etwa eine Minute.
+(54 Tabellen, Indizes, Policies, Trigger). Das dauert etwa eine Minute; der
+erste Build von Backend und Frontend dauert deutlich länger (`npm ci`).
+
+Danach einmalig nachziehen, was an Tabellen hängt, die erst GoTrue und
+storage-api selbst anlegen (Trial-Trigger auf `auth.users`, Bucket `catches`):
+
+```bash
+docker/scripts/finalize.sh
+```
+
+Unter Windows stattdessen:
+
+```powershell
+powershell -File docker/scripts/finalize.ps1
+```
+
 Prüfen:
 
 ```bash
@@ -180,7 +195,27 @@ Google-Login: In der Google-Cloud-Console als autorisierte Redirect-URI
 | `vercel.json` crons | Container `cron` (gleiche Pfade, gleiche UTC-Zeiten, `CRON_SECRET`) |
 | Vercel KV als Rate-Limit-Store | optional `--profile redis` und `KV_URL=redis://redis:6379`, sonst In-Memory |
 | Karten-Downloads gesperrt (Read-only-FS) | funktionieren, Daten im Volume `bathymetry-data` |
-| Supabase-Cloud Postgres 17 | `supabase/postgres` 15.8 (die Dumps sind kompatibel; Image-Tag in `docker-compose.yml` kann auf ein 17er-Tag angehoben werden) |
+| Supabase-Cloud Postgres 17 | `public.ecr.aws/supabase/postgres:17.6.1.165` — gleiche Hauptversion wie die Cloud, die Dumps passen ohne Konflikt |
+
+Die Images kommen bewusst aus `public.ecr.aws/supabase/*`, also derselben
+Quelle wie bei der Supabase-CLI. Wer schon einmal `supabase start` ausgeführt
+hat, hat sie dadurch meist bereits lokal liegen.
+
+## 8. Stolperfallen, die hier schon behoben sind
+
+Diese Punkte sind im Setup bereits berücksichtigt — nützlich zu wissen, falls
+später etwas angepasst wird:
+
+- **`99-roles.sql` filtert über `pg_roles`.** Der Rollenbestand hängt von der
+  Postgres-Version ab (`supabase_functions_admin` gibt es in 17.x nicht mehr).
+  `migrate.sh` bricht beim ersten Fehler ab — ein hartes `alter user` auf eine
+  fehlende Rolle würde das gesamte Schema-Init verhindern.
+- **`auth.jwt()` wird im Schema angelegt und gehört `supabase_auth_admin`.**
+  Das Image bringt nur `auth.uid()`, `auth.role()` und `auth.email()` mit, die
+  Policies brauchen aber `auth.jwt() ->> 'email'`. Gehört die Funktion
+  `postgres`, scheitert GoTrue beim Start mit „must be owner of function jwt“.
+- **Kein `imgproxy`.** Die App liefert Fotos über `getPublicUrl()` ohne
+  Transformationen.
 
 Die Vercel-Dateien bleiben im Repo, damit ein Cloud-Deploy weiterhin möglich
 ist. Beide Wege nutzen denselben Code.

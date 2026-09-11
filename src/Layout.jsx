@@ -375,7 +375,7 @@ function LayoutContent({ children, currentPageName }) {
             <SoundProvider>
               <LocationProvider>
                 <OfflineWrapper>
-            <div className="min-h-screen bg-gray-950 text-slate-50 relative overflow-hidden">
+            <div className="bb-app min-h-screen text-slate-50 relative overflow-hidden">
               <SEO />
               
               {/* PWA Components */}
@@ -458,7 +458,7 @@ function LayoutContent({ children, currentPageName }) {
               <style>{`
                 :root {
                   --radius: 1rem;
-                  --background: 2 15 26;
+                  --background: 11 19 36;
                   --foreground: 248 250 252;
                   --catchly: #165DFF;
                 }

@@ -750,6 +750,52 @@ begin
   end loop;
 end $$;
 
+-- auth.jwt(): Viele Policies lesen die E-Mail aus dem Token
+-- (auth.jwt() ->> 'email'). Das supabase/postgres-Image legt nur auth.uid(),
+-- auth.role() und auth.email() an — auth.jwt() kommt in der Cloud aus den
+-- GoTrue-Migrationen und fehlt beim Init noch. Ohne die Funktion scheitern
+-- alle folgenden Policies (und migrate.sh bricht die ganze Datei ab).
+-- Definition identisch zur Supabase-Vorlage.
+create or replace function auth.jwt()
+returns jsonb
+language sql
+stable
+as $function$
+  select coalesce(
+    nullif(current_setting('request.jwt.claim', true), ''),
+    nullif(current_setting('request.jwt.claims', true), '')
+  )::jsonb
+$function$;
+
+-- Eigentuemer MUSS supabase_auth_admin sein: GoTrue legt dieselbe Funktion in
+-- seiner Migration 20220531120530 per "create or replace" an und laeuft dabei
+-- als supabase_auth_admin. Gehoert die Funktion postgres, scheitert GoTrue mit
+-- "must be owner of function jwt" und startet gar nicht erst.
+alter function auth.jwt() owner to supabase_auth_admin;
+grant execute on function auth.jwt() to anon, authenticated, service_role;
+
+-- Policies werden vorher entfernt, damit die Datei wiederholt laufen kann
+-- (Postgres kennt kein "create policy if not exists").
+drop policy if exists "Users can create their own notes" on public.dashboard_account_notes;
+drop policy if exists "Users can delete their own notes" on public.dashboard_account_notes;
+drop policy if exists "Users can update their own notes" on public.dashboard_account_notes;
+drop policy if exists "Users can view their own notes" on public.dashboard_account_notes;
+drop policy if exists own_invitations on public.event_invitations;
+drop policy if exists public_event_participants on public.event_participants;
+drop policy if exists public_event_point_configs on public.event_point_configs;
+drop policy if exists own_event_submissions on public.event_submissions;
+drop policy if exists event_templates_read on public.event_templates;
+drop policy if exists exam_questions_allow_read on public.exam_questions;
+drop policy if exists public_monthly_leaderboard on public.monthly_leaderboards;
+drop policy if exists own_referrals_read on public.referrals;
+drop policy if exists own_rewards on public.reward_activations;
+drop policy if exists "Allow all to read their own tickets" on public.support_tickets;
+drop policy if exists user_backups_owner_modify on public.user_backups;
+drop policy if exists user_backups_owner_select on public.user_backups;
+drop policy if exists own_referral_code_read on public.user_referral_codes;
+drop policy if exists water_scenes_owner_modify on public.water_scenes;
+drop policy if exists water_scenes_owner_select on public.water_scenes;
+
 create policy "Users can create their own notes" on public.dashboard_account_notes for insert with check ((auth.uid())::text = user_id);
 create policy "Users can delete their own notes" on public.dashboard_account_notes for delete using ((auth.uid())::text = user_id);
 create policy "Users can update their own notes" on public.dashboard_account_notes for update using ((auth.uid())::text = user_id) with check ((auth.uid())::text = user_id);
@@ -794,10 +840,22 @@ $function$;
 
 revoke execute on function public.set_trial_premium() from anon, authenticated, public;
 
-drop trigger if exists trg_set_trial_premium on auth.users;
-create trigger trg_set_trial_premium
-  before insert on auth.users
-  for each row execute function public.set_trial_premium();
+-- auth.users wird von GoTrue verwaltet und existiert beim allerersten
+-- db-Init moeglicherweise noch nicht. Deshalb nur anlegen, wenn die Tabelle
+-- schon da ist — sonst setzt docker/scripts/finalize.sh den Trigger nach dem
+-- Start nach (das Skript fuehrt genau diesen Block erneut aus).
+do $$
+begin
+  if to_regclass('auth.users') is not null then
+    drop trigger if exists trg_set_trial_premium on auth.users;
+    create trigger trg_set_trial_premium
+      before insert on auth.users
+      for each row execute function public.set_trial_premium();
+    raise notice 'trg_set_trial_premium angelegt';
+  else
+    raise notice 'auth.users fehlt noch — Trigger kommt ueber finalize.sh';
+  end if;
+end $$;
 
 -- ---------------------------------------------------------------------------
 -- Grants fuer die PostgREST-Rollen (wie in der Cloud ueblich)
