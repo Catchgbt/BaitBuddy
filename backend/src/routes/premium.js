@@ -158,8 +158,8 @@ router.get('/premium/config', (req, res) => {
 // aufgerufen (die client-seitige PlanGuard/PlanContext-Komponente prueft den
 // Plan direkt) — die Haerte hier ist Vorbereitung fuer zukuenftige serverseitige
 // Durchsetzung, nicht Ersatz fuer PlanGuard. Unbekannte/neue Feature-Keys
-// werden bewusst erlaubt (fail-open), damit dieser Endpunkt nicht kuenftige,
-// hier noch nicht katalogisierte Features blockiert.
+// werden bewusst gesperrt (fail-closed), damit ein Tippfehler oder neuer
+// Premium-Key niemals versehentlich Zugriff freischaltet.
 const FEATURE_MIN_PLAN = {
   fangbuch: 'basic',
   spots: 'basic',
@@ -175,7 +175,7 @@ router.post('/premium/check-feature', requireAuth, async (req, res) => {
   const { effectiveId } = resolvePlan(req.user);
 
   const requiredPlan = feature ? FEATURE_MIN_PLAN[feature] : null;
-  const allowed = !requiredPlan || PLAN_RANK[effectiveId] >= PLAN_RANK[requiredPlan];
+  const allowed = Boolean(requiredPlan) && PLAN_RANK[effectiveId] >= PLAN_RANK[requiredPlan];
 
   return res.json({ ok: true, allowed, plan: effectiveId, required_plan: requiredPlan || null });
 });

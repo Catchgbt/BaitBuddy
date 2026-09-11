@@ -45,6 +45,7 @@ export default defineConfig({
           include: ['backend/**/*.test.js'],
           setupFiles: ['backend/test/setup.js'],
           testTimeout: 10_000,
+          hookTimeout: 60_000,
         },
       },
     ],

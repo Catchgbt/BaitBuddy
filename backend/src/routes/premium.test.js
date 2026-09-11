@@ -507,14 +507,15 @@ describe('POST /api/premium/check-feature', () => {
     expect(res.body.required_plan).toBe('elite');
   });
 
-  it('erlaubt unbekannte Feature-Keys standardmaessig (fail-open)', async () => {
+  it('sperrt unbekannte Feature-Keys standardmaessig (fail-closed)', async () => {
     const freeApp = await appWithPlan('free');
     const res = await request(freeApp)
       .post('/api/premium/check-feature')
       .set('Authorization', 'Bearer test-token')
       .send({ feature: 'ein_zukuenftiges_feature' });
 
-    expect(res.body.allowed).toBe(true);
+    expect(res.body.allowed).toBe(false);
+    expect(res.body.required_plan).toBe(null);
   });
 });
 

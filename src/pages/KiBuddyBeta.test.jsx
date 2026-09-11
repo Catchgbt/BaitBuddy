@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup, act } from '@testing-library/react';
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 
 // PremiumGuard und schwere Abhängigkeiten wegmocken, damit der Test die
 // Chat-/History-Logik isoliert prüft.
@@ -22,6 +23,10 @@ vi.mock('@/hooks/useElevenLabsVoice', () => {
   };
 });
 vi.mock('@/api/frontendClient', () => ({
+  auth: {
+    getCurrentUser: vi.fn(async () => null),
+    onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
+  },
   events: { getActiveEvent: vi.fn(async () => ({})) },
   ai: { chatStream: vi.fn() },
 }));
@@ -39,6 +44,14 @@ vi.mock('@/functions/catchgbtChat', () => ({ catchgbtChat: vi.fn() }));
 import KiBuddyBeta from './KiBuddyBeta';
 import { catchgbtChat } from '@/functions/catchgbtChat';
 import { ai } from '@/api/frontendClient';
+
+function renderBuddy() {
+  return render(
+    <MemoryRouter>
+      <KiBuddyBeta />
+    </MemoryRouter>
+  );
+}
 
 async function ask(text) {
   const input = await screen.findByPlaceholderText('Frage stellen...');
@@ -61,7 +74,7 @@ describe('KiBuddyBeta – Chat-Historie', () => {
       .mockResolvedValueOnce({ reply: 'erste Antwort' })
       .mockResolvedValueOnce({ reply: 'zweite Antwort' });
 
-    render(<KiBuddyBeta />);
+    renderBuddy();
 
     await ask('erste Frage');
     expect(await screen.findByText('erste Antwort')).toBeInTheDocument();
@@ -97,7 +110,7 @@ describe('KiBuddyBeta – Abbruch bei Unmount', () => {
       resolveChat = () => res({ reply: 'zu spät' });
     }));
 
-    const { unmount } = render(<KiBuddyBeta />);
+    const { unmount } = renderBuddy();
 
     await ask('frage vor unmount');
 
@@ -132,7 +145,7 @@ describe('KiBuddyBeta – Live-Streaming', () => {
       return { reply: 'Klar, Hechte beißen früh am Morgen am besten.' };
     });
 
-    render(<KiBuddyBeta />);
+    renderBuddy();
     await ask('Wann beißen Hechte?');
 
     expect(await screen.findByText('Klar, Hechte beißen früh am Morgen am besten.')).toBeInTheDocument();

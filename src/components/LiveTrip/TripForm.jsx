@@ -5,7 +5,7 @@ import { entities } from '@/api/frontendClient';
 import { MapPin, ArrowLeft, ArrowRight, Check, X, Navigation, Download } from 'lucide-react';
 import { readTripForm, tripPayload, suggestedPacking, tripCalendar } from '@/lib/tripPlanning';
 import { useFishingConditions } from '@/hooks/useFishingConditions';
-import { bestWindow, formatForecastTime, weatherDescription } from '@/lib/fishingConditions';
+import { bestWindow, formatForecastTime } from '@/lib/fishingConditions';
 import BuddyCard from '@/components/buddy/BuddyCard';
 import SolunarService from '@/services/SolunarService';
 import { useBuddyPreferences } from '@/lib/BuddyPreferencesContext';
