@@ -8,6 +8,7 @@ import { createSpeechQueue } from "@/components/utils/elevenLabsTTS";
 import { stripActionMarker } from "@/lib/streamingReply";
 import { findOfflineBuddyAnswer, getOfflineBuddyFallback } from "@/lib/offlineBuddyQuestions";
 import { buildGreeting } from "@/lib/buddyGreetings";
+import { saveBuddyChatHistory, loadBuddyChatHistory, clearBuddyChatHistory } from "@/lib/buddyChatCache";
 
 import PremiumGuard from "@/components/premium/PremiumGuard";
 import BuddyAvatar from "@/components/ai/BuddyAvatar";
@@ -23,9 +24,12 @@ export default function KiBuddyBeta() {
 function KiBuddyBetaInner() {
   useFeatureTracking("ai_buddy");
   const { trackAIChat } = useEventActivityTracking();
-  // Begrüßung variiert bei jedem Öffnen (Tageszeit, Stimmung, gelegentlich ein
-  // Funktions-Tipp) statt eines immer gleichen statischen Textes.
-  const [messages, setMessages] = useState(() => [{ role: "system", text: buildGreeting({}) }]);
+  // Messages werden aus dem Cache geladen; nur beim ersten Besuch wird die
+  // Begrüßung gezeigt. Begrüßung variiert (Tageszeit, Stimmung, Tipp).
+  const [messages, setMessages] = useState(() => {
+    const cached = loadBuddyChatHistory();
+    return cached.length > 0 ? cached : [{ role: "system", text: buildGreeting({}) }];
+  });
   const [input, setInput] = useState("");
   const [status, setStatus] = useState("");
   const [tonAn, setTonAn] = useState(true);
@@ -417,6 +421,13 @@ function KiBuddyBetaInner() {
     if (status === "listening") setStatus("");
   }
 
+  function handleClearChat() {
+    if (confirm('Chat-Verlauf löschen? Alle Nachrichten gehen verloren.')) {
+      clearBuddyChatHistory();
+      setMessages([{ role: "system", text: buildGreeting({}) }]);
+    }
+  }
+
   useEffect(() => {
     // Beim (Re-)Mount wieder als aktiv markieren — sonst bliebe die Ref nach dem
     // StrictMode-Doppelmount auf false stehen.
@@ -433,6 +444,15 @@ function KiBuddyBetaInner() {
       try { stopVoice(); } catch {}
     };
   }, [stopVoice]);
+
+  useEffect(() => {
+    // Persistiere Chat-Historie im localStorage, damit sie offline und nach
+    // Page-Reload verfügbar bleibt. Filtere System-Messages aus (nur User+Assistant).
+    const persistableMessages = messages.filter(m => m.role !== 'system' || m.text.includes('BuddyBeta') === false);
+    if (persistableMessages.length > 0) {
+      saveBuddyChatHistory(persistableMessages);
+    }
+  }, [messages]);
 
   const avatarGlow = isSpeaking
     ? "0 0 0 3px rgba(34,211,200,0.45)"
@@ -459,13 +479,22 @@ function KiBuddyBetaInner() {
               <span style={{ fontSize: 16, fontWeight: 600, color: "#22d3c8", letterSpacing: 0.3 }}>KI Voice-Buddy</span>
               <span style={{ marginLeft: 8, fontSize: 11, color: "#4455aa", fontWeight: 500, background: "#0d1a33", border: "1px solid #1e2f55", borderRadius: 8, padding: "2px 7px" }}>BETA</span>
             </div>
-            <button type="button"
-              onClick={() => { setTonAn(t => !t); if (tonAn) stopSpeaking(); }}
-              style={{ display: "flex", alignItems: "center", gap: 6, background: tonAn ? "#22d3c8" : "#0d2020", border: "1px solid #22d3c8", borderRadius: 20, padding: "4px 12px", fontSize: 12, color: tonAn ? "#060d1a" : "#22d3c8", fontWeight: 500, cursor: "pointer" }}
-            >
-              <span style={{ width: 7, height: 7, borderRadius: "50%", background: tonAn ? "#060d1a" : "#22d3c8", display: "inline-block" }} />
-              {tonAn ? "Ton an" : "Ton aus"}
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <button type="button"
+                onClick={handleClearChat}
+                style={{ display: "flex", alignItems: "center", gap: 4, background: "#1a1a2e", border: "1px solid #555", borderRadius: 20, padding: "4px 10px", fontSize: 11, color: "#bbb", fontWeight: 500, cursor: "pointer", transition: "all 0.2s" }}
+                title="Chat-Verlauf löschen"
+              >
+                ✕ Löschen
+              </button>
+              <button type="button"
+                onClick={() => { setTonAn(t => !t); if (tonAn) stopSpeaking(); }}
+                style={{ display: "flex", alignItems: "center", gap: 6, background: tonAn ? "#22d3c8" : "#0d2020", border: "1px solid #22d3c8", borderRadius: 20, padding: "4px 12px", fontSize: 12, color: tonAn ? "#060d1a" : "#22d3c8", fontWeight: 500, cursor: "pointer" }}
+              >
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: tonAn ? "#060d1a" : "#22d3c8", display: "inline-block" }} />
+                {tonAn ? "Ton an" : "Ton aus"}
+              </button>
+            </div>
           </div>
 
           {/* Gesprächssteuerung: starten / beenden */}
