@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import { createSupabaseMock } from '../../test/mockSupabase.js';
 
-const TEST_USER = { id: 'user-1', email: 'angler@baitbuddy.test', user_metadata: {} };
+const TEST_USER = { id: 'user-1', email: 'angler@baitbuddy.test', user_metadata: {}, app_metadata: {} };
 
 const { supabaseMock, purchaseVerificationMock } = vi.hoisted(() => ({
   supabaseMock: { current: null },
@@ -94,10 +94,10 @@ describe('POST /api/premium/activate', () => {
 });
 
 describe('POST /api/premium/activate (Google-Play-Laufzeit)', () => {
-  async function playApp(userMetadata = {}) {
+  async function playApp(appMetadata = {}) {
     process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON = '{"type":"service_account"}';
     supabaseMock.current = createSupabaseMock({
-      authUser: { ...TEST_USER, user_metadata: userMetadata },
+      authUser: { ...TEST_USER, app_metadata: appMetadata },
     });
     supabaseMock.current.auth.admin = {
       updateUserById: vi.fn(async () => ({ data: {}, error: null })),
@@ -295,10 +295,10 @@ describe('POST /api/premium/checkout', () => {
 });
 
 describe('POST /api/premium/activate (Stripe-Härtung)', () => {
-  async function stripeApp(userMetadata = {}) {
+  async function stripeApp(appMetadata = {}) {
     process.env.STRIPE_SECRET_KEY = 'sk_test_123';
     supabaseMock.current = createSupabaseMock({
-      authUser: { ...TEST_USER, user_metadata: userMetadata },
+      authUser: { ...TEST_USER, app_metadata: appMetadata },
     });
     supabaseMock.current.auth.admin = {
       updateUserById: vi.fn(async () => ({ data: {}, error: null })),
@@ -383,7 +383,7 @@ describe('Referral: 10-EUR-Ultimate-Rabatt', () => {
   it('zieht den Referral-Rabatt beim Ultimate-Checkout ab (elite)', async () => {
     process.env.STRIPE_SECRET_KEY = 'sk_test_123';
     supabaseMock.current = createSupabaseMock({
-      authUser: { ...TEST_USER, user_metadata: { ultimate_discount_cents: 1000 } },
+      authUser: { ...TEST_USER, app_metadata: { ultimate_discount_cents: 1000 } },
     });
     vi.resetModules();
     const configuredApp = (await import('../server.js')).default;
@@ -406,7 +406,7 @@ describe('Referral: 10-EUR-Ultimate-Rabatt', () => {
   it('begrenzt den rabattierten Ultimate-Preis auf den Mindestbetrag (999)', async () => {
     process.env.STRIPE_SECRET_KEY = 'sk_test_123';
     supabaseMock.current = createSupabaseMock({
-      authUser: { ...TEST_USER, user_metadata: { ultimate_discount_cents: 3000 } },
+      authUser: { ...TEST_USER, app_metadata: { ultimate_discount_cents: 3000 } },
     });
     vi.resetModules();
     const configuredApp = (await import('../server.js')).default;
@@ -437,7 +437,7 @@ describe('Referral: 10-EUR-Ultimate-Rabatt', () => {
     });
     supabaseMock.current.auth.admin = {
       updateUserById: vi.fn(async () => ({ data: {}, error: null })),
-      getUserById: vi.fn(async () => ({ data: { user: { id: 'user-2', user_metadata: {} } }, error: null })),
+      getUserById: vi.fn(async () => ({ data: { user: { id: 'user-2', user_metadata: {}, app_metadata: {} } }, error: null })),
     };
     vi.resetModules();
     const configuredApp = (await import('../server.js')).default;
@@ -454,7 +454,7 @@ describe('Referral: 10-EUR-Ultimate-Rabatt', () => {
     expect(supabaseMock.current.auth.admin.updateUserById).toHaveBeenCalledWith(
       'user-2',
       expect.objectContaining({
-        user_metadata: expect.objectContaining({ ultimate_discount_cents: 1000 }),
+        app_metadata: expect.objectContaining({ ultimate_discount_cents: 1000 }),
       })
     );
     // Einladung als belohnt markiert (Idempotenz).
@@ -468,7 +468,8 @@ describe('POST /api/premium/check-feature', () => {
     const user = {
       id: 'user-1',
       email: 'angler@baitbuddy.test',
-      user_metadata: planId === 'free' ? {} : { premium_plan_id: planId, premium_expires_at: futureDate },
+      user_metadata: {},
+      app_metadata: planId === 'free' ? {} : { premium_plan_id: planId, premium_expires_at: futureDate },
     };
     supabaseMock.current = createSupabaseMock({ authUser: user });
     vi.resetModules();

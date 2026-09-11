@@ -78,6 +78,7 @@ export function createSupabaseMock({
     const user = users.find((u) => u.id === id);
     if (!user) return { data: { user: null }, error: { message: 'not found' } };
     if (attrs?.user_metadata) user.user_metadata = attrs.user_metadata;
+    if (attrs?.app_metadata) user.app_metadata = attrs.app_metadata;
     return { data: { user }, error: null };
   });
 

@@ -403,7 +403,7 @@ describe('POST /api/ai/tts', () => {
   it('nutzt fuer voice=female MIT Ultimate-Plan (elite) die weibliche Stimme', async () => {
     process.env.ELEVENLABS_API_KEY = 'test-eleven-key';
     supabaseMock.current = createSupabaseMock({
-      authUser: { id: 'u1', email: 'a@b.de', user_metadata: { premium_plan_id: 'elite' } },
+      authUser: { id: 'u1', email: 'a@b.de', app_metadata: { premium_plan_id: 'elite' } },
     });
     const fetchMock = vi.fn(async () => ({
       ok: true,

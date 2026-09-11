@@ -105,7 +105,7 @@ describe('checkChatRateLimit', () => {
     process.env.KV_URL = 'redis://localhost:6379';
     const { checkChatRateLimit } = await import('./rateLimit.js');
     const future = new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString();
-    const req = { user: { id: 'u-basic', user_metadata: { premium_plan_id: 'basic', premium_expires_at: future } } };
+    const req = { user: { id: 'u-basic', app_metadata: { premium_plan_id: 'basic', premium_expires_at: future } } };
     const res = makeRes();
     let nextCalled = false;
     await checkChatRateLimit(req, res, () => { nextCalled = true; });

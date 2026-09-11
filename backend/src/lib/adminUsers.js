@@ -43,7 +43,7 @@ export async function listAllUsers(supabase) {
  * Identitäten und App-Metadaten, die im Frontend nichts verloren haben.
  */
 export function toAdminUserSummary(user) {
-  const meta = user?.user_metadata || {};
+  const meta = user?.app_metadata || {};
   return {
     id: user.id,
     email: user.email || '',

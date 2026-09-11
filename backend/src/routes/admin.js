@@ -32,7 +32,7 @@ router.get('/admin/premium/check-expiry', requireCronAuth, async (req, res) => {
 
     let expiredCount = 0;
     for (const user of users) {
-      const meta = user.user_metadata || {};
+      const meta = user.app_metadata || {};
       const expiresAt = meta.premium_expires_at;
       const planId = meta.premium_plan_id;
 
@@ -43,7 +43,7 @@ router.get('/admin/premium/check-expiry', requireCronAuth, async (req, res) => {
         const nextVersion = currentVersion + 1;
 
         const { error: updateError } = await supabase.auth.admin.updateUserById(user.id, {
-          user_metadata: {
+          app_metadata: {
             ...meta,
             premium_plan_id: null,
             premium_expires_at: null,
@@ -106,7 +106,7 @@ router.post('/admin/plans/assign', requireAuth, requireAdmin, async (req, res) =
   const targetUser = found?.user;
   if (!targetUser) return res.status(404).json({ error: 'Benutzer nicht gefunden' });
 
-  const current = targetUser.user_metadata || {};
+  const current = targetUser.app_metadata || {};
   const isRevoke = plan_id === 'free';
 
   const merged = {
@@ -124,7 +124,7 @@ router.post('/admin/plans/assign', requireAuth, requireAdmin, async (req, res) =
   };
 
   const { error: updateError } = await supabase.auth.admin.updateUserById(target_user_id, {
-    user_metadata: merged,
+    app_metadata: merged,
   });
   if (updateError) return sendDbError(res, updateError);
 

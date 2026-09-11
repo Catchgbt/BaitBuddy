@@ -96,12 +96,17 @@ router.post('/auth/register', async (req, res) => {
   // Neue Nutzer bekommen 24h Vollzugriff (Elite-Trial). Wir setzen die Metadaten
   // final NACH createUser, da der email_confirm-Schritt die Metadaten überschreibt.
   if (created?.user?.id) {
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
     await supabase.auth.admin.updateUserById(created.user.id, {
-      user_metadata: {
-        full_name,
+      user_metadata: { full_name },
+      app_metadata: {
         premium_plan_id: 'elite',
-        premium_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        premium_expires_at: expiresAt,
         premium_trial: true,
+        trial_started_at: now.toISOString(),
+        trial_expires_at: expiresAt,
+        trial_used: true,
       },
     }).catch((error) => {
       console.error('Fehler beim Setzen der Premium-Trial nach Registration:', error);

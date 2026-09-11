@@ -59,7 +59,7 @@ function verifiedExpiryFrom(verification) {
 }
 
 function readDiscountCents(user) {
-  const raw = Number(user?.user_metadata?.ultimate_discount_cents);
+  const raw = Number(user?.app_metadata?.ultimate_discount_cents);
   if (!Number.isFinite(raw) || raw <= 0) return 0;
   return Math.min(Math.floor(raw), ULTIMATE_DISCOUNT_MAX_CENTS);
 }
@@ -83,12 +83,12 @@ async function grantReferralBasicReward(referredUser) {
       await supabase.auth.admin.getUserById(row.referrer_user_id);
     if (refErr || !refRes?.user) return;
 
-    const refMeta = refRes.user.user_metadata || {};
+    const refMeta = refRes.user.app_metadata || {};
     const current = readDiscountCents(refRes.user);
     const next = Math.min(current + ULTIMATE_DISCOUNT_PER_REFERRAL_CENTS, ULTIMATE_DISCOUNT_MAX_CENTS);
 
     const { error: updErr } = await supabase.auth.admin.updateUserById(row.referrer_user_id, {
-      user_metadata: { ...refMeta, ultimate_discount_cents: next },
+      app_metadata: { ...refMeta, ultimate_discount_cents: next },
     });
     if (updErr) return;
 
@@ -99,7 +99,20 @@ async function grantReferralBasicReward(referredUser) {
 }
 
 router.get('/premium/status', requireAuth, async (req, res) => {
-  const { effectiveId, isActive, expiresAt, remainingHours, isTrial } = resolvePlan(req.user);
+  const {
+    effectiveId,
+    isActive,
+    expiresAt,
+    remainingHours,
+    isTrial,
+    isPass,
+    source,
+    trialUsed,
+    trialStartedAt,
+    trialExpiresAt,
+    premiumPassStartedAt,
+    premiumPassExpiresAt,
+  } = resolvePlan(req.user);
 
   return res.json({
     ok: true,
@@ -108,9 +121,16 @@ router.get('/premium/status', requireAuth, async (req, res) => {
       name: PLAN_DISPLAY_NAMES[effectiveId] || 'Free',
       is_active: isActive,
       is_trial: isTrial && isActive,
+      is_pass: isPass && isActive,
+      source,
       expires_at: expiresAt,
       remaining_days: remainingHours == null ? null : Math.ceil(remainingHours / 24),
       remaining_hours: remainingHours,
+      trial_used: trialUsed,
+      trial_started_at: trialStartedAt,
+      trial_expires_at: trialExpiresAt,
+      premium_pass_started_at: premiumPassStartedAt,
+      premium_pass_expires_at: premiumPassExpiresAt,
       // Angesammelter Referral-Rabatt (Cent) auf den nächsten Ultimate-Kauf.
       ultimate_discount_cents: readDiscountCents(req.user)
     }
@@ -129,6 +149,7 @@ const PRODUCTS = [
   { id: 'basic', name: 'Basic', price: 8.99, features: ['Werbefrei', 'KI-Buddy unbegrenzt', 'Fangbuch', 'Spots', 'Wetter'] },
   { id: 'pro', name: 'Pro', price: 18, features: ['Alles in Basic', 'KI-Fangprognosen', 'AR & 3D', 'Community'] },
   { id: 'elite', name: 'Ultimate', price: 36, features: ['Alles in Pro', 'Live-Bissanzeiger', 'CatchCam', 'Priorisierte KI'] },
+  { id: 'premium_24h', name: '24 Stunden Premium', price: 4.99, duration_hours: 24, features: ['24 Stunden Ultimate-Zugriff', 'Premium-KI', 'Premium Voice', 'Werbefrei'] },
   { id: 'friends', name: 'Freundschaft', price: 150, yearly: true, features: ['Alles in Ultimate (12 Monate)', 'Freundes-Einladungen', 'Geteilte Spot-Gruppen', 'Gruppen-Ranking'] },
 ];
 
@@ -187,6 +208,7 @@ const CHECKOUT_PLANS = {
   basic:           { name: 'Basic', amountCents: 899 },
   pro:             { name: 'Pro', amountCents: 1800 },
   elite:           { name: 'Ultimate', amountCents: 3600 },
+  premium_24h:     { name: '24 Stunden Premium', amountCents: 499, durationHours: 24, grantsPlan: 'elite' },
   friends:         { name: 'Freundschaft (Jahresabo)', amountCents: 15000 },
   // friends_monthly wird nicht mehr aktiv beworben (Freundschaftsplan ist ein
   // reines Jahresabo), bleibt aber für Bestandskäufe/Google-Play-Restore gültig.
@@ -248,6 +270,9 @@ router.post('/premium/activate', requireAuth, async (req, res) => {
   if (!plan_id) {
     return res.status(400).json({ error: 'plan_id erforderlich' });
   }
+  if (!CHECKOUT_PLANS[plan_id] && !(plan_id in PLAN_RANK)) {
+    return res.status(400).json({ error: 'Unbekannte plan_id' });
+  }
   if (!purchase_token && !transaction_id) {
     return res.status(400).json({
       error: 'purchase_token (Google Play) oder transaction_id erforderlich — keine Zahlung verifiziert'
@@ -285,13 +310,17 @@ router.post('/premium/activate', requireAuth, async (req, res) => {
     }
   }
 
-  const current = req.user.user_metadata || {};
+  const current = req.user.app_metadata || {};
 
   // Ablaufdatum: Bei Google-Play-Abos gilt das von Play gelieferte
   // expiryTimeMillis, sonst rechnet der Server die Laufzeit selbst.
   const verifiedExpiresAt = verifiedExpiryFrom(verification);
+  const checkoutPlan = CHECKOUT_PLANS[plan_id] || {};
   const durationDays = PLAN_DURATION_DAYS[plan_id] ?? DEFAULT_PLAN_DURATION_DAYS;
   const expiresAt = verifiedExpiresAt
+    || (checkoutPlan.durationHours
+      ? new Date(Date.now() + checkoutPlan.durationHours * 60 * 60 * 1000).toISOString()
+      : null)
     || new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString();
 
   // Play verlängert Abos automatisch und behält dabei denselben purchaseToken
@@ -336,12 +365,18 @@ router.post('/premium/activate', requireAuth, async (req, res) => {
     }
   }
 
-  const isUltimateTier = (PLAN_RANK[plan_id] ?? 0) >= PLAN_RANK.elite;
+  const storedPlanId = checkoutPlan.grantsPlan || plan_id;
+  const isPremiumPass = plan_id === 'premium_24h';
+  const isUltimateTier = (PLAN_RANK[storedPlanId] ?? 0) >= PLAN_RANK.elite;
 
   const merged = {
     ...current,
-    premium_plan_id: plan_id,
-    premium_expires_at: expiresAt,
+    premium_plan_id: isPremiumPass ? current.premium_plan_id || 'free' : storedPlanId,
+    premium_expires_at: isPremiumPass ? current.premium_expires_at || null : expiresAt,
+    ...(isPremiumPass ? {
+      premium_pass_started_at: new Date().toISOString(),
+      premium_pass_expires_at: expiresAt,
+    } : {}),
     premium_trial: false,
     premium_payment_method: payment_method || 'unknown',
     premium_product_id: product_id,
@@ -354,20 +389,20 @@ router.post('/premium/activate', requireAuth, async (req, res) => {
   };
 
   const { error } = await supabase.auth.admin.updateUserById(req.user.id, {
-    user_metadata: merged,
+    app_metadata: merged,
   });
   if (error) return sendDbError(res, error);
 
   // Referral-Belohnung: Aktiviert ein eingeladener Nutzer erstmals Basic,
   // bekommt sein Referrer 10 € Ultimate-Rabatt gutgeschrieben (best-effort).
   if (plan_id === 'basic') {
-    await grantReferralBasicReward({ id: req.user.id, user_metadata: merged });
+    await grantReferralBasicReward({ id: req.user.id, user_metadata: req.user.user_metadata || {}, app_metadata: merged });
   }
 
   return res.json({
     ok: true,
     plan_id,
-    expires_at: merged.premium_expires_at,
+    expires_at: isPremiumPass ? merged.premium_pass_expires_at : merged.premium_expires_at,
     // `updated` unterscheidet eine echte Änderung von einem no-op (Replay).
     // Der Client stößt nur bei einer echten Änderung ein Plan-Reload an.
     updated: true,

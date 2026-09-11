@@ -23,24 +23,66 @@ export function planRank(planId) {
   return PLAN_RANK[planId] ?? 0;
 }
 
-// Ermittelt den effektiven Plan aus den User-Metadaten. Ist ein Ablaufdatum
-// gesetzt und überschritten (z.B. nach dem 24h-Trial für neue Nutzer), gilt der
-// Nutzer wieder als 'free' — wichtig, weil das Frontend-Gating nur die Plan-ID
-// prüft, nicht is_active.
-export function resolvePlan(user) {
-  const meta = user?.user_metadata || {};
+// Ermittelt den effektiven Plan ausschließlich aus app_metadata. Diese Metadaten
+// sind serverseitig/admin-verwaltet; user_metadata darf hier nicht als Premium-
+// Quelle dienen, weil Clients sie teilweise selbst schreiben können.
+export function resolvePlan(user, now = new Date()) {
+  const meta = user?.app_metadata || {};
   const rawPlanId = meta.premium_plan_id || 'free';
   const expiresAt = meta.premium_expires_at || null;
-  const isTrial = meta.premium_trial === true;
+  const trialExpiresAt = meta.trial_expires_at || null;
+  const passExpiresAt = meta.premium_pass_expires_at || null;
+  const rawIsTrial = meta.premium_trial === true;
+  const nowMs = now instanceof Date ? now.getTime() : new Date(now).getTime();
 
   let isActive = rawPlanId !== 'free';
-  let remainingHours = null;
+  let subscriptionRemainingHours = null;
   if (expiresAt) {
-    const msLeft = new Date(expiresAt) - new Date();
-    remainingHours = Math.ceil(msLeft / 3600000);
+    const msLeft = new Date(expiresAt).getTime() - nowMs;
+    subscriptionRemainingHours = Math.ceil(msLeft / 3600000);
     isActive = isActive && msLeft > 0;
   }
 
-  const effectiveId = isActive ? rawPlanId : 'free';
-  return { effectiveId, isActive, expiresAt, remainingHours, isTrial };
+  const passMsLeft = passExpiresAt ? new Date(passExpiresAt).getTime() - nowMs : 0;
+  const fallbackTrialExpiresAt = rawIsTrial ? expiresAt : null;
+  const effectiveTrialExpiresAt = trialExpiresAt || fallbackTrialExpiresAt;
+  const trialMsLeft = effectiveTrialExpiresAt ? new Date(effectiveTrialExpiresAt).getTime() - nowMs : 0;
+
+  let effectiveId = isActive && !rawIsTrial ? rawPlanId : 'free';
+  let effectiveSource = isActive && !rawIsTrial ? 'subscription' : 'base';
+  let effectiveExpiresAt = isActive && !rawIsTrial ? expiresAt : null;
+  let remainingHours = isActive && !rawIsTrial ? subscriptionRemainingHours : null;
+  let isTrial = false;
+  let isPass = false;
+
+  if (passMsLeft > 0 && planRank(effectiveId) < PLAN_RANK.elite) {
+    effectiveId = 'elite';
+    effectiveSource = 'premium_pass';
+    effectiveExpiresAt = passExpiresAt;
+    remainingHours = Math.ceil(passMsLeft / 3600000);
+    isPass = true;
+  }
+
+  if (!isPass && trialMsLeft > 0 && planRank(effectiveId) < PLAN_RANK.elite) {
+    effectiveId = 'elite';
+    effectiveSource = 'trial';
+    effectiveExpiresAt = effectiveTrialExpiresAt;
+    remainingHours = Math.ceil(trialMsLeft / 3600000);
+    isTrial = true;
+  }
+
+  return {
+    effectiveId,
+    isActive: effectiveId !== 'free',
+    expiresAt: effectiveExpiresAt,
+    remainingHours,
+    isTrial,
+    isPass,
+    source: effectiveSource,
+    trialUsed: meta.trial_used === true,
+    trialStartedAt: meta.trial_started_at || null,
+    trialExpiresAt,
+    premiumPassStartedAt: meta.premium_pass_started_at || null,
+    premiumPassExpiresAt: passExpiresAt,
+  };
 }

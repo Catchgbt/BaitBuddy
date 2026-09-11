@@ -117,7 +117,7 @@ describe('POST /api/events — visibility-Gate', () => {
 
   it('Friends-Plan: friends-Sichtbarkeit wird uebernommen', async () => {
     const future = new Date(Date.now() + 300 * 24 * 3600 * 1000).toISOString();
-    await postAppFor({ ...ME, user_metadata: { premium_plan_id: 'friends', premium_expires_at: future } });
+    await postAppFor({ ...ME, app_metadata: { premium_plan_id: 'friends', premium_expires_at: future } });
 
     const res = await request(app).post('/api/events').set('Authorization', 'Bearer tok').send(body);
 

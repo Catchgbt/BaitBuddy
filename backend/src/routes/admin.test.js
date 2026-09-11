@@ -18,6 +18,7 @@ function makeUsers(count, overrides = {}) {
     email: `angler${i}@baitbuddy.test`,
     created_at: `2026-01-${String((i % 28) + 1).padStart(2, '0')}T00:00:00.000Z`,
     user_metadata: { full_name: `Angler ${i}`, ...overrides },
+    app_metadata: { ...overrides },
   }));
 }
 
@@ -38,7 +39,8 @@ describe('GET /api/admin/premium/check-expiry', () => {
     const expired = {
       id: 'u-expired',
       email: 'abgelaufen@baitbuddy.test',
-      user_metadata: {
+      user_metadata: {},
+      app_metadata: {
         premium_plan_id: 'elite',
         premium_expires_at: '2020-01-01T00:00:00.000Z',
       },
@@ -46,7 +48,8 @@ describe('GET /api/admin/premium/check-expiry', () => {
     const active = {
       id: 'u-active',
       email: 'aktiv@baitbuddy.test',
-      user_metadata: {
+      user_metadata: {},
+      app_metadata: {
         premium_plan_id: 'basic',
         premium_expires_at: '2099-01-01T00:00:00.000Z',
       },
@@ -61,8 +64,8 @@ describe('GET /api/admin/premium/check-expiry', () => {
     expect(res.body.ok).toBe(true);
     expect(res.body.checked).toBe(2);
     expect(res.body.expired).toBe(1);
-    expect(expired.user_metadata.premium_plan_id).toBeNull();
-    expect(active.user_metadata.premium_plan_id).toBe('basic');
+    expect(expired.app_metadata.premium_plan_id).toBeNull();
+    expect(active.app_metadata.premium_plan_id).toBe('basic');
   });
 
   it('prueft auch Konten jenseits der ersten Seite', async () => {
@@ -110,11 +113,11 @@ describe('POST /api/admin/plans/assign', () => {
     expect(res.body.plan_id).toBe('elite');
     expect(res.body.user_email).toBe('ziel@baitbuddy.test');
 
-    expect(user.user_metadata.premium_plan_id).toBe('elite');
-    expect(user.user_metadata.premium_payment_method).toBe('admin');
-    expect(user.user_metadata.premium_assigned_by).toBe(ADMIN.email);
+    expect(user.app_metadata.premium_plan_id).toBe('elite');
+    expect(user.app_metadata.premium_payment_method).toBe('admin');
+    expect(user.app_metadata.premium_assigned_by).toBe(ADMIN.email);
 
-    const days = (new Date(user.user_metadata.premium_expires_at) - Date.now()) / 86400000;
+    const days = (new Date(user.app_metadata.premium_expires_at) - Date.now()) / 86400000;
     expect(days).toBeGreaterThan(13.9);
     expect(days).toBeLessThan(14.1);
   });
@@ -136,8 +139,10 @@ describe('POST /api/admin/plans/assign', () => {
 
   it('entzieht den Plan bei plan_id=free', async () => {
     const user = target();
-    user.user_metadata.premium_plan_id = 'elite';
-    user.user_metadata.premium_expires_at = '2099-01-01T00:00:00.000Z';
+    user.app_metadata = {
+      premium_plan_id: 'elite',
+      premium_expires_at: '2099-01-01T00:00:00.000Z',
+    };
     await boot({ adminUsers: [user] });
 
     const res = await request(app)
@@ -146,8 +151,8 @@ describe('POST /api/admin/plans/assign', () => {
       .send({ target_user_id: 'u-target', plan_id: 'free' });
 
     expect(res.status).toBe(200);
-    expect(user.user_metadata.premium_plan_id).toBe('free');
-    expect(user.user_metadata.premium_expires_at).toBeNull();
+    expect(user.app_metadata.premium_plan_id).toBe('free');
+    expect(user.app_metadata.premium_expires_at).toBeNull();
   });
 
   it('lehnt unbekannte Plaene und unsinnige Laufzeiten ab (400)', async () => {
