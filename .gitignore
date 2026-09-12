@@ -1,6 +1,8 @@
 #env
 .env
 .env.*
+.env.production
+.env.production.local
 
 # Logs
 logs

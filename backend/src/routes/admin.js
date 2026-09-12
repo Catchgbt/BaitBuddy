@@ -7,7 +7,13 @@ import { sendDbError } from '../lib/errorResponse.js';
 
 const router = Router();
 
-const ADMIN_SECRET = process.env.CRON_SECRET || 'dev-secret';
+const ADMIN_SECRET = process.env.CRON_SECRET;
+if (!ADMIN_SECRET) {
+  throw new Error(
+    'CRON_SECRET environment variable is required for admin routes. ' +
+    'Set it in Vercel Environment Variables or .env.production (never commit)'
+  );
+}
 
 function requireCronAuth(req, res, next) {
   const secret = req.get('x-cron-secret') || req.query.secret;
