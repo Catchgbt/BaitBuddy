@@ -14,7 +14,7 @@ import {
 } from '../lib/buddyKnowledge.js';
 import { isInClosedSeason } from '../lib/closedSeason.js';
 import { isAllowedFetchUrl } from '../lib/urlSafety.js';
-import { resolvePlan, planRank, PLAN_RANK } from '../lib/planResolver.js';
+import { resolvePlan } from '../lib/planResolver.js';
 import { sendDbError } from '../lib/errorResponse.js';
 import { fetchWithTimeout } from '../lib/fetchWithTimeout.js';
 import { getTTSAudio } from '../lib/multiProviderTTS.js';
