@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { supabase } from '../lib/supabase.js';
-import { verifyGooglePlayPurchase, verifyStripePayment, createStripeCheckoutSession } from '../lib/purchaseVerification.js';
+import { verifyGooglePlayPurchase, verifyStripePayment, createStripeCheckoutSession, constructStripeWebhookEvent } from '../lib/purchaseVerification.js';
 import { sendDbError } from '../lib/errorResponse.js';
 import { resolvePlan, PLAN_RANK } from '../lib/planResolver.js';
 
@@ -214,6 +214,56 @@ const CHECKOUT_PLANS = {
   // reines Jahresabo), bleibt aber für Bestandskäufe/Google-Play-Restore gültig.
   friends_monthly: { name: 'Freundschaft Monatlich', amountCents: 3600 },
 };
+
+// Stripe's signed webhook is the authoritative fulfillment path. The browser
+// success URL is only a confirmation screen and cannot grant access itself.
+export async function stripeWebhookHandler(req, res) {
+  let event;
+  try {
+    event = constructStripeWebhookEvent(req.body, req.headers['stripe-signature']);
+  } catch (error) {
+    return res.status(400).json({ error: 'Ungültiger Stripe-Webhook' });
+  }
+
+  if (!['checkout.session.completed', 'checkout.session.async_payment_succeeded'].includes(event.type)) {
+    return res.status(200).json({ received: true });
+  }
+
+  const session = event.data.object;
+  if (session.payment_status !== 'paid') return res.status(200).json({ received: true });
+  const userId = session.client_reference_id || session.metadata?.user_id;
+  const planId = session.metadata?.plan_id;
+  const checkoutPlan = planId ? CHECKOUT_PLANS[planId] : null;
+  if (!userId || !checkoutPlan) {
+    console.error('[stripe] checkout session has invalid BaitBuddy metadata', { sessionId: session.id });
+    return res.status(200).json({ received: true });
+  }
+
+  const { data: userResult, error: userError } = await supabase.auth.admin.getUserById(userId);
+  if (userError || !userResult?.user) throw new Error('BaitBuddy user not found for Stripe session');
+  const current = userResult.user.app_metadata || {};
+  if (current.premium_transaction_id === session.id) {
+    return res.status(200).json({ received: true, duplicate: true });
+  }
+
+  const expiresAt = checkoutPlan.durationHours
+    ? new Date(Date.now() + checkoutPlan.durationHours * 60 * 60 * 1000).toISOString()
+    : new Date(Date.now() + (PLAN_DURATION_DAYS[planId] ?? DEFAULT_PLAN_DURATION_DAYS) * 24 * 60 * 60 * 1000).toISOString();
+  const isPremiumPass = planId === 'premium_24h';
+  const merged = {
+    ...current,
+    premium_plan_id: isPremiumPass ? current.premium_plan_id || 'free' : (checkoutPlan.grantsPlan || planId),
+    premium_expires_at: isPremiumPass ? current.premium_expires_at || null : expiresAt,
+    ...(isPremiumPass ? { premium_pass_started_at: new Date().toISOString(), premium_pass_expires_at: expiresAt } : {}),
+    premium_payment_method: 'stripe',
+    premium_transaction_id: session.id,
+    premium_activated_at: new Date().toISOString(),
+    premium_activation_version: (current.premium_activation_version || 0) + 1,
+  };
+  const { error } = await supabase.auth.admin.updateUserById(userId, { app_metadata: merged });
+  if (error) throw error;
+  return res.status(200).json({ received: true, fulfilled: true });
+}
 
 router.post('/premium/checkout', requireAuth, async (req, res) => {
   if (!STRIPE_PAYMENT_VERIFICATION_CONFIGURED) {

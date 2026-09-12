@@ -15,7 +15,7 @@ import catchesRoutes from './routes/catches.js';
 import spotsRoutes from './routes/spots.js';
 import communityRoutes from './routes/community.js';
 import eventsRoutes from './routes/events.js';
-import premiumRoutes from './routes/premium.js';
+import premiumRoutes, { stripeWebhookHandler } from './routes/premium.js';
 import gearRoutes from './routes/gear.js';
 import miscRoutes from './routes/misc.js';
 import mapsRoutes from './routes/maps.js';
@@ -49,6 +49,9 @@ app.use(cors({
   ],
   credentials: true
 }));
+// Stripe's signature is calculated over the original byte stream. This route
+// must therefore remain before the global JSON parser and all auth middleware.
+app.post('/api/premium/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhookHandler);
 app.use(express.json({ limit: '10mb' }));
 app.use(requestLogger);
 

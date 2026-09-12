@@ -97,6 +97,16 @@ function getStripeClient() {
   return stripeClient;
 }
 
+// Verifies Stripe's signature over the original, unmodified request bytes.
+// This must be called only from a route mounted before express.json().
+export function constructStripeWebhookEvent(rawBody, signature) {
+  const client = getStripeClient();
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!client || !webhookSecret) throw new Error('Stripe webhook is not configured');
+  if (!signature) throw new Error('Missing Stripe-Signature');
+  return client.webhooks.constructEvent(rawBody, signature, webhookSecret);
+}
+
 // Erstellt eine Stripe-Checkout-Session für einen Plan-Kauf. mode 'payment'
 // (Einmalzahlung, kein Abo) — BaitBuddy berechnet die Laufzeit selbst, siehe
 // premium.js. Die Session trägt user_id/plan_id als Metadata, damit
