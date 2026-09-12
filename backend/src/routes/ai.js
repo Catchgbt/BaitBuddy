@@ -14,11 +14,12 @@ import {
 } from '../lib/buddyKnowledge.js';
 import { isInClosedSeason } from '../lib/closedSeason.js';
 import { isAllowedFetchUrl } from '../lib/urlSafety.js';
-import { resolvePlan, planRank, PLAN_RANK } from '../lib/planResolver.js';
+import { resolvePlan } from '../lib/planResolver.js';
 import { sendDbError } from '../lib/errorResponse.js';
 import { fetchWithTimeout } from '../lib/fetchWithTimeout.js';
 import { getTTSAudio } from '../lib/multiProviderTTS.js';
 import { buddyPersonalization } from '../lib/buddyPersonalization.js';
+import { resolveServerToolAccess } from '../lib/toolEntitlements.js';
 
 // open-meteo ist optional/schnell — kurzes Timeout, damit ein hängender
 // Wetterdienst nie die KI-Antwort blockiert.
@@ -643,14 +644,17 @@ router.post('/ai/tts', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'Text is required' });
   }
 
-  // Stimmen-Wahl: 'female' ist ein Ultimate-Feature (Plan-ID 'elite' bzw.
-  // Friends-Level). Das Gate MUSS serverseitig sitzen — die Auswahl in den
-  // Einstellungen ist nur Komfort; ohne ausreichenden Plan wird still auf die
-  // Standardstimme zurückgefallen statt die Sprachausgabe zu blockieren.
+  // Premium Voice is granted by an active Premium plan OR a permanent,
+  // server-owned level/purchase unlock. The client can only request a voice;
+  // it cannot claim ownership. Monthly quota consumption remains a separate
+  // server-side concern and will be enabled once production limits are set.
   let voiceUsed = voice === 'female' ? 'female' : 'male';
   if (voiceUsed === 'female') {
-    const { effectiveId } = resolvePlan(req.user);
-    if (planRank(effectiveId) < PLAN_RANK.elite) voiceUsed = 'male';
+    const access = await resolveServerToolAccess({
+      user: req.user,
+      toolId: 'premium_voice',
+    });
+    if (!access.allowed) voiceUsed = 'male';
   }
 
   const voiceId = voiceUsed === 'female'
