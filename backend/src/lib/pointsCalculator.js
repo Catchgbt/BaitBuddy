@@ -250,16 +250,18 @@ export async function calculateEventFinalRankings(eventId, supabase) {
         };
       });
 
-    for (const ranking of rankings) {
-      await supabase
-        .from('event_participants')
-        .update({
-          total_points: ranking.final_points,
-          is_winner: ranking.is_winner
-        })
-        .eq('event_id', eventId)
-        .eq('user_id', ranking.user_id);
-    }
+    await Promise.all(
+      rankings.map(ranking =>
+        supabase
+          .from('event_participants')
+          .update({
+            total_points: ranking.final_points,
+            is_winner: ranking.is_winner
+          })
+          .eq('event_id', eventId)
+          .eq('user_id', ranking.user_id)
+      )
+    );
 
     return rankings;
   } catch (error) {
