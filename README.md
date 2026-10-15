@@ -4,7 +4,7 @@ BaitBuddy ist eine Angel-App mit KI-gestütztem Buddy, Fangbuch, Karten- und
 Wetterfunktionen. Sie läuft als Web-App und wird für Android in einen
 Capacitor-WebView verpackt.
 
-**Live:** https://bait-buddy.vercel.app
+**Live:** https://catchgbt.com
 
 **Self-Hosting:** Der komplette Stack (inkl. Supabase) läuft auch per
 `docker compose` auf einem eigenen Rechner, siehe [docs/DOCKER_SELFHOST.md](docs/DOCKER_SELFHOST.md).
