@@ -109,6 +109,96 @@ describe('ApiClient.request', () => {
     expect(api.getToken()).toBe('expired-token');
     expect(api.getRefreshToken()).toBe('refresh-token');
   });
+
+  it.each(['logout', 'account-switch'])('verwirft einen verspäteten Refresh nach %s', async change => {
+    api.setToken('old-token');
+    api.setRefreshToken('old-refresh');
+    let finishRefresh;
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({ error: 'expired' }, { ok: false, status: 401 }))
+      .mockImplementationOnce(() => new Promise(resolve => { finishRefresh = resolve; }))
+      .mockResolvedValue(jsonResponse({ id: 'old-user' }));
+    vi.stubGlobal('fetch', fetchMock);
+    const pending = api.get('/api/auth/me').catch(error => error);
+    await vi.waitFor(() => expect(finishRefresh).toBeTypeOf('function'));
+    api.setToken(change === 'logout' ? null : 'new-account-token');
+    api.setRefreshToken(change === 'logout' ? null : 'new-account-refresh');
+    finishRefresh(jsonResponse({ token: 'revived-old-token', refresh_token: 'revived-old-refresh' }));
+
+    expect(await pending).toMatchObject({ name: 'AbortError' });
+    expect(api.getToken()).toBe(change === 'logout' ? null : 'new-account-token');
+    expect(api.getRefreshToken()).toBe(change === 'logout' ? null : 'new-account-refresh');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('wiederholt eine alte Mutation nach einem Kontowechsel nicht mit dem neuen Token', async () => {
+    api.setToken('old-token');
+    api.setRefreshToken('old-refresh');
+    let finishRequest;
+    const fetchMock = vi.fn().mockImplementationOnce(() => new Promise(resolve => { finishRequest = resolve; }));
+    vi.stubGlobal('fetch', fetchMock);
+    const pending = api.post('/api/catches', { species: 'Hecht' }).catch(error => error);
+    api.setToken('new-token');
+    api.setRefreshToken('new-refresh');
+    finishRequest(jsonResponse({ error: 'expired' }, { ok: false, status: 401 }));
+
+    expect(await pending).toMatchObject({ name: 'AbortError' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(api.getToken()).toBe('new-token');
+  });
+
+  it('cacht nach dem Abmelden kein verspätet geladenes Profil', async () => {
+    api.setToken('old-token');
+    let finishRequest;
+    vi.stubGlobal('fetch', vi.fn().mockImplementationOnce(() => new Promise(resolve => { finishRequest = resolve; })));
+    const pending = auth.me().catch(error => error);
+    api.setToken(null);
+    finishRequest(jsonResponse({ id: 'old-user' }));
+
+    expect(await pending).toMatchObject({ name: 'AbortError' });
+    expect(auth.getCachedUser()).toBeNull();
+  });
+
+  it('teilt einen normalen Refresh weiterhin zwischen parallelen Requests', async () => {
+    api.setToken('expired-token');
+    api.setRefreshToken('refresh-token');
+    const releases = [];
+    const fetchMock = vi.fn((url, options) => {
+      if (url.endsWith('/api/auth/refresh')) {
+        return new Promise(resolve => { releases.push(resolve); });
+      }
+      return Promise.resolve(options.headers.Authorization === 'Bearer expired-token'
+        ? jsonResponse({ error: 'expired' }, { ok: false, status: 401 })
+        : jsonResponse({ id: 'user-1' }));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const first = api.get('/api/auth/me');
+    const second = api.get('/api/auth/me');
+    await vi.waitFor(() => expect(releases.length).toBeGreaterThan(0));
+    releases.forEach(resolve => resolve(jsonResponse({ token: 'fresh-token', refresh_token: 'fresh-refresh' })));
+
+    expect(await Promise.all([first, second])).toEqual([{ id: 'user-1' }, { id: 'user-1' }]);
+    expect(releases).toHaveLength(1);
+    expect(api.getRefreshToken()).toBe('fresh-refresh');
+  });
+
+  it('löscht die neue Sitzung nicht, wenn ein alter Refresh endgültig abgelehnt wird', async () => {
+    api.setToken('old-token');
+    api.setRefreshToken('old-refresh');
+    let finishRefresh;
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(jsonResponse({ error: 'expired' }, { ok: false, status: 401 }))
+      .mockImplementationOnce(() => new Promise(resolve => { finishRefresh = resolve; })));
+    const pending = api.get('/api/auth/me').catch(error => error);
+    await vi.waitFor(() => expect(finishRefresh).toBeTypeOf('function'));
+    api.setToken('new-token');
+    api.setRefreshToken('new-refresh');
+    finishRefresh(jsonResponse({ error: 'invalid refresh' }, { ok: false, status: 401 }));
+
+    expect(await pending).toMatchObject({ name: 'AbortError' });
+    expect(api.getToken()).toBe('new-token');
+    expect(api.getRefreshToken()).toBe('new-refresh');
+  });
 });
 
 describe('entities (frontendClient)', () => {

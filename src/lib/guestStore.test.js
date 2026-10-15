@@ -92,6 +92,18 @@ describe('guestStore — lokale Ablage', () => {
 });
 
 describe('migrateGuestData', () => {
+  it('behält Gastdaten, die während einer laufenden Übertragung hinzukommen', async () => {
+    guestCreate('Catch', { species: 'Hecht' });
+    let finishCreate;
+    const create = vi.fn(() => new Promise(resolve => { finishCreate = resolve; }));
+    const pending = migrateGuestData({ Catch: { create } });
+    const added = guestCreate('Catch', { species: 'Zander' });
+    finishCreate({ id: 'server-1' });
+
+    expect(await pending).toMatchObject({ migrated: 1, failed: 0 });
+    expect(guestList('Catch')).toEqual([added]);
+  });
+
   it('überträgt alle Datensätze ins Konto und leert den lokalen Speicher', async () => {
     guestCreate('Catch', { species: 'Hecht' });
     guestCreate('Spot', { name: 'Buhne 12' });

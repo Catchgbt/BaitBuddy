@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, waitFor } from '@testing-library/react';
+import { render, waitFor, screen, cleanup, act } from '@testing-library/react';
 import React from 'react';
 
 const { mockAuth, mockSupabaseAuth, authStateCallback } = vi.hoisted(() => ({
@@ -7,6 +7,7 @@ const { mockAuth, mockSupabaseAuth, authStateCallback } = vi.hoisted(() => ({
     getToken: vi.fn(() => null),
     setToken: vi.fn(),
     setRefreshToken: vi.fn(),
+    clearCachedUser: vi.fn(),
     me: vi.fn(),
   },
   mockSupabaseAuth: { signOut: vi.fn(async () => ({ error: null })) },
@@ -29,16 +30,19 @@ vi.mock('@/api/supabaseClient', () => ({
 import { AuthProvider, useAuth } from './AuthContext';
 
 function TestConsumer() {
-  const { logout } = useAuth();
-  return <button type="button" onClick={() => logout(false)}>logout</button>;
+  const { logout, user, isAuthenticated } = useAuth();
+  return <><span>{isAuthenticated ? user?.id : 'guest'}</span><button type="button" onClick={() => logout(false)}>logout</button></>;
 }
 
 describe('AuthContext – Supabase-Token-Sync', () => {
   beforeEach(() => {
+    cleanup();
     localStorage.clear();
     mockAuth.getToken.mockReturnValue(null);
     mockAuth.setToken.mockClear();
     mockAuth.setRefreshToken.mockClear();
+    mockAuth.clearCachedUser.mockClear();
+    mockAuth.me.mockReset();
     mockSupabaseAuth.signOut.mockClear();
     authStateCallback.current = null;
   });
@@ -78,5 +82,28 @@ describe('AuthContext – Supabase-Token-Sync', () => {
 
     expect(mockSupabaseAuth.signOut).toHaveBeenCalled();
     expect(mockAuth.setToken).toHaveBeenCalledWith(null);
+  });
+
+  it('übernimmt nach dem Logout kein verspätetes Profil mehr in die UI', async () => {
+    mockAuth.getToken.mockReturnValue('token');
+    let finishMe;
+    mockAuth.me.mockImplementation(() => new Promise(resolve => { finishMe = resolve; }));
+    render(<AuthProvider><TestConsumer /></AuthProvider>);
+    await act(async () => { screen.getByText('logout').click(); });
+    await act(async () => { finishMe({ id: 'old-user' }); });
+
+    expect(screen.getByText('guest')).toBeInTheDocument();
+    expect(screen.queryByText('old-user')).not.toBeInTheDocument();
+  });
+
+  it('räumt bei SIGNED_OUT auch den UI-Status und den Profilcache auf', async () => {
+    mockAuth.getToken.mockReturnValue('token');
+    mockAuth.me.mockResolvedValue({ id: 'user-1' });
+    render(<AuthProvider><TestConsumer /></AuthProvider>);
+    await screen.findByText('user-1');
+    await act(async () => { authStateCallback.current('SIGNED_OUT', null); });
+
+    expect(screen.getByText('guest')).toBeInTheDocument();
+    expect(mockAuth.clearCachedUser).toHaveBeenCalled();
   });
 });

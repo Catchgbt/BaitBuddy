@@ -242,15 +242,15 @@ export function pickFaqAnswer(entry, random = Math.random) {
  * Frage spezieller als der Eintrag, wird das offen dazugesagt.
  *
  * @param {string} question
- * @param {{ online?: boolean, inConversation?: boolean }} [options]
- * @returns {{ mode: 'instant'|'offline', entry, answer: string, page: string|null } | null}
+ * @param {{ online?: boolean, inConversation?: boolean, knowledgeOnly?: boolean }} [options]
+ * @returns {{ mode: 'instant'|'offline'|'knowledge', entry, answer: string, page: string|null } | null}
  */
-export function resolveLocalAnswer(question, { online = true, inConversation = false } = {}) {
+export function resolveLocalAnswer(question, { online = true, inConversation = false, knowledgeOnly = false } = {}) {
   const match = findFaqMatch(question);
   if (!match) return null;
   const { entry, coverage, contentTokens } = match;
 
-  if (online) {
+  if (online && !knowledgeOnly) {
     if (coverage < INSTANT_MIN_COVERAGE) return null;
     if (contentTokens > INSTANT_MAX_CONTENT_TOKENS) return null;
     if (isActionRequest(question) || needsPersonalContext(question)) return null;
@@ -263,6 +263,15 @@ export function resolveLocalAnswer(question, { online = true, inConversation = f
   // Antwort am Thema vorbei — dann lieber die ehrliche Fallback-Nachricht.
   if (coverage === 0) return null;
   let answer = pickFaqAnswer(entry);
+  // Bewusst gewähltes Wissen oder fehlender Login ist kein Netzausfall.
+  if (knowledgeOnly) {
+    if (isActionRequest(question)) {
+      answer = `Im Wissensmodus führe ich keine App-Aktionen aus. Aus meinem gespeicherten Wissen: ${answer}`;
+    } else if (coverage < INSTANT_MIN_COVERAGE || needsPersonalContext(question)) {
+      answer = `Aus meinem gespeicherten Wissen antworte ich allgemein, ohne deine Daten, deinen Ort oder die aktuelle Lage auszuwerten: ${answer}`;
+    }
+    return { mode: 'knowledge', entry, answer, page: entry.page || null };
+  }
   if (isActionRequest(question)) {
     answer = `Ohne Verbindung kann ich gerade nichts in der App anlegen oder öffnen — das klappt wieder, sobald die Verbindung steht. Soweit ich es aus meinem eingebauten Wissen sagen kann: ${answer}`;
   } else if (coverage < INSTANT_MIN_COVERAGE || needsPersonalContext(question)) {

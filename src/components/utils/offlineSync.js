@@ -127,7 +127,20 @@ export function removeFromOfflineCatchQueue(offlineId) {
   }
 }
 
-export async function syncOfflineCatches() {
+// Login-, Online- und manuelle Sync-Auslöser können gleichzeitig eintreffen.
+// Pro Queue denselben laufenden Durchlauf teilen, damit kein Eintrag doppelt
+// angelegt wird. Nach Erfolg oder Fehler darf ein neuer Versuch starten.
+let catchSyncPromise = null;
+let photoSyncPromise = null;
+
+export function syncOfflineCatches() {
+  if (!catchSyncPromise) {
+    catchSyncPromise = runCatchSync().finally(() => { catchSyncPromise = null; });
+  }
+  return catchSyncPromise;
+}
+
+async function runCatchSync() {
   if (!checkIsOnline()) {
     console.log('Offline — Sync verpasst');
     return { synced: 0, failed: 0, errors: [] };
@@ -343,7 +356,14 @@ function resolveSyncedCatchId(catchId, idMap, pendingOfflineIds) {
   return { catchId: null, defer: false };
 }
 
-export async function syncOfflinePhotos() {
+export function syncOfflinePhotos() {
+  if (!photoSyncPromise) {
+    photoSyncPromise = runPhotoSync().finally(() => { photoSyncPromise = null; });
+  }
+  return photoSyncPromise;
+}
+
+async function runPhotoSync() {
   if (!checkIsOnline()) {
     console.log('Offline — Foto-Sync verpasst');
     return { synced: 0, failed: 0, deferred: 0, errors: [] };
@@ -397,18 +417,14 @@ export async function syncOfflinePhotos() {
         });
 
         if (uploadResult?.file_url) {
-          await markPhotoAsSynced(photo.id);
-
           // Wenn das Foto mit einem Fang verlinkt ist, aktualisiere den Fang mit der photo_url
           if (resolved.catchId) {
-            try {
-              await entities.Catch.update(resolved.catchId, { photo_url: uploadResult.file_url });
-              console.log(`Catch ${resolved.catchId} mit Foto-URL aktualisiert: ${uploadResult.file_url}`);
-            } catch (updateError) {
-              console.warn(`Fehler beim Aktualisieren von Catch ${resolved.catchId} mit Foto-URL:`, updateError);
-              // Nicht kritisch — Foto ist hochgeladen, nur die Verlinkung fehlgeschlagen
-            }
+            await entities.Catch.update(resolved.catchId, { photo_url: uploadResult.file_url });
+            console.log(`Catch ${resolved.catchId} mit Foto-URL aktualisiert: ${uploadResult.file_url}`);
           }
+          // Erst nach erfolgreicher Verknüpfung darf das lokale Foto beim
+          // Cleanup verschwinden. Fehler bleiben für den nächsten Versuch.
+          await markPhotoAsSynced(photo.id);
 
           console.log(`Foto ${photo.id} synchronisiert: ${uploadResult.file_url}`);
           synced++;
