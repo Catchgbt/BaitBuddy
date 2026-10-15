@@ -735,8 +735,8 @@ router.post('/ai/tts', requireAuth, requirePremiumVoice, meterAiTokens('tts', { 
   // hält eine mehrsätzige Antwort auf demselben Cloud-Provider, statt bei
   // einem transienten Fehler mitten in der Antwort auf einen anderen Provider
   // (= andere Stimme) auszuweichen. Schlägt genau dieser Provider fehl, gibt
-  // es hier bewusst KEINEN Cloud-Fallback mehr — das übernimmt kontrolliert
-  // die Gerätestimme im Client.
+  // es hier bewusst KEINEN Cloud-Fallback mehr. Nach erfolgreicher Cloud-
+  // Ausgabe bleibt ein fehlgeschlagener Satz im Client still.
   const preferredProvider = typeof preferred_provider === 'string' ? preferred_provider : null;
 
   try {

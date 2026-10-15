@@ -49,9 +49,8 @@ function buildProviderChain(text, voiceId) {
  *   Provider, der den ersten Satz einer Antwort geliefert hat, und schickt ihn
  *   bei jedem weiteren Satz derselben Antwort erneut mit. Schlägt genau dieser
  *   Provider fehl, wird NICHT auf einen anderen Cloud-Provider (= andere
- *   Stimme) ausgewichen — das überließe dem Aufrufer (Route) den kontrollierten
- *   Fallback auf die Gerätestimme, statt zwei Cloud-Stimmen im selben Turn
- *   gegeneinander zu starten.
+ *   Stimme) ausgewichen. Nach erfolgreicher Cloud-Ausgabe bleibt der Satz
+ *   bei einem Fehler still; der Text bleibt im Client sichtbar.
  * @returns {Promise<{ audioBase64: string, contentType: string, provider: string }>}
  */
 export async function getTTSAudio(text, voiceId = null, preferredProvider = null) {
@@ -154,14 +153,9 @@ async function elevenlabsTTS(text, voiceId) {
     TTS_TIMEOUT_MS
   );
 
-  let response = await callElevenLabs(voiceIdToUse);
-
-  // Library-Voices sind im Free-Plan gesperrt (402/403) — einmalig mit der
-  // Premade-Standardstimme wiederholen statt ganz ohne Audio zu bleiben.
-  if (!response.ok && (response.status === 402 || response.status === 403) && voiceIdToUse !== DEFAULT_VOICE_ID) {
-    console.warn(`[ElevenLabs] Voice ${voiceIdToUse} abgelehnt (${response.status}) — Fallback auf Premade-Voice`);
-    response = await callElevenLabs(DEFAULT_VOICE_ID);
-  }
+  // Eine abgelehnte Stimme bleibt ein Fehler. Auch innerhalb desselben
+  // Providers darf ein Satz nicht unbemerkt mit Daniel statt Matilda sprechen.
+  const response = await callElevenLabs(voiceIdToUse);
 
   if (!response.ok) {
     throw new Error(`ElevenLabs error: ${response.status}`);

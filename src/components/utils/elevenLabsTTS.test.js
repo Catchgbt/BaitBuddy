@@ -12,6 +12,7 @@ import {
   splitIntoSentences,
   createSpeechQueue,
 } from './elevenLabsTTS';
+import { setVoiceTier } from '@/lib/ttsVoice';
 
 const tick = () => new Promise((r) => setTimeout(r, 0));
 
@@ -34,6 +35,8 @@ class FakeAudio {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  setVoiceTier('browser');
+  setVoiceTier('premium');
   audioInstances = [];
   lastAudio = null;
 
@@ -291,6 +294,7 @@ describe('Stimmen-Stufe nach Plan', () => {
   });
 
   it('Satz-Queue spricht im Browser-Modus satzweise mit der Gerätestimme', async () => {
+    setVoiceTier('browser');
     const q = createSpeechQueue();
     q.push('Das ist der erste lange Satz hier. Und das ist der zweite lange Satz.');
     q.flush();
@@ -347,17 +351,12 @@ describe('Eine Stimme pro Antwort (Tier- und Provider-Pinning)', () => {
     expect(invokeMock).not.toHaveBeenCalled();
   });
 
-  it('pinnt den Cloud-Provider des ersten Satzes ab dem dritten Satz dieser Antwort', async () => {
-    // Satz 2 wird bereits parallel zu Satz 1 vorab angefordert (Pipelining
-    // "spricht, bevor die ganze Antwort fertig ist" — CLAUDE.md), BEVOR
-    // bekannt ist, welcher Provider Satz 1 beantwortet hat. Das Pinning greift
-    // deshalb technisch bedingt erst ab Satz 3 — das genügt, um den
-    // gemeldeten Bug (wiederholte Stimmwechsel über eine ganze Antwort) zu
-    // beheben, ohne die Latenz-kritische Pipelining-Optimierung zu opfern.
+  it('wartet vor Satz 2 auf die Stimmwahl und lädt ihn während der Wiedergabe von Satz 1 vor', async () => {
     const { setVoiceTier } = await import('@/lib/ttsVoice');
     setVoiceTier('premium');
 
-    invokeMock.mockResolvedValueOnce({ audioBase64: btoa('satz-1'), contentType: 'audio/mpeg', provider: 'openai' });
+    let resolveFirst;
+    invokeMock.mockImplementationOnce(() => new Promise(resolve => { resolveFirst = resolve; }));
     invokeMock.mockResolvedValueOnce({ audioBase64: btoa('satz-2'), contentType: 'audio/mpeg', provider: 'openai' });
     invokeMock.mockResolvedValueOnce({ audioBase64: btoa('satz-3'), contentType: 'audio/mpeg', provider: 'openai' });
 
@@ -365,9 +364,13 @@ describe('Eine Stimme pro Antwort (Tier- und Provider-Pinning)', () => {
     q.push('Das ist der erste lange Satz hier. Und das ist der zweite lange Satz danach. Und hier kommt noch ein dritter langer Satz.');
     q.flush();
     await tick();
+    expect(invokeMock).toHaveBeenCalledTimes(1);
+    resolveFirst({ audioBase64: btoa('satz-1'), contentType: 'audio/mpeg', provider: 'openai' });
+    await tick();
     expect(audioInstances).toHaveLength(1);
     // Erster Satz: noch kein gepinnter Provider.
     expect(invokeMock.mock.calls[0][1]).toMatchObject({ preferred_provider: undefined });
+    expect(invokeMock.mock.calls[1][1]).toMatchObject({ preferred_provider: 'openai' });
 
     lastAudio.onended();
     await tick(); await tick();
@@ -378,6 +381,121 @@ describe('Eine Stimme pro Antwort (Tier- und Provider-Pinning)', () => {
     expect(audioInstances).toHaveLength(3);
     // Dritter Satz: der vom ersten Satz gemeldete Provider wird mitgeschickt.
     expect(invokeMock.mock.calls[2][1]).toMatchObject({ preferred_provider: 'openai' });
+  });
+
+  it('wechselt bei einem späteren Cloud-Fehler nicht zur Gerätestimme', async () => {
+    setVoiceTier('premium');
+    invokeMock.mockResolvedValueOnce({ audioBase64: btoa('satz-1'), provider: 'openai' });
+    invokeMock.mockRejectedValueOnce(new Error('HTTP 502'));
+    const onDrain = vi.fn();
+    const q = createSpeechQueue({ onDrain });
+    q.push('Das ist der erste lange Satz hier. Und das ist der zweite lange Satz danach.');
+    q.flush();
+    await tick();
+    lastAudio.onended();
+    await tick();
+    expect(spoken).toHaveLength(0);
+    expect(onDrain).toHaveBeenCalledTimes(1);
+  });
+
+  it('bleibt nach dem anfänglichen Cloud-Ausfall bei der Gerätestimme bis zum Tarifwechsel', async () => {
+    setVoiceTier('premium');
+    invokeMock.mockRejectedValueOnce(new Error('HTTP 502'));
+    const q = createSpeechQueue();
+    q.push('Das ist der erste lange Satz hier. Und das ist der zweite lange Satz danach.');
+    q.flush();
+    await tick();
+    expect(spoken).toHaveLength(1);
+    spoken[0].onend();
+    await tick();
+    expect(spoken).toHaveLength(2);
+    spoken[1].onend();
+    await tick();
+    const next = speakWithFallback('Die nächste Antwort bleibt bei derselben Stimme.');
+    await tick();
+    expect(spoken).toHaveLength(3);
+    expect(invokeMock).toHaveBeenCalledTimes(1);
+    spoken[2].onend();
+    await next;
+  });
+
+  it('pinnt den Provider auch zwischen Begrüßung und späterer Antwort', async () => {
+    invokeMock.mockResolvedValueOnce({ audioBase64: btoa('hallo'), provider: 'elevenlabs' });
+    invokeMock.mockResolvedValueOnce({ audioBase64: btoa('antwort'), provider: 'elevenlabs' });
+    const first = await speakWithElevenLabs('Hallo');
+    first.onended();
+    const next = await speakWithElevenLabs('Deine nächste Antwort');
+    expect(invokeMock.mock.calls[1][1].preferred_provider).toBe('elevenlabs');
+    next.onended();
+  });
+
+  it('verwirft Audio eines unerwartet anderen Providers statt die Stimme zu wechseln', async () => {
+    invokeMock.mockResolvedValueOnce({ audioBase64: btoa('hallo'), provider: 'elevenlabs' });
+    const first = await speakWithElevenLabs('Hallo');
+    first.onended();
+    invokeMock.mockResolvedValueOnce({ audioBase64: btoa('falsch'), provider: 'openai' });
+    await expect(speakWithElevenLabs('Antwort')).rejects.toThrow(/andere Stimme/);
+    expect(audioInstances).toHaveLength(1);
+    expect(spoken).toHaveLength(0);
+  });
+
+  it('ein verspäteter 403 darf die neuere Premium-Ausgabe nicht herabstufen', async () => {
+    const { getVoiceTier } = await import('@/lib/ttsVoice');
+    let rejectFirst;
+    invokeMock.mockImplementationOnce(() => new Promise((_, reject) => { rejectFirst = reject; }));
+    const first = speakWithElevenLabs('Alter Text');
+    const second = await speakWithElevenLabs('Neuer Text');
+    rejectFirst(Object.assign(new Error('abgelehnt'), { status: 403, data: { code: 'premium_voice_required' } }));
+    await expect(first).resolves.toBeNull();
+    expect(getVoiceTier()).toBe('premium');
+    expect(spoken).toHaveLength(0);
+    second.onended();
+  });
+});
+
+describe('Abbruch und veraltete Audio-Ereignisse', () => {
+  it('löst wartende Vorlese-Aufrufe beim Stoppen auf, auch ohne ended-Event', async () => {
+    let finished = false;
+    speakWithFallback('Hallo Welt').then(() => { finished = true; });
+    await tick();
+    cancelElevenLabs();
+    await tick();
+    expect(finished).toBe(true);
+  });
+
+  it('eine veraltete Queue darf die neue Wiedergabe nicht abbrechen', async () => {
+    const old = createSpeechQueue();
+    const next = createSpeechQueue();
+    next.push('Die neue Antwort soll weiter gesprochen werden.');
+    next.flush();
+    await tick();
+    old.cancel();
+    expect(lastAudio.paused).toBe(false);
+  });
+
+  it('Stop beendet auch ein noch wartendes audio.play()', async () => {
+    const play = vi.spyOn(FakeAudio.prototype, 'play').mockImplementationOnce(() => new Promise(() => {}));
+    let finished = false;
+    speakWithFallback('Hallo Welt').then(() => { finished = true; });
+    await tick();
+    cancelElevenLabs();
+    await tick();
+    expect(finished).toBe(true);
+    play.mockRestore();
+  });
+
+  it('alte Audio-Events beenden weder die neue Stimme noch deren Status', async () => {
+    const { isVoiceSpeaking } = await import('@/lib/voiceActivity');
+    const onEndOld = vi.fn();
+    const old = await speakWithElevenLabs('Alt', { onEnd: onEndOld });
+    const oldEnd = old.onended;
+    const current = await speakWithElevenLabs('Neu');
+    oldEnd();
+    await new Promise(resolve => setTimeout(resolve, 400));
+    expect(onEndOld).not.toHaveBeenCalled();
+    expect(current.paused).toBe(false);
+    expect(isVoiceSpeaking()).toBe(true);
+    current.onended();
   });
 });
 

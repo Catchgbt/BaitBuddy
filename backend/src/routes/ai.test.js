@@ -474,7 +474,7 @@ describe('POST /api/ai/tts', () => {
     expect(String(fetchMock.mock.calls[0][0])).toContain('XrExE9yKIg1WjnnlVkGX');
   });
 
-  it('faellt bei 402 (Library-Voice) auf die Premade-Voice zurueck', async () => {
+  it('meldet eine abgelehnte Stimme ohne sie durch eine andere zu ersetzen', async () => {
     process.env.ELEVENLABS_API_KEY = 'test-eleven-key';
     const origVoice = process.env.ELEVENLABS_VOICE_ID_FEMALE;
     process.env.ELEVENLABS_VOICE_ID_FEMALE = 'library-voice-xyz';
@@ -497,11 +497,10 @@ describe('POST /api/ai/tts', () => {
         .set('Authorization', 'Bearer tok')
         .send({ text: 'Hallo' });
 
-      expect(res.status).toBe(200);
-      expect(res.body.audioBase64).toBe(Buffer.from('MP3DATA').toString('base64'));
-      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(res.status).toBe(502);
+      expect(res.body.audioBase64).toBeUndefined();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(String(fetchMock.mock.calls[0][0])).toContain('library-voice-xyz');
-      expect(String(fetchMock.mock.calls[1][0])).toContain('onwK4e9ZLuTAKqWW03F9');
     } finally {
       if (origVoice === undefined) delete process.env.ELEVENLABS_VOICE_ID_FEMALE;
       else process.env.ELEVENLABS_VOICE_ID_FEMALE = origVoice;

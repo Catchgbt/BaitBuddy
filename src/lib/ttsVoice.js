@@ -13,5 +13,15 @@ export function getActiveBuddyAudio() { return activeAudio; }
 // PlanProvider; das verbindliche Gate sitzt serverseitig (403
 // premium_voice_required), der Client fällt dann selbst auf 'browser' zurück.
 let voiceTier = 'browser';
-export function setVoiceTier(tier) { voiceTier = tier === 'premium' ? 'premium' : 'browser'; }
+let voiceSession = { tier: voiceTier, provider: null, cloudSelected: false, browser: true };
+export function setVoiceTier(tier) {
+  const next = tier === 'premium' ? 'premium' : 'browser';
+  if (next !== voiceTier) {
+    voiceTier = next;
+    voiceSession = { tier: next, provider: null, cloudSelected: false, browser: next === 'browser' };
+  }
+}
 export function getVoiceTier() { return voiceTier; }
+// Eine Stimme über Begrüßung und Antworten hinweg. Nur ein tatsächlicher
+// Tarifwechsel beginnt eine neue Auswahl; cancel/Stop tut das nicht.
+export function getBuddyVoiceSession() { return voiceSession; }

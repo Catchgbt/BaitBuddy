@@ -11,23 +11,46 @@ async function freshModule() {
 
 describe('browserTTS – Stimmwahl (Regressionstests)', () => {
   beforeEach(() => {
+    vi.useFakeTimers();
     vi.stubGlobal('window', {
-      speechSynthesis: { getVoices: vi.fn(() => []), speak: vi.fn(), cancel: vi.fn() },
+      speechSynthesis: Object.assign(new EventTarget(), { getVoices: vi.fn(() => []), speak: vi.fn(), cancel: vi.fn() }),
       SpeechSynthesisUtterance: function SpeechSynthesisUtterance(text) { this.text = text; },
     });
   });
 
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
 
-  it('pinnt keine Stimme, solange getVoices() leer ist', async () => {
+  it('wartet auf eine deutsche Stimme statt zuerst mit der Standardstimme zu sprechen', async () => {
     const { speakBrowser, isBrowserTTSAvailable } = await freshModule();
     expect(isBrowserTTSAvailable()).toBe(true);
     const handle = speakBrowser('Hallo');
     expect(handle).toBeTruthy();
-    // window.speechSynthesis.speak() erhielt eine Utterance ohne .voice (kein
-    // Fehlgriff dauerhaft gecacht, solange noch keine Stimmen geladen waren).
+    expect(window.speechSynthesis.speak).not.toHaveBeenCalled();
+    window.speechSynthesis.getVoices.mockReturnValue([mockVoice('Google Deutsch', 'de-DE')]);
+    window.speechSynthesis.dispatchEvent(new Event('voiceschanged'));
     const utterance = window.speechSynthesis.speak.mock.calls[0][0];
-    expect(utterance.voice).toBeUndefined();
+    expect(utterance.voice.name).toBe('Google Deutsch');
+  });
+
+  it('endet bei fehlendem deutschem Sprachpaket ohne eine zufällige andere Stimme', async () => {
+    const { speakBrowser } = await freshModule();
+    const handle = speakBrowser('Hallo');
+    handle.onerror = vi.fn();
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(window.speechSynthesis.speak).not.toHaveBeenCalled();
+    expect(handle.onerror).toHaveBeenCalledTimes(1);
+  });
+
+  it('stoppt auch eine noch auf voiceschanged wartende Ausgabe', async () => {
+    const { speakBrowser, cancelBrowserTTS } = await freshModule();
+    const handle = speakBrowser('Hallo');
+    handle.onended = vi.fn();
+    cancelBrowserTTS();
+    window.speechSynthesis.getVoices.mockReturnValue([mockVoice('Google Deutsch', 'de-DE')]);
+    window.speechSynthesis.dispatchEvent(new Event('voiceschanged'));
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(window.speechSynthesis.speak).not.toHaveBeenCalled();
+    expect(handle.onended).toHaveBeenCalledTimes(1);
   });
 
   it('bevorzugt eine namentlich weibliche deutsche Stimme', async () => {
@@ -39,6 +62,19 @@ describe('browserTTS – Stimmwahl (Regressionstests)', () => {
     speakBrowser('Hallo');
     const utterance = window.speechSynthesis.speak.mock.calls[0][0];
     expect(utterance.voice.name).toBe('Google Deutsch');
+  });
+
+  it('pausiert und setzt dieselbe Utterance fort ohne erneut zu sprechen', async () => {
+    window.speechSynthesis.getVoices.mockReturnValue([mockVoice('Google Deutsch', 'de-DE')]);
+    window.speechSynthesis.pause = vi.fn();
+    window.speechSynthesis.resume = vi.fn();
+    const { speakBrowser } = await freshModule();
+    const handle = speakBrowser('Hallo');
+    handle.pause();
+    await handle.play();
+    expect(window.speechSynthesis.pause).toHaveBeenCalledTimes(1);
+    expect(window.speechSynthesis.resume).toHaveBeenCalledTimes(1);
+    expect(window.speechSynthesis.speak).toHaveBeenCalledTimes(1);
   });
 
   it('pinnt die einmal aufgelöste Stimme für die restliche Session (keine erneute getVoices-Auswertung)', async () => {
