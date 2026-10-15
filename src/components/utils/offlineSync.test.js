@@ -87,6 +87,19 @@ describe('offlineSync – Catch-Queue', () => {
     expect(getOfflineCatchQueue()).toHaveLength(0);
   });
 
+  it('lädt bei überlappenden Sync-Auslösern jeden Fang nur einmal hoch', async () => {
+    addToOfflineCatchQueue({ species: 'Hecht' });
+    const releases = [];
+    mockEntities.Catch.create.mockImplementation(() => new Promise(resolve => { releases.push(resolve); }));
+    const first = syncOfflineCatches();
+    const second = syncOfflineCatches();
+    const calls = mockEntities.Catch.create.mock.calls.length;
+    releases.forEach(resolve => resolve({ id: 'server-1' }));
+    const results = await Promise.all([first, second]);
+    expect(calls).toBe(1);
+    results.forEach(result => expect(result).toMatchObject({ synced: 1 }));
+  });
+
   it('syncOfflineCatches behaelt fehlgeschlagene Eintraege in der Queue', async () => {
     addToOfflineCatchQueue({ species: 'Hecht' });
     mockEntities.Catch.create.mockRejectedValue(new Error('Netzwerkfehler'));
@@ -188,6 +201,21 @@ describe('offlineSync – Foto-Sync', () => {
     expect(result.failed).toBe(1);
   });
 
+  it('teilt auch beim Foto-Upload einen laufenden Sync zwischen mehreren Auslösern', async () => {
+    mockPhotoStorage.getUnsyncdOfflinePhotos.mockResolvedValue([photo()]);
+    const releases = [];
+    mockApi.post.mockImplementation(() => new Promise(resolve => { releases.push(resolve); }));
+    const first = syncOfflinePhotos();
+    const second = syncOfflinePhotos();
+    await vi.waitFor(() => expect(releases.length).toBeGreaterThan(0));
+    releases.forEach(resolve => resolve({ file_url: 'https://storage/fang.jpg' }));
+    const results = await Promise.all([first, second]);
+
+    expect(mockApi.post).toHaveBeenCalledTimes(1);
+    expect(mockPhotoStorage.markPhotoAsSynced).toHaveBeenCalledTimes(1);
+    results.forEach(result => expect(result.synced).toBe(1));
+  });
+
   it('synchronisiert nicht ohne Auth-Token', async () => {
     mockApi.getToken.mockReturnValue(null);
     mockPhotoStorage.getUnsyncdOfflinePhotos.mockResolvedValue([photo()]);
@@ -230,6 +258,9 @@ describe('offlineSync – Offline Photo Integration with Catches', () => {
     mockApi.post.mockReset();
     mockEntities.Catch.update = vi.fn().mockResolvedValue({});
     mockPhotoStorage.getUnsyncdOfflinePhotos.mockReset().mockResolvedValue([]);
+    mockPhotoStorage.markPhotoAsSynced.mockClear();
+    mockPhotoStorage.markPhotoSyncError.mockClear();
+    mockPhotoStorage.cleanupSyncedPhotos.mockClear();
   });
 
   it('verlinkt offline Fangfoto mit Fang und lädt beide hoch', async () => {
@@ -307,16 +338,24 @@ describe('offlineSync – Offline Photo Integration with Catches', () => {
     mockEntities.Catch.update.mockRejectedValue(new Error('Fang nicht gefunden'));
 
     onlineState.current = true;
-    await syncOfflinePhotos();
+    const result = await syncOfflinePhotos();
 
-    // Foto wird trotzdem als synced markiert (Upload erfolgreich)
-    expect(mockPhotoStorage.markPhotoAsSynced).toHaveBeenCalledWith(9);
+    expect(result).toMatchObject({ synced: 0, failed: 1 });
+    expect(mockPhotoStorage.markPhotoAsSynced).not.toHaveBeenCalled();
+    expect(mockPhotoStorage.markPhotoSyncError).toHaveBeenCalledWith(9, 'Fang nicht gefunden');
+    expect(mockPhotoStorage.cleanupSyncedPhotos).not.toHaveBeenCalled();
 
-    // Versuch, Fang zu aktualisieren, fehlgeschlagen — aber nicht kritisch
+    // Das lokale Foto bleibt bis zur erfolgreichen Verknüpfung erhalten.
     expect(mockEntities.Catch.update).toHaveBeenCalledWith(
       'srv-3',
       { photo_url: 'https://storage/fang3.jpg' }
     );
+
+    // Ein späterer Versuch kann die Verknüpfung abschließen und erst dann aufräumen.
+    mockEntities.Catch.update.mockResolvedValue({});
+    expect(await syncOfflinePhotos()).toMatchObject({ synced: 1, failed: 0 });
+    expect(mockPhotoStorage.markPhotoAsSynced).toHaveBeenCalledWith(9);
+    expect(mockPhotoStorage.cleanupSyncedPhotos).toHaveBeenCalledTimes(1);
   });
 });
 

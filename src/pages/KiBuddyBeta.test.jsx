@@ -322,6 +322,28 @@ describe('KiBuddyBeta – Datenquelle (Punkt 8: Wissen vs. KI-Modell)', () => {
     expect(ai.chatStream).not.toHaveBeenCalled();
   });
 
+  it('bezeichnet eine gespeicherte Antwort im Datenbank-Modus nicht als Netzausfall', async () => {
+    localStorage.setItem('bb_buddy_data_source', 'database');
+    renderBuddy();
+    await ask('Welche Köder passen gerade für Hecht?');
+
+    expect(await screen.findByText('Aus dem Buddy-Wissen')).toBeInTheDocument();
+    expect(screen.queryByText(/Online-KI ist gerade nicht erreichbar/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Offline-Antwort aus dem Buddy-Wissen')).not.toBeInTheDocument();
+    expect(ai.chatStream).not.toHaveBeenCalled();
+  });
+
+  it('erklärt einen fehlenden Login statt einen Verbindungsausfall zu behaupten', async () => {
+    catchgbtChat.mockRejectedValue(Object.assign(new Error('Bitte anmelden'), { status: 401 }));
+    renderBuddy();
+    await ask('Welche Köder passen gerade für Hecht?');
+
+    expect(await screen.findByText(/Für die Online-KI melde dich bitte an/)).toBeInTheDocument();
+    expect(screen.getByText('Aus dem Buddy-Wissen')).toBeInTheDocument();
+    expect(screen.queryByText(/Online-KI ist gerade nicht erreichbar/)).not.toBeInTheDocument();
+    expect(catchgbtChat).toHaveBeenCalledTimes(1);
+  });
+
   it('Modus "KI-Modell": ruft auch bei einer sonst sofort lokal beantworteten Standardfrage das Modell auf', async () => {
     catchgbtChat.mockResolvedValueOnce({ reply: 'Antwort vom Modell.' });
     localStorage.setItem('bb_buddy_data_source', 'model');

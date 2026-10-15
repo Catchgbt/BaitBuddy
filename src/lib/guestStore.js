@@ -207,18 +207,22 @@ export async function migrateGuestData(entityClients) {
         continue;
       }
 
-      const remaining = [];
+      const migratedIds = new Set();
       for (const record of records) {
         try {
           await client.create(stripLocalFields(record));
+          migratedIds.add(record.id);
           migrated += 1;
           byEntity[entityName] = (byEntity[entityName] || 0) + 1;
         } catch {
-          remaining.push(record);
           failed += 1;
         }
       }
-      writeAll(entityName, remaining);
+      // Während der Requests können weitere Gastdaten hinzukommen. Nur die
+      // tatsächlich übertragenen IDs aus dem aktuellen Speicher entfernen.
+      if (migratedIds.size > 0) {
+        writeAll(entityName, readAll(entityName).filter(record => !migratedIds.has(record.id)));
+      }
     }
   } finally {
     try {

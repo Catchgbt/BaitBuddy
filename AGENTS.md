@@ -59,6 +59,11 @@ Die App nutzt **absichtlich zwei parallele Auth-Pfade**, beide aktiv:
 ### ⚠️ Kritisch
 `autoRefreshToken` ist in `supabaseClient.js` **deaktiviert**, um Token-Konflikt zu vermeiden (nur `bb_token`-Refresh ist aktiv). Eine vollständige Konsolidierung wurde bewusst zurückgestellt (zu großer Eingriff, OAuth nicht offline verifizierbar). **Bei zukünftigen Auth-Änderungen diese Dualität beachten.**
 
+- `ApiClient` entwertet laufende Requests bei expliziten Sitzungsänderungen über eine Versionsnummer. Ein alter Refresh darf nach Logout oder Kontowechsel keine Tokens setzen oder löschen; alte Requests dürfen nicht unter dem neuen Konto wiederholt werden. Die interne Refresh-Rotation erhält dieselbe Sitzungsversion.
+- `AuthContext` verwirft überholte Profilabfragen nach Logout oder einem neueren Auth-Check. `SIGNED_OUT` räumt Tokens, Profilcache und UI-Status auf.
+- Offline-Sync teilt überlappende Aufrufe pro Queue innerhalb einer App-Instanz. Fotos bleiben bis zur erfolgreichen Fang-Verknüpfung lokal erhalten. Die Gastdatenübernahme entfernt nur übertragene IDs aus dem aktuellen Speicher, damit währenddessen neu erfasste Einträge erhalten bleiben.
+- `resolveLocalAnswer(..., { knowledgeOnly: true })` kennzeichnet bewusst gewähltes Buddy-Wissen ohne Netzausfall-Meldung. `KiBuddyBeta` nutzt diesen Pfad im Datenbankmodus und nach endgültigem Chat-401 mit Anmeldehinweis; echte Verbindungsfehler behalten ihren getrennten Fallback.
+
 ---
 
 ## 🤖 KI-Buddy (CloudMD) — Kernfeature

@@ -14,6 +14,26 @@ import {
   getOfflineFallback,
 } from './buddyFaq.js';
 
+describe('Wissensmodus ohne behaupteten Netzausfall', () => {
+  it('kennzeichnet kontextabhängige Fragen als allgemeines gespeichertes Wissen', () => {
+    const result = resolveLocalAnswer('Welche Köder passen gerade für Hecht?', { knowledgeOnly: true });
+    expect(result.mode).toBe('knowledge');
+    expect(result.answer).toContain('ohne deine Daten');
+    expect(result.answer).not.toMatch(/nicht erreichbar|Offline|Ohne Verbindung/);
+  });
+
+  it('führt App-Aktionen im Wissensmodus nicht auf eine fehlende Verbindung zurück', () => {
+    const result = resolveLocalAnswer('Trag einen Hecht ein', { knowledgeOnly: true });
+    expect(result.mode).toBe('knowledge');
+    expect(result.answer).toContain('keine App-Aktionen');
+    expect(result.answer).not.toMatch(/sobald die Verbindung|nicht erreichbar/);
+  });
+
+  it('erfindet bei fehlendem Treffer keine Wissensantwort', () => {
+    expect(resolveLocalAnswer('Wie wird die Bundesliga ausgehen?', { knowledgeOnly: true })).toBeNull();
+  });
+});
+
 const idOf = (question) => findFaqMatch(question)?.entry.id ?? null;
 
 describe('FAQ-Datenbank — Integrität', () => {

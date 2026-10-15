@@ -441,7 +441,7 @@ export function KiBuddyBetaInner({ initialMode } = {}) {
         abortRef.current?.abort();
         speechQueueRef.current?.cancel();
         speechQueueRef.current = null;
-        const knowledge = resolveLocalAnswer(q, { online: false, inConversation });
+        const knowledge = resolveLocalAnswer(q, { knowledgeOnly: true, inConversation });
         answerLocally(knowledge || {
           answer: "Dazu habe ich in meinem gespeicherten Wissen noch keine passende Antwort. Wähle Auto oder KI-Modell für eine ausführlichere Antwort.",
           mode: "knowledge",
@@ -596,6 +596,17 @@ export function KiBuddyBetaInner({ initialMode } = {}) {
       // der Cloud, denn lokal kostet eine Antwort nichts.
       if (localBuddy.canFallBack) {
         askOnDevice(q, { fallback: true });
+        return;
+      }
+
+      // Cloud-Chat verlangt eine Anmeldung. Ein 401 ist kein Netzausfall;
+      // gespeichertes Wissen bleibt trotzdem nutzbar, ohne sinnlose Retries.
+      if (error?.status === 401) {
+        appendMessages({ role: 'system', text: 'Für die Online-KI melde dich bitte an. Mein gespeichertes Wissen kannst du weiter nutzen.' });
+        answerLocally(resolveLocalAnswer(q, { knowledgeOnly: true }) || {
+          answer: 'Dazu habe ich in meinem gespeicherten Wissen noch keine passende Antwort.',
+          mode: 'knowledge',
+        });
         return;
       }
 

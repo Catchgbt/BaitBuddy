@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { auth } from "@/api/auth";
 import { supabase } from "@/api/supabaseClient";
 import { entities } from "@/api/frontendClient";
@@ -13,8 +13,12 @@ export const AuthProvider = ({ children }) => {
   const [isLoadingPublicSettings]                         = useState(false);
   const [authError, setAuthError]                         = useState(null);
   const [appPublicSettings]                               = useState(null);
+  const authCheckVersion = useRef(0);
 
-  useEffect(() => { checkAppState(); }, []);
+  useEffect(() => {
+    checkAppState();
+    return () => { authCheckVersion.current += 1; };
+  }, []);
 
   // Profiländerungen (auth.updateMe) sofort übernehmen — sonst zeigten
   // Buddy-Begrüßung, Einstellungen und Avatar bis zum Neuladen den alten Stand.
@@ -44,8 +48,13 @@ export const AuthProvider = ({ children }) => {
         auth.setToken(session.access_token);
         if (session.refresh_token) auth.setRefreshToken(session.refresh_token);
       } else if (event === 'SIGNED_OUT') {
+        authCheckVersion.current += 1;
         auth.setToken(null);
         auth.setRefreshToken?.(null);
+        auth.clearCachedUser?.();
+        setUser(null);
+        setIsAuthenticated(false);
+        setIsLoadingAuth(false);
       }
     });
     return () => subscription.unsubscribe();
@@ -64,6 +73,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const checkAppState = async () => {
+    const version = ++authCheckVersion.current;
     try {
       setIsLoadingAuth(true);
       setAuthError(null);
@@ -80,10 +90,13 @@ export const AuthProvider = ({ children }) => {
       // Profil zurück, sofern ein Token vorliegt — ein zuvor angemeldeter Nutzer
       // bleibt damit ohne Verbindung angemeldet.
       const currentUser = await auth.me();
+      // Logout oder ein neuerer Auth-Check kann den Request überholt haben.
+      if (version !== authCheckVersion.current) return;
       setUser(currentUser);
       setIsAuthenticated(true);
       await adoptGuestData();
     } catch (error) {
+      if (version !== authCheckVersion.current) return;
       setIsAuthenticated(false);
       setUser(null);
       // Nur bei einer echten Ablehnung (401/403) die Tokens verwerfen. Bei einem
@@ -94,13 +107,15 @@ export const AuthProvider = ({ children }) => {
         auth.setRefreshToken?.(null);
       }
     } finally {
-      setIsLoadingAuth(false);
+      if (version === authCheckVersion.current) setIsLoadingAuth(false);
     }
   };
 
   const logout = async (shouldRedirect = true) => {
+    authCheckVersion.current += 1;
     setUser(null);
     setIsAuthenticated(false);
+    setIsLoadingAuth(false);
     auth.setToken(null);
     auth.setRefreshToken?.(null);
     auth.clearCachedUser?.();

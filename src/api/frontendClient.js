@@ -59,6 +59,7 @@ function clearCachedUser() {
 // echte Ablehnung und muss zum Logout führen.
 function isNetworkError(error) {
   if (error == null) return false;
+  if (error.name === 'AbortError') return false;
   if (error.status == null) return true;
   // Cloudflare-Infrastrukturfehler (520–530): Origin nicht erreichbar. Für den
   // Client verhält sich das wie ein Netzwerkausfall — der Offline-Cache greift.
@@ -105,13 +106,20 @@ class ApiClient {
   constructor() {
     // Token wird bei jeder Request aus localStorage gelesen, nicht gecacht
     this._refreshPromise = null;
+    this._sessionVersion = 0;
+    this._refreshSessionVersion = null;
+  }
+
+  _storeToken(key, token) {
+    if (typeof localStorage !== 'undefined') {
+      if (token) localStorage.setItem(key, token);
+      else localStorage.removeItem(key);
+    }
   }
 
   setToken(token) {
-    if (typeof localStorage !== 'undefined') {
-      if (token) localStorage.setItem(TOKEN_KEY, token);
-      else localStorage.removeItem(TOKEN_KEY);
-    }
+    if (this.getToken() !== (token || null)) this._sessionVersion += 1;
+    this._storeToken(TOKEN_KEY, token);
   }
 
   getToken() {
@@ -122,10 +130,8 @@ class ApiClient {
   }
 
   setRefreshToken(token) {
-    if (typeof localStorage !== 'undefined') {
-      if (token) localStorage.setItem(REFRESH_KEY, token);
-      else localStorage.removeItem(REFRESH_KEY);
-    }
+    if (this.getRefreshToken() !== (token || null)) this._sessionVersion += 1;
+    this._storeToken(REFRESH_KEY, token);
   }
 
   getRefreshToken() {
@@ -135,20 +141,38 @@ class ApiClient {
     return null;
   }
 
+  _assertSession(version) {
+    if (this._sessionVersion === version) return;
+    const error = new Error('Die Sitzung wurde während der Anfrage geändert.');
+    error.name = 'AbortError';
+    throw error;
+  }
+
   // Supabase-Access-Tokens laufen nach ~1h ab. Bei 401 wird hier einmalig ein
   // frisches Token geholt und die Anfrage wiederholt, statt den Nutzer mit
   // "Verbindungsfehler" sitzen zu lassen. Parallele 401s teilen sich denselben
   // Refresh-Call (Supabase rotiert Refresh-Tokens bei jeder Nutzung).
   _refreshSession() {
-    if (!this._refreshPromise) {
-      this._refreshPromise = (async () => {
-        const res = await fetch(`${API_URL}/api/auth/refresh`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refresh_token: this.getRefreshToken() }),
-          signal: timeoutSignal(15000), // 15s timeout for token refresh
-        });
+    const version = this._sessionVersion;
+    if (!this._refreshPromise || this._refreshSessionVersion !== version) {
+      this._refreshSessionVersion = version;
+      const refreshPromise = (async () => {
+        let res;
+        try {
+          res = await fetch(`${API_URL}/api/auth/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh_token: this.getRefreshToken() }),
+            signal: timeoutSignal(15000), // 15s timeout for token refresh
+          });
+        } catch (error) {
+          this._assertSession(version);
+          throw error;
+        }
         const data = await res.json().catch(() => ({}));
+        // Ein alter Refresh darf nach Logout/Kontowechsel weder Tokens
+        // wiederherstellen noch die inzwischen neue Sitzung löschen.
+        this._assertSession(version);
         if (!res.ok || !data.token) {
           // Nur eine echte Ablehnung (Refresh-Token ungültig/abgelaufen)
           // beendet die Sitzung. Bei 429 (Auth-Rate-Limit teilen sich z. B.
@@ -167,10 +191,15 @@ class ApiClient {
           error.status = res.ok ? 502 : res.status;
           throw error;
         }
-        this.setToken(data.token);
-        if (data.refresh_token) this.setRefreshToken(data.refresh_token);
+        // Token-Rotation gehört weiter zur selben Sitzung. Nur explizite
+        // Änderungen über die öffentlichen Setter entwerten laufende Requests.
+        this._storeToken(TOKEN_KEY, data.token);
+        if (data.refresh_token) this._storeToken(REFRESH_KEY, data.refresh_token);
         return true;
-      })().finally(() => { this._refreshPromise = null; });
+      })().finally(() => {
+        if (this._refreshPromise === refreshPromise) this._refreshPromise = null;
+      });
+      this._refreshPromise = refreshPromise;
     }
     return this._refreshPromise;
   }
@@ -181,6 +210,7 @@ class ApiClient {
     // interne 30s-Timeout bleibt immer aktiv und wird mit dem externen Signal
     // kombiniert. `_retried` verhindert Endlos-Refresh-Schleifen bei 401.
     const { signal: externalSignal, _retried = false, _attempt = 0 } = options;
+    const sessionVersion = this._sessionVersion;
     const token = this.getToken();
     const opts = {
       method,
@@ -197,16 +227,26 @@ class ApiClient {
     // (gecachtes Profil, lokale Warteschlange) SOFORT auslösen, statt erst
     // mehrere Sekunden lang zu warten. Backoff greift nur bei echter, vom Server
     // gemeldeter Überlast (transiente Statuscodes unten).
-    const res = await fetch(`${API_URL}${path}`, opts);
+    let res;
+    try {
+      res = await fetch(`${API_URL}${path}`, opts);
+    } catch (error) {
+      this._assertSession(sessionVersion);
+      throw error;
+    }
 
     const data = await res.json().catch(() => ({}));
+    this._assertSession(sessionVersion);
     if (!res.ok) {
       // Abgelaufene Sitzung: einmalig Token erneuern und Anfrage wiederholen.
       // Login/Register/Refresh selbst sind ausgenommen (401 = falsche Daten).
       const noRetry = ['/api/auth/login', '/api/auth/register', '/api/auth/refresh', '/api/auth/clerk'];
       if (res.status === 401 && !_retried && !noRetry.some(p => path.startsWith(p)) && this.getRefreshToken()) {
         const refreshed = await this._refreshSession();
-        if (refreshed) return this.request(method, path, body, { signal: externalSignal, _retried: true, _attempt });
+        if (refreshed) {
+          this._assertSession(sessionVersion);
+          return this.request(method, path, body, { signal: externalSignal, _retried: true, _attempt });
+        }
       }
       // Transiente Serverüberlast (408/429/502/503/504): GET gestaffelt erneut
       // versuchen (Exponential Backoff, ggf. mit Retry-After des Servers), statt
@@ -215,6 +255,7 @@ class ApiClient {
       if (method === 'GET' && RETRYABLE_STATUS.has(res.status) && _attempt < MAX_RETRIES) {
         const retryAfter = parseRetryAfter(res.headers?.get?.('Retry-After'));
         await sleep(computeRetryDelay(_attempt, retryAfter));
+        this._assertSession(sessionVersion);
         return this.request(method, path, body, { ...options, _attempt: _attempt + 1 });
       }
       const err = /** @type {Error & { status?: number, data?: any }} */ (
