@@ -694,12 +694,59 @@ describe('POST /api/premium/check-feature', () => {
 
 describe('GET /api/premium/status', () => {
   it('liefert free ohne user_metadata', async () => {
+    supabaseMock.current.auth.admin.getUserById.mockImplementation(async () => ({
+      data: { user: TEST_USER },
+      error: null,
+    }));
     const res = await request(app)
       .get('/api/premium/status')
       .set('Authorization', 'Bearer test-token');
 
     expect(res.status).toBe(200);
     expect(res.body.plan.id).toBe('free');
+    expect(res.headers['cache-control']).toContain('no-store');
+  });
+
+  it('liefert eine frische manuelle Premium-Zuweisung trotz veraltetem Auth-Cache', async () => {
+    const freshAdminUser = {
+      ...TEST_USER,
+      app_metadata: {
+        premium_plan_id: 'pro',
+        premium_expires_at: new Date(Date.now() + 30 * 86400000).toISOString(),
+        premium_payment_method: 'admin',
+      },
+    };
+    // Auth-Middleware simuliert einen gecachten Free-Nutzer, während die
+    // Admin-Quelle bereits die manuelle Premium-Freischaltung enthält.
+    supabaseMock.current = createSupabaseMock({
+      authUser: TEST_USER,
+      adminUsers: [freshAdminUser],
+    });
+    vi.resetModules();
+    const freshApp = (await import('../server.js')).default;
+
+    const res = await request(freshApp)
+      .get('/api/premium/status')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(res.status).toBe(200);
+    expect(res.body.plan.id).toBe('pro');
+    expect(res.body.plan.source).toBe('subscription');
+    expect(res.headers['cache-control']).toContain('no-store');
+    expect(supabaseMock.current.auth.admin.getUserById).toHaveBeenCalledWith('user-1');
+  });
+
+  it('bestätigt bei Fehler der maßgeblichen Quelle nicht fälschlich Free', async () => {
+    supabaseMock.current.auth.admin.getUserById.mockResolvedValue({
+      data: { user: null },
+      error: { message: 'GoTrue unavailable' },
+    });
+    const res = await request(app)
+      .get('/api/premium/status')
+      .set('Authorization', 'Bearer test-token');
+
+    expect(res.status).toBe(503);
+    expect(res.body.plan).toBeUndefined();
   });
 
   it('gleicht ein abgelaufenes Play-Abo beim Statusabruf serverseitig ab', async () => {
