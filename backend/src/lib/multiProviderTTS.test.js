@@ -127,4 +127,15 @@ describe('getTTSAudio – gepinnter Provider (preferredProvider)', () => {
     await expect(getTTSAudio('Hallo Welt', null, 'openai')).rejects.toThrow(/nicht verfügbar/i);
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it.each([402, 403])('ersetzt die gewählte ElevenLabs-Stimme bei %i nicht durch eine andere Stimme', async status => {
+    process.env.ELEVENLABS_API_KEY = 'el-test';
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: false, status })
+      .mockResolvedValueOnce(mp3Response());
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(getTTSAudio('Hallo', 'XrExE9yKIg1WjnnlVkGX', 'elevenlabs')).rejects.toThrow();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(String(fetchMock.mock.calls[0][0])).toContain('XrExE9yKIg1WjnnlVkGX');
+  });
 });

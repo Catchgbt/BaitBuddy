@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, cleanup } from '@testing-library/react';
 
 vi.mock('@/components/utils/elevenLabsTTS', () => ({
   speakWithElevenLabs: vi.fn(),
@@ -11,6 +11,7 @@ import { speakWithElevenLabs } from '@/components/utils/elevenLabsTTS';
 
 describe('useElevenLabsVoice', () => {
   beforeEach(() => {
+    cleanup();
     vi.clearAllMocks();
   });
 
@@ -56,5 +57,38 @@ describe('useElevenLabsVoice', () => {
 
     expect(result.current.isSpeaking).toBe(false);
     expect(result.current.error).toBe('TTS kaputt');
+  });
+
+  it('ignoriert den verspäteten Fehler einer ersetzten Anfrage', async () => {
+    let rejectOld;
+    speakWithElevenLabs.mockImplementationOnce(() => new Promise((_, reject) => { rejectOld = reject; }));
+    speakWithElevenLabs.mockResolvedValueOnce({ pause() {} });
+    const { result } = renderHook(() => useElevenLabsVoice());
+    let old;
+    act(() => { old = result.current.speak('Alt'); });
+    await act(async () => { await result.current.speak('Neu'); });
+    await act(async () => { rejectOld(new Error('Alter Fehler')); await old; });
+    expect(result.current.isSpeaking).toBe(true);
+    expect(result.current.error).toBeNull();
+  });
+
+  it('Stop beendet den Ladezustand auch während einer noch laufenden Anfrage', async () => {
+    speakWithElevenLabs.mockImplementationOnce(() => new Promise(() => {}));
+    const { result } = renderHook(() => useElevenLabsVoice());
+    act(() => { result.current.speak('Alt'); });
+    expect(result.current.isLoading).toBe(true);
+    act(() => { result.current.stop(); });
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.isSpeaking).toBe(false);
+  });
+
+  it('setzt den Status nach zentralem Abbruch ohne onEnd zurück', async () => {
+    let finish;
+    speakWithElevenLabs.mockResolvedValueOnce({ pause() {}, finished: new Promise(resolve => { finish = resolve; }) });
+    const { result } = renderHook(() => useElevenLabsVoice());
+    await act(async () => { await result.current.speak('Hallo'); });
+    expect(result.current.isSpeaking).toBe(true);
+    await act(async () => { finish(); });
+    expect(result.current.isSpeaking).toBe(false);
   });
 });

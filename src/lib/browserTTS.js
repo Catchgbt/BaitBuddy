@@ -1,6 +1,6 @@
-// Schnelle Geräte-Stimme (Web Speech API, speechSynthesis) für Free/Basic/Pro.
+// Schnelle Geräte-Stimme (Web Speech API, speechSynthesis) für Free/Basic.
 //
-// Die natürliche Premium-Stimme (/api/ai/tts) gibt es ab Ultimate. Die kleinen
+// Die natürliche Premium-Stimme (/api/ai/tts) gibt es ab Pro. Die kleinen
 // Pläne sprechen über die Stimme des Geräts: kein Netz-Roundtrip, kein
 // KI-Volumen, sofort hörbar. Aufgerufen wird dieses Modul ausschließlich über
 // src/components/utils/elevenLabsTTS.js, damit Abbruch (Generation-Token) und
@@ -36,6 +36,8 @@ export function isBrowserTTSAvailable() {
 // gepinnte Stimme wieder verwerfen bzw. dauerhaft auf einer zu früh (vor
 // vollständig geladener Stimmenliste) getroffenen Fehlwahl festnageln.
 let cachedVoice = null;
+const pendingSpeech = new Set();
+const VOICE_WAIT_MS = 1500;
 
 // Deutsche, bevorzugt weibliche Stimme wählen; lokale (offline nutzbare)
 // Stimmen bevorzugt. Liefert die Stimmenliste noch nichts (asynchrones Laden
@@ -57,6 +59,7 @@ function pickGermanVoice() {
 }
 
 export function cancelBrowserTTS() {
+  for (const cancel of [...pendingSpeech]) cancel();
   if (!isBrowserTTSAvailable()) return;
   try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
 }
@@ -73,20 +76,36 @@ export function speakBrowser(text, options = {}) {
   if (!isBrowserTTSAvailable()) throw new Error('Geräte-Sprachausgabe nicht verfügbar');
   const utterance = new window.SpeechSynthesisUtterance(text);
   utterance.lang = PREFERRED_LANG;
-  const voice = pickGermanVoice();
-  if (voice) utterance.voice = voice;
   const rate = Number(options.rate);
   if (Number.isFinite(rate) && rate >= 0.5 && rate <= 2.0) utterance.rate = rate;
 
   let finished = false;
+  let voiceTimer;
+  let voicePoll;
+  let listeningForVoices = false;
+  let started = false;
+  let paused = false;
+  const synth = window.speechSynthesis;
   const handle = {
     onended: null,
     onerror: null,
-    pause() { cancelBrowserTTS(); },
+    pause() { paused = true; if (started) synth.pause?.(); },
+    play() {
+      paused = false;
+      if (!finished) {
+        if (started) synth.resume?.();
+        else tryStart();
+      }
+      return Promise.resolve();
+    },
   };
   const finish = (kind, event) => {
     if (finished) return;
     finished = true;
+    clearTimeout(voiceTimer);
+    clearInterval(voicePoll);
+    if (listeningForVoices) synth.removeEventListener?.('voiceschanged', tryStart);
+    pendingSpeech.delete(cancel);
     const fn = kind === 'end' ? handle.onended : handle.onerror;
     fn?.call(handle, event);
   };
@@ -95,6 +114,33 @@ export function speakBrowser(text, options = {}) {
   // ein gewolltes Ende, kein Fehler.
   utterance.onerror = (e) => finish(e?.error === 'interrupted' || e?.error === 'canceled' ? 'end' : 'error', e);
 
-  window.speechSynthesis.speak(utterance);
+  const cancel = () => finish('end');
+  pendingSpeech.add(cancel);
+
+  function tryStart() {
+    if (finished || started || paused) return false;
+    const voice = pickGermanVoice();
+    if (!voice) return false;
+    clearTimeout(voiceTimer);
+    clearInterval(voicePoll);
+    if (listeningForVoices) synth.removeEventListener?.('voiceschanged', tryStart);
+    utterance.voice = voice;
+    started = true;
+    try {
+      if (synth.paused) synth.resume?.();
+      synth.speak(utterance);
+    }
+    catch (err) { queueMicrotask(() => finish('error', err)); }
+    return true;
+  }
+
+  if (!tryStart()) {
+    // Chrome/Android lädt Stimmen asynchron. Ohne explizite Stimme würde
+    // zuerst die Systemvorgabe und später die deutsche Auswahl sprechen.
+    listeningForVoices = true;
+    synth.addEventListener?.('voiceschanged', tryStart);
+    voicePoll = setInterval(tryStart, 100);
+    voiceTimer = setTimeout(() => finish('error', new Error('Keine deutsche Gerätestimme verfügbar')), VOICE_WAIT_MS);
+  }
   return handle;
 }

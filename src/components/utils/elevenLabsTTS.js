@@ -1,258 +1,133 @@
-// src/components/utils/elevenLabsTTS.js
-// Zentrale ElevenLabs Text-to-Speech Utility.
-// Das Backend (/api/ai/tts) liefert JSON { audioBase64, contentType }.
-// Diese Helfer dekodieren das Base64-Audio und spielen es ab.
-//
-// Zwei Stimmen-Stufen nach Plan (getVoiceTier, gesetzt vom PlanProvider):
-// - 'premium' (ab Ultimate): natürliche Server-Stimme über /api/ai/tts.
-// - 'browser' (Free/Basic/Pro): schnelle Gerätestimme (src/lib/browserTTS.js),
-//   ohne Netz und ohne KI-Volumen.
-// Lehnt der Server die Premium-Stimme ab (403 premium_voice_required), wechselt
-// der Client auf die Gerätestimme. Schlägt die Premium-Stimme sonst fehl
-// (offline, kein Provider), springt ebenfalls die Gerätestimme ein, damit der
-// Buddy überall hörbar bleibt.
-
+// Zentrale Sprachausgabe: eine Sitzung, eine Stimme, eine Wiedergabe.
+// Free/Basic verwenden die fest gewählte deutsche Gerätestimme. Premium
+// bindet den ersten erfolgreichen Cloud-Provider auch für spätere Antworten.
+// Nur vor der ersten Cloud-Ausgabe darf auf die Gerätestimme gewechselt werden.
 import { functions } from "@/api/frontendClient";
-import { getActiveBuddyAudio, getVoiceTier, setVoiceTier } from "@/lib/ttsVoice";
+import { getActiveBuddyAudio, getBuddyVoiceSession, setVoiceTier } from "@/lib/ttsVoice";
 import { speakBrowser, cancelBrowserTTS, isBrowserTTSAvailable } from "@/lib/browserTTS";
 import { setVoiceSpeaking, isVoiceMuted, subscribeVoiceMuted } from "@/lib/voiceActivity";
 
-// Lautlos mitten im Satz: laufende Ausgabe sofort beenden.
-subscribeVoiceMuted((muted) => { if (muted) cancelElevenLabs(); });
-
-function isPremiumVoiceDenied(err) {
-  return err?.status === 403 || err?.data?.code === 'premium_voice_required' || err?.code === 'premium_voice_required';
-}
-
-// Premium-Audio holen; bei Plan-Ablehnung dauerhaft auf die Gerätestimme gehen.
-// `preferredProvider` pinnt den Cloud-TTS-Provider (OpenAI/ElevenLabs/Google/
-// Gemini) innerhalb einer Antwort auf den, der den ersten Satz geliefert hat —
-// verhindert einen Stimmwechsel mitten in einer mehrsätzigen Antwort, wenn ein
-// späterer Satz sonst bei einem anderen Provider (= andere Stimme) landen würde.
-async function fetchPremiumAudio(text, preferredProvider) {
-  try {
-    return await functions.invoke("textToSpeech", { text, preferred_provider: preferredProvider || undefined });
-  } catch (err) {
-    if (isPremiumVoiceDenied(err)) setVoiceTier('browser');
-    throw err;
-  }
-}
-
-function prefersBrowserVoice() {
-  return getVoiceTier() !== 'premium' && isBrowserTTSAvailable();
-}
-
-// Modul-globaler Singleton: Es spielt bewusst immer nur EINE Stimme gleichzeitig.
-// Konsequenz: Gleichzeitiges TTS aus dem KI-Buddy (KiBuddyBeta) und dem schwebenden Widget
-// teilt sich diese eine Wiedergabe – ein neuer speak-Aufruf bricht den vorherigen ab
-// (cancelElevenLabs). Das ist gewolltes Verhalten und kein Bug bei paralleler Nutzung.
-let currentAudio = null;
-let currentUrl = null;
-
-// Generation-Token gegen überlappende Aufrufe: Startet während des laufenden
-// TTS-Requests ein neuer speak-/cancel-Aufruf, würde die ältere Antwort nach
-// ihrem await trotzdem abgespielt und zwei Stimmen sprächen gleichzeitig.
-// Jeder Aufruf merkt sich seine Generation; nur die neueste darf abspielen.
+let currentPlayback = null;
 let generation = 0;
 
-/**
- * Bricht eine laufende ElevenLabs-Wiedergabe ab — auch eine, deren
- * TTS-Request gerade noch läuft (via Generation-Token).
- */
+subscribeVoiceMuted((muted) => { if (muted) cancelElevenLabs(); });
+
 export function cancelElevenLabs() {
   generation += 1;
-  if (currentAudio) {
-    try {
-      currentAudio.pause();
-      currentAudio.src = "";
-    } catch { /* ignore */ }
-    currentAudio = null;
-  }
-  if (currentUrl) {
-    URL.revokeObjectURL(currentUrl);
-    currentUrl = null;
+  const playback = currentPlayback;
+  // Zuerst abschließen: pause/cancel kann synchrone alte Events auslösen.
+  playback?.finish('cancel');
+  if (playback) {
+    try { playback.handle.pause(); playback.handle.src = ''; } catch { /* noop */ }
   }
   cancelBrowserTTS();
   setVoiceSpeaking(false);
 }
 
-// Spricht über die Gerätestimme im Modul-Singleton (für cancelElevenLabs).
-function speakBrowserTracked(text, callbacks, rate) {
-  const handle = speakBrowser(text, { rate });
-  currentAudio = handle;
-  setVoiceSpeaking(true);
-  handle.onended = () => {
-    if (currentAudio === handle) currentAudio = null;
-    setVoiceSpeaking(false);
-    callbacks.onEnd?.();
-  };
-  handle.onerror = (e) => {
-    if (currentAudio === handle) currentAudio = null;
-    setVoiceSpeaking(false);
-    callbacks.onError?.(e);
-  };
-  return handle;
-}
-
-// Dekodiert Base64-Audio in einen Blob (zentral, damit Einzel-Aufruf und
-// Satz-Queue dieselbe Logik teilen).
 function base64ToBlob(audioBase64, contentType) {
   const binary = atob(audioBase64);
   const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return new Blob([bytes], { type: contentType || "audio/mpeg" });
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new Blob([bytes], { type: contentType || 'audio/mpeg' });
 }
 
-/**
- * Holt ElevenLabs-Audio fürs übergebene Text und spielt es ab.
- * Wirft einen Fehler, wenn kein Audio geliefert wird (z. B. API-Key fehlt 501)
- * oder die Wiedergabe blockiert ist (Autoplay-Policy).
- *
- * @param {string} text
- * @param {{ onEnd?: () => void, onError?: (e:any) => void }} [callbacks]
- * @param {{ rate?: number }} [options] rate = Wiedergabegeschwindigkeit (0.5–2.0)
- * @returns {Promise<HTMLAudioElement|null>} null, wenn der Aufruf während des
- *   Requests von einem neueren speak-/cancel-Aufruf abgelöst wurde (dann wird
- *   nichts abgespielt und keiner der Callbacks feuert).
- */
-export async function speakWithElevenLabs(text, callbacks = {}, options = {}) {
-  if (!getActiveBuddyAudio().voiceEnabled || isVoiceMuted()) return null;
-  options = { ...options, rate: (options.rate || 1) * getActiveBuddyAudio().speed };
-  if (!text || typeof text !== "string" || text.trim().length === 0) {
-    throw new Error("Kein Text für TTS");
-  }
-
-  cancelElevenLabs();
-  const myGeneration = generation;
-
-  if (prefersBrowserVoice()) return speakBrowserTracked(text, callbacks, options.rate);
-
-  // Die in den Einstellungen gewählte Stimme mitsenden; das Backend prüft den
-  // Plan (Premium-Stimme nur ab Ultimate).
-  let response;
+async function fetchSpeechSource(text, myGeneration, session) {
+  if (myGeneration !== generation || !getActiveBuddyAudio().voiceEnabled || isVoiceMuted()) return null;
+  if (session.browser && isBrowserTTSAvailable()) return { browserText: text };
   try {
-    response = await fetchPremiumAudio(text);
+    const response = await functions.invoke('textToSpeech', {
+      text, preferred_provider: session.provider || undefined,
+    });
+    if (myGeneration !== generation) return null;
+    const payload = response?.audioBase64 ? response : response?.data;
+    if (!payload?.audioBase64) throw new Error('TTS lieferte kein Audio');
+    if (session.provider && payload.provider !== session.provider) {
+      throw new Error('TTS lieferte eine andere Stimme');
+    }
+    const blob = base64ToBlob(payload.audioBase64, payload.contentType);
+    session.provider = payload.provider || session.provider;
+    session.cloudSelected = true;
+    return blob;
   } catch (err) {
     if (myGeneration !== generation) return null;
-    if (isBrowserTTSAvailable()) return speakBrowserTracked(text, callbacks, options.rate);
+    // Keine andere Stimme nach einer erfolgreichen Cloud-Ausgabe. Auch ein
+    // späteres 403/502 bleibt still; Text und Gesprächssteuerung laufen weiter.
+    if (!session.cloudSelected && isBrowserTTSAvailable()) {
+      session.browser = true;
+      if (err?.data?.code === 'premium_voice_required' || err?.code === 'premium_voice_required') {
+        if (getBuddyVoiceSession() === session) setVoiceTier('browser');
+      }
+      return { browserText: text };
+    }
     throw err;
   }
-
-  // Während des Requests hat ein neuerer speak-/cancel-Aufruf übernommen:
-  // dieses Audio verwerfen statt es parallel zur neuen Stimme abzuspielen.
-  if (myGeneration !== generation) return null;
-
-  // frontendClient liefert das geparste JSON direkt (kein axios-Wrapper).
-  // Unterstütze zur Sicherheit auch ein response.data-Nesting.
-  const payload = response?.audioBase64 ? response : response?.data;
-  const audioBase64 = payload?.audioBase64;
-
-  if (!audioBase64) {
-    throw new Error("ElevenLabs lieferte kein Audio");
-  }
-
-  // Base64 Blob
-  const blob = base64ToBlob(audioBase64, payload.contentType);
-
-  const url = URL.createObjectURL(blob);
-  currentUrl = url;
-
-  const audio = new Audio(url);
-  currentAudio = audio;
-
-  // Die in den Audio-Einstellungen gewählte Sprechgeschwindigkeit gilt auch
-  // für die ElevenLabs-Wiedergabe.
-  const rate = Number(options.rate);
-  if (Number.isFinite(rate) && rate >= 0.5 && rate <= 2.0 && rate !== 1.0) {
-    audio.playbackRate = rate;
-  }
-
-  audio.onended = () => {
-    setVoiceSpeaking(false);
-    if (currentUrl === url) {
-      URL.revokeObjectURL(url);
-      currentUrl = null;
-    }
-    if (currentAudio === audio) currentAudio = null;
-    callbacks.onEnd?.();
-  };
-
-  audio.onerror = (e) => {
-    setVoiceSpeaking(false);
-    if (currentUrl === url) {
-      URL.revokeObjectURL(url);
-      currentUrl = null;
-    }
-    if (currentAudio === audio) currentAudio = null;
-    callbacks.onError?.(e);
-  };
-
-  try {
-    await audio.play();
-    if (currentAudio === audio) setVoiceSpeaking(true);
-  } catch (err) {
-    // Wiedergabe blockiert (z. B. Autoplay-Policy): Blob-URL sofort freigeben,
-    // damit kein Leak entsteht, und den Fehler an den Aufrufer durchreichen.
-    if (currentUrl === url) {
-      URL.revokeObjectURL(url);
-      currentUrl = null;
-    }
-    if (currentAudio === audio) currentAudio = null;
-    throw err;
-  }
-  return audio;
 }
 
-/**
- * Zentrale Sprech-Funktion der App: Spielt den Text mit der natürlichen
- * ElevenLabs-Stimme ab und löst auf, wenn die Wiedergabe beendet ist.
- * Es gibt bewusst KEINEN Browser-TTS-Fallback — schlägt die Ausgabe fehl,
- * löst das Promise still auf, damit Aufrufer (Status-Reset, Gesprächs-Loops)
- * normal weiterlaufen. Respektiert das voiceEnabled-Setting.
- *
- * @param {string} text
- * @param {{ voiceEnabled?: boolean, rate?: number }} [options]
- */
+async function playSpeechSource(source, myGeneration, rate, callbacks = {}) {
+  if (!source || myGeneration !== generation || !getActiveBuddyAudio().voiceEnabled || isVoiceMuted()) return null;
+  const browser = !!source.browserText;
+  const url = browser ? null : URL.createObjectURL(source);
+  let handle;
+  try { handle = browser ? speakBrowser(source.browserText, { rate }) : new Audio(url); }
+  catch (err) { if (url) URL.revokeObjectURL(url); throw err; }
+
+  let settle;
+  const finished = new Promise(resolve => { settle = resolve; });
+  let done = false;
+  const playback = {
+    handle,
+    finish(kind, event) {
+      if (done) return;
+      done = true;
+      if (url) URL.revokeObjectURL(url);
+      if (currentPlayback === playback) {
+        currentPlayback = null;
+        setVoiceSpeaking(false);
+      }
+      settle();
+      if (myGeneration !== generation || kind === 'cancel') return;
+      if (kind === 'end') callbacks.onEnd?.();
+      else callbacks.onError?.(event);
+    },
+  };
+  currentPlayback = playback;
+  handle.finished = finished;
+  handle.onended = e => playback.finish('end', e);
+  handle.onerror = e => playback.finish('error', e);
+  if (Number.isFinite(rate) && rate >= 0.5 && rate <= 2) handle.playbackRate = rate;
+  setVoiceSpeaking(true);
+  if (!browser) {
+    try { await Promise.race([handle.play(), finished]); }
+    catch (err) {
+      playback.finish('error', err);
+      if (myGeneration !== generation) return null;
+      throw err;
+    }
+  }
+  if (myGeneration !== generation) return null;
+  return handle;
+}
+
+/** Spielt einen Text; `finished` endet auch bei Stop/Ersetzen ohne ended-Event. */
+export async function speakWithElevenLabs(text, callbacks = {}, options = {}) {
+  if (!getActiveBuddyAudio().voiceEnabled || isVoiceMuted()) return null;
+  if (typeof text !== 'string' || !text.trim()) throw new Error('Kein Text für TTS');
+  cancelElevenLabs();
+  const myGeneration = generation;
+  const session = getBuddyVoiceSession();
+  const source = await fetchSpeechSource(text, myGeneration, session);
+  return playSpeechSource(source, myGeneration, (options.rate || 1) * getActiveBuddyAudio().speed, callbacks);
+}
+
+/** Wartet auf Ende oder Abbruch; bei Fehlern bleibt der Antworttext verfügbar. */
 export async function speakWithFallback(text, options = {}) {
-  const { voiceEnabled = true, rate = 1.0 } = options;
-
-  if (!text || typeof text !== 'string' || !text.trim()) {
-    return;
-  }
-
-  if (!voiceEnabled) {
-    return;
-  }
-
-  let audio;
+  if (typeof text !== 'string' || !text.trim() || options.voiceEnabled === false) return;
   try {
-    audio = await speakWithElevenLabs(text, {}, { rate });
+    const audio = await speakWithElevenLabs(text, {}, { rate: options.rate || 1 });
+    await audio?.finished;
   } catch (err) {
-    console.warn('[TTS] Sprachausgabe nicht verfügbar, Ausgabe bleibt still:', err?.message);
-    return;
+    console.warn('[TTS] Sprachausgabe nicht verfügbar:', err?.message);
   }
-
-  // Von einem neueren speak-Aufruf abgelöst — der steuert die Wiedergabe.
-  if (!audio) return;
-
-  await new Promise((resolve) => {
-    // speakWithElevenLabs setzt bereits onended/onerror-Handler, die die
-    // Blob-URL via URL.revokeObjectURL freigeben. Diese Handler NICHT
-    // überschreiben (sonst Memory-Leak) – stattdessen wrappen: Original-
-    // Cleanup zuerst ausführen, dann das Promise auflösen.
-    const originalOnEnded = audio.onended;
-    const originalOnError = audio.onerror;
-    audio.onended = (e) => {
-      originalOnEnded?.call(audio, e);
-      resolve();
-    };
-    audio.onerror = (e) => {
-      originalOnError?.call(audio, e);
-      resolve();
-    };
-  });
 }
 
 // ── Satzweise Streaming-Wiedergabe (Time-to-first-Audio senken) ──────────────
@@ -332,70 +207,12 @@ export function splitIntoSentences(text, opts = {}) {
   return { sentences, rest };
 }
 
-// Holt das Audio für einen einzelnen Satz und liefert einen Blob (oder null,
-// wenn die Queue zwischenzeitlich abgelöst/abgebrochen wurde bzw. kein Audio
-// kam). Wirft bei Netzwerkfehlern — die Queue überspringt den Satz dann still.
-//
-// @param {boolean} useBrowserVoice Einmal pro Antwort/Queue entschieden
-//   (siehe createSpeechQueue) statt hier live neu abgefragt — verhindert einen
-//   Stimmwechsel mitten in der Antwort, falls sich der Plan-Tier während der
-//   Wiedergabe ändert (z.B. Kauf-Webhook kommt mitten im Vorlesen an).
-// @param {string|null} preferredProvider Vom ersten erfolgreichen Satz dieser
-//   Antwort gepinnter Cloud-Provider (siehe fetchPremiumAudio).
-// @param {(provider: string) => void} [onProvider] Meldet den vom Server
-//   tatsächlich genutzten Provider zurück, damit die Queue ihn für die
-//   restlichen Sätze pinnen kann.
-async function fetchSentenceBlob(text, myGeneration, useBrowserVoice, preferredProvider, onProvider) {
-  if (!getActiveBuddyAudio().voiceEnabled || isVoiceMuted()) return null;
-  // Gerätestimme: nichts vorzuladen, der Satz wird direkt gesprochen.
-  if (useBrowserVoice) return { browserText: text };
-  let response;
+// Wiedergabe-Ende und Abbruch verwenden denselben Abschluss wie Einzelansagen.
+async function playSentenceBlob(source, myGeneration, rate) {
   try {
-    response = await fetchPremiumAudio(text, preferredProvider);
-  } catch (err) {
-    if (isBrowserTTSAvailable()) return { browserText: text };
-    throw err;
-  }
-  if (myGeneration !== generation) return null;
-  const payload = response?.audioBase64 ? response : response?.data;
-  const audioBase64 = payload?.audioBase64;
-  if (!audioBase64) return null;
-  if (payload.provider) onProvider?.(payload.provider);
-  return base64ToBlob(audioBase64, payload.contentType);
-}
-
-// Spielt einen Blob über den Modul-Singleton ab (damit cancelElevenLabs auch
-// die Queue-Wiedergabe stoppt) und löst auf, wenn die Wiedergabe endet.
-function playSentenceBlob(blob, myGeneration, rate) {
-  return new Promise((resolve) => {
-    if (myGeneration !== generation) return resolve();
-    if (blob.browserText) {
-      try {
-        speakBrowserTracked(blob.browserText, { onEnd: resolve, onError: resolve }, rate);
-      } catch { resolve(); }
-      return;
-    }
-    const url = URL.createObjectURL(blob);
-    currentUrl = url;
-    const audio = new Audio(url);
-    currentAudio = audio;
-
-    if (Number.isFinite(rate) && rate >= 0.5 && rate <= 2.0 && rate !== 1.0) {
-      audio.playbackRate = rate;
-    }
-
-    const cleanup = () => {
-      setVoiceSpeaking(false);
-      if (currentUrl === url) {
-        URL.revokeObjectURL(url);
-        currentUrl = null;
-      }
-      if (currentAudio === audio) currentAudio = null;
-    };
-    audio.onended = () => { cleanup(); resolve(); };
-    audio.onerror = () => { cleanup(); resolve(); };
-    audio.play().then(() => { if (currentAudio === audio) setVoiceSpeaking(true); }, () => { cleanup(); resolve(); });
-  });
+    const audio = await playSpeechSource(source, myGeneration, rate);
+    await audio?.finished;
+  } catch { /* Text bleibt sichtbar, Queue wird regulär abgeschlossen. */ }
 }
 
 /**
@@ -419,16 +236,8 @@ export function createSpeechQueue(options = {}) {
   cancelElevenLabs();
   const myGeneration = generation;
 
-  // Einmal pro Antwort/Queue entschieden — nicht pro Satz neu abgefragt (siehe
-  // fetchSentenceBlob-Doku oben). Das ist der Kern-Fix gegen Stimmwechsel
-  // mitten in einer Antwort: vorher rief jeder Satz prefersBrowserVoice() frisch
-  // auf, wodurch ein Plan-/Tier-Wechsel während der Wiedergabe die Stimme
-  // zwischen Satz 1 und Satz 2 kippen konnte.
-  const useBrowserVoice = prefersBrowserVoice();
-  // Sobald der erste Premium-Satz einen Provider liefert, gilt dieser für den
-  // Rest der Antwort verbindlich (kein Provider-Wechsel pro Satz).
-  let pinnedProvider = null;
-  const pinProvider = (provider) => { if (!pinnedProvider) pinnedProvider = provider; };
+  // Auch Einzelansagen und spätere Antworten teilen diese Auswahl.
+  const session = getBuddyVoiceSession();
 
   let textBuffer = "";
   const queue = [];          // fertige Sätze in Reihenfolge
@@ -443,7 +252,7 @@ export function createSpeechQueue(options = {}) {
     if (!headBlobPromise && queue.length > 0 && isActive()) {
       // Fehler abfangen, damit ein Reject nicht als Unhandled Rejection endet;
       // die Wiedergabeschleife wertet das Ergebnis (null) aus.
-      headBlobPromise = fetchSentenceBlob(queue[0], myGeneration, useBrowserVoice, pinnedProvider, pinProvider).catch(() => null);
+      headBlobPromise = fetchSpeechSource(queue[0], myGeneration, session).catch(() => null);
     }
   }
 
@@ -463,11 +272,11 @@ export function createSpeechQueue(options = {}) {
         const blobPromise = headBlobPromise;
         headBlobPromise = null;
         queue.shift();
-        // Nächsten Satz schon anfordern, während der aktuelle spielt.
-        ensureHeadPrefetch();
-
         const blob = await blobPromise;
         if (!isActive()) return;
+        // Erst steht die Stimme fest, dann den nächsten Satz vorladen. Die
+        // Synthese läuft weiterhin parallel zur Wiedergabe des aktuellen Satzes.
+        ensureHeadPrefetch();
         if (blob) {
           await playSentenceBlob(blob, myGeneration, rate);
           if (!isActive()) return;
@@ -501,7 +310,7 @@ export function createSpeechQueue(options = {}) {
       maybeDrain(); // Fall: nichts zu sprechen → sofort drainen
     },
     cancel() {
-      cancelElevenLabs();
+      if (isActive()) cancelElevenLabs();
     },
   };
 }
