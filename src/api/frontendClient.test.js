@@ -81,7 +81,7 @@ describe('ApiClient.request', () => {
       .mockResolvedValueOnce(jsonResponse({ error: 'Zu viele Anfragen' }, { ok: false, status }));
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(api.post('/api/catches', { species: 'Hecht' })).rejects.toThrow();
+    await expect(api.post('/api/catches', { species: 'Hecht' })).rejects.toMatchObject({ status });
 
     expect(api.getToken()).toBe('expired-token');
     expect(api.getRefreshToken()).toBe('refresh-token');
@@ -94,6 +94,20 @@ describe('ApiClient.request', () => {
 
     await expect(api.post('/api/auth/login', { email: 'a@b.de', password: 'x' })).rejects.toThrow();
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('nutzt das Offline-Profil, wenn der Refresh nach einem 401 keine Verbindung hat', async () => {
+    api.setToken('expired-token');
+    api.setRefreshToken('refresh-token');
+    const profile = { id: 'u1' };
+    localStorage.setItem('bb_user', JSON.stringify(profile));
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(jsonResponse({ error: 'Token abgelaufen' }, { ok: false, status: 401 }))
+      .mockRejectedValueOnce(new TypeError('Failed to fetch')));
+
+    await expect(auth.me()).resolves.toEqual(profile);
+    expect(api.getToken()).toBe('expired-token');
+    expect(api.getRefreshToken()).toBe('refresh-token');
   });
 });
 

@@ -142,32 +142,34 @@ class ApiClient {
   _refreshSession() {
     if (!this._refreshPromise) {
       this._refreshPromise = (async () => {
-        try {
-          const res = await fetch(`${API_URL}/api/auth/refresh`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ refresh_token: this.getRefreshToken() }),
-            signal: timeoutSignal(15000), // 15s timeout for token refresh
-          });
-          const data = await res.json().catch(() => ({}));
-          if (!res.ok || !data.token) {
-            // Nur eine echte Ablehnung (Refresh-Token ungültig/abgelaufen)
-            // beendet die Sitzung. Bei 429 (Auth-Rate-Limit teilen sich z. B.
-            // alle Nutzer hinter einer Mobilfunk-NAT-IP) oder 5xx bleiben die
-            // Tokens erhalten — sonst würde eine kurze Server-Störung jeden
-            // Nutzer ausloggen, obwohl sein Refresh-Token gültig ist.
-            if (res.status === 400 || res.status === 401 || res.status === 403) {
-              this.setToken(null);
-              this.setRefreshToken(null);
-            }
+        const res = await fetch(`${API_URL}/api/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: this.getRefreshToken() }),
+          signal: timeoutSignal(15000), // 15s timeout for token refresh
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.token) {
+          // Nur eine echte Ablehnung (Refresh-Token ungültig/abgelaufen)
+          // beendet die Sitzung. Bei 429 (Auth-Rate-Limit teilen sich z. B.
+          // alle Nutzer hinter einer Mobilfunk-NAT-IP) oder 5xx bleiben die
+          // Tokens erhalten — sonst würde eine kurze Server-Störung jeden
+          // Nutzer ausloggen, obwohl sein Refresh-Token gültig ist.
+          if (res.status === 400 || res.status === 401 || res.status === 403) {
+            this.setToken(null);
+            this.setRefreshToken(null);
             return false;
           }
-          this.setToken(data.token);
-          if (data.refresh_token) this.setRefreshToken(data.refresh_token);
-          return true;
-        } catch {
-          return false;
+          // Den Refresh-Fehler weiterreichen, sonst wertet AuthContext den
+          // ursprünglichen 401 als endgültigen Logout. Netzwerkfehler müssen
+          // ebenfalls unverändert den Offline-Profil-Cache erreichen.
+          const error = new Error(data.error || 'Sitzung konnte nicht erneuert werden.');
+          error.status = res.ok ? 502 : res.status;
+          throw error;
         }
+        this.setToken(data.token);
+        if (data.refresh_token) this.setRefreshToken(data.refresh_token);
+        return true;
       })().finally(() => { this._refreshPromise = null; });
     }
     return this._refreshPromise;
