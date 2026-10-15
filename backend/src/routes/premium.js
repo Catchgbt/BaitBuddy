@@ -180,10 +180,32 @@ async function grantReferralBasicReward(referredUser) {
 }
 
 router.get('/premium/status', requireAuth, async (req, res) => {
-  let statusUser = req.user;
+  // requireAuth caches users per serverless instance for up to 60 seconds.
+  // Admin plan assignments invalidate only that instance's cache, so another
+  // warm instance could otherwise keep returning Free after a manual upgrade.
+  // Always read the authoritative app_metadata before resolving this status.
+  res.set({
+    'Cache-Control': 'private, no-store, no-cache, must-revalidate',
+    Pragma: 'no-cache',
+    Expires: '0',
+  });
+
+  let statusUser;
   try {
-    statusUser = await reconcilePlaySubscription(req.user);
+    const { data, error } = await supabase.auth.admin.getUserById(req.user.id);
+    if (error || !data?.user) {
+      console.error('[premium] Aktueller Nutzerstatus konnte nicht geladen werden:', error?.message || 'user missing');
+      return res.status(503).json({ ok: false, error: 'Premium-Status derzeit nicht verfügbar' });
+    }
+    statusUser = data.user;
   } catch (error) {
+    console.error('[premium] Aktueller Nutzerstatus konnte nicht geladen werden:', error?.message || error);
+    return res.status(503).json({ ok: false, error: 'Premium-Status derzeit nicht verfügbar' });
+  }
+  try {
+    statusUser = await reconcilePlaySubscription(statusUser);
+  } catch (error) {
+    // Ein Play-API-Fehler darf einen gültigen serverseitigen Plan nicht verwerfen.
     console.warn('[premium] Play-Abgleich fehlgeschlagen:', error?.message || error);
   }
   const {
