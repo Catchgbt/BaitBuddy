@@ -608,13 +608,14 @@ const WMO = {
 
 router.post('/ai/fishing-recommendation', requireAuth, meterAiTokens('tool'), async (req, res) => {
   try {
-    const coords = parseCoordinates(req.body?.latitude, req.body?.longitude);
+    const coords = parseOptionalCoordinates(req.body?.latitude, req.body?.longitude);
     if (!coords.ok) return res.status(400).json({ error: coords.error });
     const { latitude: lat, longitude: lon } = coords;
+    const hasLocation = lat !== null;
 
     // Wetter und Fangbuch parallel laden — spart Latenz vor dem LLM-Call.
     const [weather, catches] = await Promise.all([
-      optionalContext('Wetter', async () => {
+      hasLocation ? optionalContext('Wetter', async () => {
         const w = await fetchWithTimeout(
           `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,weather_code,surface_pressure,relative_humidity_2m&timezone=auto`,
           {}, WEATHER_TIMEOUT_MS
@@ -627,7 +628,7 @@ router.post('/ai/fishing-recommendation', requireAuth, meterAiTokens('tool'), as
           humidity: w.current.relative_humidity_2m,
           condition: WMO[w.current.weather_code] ?? 'unbekannt'
         };
-      }),
+      }) : Promise.resolve(null),
       optionalContext('Fangbuch', async () => {
         const { data } = await supabase
           .from('catches').select('*')
@@ -637,6 +638,9 @@ router.post('/ai/fishing-recommendation', requireAuth, meterAiTokens('tool'), as
       }),
     ]);
     const catchCount = catches?.length || 0;
+    if (!weather && !catchCount) {
+      return res.status(422).json({ error: 'Keine Wetterdaten und keine Fänge verfügbar. Bitte Standort prüfen oder einen Fang eintragen.' });
+    }
 
     const catchSummary = catchCount
       ? catches.slice(0, 20).map(c =>
@@ -646,7 +650,7 @@ router.post('/ai/fishing-recommendation', requireAuth, meterAiTokens('tool'), as
 
     const weatherSummary = weather
       ? `Temperatur: ${weather.temperature}°C, Wind: ${weather.wind} km/h, Luftdruck: ${weather.pressure} hPa, Luftfeuchte: ${weather.humidity}%, Wetter: ${weather.condition}`
-      : 'Keine Wetterdaten verfügbar.';
+      : 'Keine aktuellen Wetterdaten verfügbar. Keine Wetterbedingungen oder genaue Angelzeiten erfinden.';
 
     const prompt = `Du bist ein erfahrener Angel-Experte. Erstelle eine Angelempfehlung basierend auf den folgenden Daten.
 
@@ -656,10 +660,12 @@ ${weatherSummary}
 FANGBUCH DES ANGLERS (${catchCount} Fänge):
 ${catchSummary}
 
+Falls keine aktuellen Wetterdaten vorliegen, stütze dich nur auf vorhandene Fänge. Nenne keine aktuelle Wetterbewertung oder angeblich optimale Uhrzeiten ohne Wetterdaten. Gib weather_rating als "Unbekannt" und optimal_times als [] zurück.
+
 Antworte AUSSCHLIESSLICH mit einem gültigen JSON-Objekt in exakt diesem Format, ohne Markdown, ohne Erklärungen:
 {
-  "weather_rating": "Gut" | "Mittel" | "Schlecht",
-  "summary": "2-3 Sätze Einschätzung der aktuellen Angelbedingungen auf Deutsch",
+  "weather_rating": "Gut" | "Mittel" | "Schlecht" | "Unbekannt",
+  "summary": "2-3 Sätze Einschätzung auf Deutsch nur anhand vorhandener Daten",
   "optimal_times": ["z.B. Früh morgens 5-8 Uhr", "Abends 19-21 Uhr"],
   "recommended_baits": ["Köder 1", "Köder 2", "Köder 3"],
   "target_species": ["Fischart 1", "Fischart 2"],

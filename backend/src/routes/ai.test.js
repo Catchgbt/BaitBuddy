@@ -24,6 +24,38 @@ beforeEach(async () => {
   ({ default: app } = await import('../server.js'));
 });
 
+describe('POST /api/ai/fishing-recommendation ohne GPS', () => {
+  it('analysiert vorhandene Fänge ohne Wetterabfrage', async () => {
+    supabaseMock.current.from('catches').__setResult({
+      data: [{ species: 'Hecht', length_cm: 72, bait_used: 'Gummifisch', catch_time: '2026-10-01T10:00:00Z' }],
+      error: null,
+    });
+    llmMock.invokeLLM = vi.fn().mockResolvedValue(JSON.stringify({
+      weather_rating: 'Unbekannt', summary: 'Deine Hechtfänge deuten auf Gummifisch hin.',
+      optimal_times: [], recommended_baits: ['Gummifisch'], target_species: ['Hecht'], tips: [],
+    }));
+
+    const res = await request(app).post('/api/ai/fishing-recommendation')
+      .set('Authorization', 'Bearer tok').send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.weather).toBeNull();
+    expect(res.body.data.catchCount).toBe(1);
+    expect(llmMock.invokeLLM).toHaveBeenCalledWith(expect.objectContaining({
+      prompt: expect.stringContaining('Keine aktuellen Wetterdaten verfügbar'),
+    }));
+  });
+
+  it('verbraucht ohne Standort und ohne Fänge keine KI-Anfrage', async () => {
+    llmMock.invokeLLM = vi.fn();
+    const res = await request(app).post('/api/ai/fishing-recommendation')
+      .set('Authorization', 'Bearer tok').send({});
+
+    expect(res.status).toBe(422);
+    expect(llmMock.invokeLLM).not.toHaveBeenCalled();
+  });
+});
+
 describe('POST /api/ai/chat', () => {
   it('lehnt Zugriff ohne Token ab (401)', async () => {
     llmMock.invokeLLM = vi.fn();
