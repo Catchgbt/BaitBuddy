@@ -8,6 +8,7 @@ import { Sparkles } from "lucide-react";
 export default function FishingRecommendationCard() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState(null);
+  const [message, setMessage] = useState("");
   const { ensureLocation } = useGeoLocation();
 
   const ratingColor = {
@@ -18,26 +19,33 @@ export default function FishingRecommendationCard() {
 
   const analyze = async () => {
     setLoading(true);
+    setMessage("Standort wird geprüft …");
     try {
-      // Holt bei fehlendem gespeichertem Standort einmal GPS; bei Ablehnung
-      // meldet requestGpsLocation den Grund bereits selbst.
+      // Bei verweigertem GPS kann die API weiterhin das Fangbuch auswerten.
       const loc = await ensureLocation();
-      if (loc?.lat == null || loc?.lon == null) return;
-
-      const res = await getFishingRecommendation({ latitude: loc.lat, longitude: loc.lon });
+      const hasLocation = loc?.lat != null && loc?.lon != null;
+      setMessage(hasLocation ? "Wetter und Fangbuch werden analysiert …" : "Standort fehlt. Fangbuch wird ohne Live-Wetter analysiert …");
+      const res = await getFishingRecommendation(hasLocation
+        ? { latitude: loc.lat, longitude: loc.lon }
+        : {});
       if (res?.data?.recommendation) {
         setData(res.data);
+        setMessage(res.data.weather ? "" : "Ohne Live-Wetter: Die Empfehlung basiert auf deinem Fangbuch.");
         toast.success("Empfehlung aktualisiert");
       } else {
-        toast.error("Keine Empfehlung erhalten");
+        setMessage("Keine Empfehlung erhalten. Bitte versuche es erneut.");
       }
     } catch (e) {
       console.error(e);
-      toast.error(e?.status === 401
+      const error = e?.status === 401
         ? "Bitte melde dich an, um die Empfehlung zu nutzen."
         : e?.status === 429
-          ? (e?.data?.error || "Limit erreicht. Bitte spaeter erneut versuchen.")
-          : "Fehler bei der Analyse. Bitte spaeter erneut versuchen.");
+          ? (e?.data?.error || "Limit erreicht. Bitte später erneut versuchen.")
+          : e?.status === 422
+            ? (e?.data?.error || "Wähle einen Standort oder trage einen Fang ein.")
+            : "Fehler bei der Analyse. Bitte später erneut versuchen.";
+      setMessage(error);
+      toast.error(error);
     } finally {
       setLoading(false);
     }
@@ -59,6 +67,8 @@ export default function FishingRecommendationCard() {
           {loading ? "Analysiere..." : data ? "Neu laden" : "Analysieren"}
         </button>
       </div>
+
+      {message && <p className="bb-home-tile-meta" role="status">{message}</p>}
 
       {loading && (
         <div className="flex items-center gap-3 text-gray-400 text-sm pt-2" role="status">
