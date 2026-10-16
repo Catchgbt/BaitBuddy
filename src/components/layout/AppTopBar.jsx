@@ -6,6 +6,7 @@ import { useSound } from '@/components/utils/SoundManager';
 import EventTimer from '@/components/header/EventTimer';
 import BrandLogo from '@/components/layout/BrandLogo';
 import AiCreditBadge from '@/components/premium/AiCreditBadge';
+import HeaderModeStatus from '@/components/layout/HeaderModeStatus';
 
 function initialsOf(user) {
   const name = user?.nickname || user?.full_name;
@@ -94,6 +95,7 @@ export default function AppTopBar({ isRoot, user, isDemo, onOpenCommandCenter, t
       <header className="bb-topbar bb-topbar-root">
         <BrandLogo size="lg" align="left" withMark={false} />
         {right}
+        {showEventTimer && <HeaderModeStatus user={user} />}
         {showEventTimer && <EventTimer />}
       </header>
     );
