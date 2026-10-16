@@ -10,8 +10,9 @@
 // Fehlgeschlagene Aufrufe kosten nichts. Die KI auf dem Gerät läuft nicht über
 // den Server und verbraucht deshalb kein Volumen.
 //
-// Die Verbrauchsbuchung ist Teil des Erfolgswegs: Wenn die Datenbankbuchung
-// fehlschlägt, darf keine erfolgreiche Cloud-KI-Antwort ausgeliefert werden.
+// Die Verbrauchsbuchung ist Teil des Erfolgswegs: Wenn der Monatsstand nicht
+// gelesen oder die Datenbankbuchung nicht ausgeführt werden kann, darf für
+// normale Nutzer kein kostenpflichtiger Cloud-Aufruf erfolgreich werden.
 // Sonst entstehen Providerkosten ohne Guthabenabbuchung.
 import { supabase } from './supabase.js';
 import { resolvePlan, planRank, PLAN_RANK } from './planResolver.js';
@@ -127,15 +128,14 @@ async function readUsed(userId, period) {
     const used = Number(data?.used);
     return { used: Number.isFinite(used) && used > 0 ? used : 0, available: true };
   } catch (e) {
-    console.warn('[aiTokenQuota] Verbrauch nicht lesbar (fail-open):', e?.message || e);
+    console.warn('[aiTokenQuota] Verbrauch nicht lesbar (Abrechnung gesperrt):', e?.message || e);
     return { used: 0, available: false };
   }
 }
 
 // Letzte Verbrauchsbuchungen für die Verbrauchsübersicht (Punkt 10:
-// "letzte Nutzungen"). Fail-open wie der Rest dieses Moduls — fehlt die
-// Tabelle/Migration, liefert die Übersicht einfach eine leere Liste statt
-// den Aufruf scheitern zu lassen.
+// "letzte Nutzungen"). Ein Fehler in dieser optionalen Liste blockiert den
+// KI-Aufruf nicht; die eigentliche Monatsbuchung bleibt davon getrennt.
 export async function getRecentUsage(userId, limit = 15) {
   try {
     const { data, error } = await supabase
@@ -147,7 +147,7 @@ export async function getRecentUsage(userId, limit = 15) {
     if (error) throw error;
     return Array.isArray(data) ? data : [];
   } catch (e) {
-    console.warn('[aiTokenQuota] Letzte Nutzungen nicht lesbar (fail-open):', e?.message || e);
+    console.warn('[aiTokenQuota] Letzte Nutzungen nicht lesbar:', e?.message || e);
     return [];
   }
 }
@@ -215,8 +215,8 @@ export function quotaExceededMessage(usage) {
  * Kosten, bevor eine erfolgreiche JSON-Antwort (Status < 400) rausgeht.
  *
  * Routen, die trotz Status 200 scheitern können (SSE-Stream), setzen
- * `req.aiTokens.deferred = true` und rufen `await req.aiTokens.charge()` vor
- * `res.end()` selbst auf.
+ * `req.aiTokens.deferred = true` und prüfen das Ergebnis von
+ * `await req.aiTokens.charge()` vor dem `done`-Event.
  * `req.aiTokens.setUsage({ input_tokens, output_tokens })` hängt die echten
  * Anbieter-Token an die Buchung (Kostenkontrolle im Ledger).
  */
@@ -229,8 +229,24 @@ export function meterAiTokens(feature, { cost } = {}) {
     try {
       usage = await getTokenUsage(req.user);
     } catch (e) {
-      console.warn('[aiTokenQuota] Volumen-Prüfung fehlgeschlagen (fail-open):', e?.message || e);
-      return next();
+      console.warn('[aiTokenQuota] Volumen-Prüfung fehlgeschlagen:', e?.message || e);
+      return res.status(503).json({
+        ok: false,
+        code: 'ai_token_billing_unavailable',
+        error: 'Die KI-Abrechnung ist gerade nicht verfügbar. Bitte versuche es später erneut.',
+        message: 'Die KI-Abrechnung ist gerade nicht verfügbar. Bitte versuche es später erneut.',
+      });
+    }
+
+    // Ohne lesbaren Monatsstand kann das Limit nicht sicher geprüft werden.
+    // Ein normaler Cloud-Aufruf darf dann nicht unverbucht durchlaufen.
+    if (usage.tracking === false && usage.limit !== null) {
+      return res.status(503).json({
+        ok: false,
+        code: 'ai_token_billing_unavailable',
+        error: 'Die KI-Abrechnung ist gerade nicht verfügbar. Bitte versuche es später erneut.',
+        message: 'Die KI-Abrechnung ist gerade nicht verfügbar. Bitte versuche es später erneut.',
+      });
     }
 
     if (usage.limit !== null && usage.used + amount > usage.limit) {
