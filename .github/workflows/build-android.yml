@@ -97,12 +97,20 @@ jobs:
           key: gradle-v2-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: gradle-v2-
 
-      # Debug-APK zum lokalen Testen per Sideload (aus dem früheren build-apk.yml
-      # übernommen, damit beim Zusammenführen keine Fähigkeit verloren geht).
+      # Pull Requests sollen die Play-Billing-Java-Schnittstelle kompilieren,
+      # nicht jedes Mal alle vier NDK-Abis und llama.cpp neu bauen.
+      - name: Compile Android Java (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: cd android && ./gradlew compileDebugJavaWithJavac --no-daemon
+
+      # Debug-APK zum lokalen Testen per Sideload (aus dem frueheren build-apk.yml
+      # uebernommen, damit beim Zusammenfuehren keine Faehigkeit verloren geht).
       - name: Build Debug APK
+        if: ${{ github.event_name != 'pull_request' }}
         run: cd android && ./gradlew assembleDebug --no-daemon
 
       - name: Upload Debug APK
+        if: ${{ github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
           name: baitbuddy-debug-apk
