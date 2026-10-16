@@ -26,16 +26,9 @@ const CRON_ROUTES = {
 };
 
 // Das aktuelle Vercel-Backend (Konto ssbedburg) ist per Vercel Deployment
-// Protection gesperrt: ohne Freigabe antwortet es mit einem Redirect auf die
-// Vercel-Anmeldung. Der Worker schaltet deshalb erst dorthin um, wenn das
-// Secret VERCEL_PROTECTION_BYPASS ("Protection Bypass for Automation" aus dem
-// Vercel-Projekt) gesetzt ist, und schickt es als Header mit. Ohne Secret
-// bleibt BACKEND_URL das Ziel, und Entfernen des Secrets schaltet zurueck.
-//
-// Weist Vercel den Wert trotzdem ab (falsches Projekt, falsch kopiert) oder
-// stuerzt das neue Backend ab (z. B. fehlende Env-Variablen dort), faellt der
-// Worker auf BACKEND_URL zurueck (siehe isVercelFailure) — das neue Ziel darf
-// nie die ganze API lahmlegen.
+// Protection gesperrt. Der Worker sendet den serverseitigen Bypass-Header.
+// Fehlt das Secret oder weist Vercel es ab, wird der Fehler sichtbar (503),
+// statt stillschweigend einen aelteren API-Stand zu verwenden.
 // Das alte Projekt bait-buddy.vercel.app enthaelt aktuelle API-Routen (z. B.
 // /api/ai/fish-recipes) NICHT. Der Front-Door-Worker darf deshalb niemals auf
 // diesen alten Stand zurueckfallen, auch nicht bei fehlendem/falschem Bypass.
