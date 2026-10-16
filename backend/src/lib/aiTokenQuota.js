@@ -21,11 +21,11 @@ import { isSuperuserEmail } from '../middleware/auth.js';
 // Monatsvolumen je Plan-Rang (planResolver.PLAN_RANK). Über die Env-Variable
 // AI_TOKEN_QUOTAS (JSON, Schlüssel = Plan-ID) je Plan überschreibbar.
 export const DEFAULT_TOKEN_QUOTAS = Object.freeze({
-  free: 5000,
-  basic: 50000,
-  pro: 120000,
-  elite: 300000,
-  friends: 400000,
+  free: 500,
+  basic: 5000,
+  pro: 12000,
+  elite: 30000,
+  friends: 40000,
 });
 
 // Kosten je Werkzeug in Buddy-Tokens. Über AI_TOKEN_COSTS (JSON) überschreibbar.
