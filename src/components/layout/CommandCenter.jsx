@@ -10,6 +10,7 @@ import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/
 import { entities, events } from '@/api/frontendClient';
 import { auth } from '@/api/auth';
 import { usePlan } from '@/components/premium/PlanContext';
+import AllToolsFreeNotice from '@/components/premium/AllToolsFreeNotice';
 import { useLocation as useGeoLocation } from '@/components/location/LocationManager';
 import { useFishingConditions } from '@/hooks/useFishingConditions';
 import { formatForecastTime } from '@/lib/fishingConditions';
@@ -60,7 +61,7 @@ function RelevantCard({ to, icon: Icon, title, detail, accent, onNavigate }) {
 }
 
 export default function CommandCenter({ isOpen, setIsOpen, currentPageName, user }) {
-  const { plan } = usePlan();
+  const { plan, allToolsFree } = usePlan();
   const { currentLocation } = useGeoLocation();
   const conditions = useFishingConditions(currentLocation?.lat, currentLocation?.lon);
   const [openArea, setOpenArea] = useState(null);
@@ -150,6 +151,8 @@ export default function CommandCenter({ isOpen, setIsOpen, currentPageName, user
               </Link>
             )}
           </section>
+
+          {allToolsFree && <AllToolsFreeNotice compact />}
 
           {/* Hey Buddy */}
           <Link to="/KiBuddyBeta" onClick={close} className="bb-cc-buddy">
