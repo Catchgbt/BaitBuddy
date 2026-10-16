@@ -63,6 +63,37 @@ describe('Zugriff auf /api/superadmin', () => {
   });
 });
 
+describe('Ticket-Eingang', () => {
+  it('speichert neue Nutzertickets und benachrichtigt die Superuser-Mailbox', async () => {
+    const author = { id: 'u1', email: 'kunde@baitbuddy.test', user_metadata: { full_name: 'Kunde' } };
+    await boot({ authUser: author, fromResults: {
+      support_tickets: { data: [{ id: 'ticket-123' }], error: null },
+    } });
+    const res = await auth(request(app).post('/api/support/tickets'))
+      .send({ subject: 'Problem in der App', category: 'bug', message: 'Der Button reagiert nicht.' });
+    expect(res.status).toBe(201);
+    expect(res.body.ticket.id).toBe('ticket-123');
+    expect(supabaseMock.current.__builders.support_tickets.insert).toHaveBeenCalledWith([
+      expect.objectContaining({
+        subject: 'Problem in der App',
+        message: 'Der Button reagiert nicht.',
+        user_email: 'kunde@baitbuddy.test', status: 'offen',
+      }),
+    ]);
+    expect(sendMail).toHaveBeenCalledTimes(2);
+    expect(sendMail.mock.calls[0][0].to).toBe('kaisaschnitt99@gmail.com');
+    expect(sendMail.mock.calls[1][0].to).toBe('kunde@baitbuddy.test');
+  });
+
+  it('zeigt Nutzern nur die Tickets ihrer eigenen E-Mail-Adresse', async () => {
+    await boot({ authUser: { id: 'u1', email: 'kunde@baitbuddy.test', user_metadata: {} } });
+    const res = await auth(request(app).get('/api/support/tickets'));
+    expect(res.status).toBe(200);
+    expect(supabaseMock.current.__builders.support_tickets.eq)
+      .toHaveBeenCalledWith('user_email', 'kunde@baitbuddy.test');
+  });
+});
+
 describe('Statistik', () => {
   const NOW = Date.parse('2026-09-25T10:00:00.000Z');
 
