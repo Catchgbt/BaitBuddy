@@ -198,6 +198,18 @@ describe('meterAiTokens', () => {
     expect(supabaseMock.current.rpc).not.toHaveBeenCalled();
   });
 
+  it('liefert keine erfolgreiche Antwort aus, wenn die Buchung fehlschlägt', async () => {
+    supabaseMock.current = createSupabaseMock({
+      fromResults: { ai_token_balances: { data: { used: 0 }, error: null } },
+      rpcResults: { record_ai_token_usage: { data: null, error: { message: 'RPC fehlt' } } },
+    });
+    const req = { user: userWithPlan('pro'), body: {} };
+    const { res } = await run(meterAiTokens('chat'), req);
+    res.json({ ok: true, reply: 'Antwort' });
+    await vi.waitFor(() => expect(res.body.code).toBe('ai_token_charge_failed'));
+    expect(res.statusCode).toBe(503);
+  });
+
   it('nutzt eine dynamische Kostenfunktion', async () => {
     const req = { user: userWithPlan('basic'), body: { text: 'x'.repeat(450) } };
     await run(meterAiTokens('tts', { cost: (r) => costFor('tts', { textLength: r.body.text.length }) }), req);

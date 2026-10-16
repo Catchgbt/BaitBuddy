@@ -37,7 +37,7 @@ import personalizationRoutes from './routes/personalization.js';
 import progressRoutes from './routes/progress.js';
 import clubsRoutes from './routes/clubs.js';
 import { aiRateLimiter, ttsRateLimiter, authRateLimiter } from './middleware/rateLimit.js';
-import { getAnthropicKey } from './lib/llm.js';
+import { getLLMConfig } from './lib/llm.js';
 import { getAllowedOrigins } from './lib/allowedOrigins.js';
 
 const app = express();
@@ -72,9 +72,9 @@ function hasOpenAIKey() {
   return !!(process.env.OPENAI_API_KEY
     || Object.entries(process.env).find(([k, v]) => /open.?_?ai/i.test(k) && /key|token|secret/i.test(k) && v)?.[1]);
 }
-// `ai` zeigt an, ob der Claude-Key serverseitig ankommt — erlaubt eine
+// `ai` zeigt an, ob der OpenAI-Key serverseitig ankommt — erlaubt eine
 // Diagnose des KI-Chats ohne Auth (kein LLM-Call, kein Key-Wert im Response).
-const healthPayload = () => ({ ok: true, app: 'BaitBuddy', version: '1.0.0', voice: hasOpenAIKey(), ai: !!getAnthropicKey() });
+const healthPayload = () => ({ ok: true, app: 'BaitBuddy', version: '1.0.0', voice: hasOpenAIKey(), ai: getLLMConfig().configured });
 app.get('/health', (req, res) => res.json(healthPayload()));
 app.get('/api/health', (req, res) => res.json(healthPayload()));
 
