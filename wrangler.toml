@@ -44,16 +44,15 @@ not_found_handling = "single-page-application"
 crons = ["0 3 * * *", "0 2 * * *", "0 1 * * *", "0 0 1 * *"]
 
 # --- Environment Variables (Non-Secret) ---
-# Both configured URLs point to the CURRENT ssbedburg Vercel project.
-# The previous origin bait-buddy.vercel.app is retired (missing newer API
-# routes such as POST /api/ai/fish-recipes) and MUST NOT be used as fallback.
-# VERCEL_PROTECTION_BYPASS must be present as a Cloudflare Worker secret;
-# without it /api/* deliberately returns 503 rather than stale API data.
-# For a future Cloudflare container switch: remove VERCEL_BACKEND_URL and
-# point BACKEND_URL at the healthy container endpoint in the same deploy.
+# Use the current immutable Vercel deployment URL as the public origin. The
+# project alias is protected by Vercel SSO and, without the corresponding
+# Cloudflare secret, made every /api request return 503. This deployment URL
+# was verified with /api/health and /api/app/settings; it is intentionally a
+# direct BACKEND_URL so the worker does not require a protection bypass header.
+# When a permanent unprotected backend/container is available, replace this
+# URL and keep VERCEL_BACKEND_URL unset.
 [vars]
-BACKEND_URL = "https://bait-buddy-ssbedburg-2361s-projects.vercel.app"
-VERCEL_BACKEND_URL = "https://bait-buddy-ssbedburg-2361s-projects.vercel.app"
+BACKEND_URL = "https://bait-buddy-gules.vercel.app"
 DOMAIN = "catchgbt.com"
 
 # --- Rate-Limit Store (optional) ---

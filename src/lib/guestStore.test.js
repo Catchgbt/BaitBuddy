@@ -131,6 +131,21 @@ describe('migrateGuestData', () => {
     expect(guestList('Catch').map((c) => c.species)).toEqual(['Hecht']);
   });
 
+  it('übersetzt Gast-Spot-IDs, bevor verknüpfte Fänge migriert werden', async () => {
+    const spot = guestCreate('Spot', { name: 'Buhne 12' });
+    guestCreate('Catch', { species: 'Zander', spot_id: spot.id });
+    const spotCreate = vi.fn().mockResolvedValue({ id: 'server-spot-1' });
+    const catchCreate = vi.fn().mockResolvedValue({ id: 'server-catch-1' });
+
+    const result = await migrateGuestData({
+      Spot: { create: spotCreate },
+      Catch: { create: catchCreate },
+    });
+
+    expect(result).toMatchObject({ migrated: 2, failed: 0 });
+    expect(catchCreate).toHaveBeenCalledWith(expect.objectContaining({ spot_id: 'server-spot-1' }));
+  });
+
   it('läuft nicht doppelt, solange eine Migration aktiv ist', async () => {
     guestCreate('Catch', { species: 'Hecht' });
     let release;

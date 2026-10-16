@@ -35,7 +35,7 @@ export default function Logbook() {
 
   const { data: catches = [], isLoading: catchesLoading } = useQuery({
     queryKey: ['catches'],
-    queryFn: () => Catch.list('-catch_time', 1000),
+    queryFn: () => Catch.list('-catch_time'),
   });
 
   const { data: spots = [], isLoading: spotsLoading } = useQuery({
@@ -259,6 +259,11 @@ export default function Logbook() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!species?.trim()) { toast.error("Bitte Fischart angeben"); return; }
+    const parsedCatchTime = new Date(catchTime);
+    if (!catchTime || Number.isNaN(parsedCatchTime.getTime())) {
+      toast.error("Bitte ein gültiges Fangdatum und eine gültige Uhrzeit angeben");
+      return;
+    }
 
     let parsedLength = null;
     let parsedWeight = null;
@@ -287,7 +292,7 @@ export default function Logbook() {
       bait_used: baitUsed.trim() || null,
       photo_url: photoUrl || null,
       notes: notes.trim() || null,
-      catch_time: new Date(catchTime).toISOString(),
+      catch_time: parsedCatchTime.toISOString(),
       points_earned: 1,
     };
 

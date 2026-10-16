@@ -34,6 +34,8 @@ export default function CatchCam() {
 
 function CatchCamInner() {
   const videoRef = useRef(null);
+  const streamRef = useRef(null);
+  const cameraRequestRef = useRef(0);
   const canvasRef = useRef(null);
   const recordCanvasRef = useRef(null);
 
@@ -41,7 +43,6 @@ function CatchCamInner() {
   const { triggerHaptic } = useHaptic();
   const { playSound } = useSound();
 
-  const [stream, setStream] = useState(null);
   const [facingMode, setFacingMode] = useState("environment");
 
   // burst & snapshots
@@ -90,25 +91,32 @@ function CatchCamInner() {
   }, [currentLocation]);
 
   async function startCamera() {
+    const requestId = ++cameraRequestRef.current;
     try {
       const s = await navigator.mediaDevices.getUserMedia({
         video: { facingMode },
         audio: false,
       });
-      setStream(s);
+      if (requestId !== cameraRequestRef.current) {
+        s.getTracks().forEach((t) => t.stop());
+        return;
+      }
+      streamRef.current = s;
       if (videoRef.current) videoRef.current.srcObject = s;
       playSound('success');
     } catch (e) {
+      if (requestId !== cameraRequestRef.current) return;
       console.error("camera start error", e);
       toast.error("Kamera konnte nicht gestartet werden. Erlaube Kamerazugriff.");
     }
   }
 
   function stopCamera() {
-    if (stream) {
-      stream.getTracks().forEach((t) => t.stop());
-      setStream(null);
-    }
+    cameraRequestRef.current += 1;
+    const activeStream = streamRef.current;
+    streamRef.current = null;
+    if (activeStream) activeStream.getTracks().forEach((t) => t.stop());
+    if (videoRef.current) videoRef.current.srcObject = null;
   }
 
   async function fetchWeather(_lat, _lon) {

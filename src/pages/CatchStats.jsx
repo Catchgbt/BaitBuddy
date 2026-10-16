@@ -32,7 +32,7 @@ function CatchStatsContent() {
   // auswertet und nicht beim Backend-Default von 50 gedeckelt wird.
   const { data: catches = [], isLoading } = useQuery({
     queryKey: ["catches"],
-    queryFn: () => Catch.list("-catch_time", 1000),
+    queryFn: () => Catch.list("-catch_time"),
   });
 
   const stats = useMemo(() => {

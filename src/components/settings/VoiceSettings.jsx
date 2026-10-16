@@ -15,6 +15,7 @@ import { speakWithFallback } from "@/components/utils/elevenLabsTTS";
 import { isVoiceGuideEnabled, setVoiceGuideEnabled } from "@/lib/voicePageGuide";
 import { isBuddyHapticEnabled, setBuddyHapticEnabled } from "@/lib/buddyActivity";
 import { readPrivacyPrefs, writePrivacyPrefs } from "@/lib/privacyPrefs";
+import { setActiveBuddyAudio } from "@/lib/ttsVoice";
 
 const VOICE_SAMPLE_TEXT = 'Hallo, ich bin dein KI-Buddy. Petri Heil und ab ans Wasser!';
 
@@ -59,13 +60,17 @@ export default function VoiceSettings() {
       const user = await auth.me();
       const settings = user?.settings || {};
       
+      // Neue Einstellungen liegen im Buddy-Profil. Die alten Root-Felder
+      // werden einmalig als Fallback gelesen, damit bestehende Nutzer ihre
+      // Auswahl behalten.
       const state = {
-        audioEnabled: settings.audio_enabled !== false,
-        speechSpeed: settings.speech_speed || 1.0
+        audioEnabled: settings.buddy?.voiceEnabled ?? settings.audio_enabled !== false,
+        speechSpeed: settings.buddy?.speed || settings.speech_speed || 1.0
       };
       setAudioEnabled(state.audioEnabled);
       setSpeechSpeed(state.speechSpeed);
       setInitialState(state);
+      setActiveBuddyAudio({ voiceEnabled: state.audioEnabled, speed: state.speechSpeed });
     } catch (error) {
       console.error("Fehler beim Laden der Einstellungen:", error);
     }
@@ -75,13 +80,22 @@ export default function VoiceSettings() {
     queryKey: 'userSettings',
     mutationFn: async (settings) => {
       const user = await auth.me();
+      const existingBuddy = user.settings?.buddy || {};
       await auth.updateMe({
         settings: {
           ...user.settings,
+          buddy: {
+            ...existingBuddy,
+            voiceEnabled: settings.audioEnabled,
+            speed: settings.speechSpeed,
+          },
+          // Kompatibilität für ältere Clients; die aktive TTS-Schicht liest
+          // das normalisierte Buddy-Profil.
           audio_enabled: settings.audioEnabled,
           speech_speed: settings.speechSpeed
         }
       });
+      setActiveBuddyAudio({ voiceEnabled: settings.audioEnabled, speed: settings.speechSpeed });
       window.dispatchEvent(new CustomEvent('voiceSettingsUpdated'));
       return settings;
     },

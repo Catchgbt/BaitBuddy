@@ -46,7 +46,7 @@ async function initDB() {
  * @param {string} catchId - Die ID des zugehörigen Fangs (optional)
  * @returns {Promise<number>} Die ID des gespeicherten Fotos
  */
-export async function saveOfflinePhoto(file, catchId = null) {
+export async function saveOfflinePhoto(file, catchId = null, ownerKey = null) {
   try {
     await initDB();
 
@@ -59,6 +59,7 @@ export async function saveOfflinePhoto(file, catchId = null) {
             mimeType: file.type,
             fileData: /** @type {FileReader} */ (e.target).result,
             catchId,
+            ownerKey,
             synced: false,
             createdAt: new Date().toISOString(),
             lastSyncAttempt: null,
@@ -189,6 +190,27 @@ export async function markPhotoAsSynced(photoId) {
     console.error('Fehler beim Markieren als synchronisiert:', e);
     throw e;
   }
+}
+
+/** Speichert die Upload-URL, ohne die Verlinkung zum Fang als abgeschlossen zu markieren. */
+export async function markPhotoAsUploaded(photoId, uploadUrl) {
+  await initDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([STORE_NAME], 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.get(photoId);
+    request.onsuccess = () => {
+      const photo = request.result;
+      if (!photo) return reject(new Error('Foto nicht gefunden'));
+      photo.uploadUrl = uploadUrl;
+      photo.lastSyncAttempt = new Date().toISOString();
+      photo.syncError = null;
+      const update = store.put(photo);
+      update.onsuccess = () => resolve(photo);
+      update.onerror = () => reject(update.error);
+    };
+    request.onerror = () => reject(request.error);
+  });
 }
 
 /**

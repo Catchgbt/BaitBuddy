@@ -18,7 +18,7 @@ import { auth } from "@/api/auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toLocalDatetimeInputValue } from "@/lib/utils";
 import { isInClosedSeason } from "@/lib/closedSeason";
-import { createCatchWithOfflineSupport, isOnline } from "@/components/utils/offlineSync";
+import { createCatchWithOfflineSupport, getOfflineOwnerKey, isOnline } from "@/components/utils/offlineSync";
 import { saveOfflinePhoto, updateOfflinePhotoById } from "@/utils/offlinePhotoStorage";
 import { notifyAction, actionMessages } from "@/lib/actionNotifications";
 
@@ -417,6 +417,12 @@ export default function QuickCatchDialog() {
       triggerHaptic('light');
       return;
     }
+    const parsedCatchTime = new Date(form.catch_time);
+    if (!form.catch_time || Number.isNaN(parsedCatchTime.getTime())) {
+      toast.error("Bitte ein gültiges Fangdatum und eine gültige Uhrzeit angeben.");
+      playSound('error');
+      return;
+    }
     if (ruleWarnings.length && !confirm(`Hinweise:\n- ${ruleWarnings.join("\n- ")}\nTrotzdem speichern?`)) {
       triggerHaptic('light');
       playSound('click');
@@ -431,7 +437,7 @@ export default function QuickCatchDialog() {
       weight_kg: form.weight_kg ? parseFloat(form.weight_kg) : null,
       bait_used: String(form.bait_used || ""),
       notes: String(form.notes || ""),
-      catch_time: new Date(form.catch_time).toISOString(),
+      catch_time: parsedCatchTime.toISOString(),
       photo_url: String(form.photo_url || ""),
       points_earned: form.length_cm ? (1 + Math.floor(parseFloat(form.length_cm)/10)) : 1
     };
@@ -676,7 +682,7 @@ export default function QuickCatchDialog() {
         // If offline or upload fails, save photo to IndexedDB for later sync
         if (!isOnline()) {
           console.log('Offline — Foto wird lokal gespeichert und später synchronisiert');
-          const photoId = await saveOfflinePhoto(blob);
+          const photoId = await saveOfflinePhoto(blob, null, getOfflineOwnerKey());
           setPendingOfflinePhotoId(photoId);
           toast.info("Foto offline gespeichert. Wird später automatisch hochgeladen.");
           playSound('notification');
