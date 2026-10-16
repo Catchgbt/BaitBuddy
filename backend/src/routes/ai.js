@@ -435,7 +435,19 @@ router.post('/ai/chat/stream', requireAuth, checkChatRateLimit, meterAiTokens('c
 
     const { action, cleanReply } = extractAction(full);
     const finalReply = cleanReply || (action ? 'OK, mache das gleich!' : 'Entschuldige, ich konnte das nicht verstehen.');
-    await req.aiTokens?.charge();
+    const charged = await req.aiTokens?.charge();
+    if (charged === null) {
+      // Keine erfolgreiche Stream-Antwort signalisieren, wenn der Ledger-Eintrag
+      // nicht geschrieben werden konnte. Sonst entstehen Providerkosten ohne
+      // Abbuchung und der Client glaubt fälschlich, die Nutzung sei verbucht.
+      send('error', {
+        ok: false,
+        code: 'ai_token_charge_failed',
+        error: 'Die KI-Nutzung konnte nicht verbucht werden. Bitte versuche es erneut.',
+      });
+      res.end();
+      return;
+    }
     send('done', { ok: true, reply: finalReply, message: finalReply, action });
     res.end();
   } catch (e) {
