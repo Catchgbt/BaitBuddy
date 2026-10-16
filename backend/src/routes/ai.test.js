@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
-import { createSupabaseMock, createQueryBuilderMock } from '../../test/mockSupabase.js';
+import { createSupabaseMock as createBaseSupabaseMock, createQueryBuilderMock } from '../../test/mockSupabase.js';
 
 const { supabaseMock, llmMock } = vi.hoisted(() => ({
   supabaseMock: { current: null },
@@ -15,6 +15,15 @@ vi.mock('../lib/llm.js', () => ({
   invokeLLMStream: (...args) => llmMock.invokeLLMStream(...args),
   getLLMConfig: () => ({ provider: 'OpenAI', model: 'gpt-5.4-mini', configured: true }),
 }));
+
+// Erfolgreiche KI-Antworten benötigen auch eine erfolgreiche Ledger-Buchung.
+// Einzelne Tests können den RPC-Fehlerpfad weiterhin explizit überschreiben.
+function createSupabaseMock(options = {}) {
+  return createBaseSupabaseMock({
+    ...options,
+    rpcResults: { record_ai_token_usage: { data: 20, error: null }, ...options.rpcResults },
+  });
+}
 
 let app;
 
@@ -621,7 +630,7 @@ describe('Optionaler App-Kontext bricht die Antwort nicht ab', () => {
   // Netzwerk-/Timeout-Problemen. Da alle Kontext-Quellen gemeinsam in einem
   // Promise.all laufen, riss ein solcher Fehler zuvor die ganze Antwort mit.
   const failingTable = (table, failFor) => {
-    const real = createSupabaseMock({ authUser: { id: 'u1', email: 'a@b.de' } });
+    const real = createSupabaseMock({ authUser: { id: 'u1', email: 'a@b.de', app_metadata: { premium_plan_id: 'pro' } } });
     const original = real.from.bind(real);
     real.from = (name) => {
       if (name === failFor) {
@@ -748,7 +757,7 @@ describe('KI-Volumen (Buddy-Tokens)', () => {
     supabaseMock.current = createSupabaseMock({
       authUser: { id: 'u1', email: 'a@b.de' },
       fromResults: { ai_token_balances: { data: { used }, error: null } },
-      rpcResults: { record_ai_token_usage: { data: used + 2, error: null } },
+      rpcResults: { record_ai_token_usage: { data: used + 20, error: null } },
     });
     ({ default: app } = await import('../server.js'));
   };
@@ -778,7 +787,7 @@ describe('KI-Volumen (Buddy-Tokens)', () => {
       .send({ messages: [{ role: 'user', content: 'Hallo' }] });
     expect(res.status).toBe(200);
     expect(supabaseMock.current.rpc).toHaveBeenCalledWith('record_ai_token_usage', expect.objectContaining({
-      p_user_id: 'u1', p_feature: 'chat', p_tokens: 2, p_input_tokens: 1500, p_output_tokens: 80,
+      p_user_id: 'u1', p_feature: 'chat', p_tokens: 20, p_input_tokens: 1500, p_output_tokens: 80,
     }));
   });
 
@@ -822,7 +831,7 @@ describe('KI-Volumen (Buddy-Tokens)', () => {
     const res = await request(app).get('/api/ai/usage').set('Authorization', 'Bearer tok');
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ ok: true, plan_id: 'free', limit: 500, used: 120, remaining: 380 });
-    expect(res.body.costs).toMatchObject({ chat: 2, realtime: 150 });
+    expect(res.body.costs).toMatchObject({ chat: 20, realtime: 1500 });
     expect(res.body.plan_quotas).toMatchObject({ free: 500, elite: 30000 });
   });
 });
