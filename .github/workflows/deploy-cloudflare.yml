@@ -60,9 +60,7 @@ jobs:
           fi
           # No credentials: the protected route MUST return HTTP 401 from
           # requireAuth. An obsolete backend returns 404 instead.
-          recipe_code=$(curl --silent --show-error --max-time 15 -o /tmp/baitbuddy-recipes.json -w '%{http_code}' \\
-            -X POST -H 'Content-Type: application/json' -d '{"species":"Hecht"}' \\
-            https://catchgbt.com/api/ai/fish-recipes)
+          recipe_code=$(curl --silent --show-error --max-time 15 -o /tmp/baitbuddy-recipes.json -w '%{http_code}' -X POST -H 'Content-Type: application/json' -d '{"species":"Hecht"}' https://catchgbt.com/api/ai/fish-recipes)
           if [ "$recipe_code" != "401" ]; then
             echo "FAIL: fish-recipes API expected unauthenticated 401, got HTTP $recipe_code"
             exit 1
