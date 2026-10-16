@@ -163,7 +163,9 @@ public class BillingManager implements PurchasesUpdatedListener, BillingClientSt
                 .setProductList(products)
                 .build();
 
-        billingClient.queryProductDetailsAsync(params, (result, productDetailsList) -> {
+        // Billing Library 8 liefert QueryProductDetailsResult statt List<ProductDetails>.
+        billingClient.queryProductDetailsAsync(params, (result, queryResult) -> {
+            List<ProductDetails> productDetailsList = queryResult.getProductDetailsList();
             boolean ok = result.getResponseCode() == BillingClient.BillingResponseCode.OK;
             if (ok) {
                 for (ProductDetails pd : productDetailsList) {

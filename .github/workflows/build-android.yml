@@ -6,12 +6,26 @@ on:
       version_code:
         description: 'Android versionCode (muss hoeher sein als der zuletzt in der Play Console hochgeladene)'
         required: false
-        default: '31'
+        default: '33'
       version_name:
         description: 'Android versionName'
         required: false
-        default: '2.117899.1'
+        default: '2.117899.2'
+  # PRs pruefen die native Java/Gradle-Kompilierung vor dem Merge.
+  pull_request:
+    paths:
+      - '.github/workflows/build-android.yml'
+      - 'android/app/build.gradle'
+      - 'android/app/src/main/java/app/baitbuddy/mobile/BillingManager.java'
   push:
+    branches:
+      - main
+    # Bei Aenderungen am Android-Billing automatisch ein neues signiertes AAB bauen.
+    # Tag-Pushes bleiben weiterhin moeglich (GitHub ignoriert Pfadfilter bei Tags).
+    paths:
+      - '.github/workflows/build-android.yml'
+      - 'android/app/build.gradle'
+      - 'android/app/src/main/java/app/baitbuddy/mobile/BillingManager.java'
     tags:
       - 'v*'
 
@@ -46,6 +60,9 @@ jobs:
       - name: Install Android SDK platform 36, NDK and CMake
         run: |
           export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/cmdline-tools/16.0/bin:$ANDROID_HOME/platform-tools:$PATH"
+          # Neue GitHub-Runner akzeptieren NDK-/Preview-Lizenzen nicht vorab.
+          # Ohne diesen Schritt stoppt sdkmanager vor der Java-Kompilierung.
+          yes | sdkmanager --licenses >/dev/null
           sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;29.0.13113456" "cmake;3.31.6"
 
       - name: Install deps
@@ -80,12 +97,20 @@ jobs:
           key: gradle-v2-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: gradle-v2-
 
-      # Debug-APK zum lokalen Testen per Sideload (aus dem früheren build-apk.yml
-      # übernommen, damit beim Zusammenführen keine Fähigkeit verloren geht).
+      # Pull Requests sollen die Play-Billing-Java-Schnittstelle kompilieren,
+      # nicht jedes Mal alle vier NDK-Abis und llama.cpp neu bauen.
+      - name: Compile Android Java (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: cd android && ./gradlew compileDebugJavaWithJavac --no-daemon
+
+      # Debug-APK zum lokalen Testen per Sideload (aus dem frueheren build-apk.yml
+      # uebernommen, damit beim Zusammenfuehren keine Faehigkeit verloren geht).
       - name: Build Debug APK
+        if: ${{ github.event_name != 'pull_request' }}
         run: cd android && ./gradlew assembleDebug --no-daemon
 
       - name: Upload Debug APK
+        if: ${{ github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
           name: baitbuddy-debug-apk
@@ -99,7 +124,7 @@ jobs:
       # die frueheren android.injected.version.*-Properties wurden vom AGP ignoriert
       # (das AAB hatte dadurch immer versionCode 1).
       - name: Build Release AAB (signed)
-        if: ${{ env.KEYSTORE_BASE64 != '' }}
+        if: ${{ env.KEYSTORE_BASE64 != '' && github.event_name != 'pull_request' }}
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
           cd android && ./gradlew bundleRelease --no-daemon --stacktrace \
@@ -107,11 +132,11 @@ jobs:
             -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
             -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
             -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }} \
-            -PappVersionCode=${{ github.event.inputs.version_code || '31' }} \
-            -PappVersionName=${{ github.event.inputs.version_name || '2.117899.1' }}
+            -PappVersionCode=${{ github.event.inputs.version_code || '33' }} \
+            -PappVersionName=${{ github.event.inputs.version_name || '2.117899.2' }}
 
       - name: Upload Release AAB
-        if: ${{ env.KEYSTORE_BASE64 != '' }}
+        if: ${{ env.KEYSTORE_BASE64 != '' && github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
           name: baitbuddy-release-aab
@@ -124,22 +149,22 @@ jobs:
       # Schlüssel wie das AAB. Ohne Keystore wird bewusst nichts veröffentlicht —
       # eine Debug-APK gehört nicht in öffentliche Hände.
       - name: Build Release APK (signed)
-        if: ${{ env.KEYSTORE_BASE64 != '' }}
+        if: ${{ env.KEYSTORE_BASE64 != '' && github.event_name != 'pull_request' }}
         run: |
           cd android && ./gradlew assembleRelease --no-daemon --stacktrace \
             -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/android/app/release.keystore \
             -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
             -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
             -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }} \
-            -PappVersionCode=${{ github.event.inputs.version_code || '31' }} \
-            -PappVersionName=${{ github.event.inputs.version_name || '2.117899.1' }}
+            -PappVersionCode=${{ github.event.inputs.version_code || '33' }} \
+            -PappVersionName=${{ github.event.inputs.version_name || '2.117899.2' }}
           cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/baitbuddy.apk"
 
       - name: Publish APK as GitHub Release
-        if: ${{ env.KEYSTORE_BASE64 != '' }}
+        if: ${{ env.KEYSTORE_BASE64 != '' && github.event_name != 'pull_request' }}
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('android-{0}', github.event.inputs.version_code || '31') }}
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('android-{0}', github.event.inputs.version_code || '33') }}
           name: ${{ github.event.inputs.version_name || github.ref_name }}
           target_commitish: ${{ github.sha }}
           files: baitbuddy.apk
