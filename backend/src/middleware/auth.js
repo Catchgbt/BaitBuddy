@@ -44,7 +44,13 @@ export async function requireAuth(req, res, next) {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'Kein Token' });
 
-  const user = await resolveUser(token);
+  let user;
+  try {
+    user = await resolveUser(token);
+  } catch (error) {
+    console.error('[auth] Tokenprüfung fehlgeschlagen:', error);
+    return res.status(503).json({ error: 'Anmeldedienst vorübergehend nicht erreichbar' });
+  }
   if (!user) return res.status(401).json({ error: 'Ungültiger Token' });
 
   req.user = user;
@@ -54,7 +60,13 @@ export async function requireAuth(req, res, next) {
 export async function optionalAuth(req, res, next) {
   const token = req.headers.authorization?.replace('Bearer ', '');
   if (token) {
-    const user = await resolveUser(token);
+    let user;
+    try {
+      user = await resolveUser(token);
+    } catch (error) {
+      console.error('[auth] Optionale Tokenprüfung fehlgeschlagen:', error);
+      return res.status(503).json({ error: 'Anmeldedienst vorübergehend nicht erreichbar' });
+    }
     if (user) req.user = user;
   }
   next();

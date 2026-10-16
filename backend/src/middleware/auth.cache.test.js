@@ -32,4 +32,11 @@ describe('requireAuth Token-Cache', () => {
     await request(app).get('/api/sync/status').set('Authorization', 'Bearer tok-b');
     expect(supabaseMock.current.auth.getUser).toHaveBeenCalledTimes(2);
   });
+
+  it('beendet Admin-Anfragen bei einem Ausfall der Tokenprüfung mit 503 statt zu hängen', async () => {
+    supabaseMock.current.auth.getUser.mockRejectedValue(new Error('GoTrue unavailable'));
+    const res = await request(app).get('/api/superadmin/tickets').set('Authorization', 'Bearer failure-token');
+    expect(res.status).toBe(503);
+    expect(res.body.error).toMatch(/Anmeldedienst/);
+  });
 });
