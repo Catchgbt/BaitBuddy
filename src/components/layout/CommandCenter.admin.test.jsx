@@ -9,7 +9,10 @@ vi.mock('@/api/frontendClient', () => ({
   events: {},
 }));
 vi.mock('@/api/auth', () => ({ auth: { logout: vi.fn(), redirectToLogin: vi.fn() } }));
-vi.mock('@/components/premium/PlanContext', () => ({ usePlan: () => ({ plan: { id: 'elite', name: 'Ultimate' } }) }));
+const planState = vi.hoisted(() => ({ allToolsFree: false }));
+vi.mock('@/components/premium/PlanContext', () => ({
+  usePlan: () => ({ plan: { id: 'elite', name: 'Ultimate' }, allToolsFree: planState.allToolsFree }),
+}));
 vi.mock('@/components/location/LocationManager', () => ({ useLocation: () => ({ currentLocation: null }) }));
 vi.mock('@/hooks/useFishingConditions', () => ({ useFishingConditions: () => ({ window: null, hasLocation: false }) }));
 vi.mock('@/components/layout/AppTopBar', () => ({ AvatarCircle: () => <span>Avatar</span> }));
@@ -48,5 +51,13 @@ describe('Command Center — Admin-Zugang', () => {
     renderCommandCenter({ id: 'admin', email: 'admin@baitbuddy.test', is_admin: true, is_superuser: false });
 
     expect(screen.queryByRole('link', { name: /Admin-Bereich/ })).toBeNull();
+  });
+
+  it('zeigt den Freischaltungs-Hinweis nur bei aktivem globalem Schalter', () => {
+    planState.allToolsFree = true;
+    renderCommandCenter({ id: 'user', email: 'user@baitbuddy.test' });
+
+    expect(screen.getByRole('status')).toHaveTextContent('Alle Funktionen sind derzeit kostenlos freigeschaltet.');
+    planState.allToolsFree = false;
   });
 });
