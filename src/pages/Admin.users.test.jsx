@@ -45,6 +45,15 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe('Admin — Nutzer', () => {
+  it('kann die Nutzerliste nach einem vorübergehenden Fehler erneut laden', async () => {
+    superAdminMock.users.mockRejectedValueOnce(new Error('Vorübergehend nicht erreichbar'));
+    const user = userEvent.setup();
+    render(<MemoryRouter initialEntries={['/Admin?tab=users']}><Admin /></MemoryRouter>);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Vorübergehend nicht erreichbar');
+    await user.click(screen.getByRole('button', { name: 'Erneut versuchen' }));
+    expect(await screen.findByRole('heading', { name: 'Kai' })).toBeInTheDocument();
+  });
+
   it('zeigt alle Konten mit Login, Anmeldeweg und geltendem Plan', async () => {
     const user = userEvent.setup();
     await openUsers(user);
@@ -137,3 +146,4 @@ describe('Admin — App-Schalter', () => {
     await waitFor(() => expect(superAdminMock.updateSettings).toHaveBeenCalledWith({ all_tools_free: true }));
   });
 });
+

@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { functions } from "@/api/frontendClient";
-import { auth } from "@/api/auth";
-import { User } from "@/entities/User";
+import React, { useState, useEffect, useCallback } from "react";
+import { api, functions } from "@/api/frontendClient";
+import { useAuth } from "@/lib/AuthContext";
 import { Input } from "@/components/ui/input";
 import { MobileSelect } from "@/components/ui/mobile-select";
 import { toast } from "sonner";
@@ -11,7 +10,7 @@ const planBadgeStyle = {
   free: { background: 'rgba(107,114,128,.2)', color: '#9ca3af', border: '1px solid rgba(107,114,128,.3)' },
   basic: { background: 'rgba(59,130,246,.15)', color: '#60a5fa', border: '1px solid rgba(59,130,246,.3)' },
   pro: { background: 'rgba(139,92,246,.15)', color: '#a78bfa', border: '1px solid rgba(139,92,246,.3)' },
-  ultimate: { background: 'rgba(245,158,11,.15)', color: '#fbbf24', border: '1px solid rgba(245,158,11,.3)' },
+  elite: { background: 'rgba(245,158,11,.15)', color: '#fbbf24', border: '1px solid rgba(245,158,11,.3)' },
 };
 
 export default function AdminUsers() {
@@ -22,35 +21,44 @@ export default function AdminUsers() {
   const [selectedPlan, setSelectedPlan] = useState("");
   const [durationDays, setDurationDays] = useState("30");
   const [assigning, setAssigning] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
+  const { user: currentUser, isLoadingAuth } = useAuth();
+  const [error, setError] = useState("");
+  const canManageUsers = currentUser?.is_admin === true;
 
-  useEffect(() => {
-    const init = async () => {
-      const me = await auth.me();
-      setCurrentUser(me);
-      if (!me.is_admin) {
-        toast.error("Kein Zugriff. Nur Admins erlaubt.");
-        return;
-      }
-      loadUsers();
-    };
-    init();
+  const loadUsers = useCallback(async (signal) => {
+    setLoading(true);
+    setError("");
+    try {
+      // Entity.list schluckt API-Fehler als leere Liste. Hier müssen Fehler
+      // sichtbar und wiederholbar bleiben.
+      const allUsers = await api.get('/api/admin/users', { signal });
+      if (signal?.aborted) return;
+      if (!Array.isArray(allUsers)) throw new Error("Ungültige Benutzerliste");
+      setUsers(allUsers);
+    } catch (e) {
+      if (signal?.aborted) return;
+      setError(e.message || "Fehler beim Laden der Benutzer");
+    } finally {
+      if (!signal?.aborted) setLoading(false);
+    }
   }, []);
 
-  const loadUsers = async () => {
-    setLoading(true);
-    try {
-      const allUsers = await User.list();
-      setUsers(allUsers);
-    } catch {
-      toast.error("Fehler beim Laden der Benutzer");
-    }
-    setLoading(false);
-  };
+  useEffect(() => {
+    if (isLoadingAuth || !canManageUsers) return;
+    const controller = new AbortController();
+    void loadUsers(controller.signal);
+    return () => controller.abort();
+  }, [isLoadingAuth, canManageUsers, currentUser?.id, loadUsers]);
 
   const handleAssignPlan = async () => {
+    if (assigning || !canManageUsers) return;
     if (!selectedUser || !selectedPlan) {
       toast.error("Bitte Benutzer und Plan auswählen");
+      return;
+    }
+    const days = Number(durationDays);
+    if (!Number.isInteger(days) || days < 1 || days > 365) {
+      toast.error("Bitte eine ganze Laufzeit zwischen 1 und 365 Tagen eingeben");
       return;
     }
     setAssigning(true);
@@ -58,7 +66,7 @@ export default function AdminUsers() {
       const result = await functions.invoke("adminAssignPlan", {
         target_user_id: selectedUser.id,
         plan_id: selectedPlan,
-        duration_days: parseInt(durationDays) || 30
+        duration_days: days
       });
       if (result?.ok) {
         toast.success(`Plan ${selectedPlan} erfolgreich an ${selectedUser.email} zugewiesen`);
@@ -79,7 +87,9 @@ export default function AdminUsers() {
     u.full_name?.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (currentUser && currentUser.role !== "admin") {
+  if (isLoadingAuth) return <div className="bb-page" role="status">Anmeldung wird geprüft …</div>;
+
+  if (!canManageUsers) {
     return (
       <div className="bb-page text-center">
         <p style={{ color: '#f87171' }}>Kein Zugriff. Nur Admins.</p>
@@ -114,7 +124,7 @@ export default function AdminUsers() {
                   { value: "free", label: "Free" },
                   { value: "basic", label: "Basic" },
                   { value: "pro", label: "Pro" },
-                  { value: "ultimate", label: "Ultimate" },
+                  { value: "elite", label: "Ultimate" },
                 ]}
               />
             </div>
@@ -142,6 +152,7 @@ export default function AdminUsers() {
               ) : "Plan zuweisen"}
             </button>
             <button
+              disabled={assigning}
               onClick={() => { setSelectedUser(null); setSelectedPlan(""); }}
               className="bb-secondary flex-1"
             >
@@ -160,7 +171,12 @@ export default function AdminUsers() {
           className="bg-gray-900 border-gray-700 text-white"
         />
 
-        {loading ? (
+        {error ? (
+          <div role="alert">
+            <p>{error}</p>
+            <button type="button" className="bb-secondary mt-2" onClick={() => loadUsers()}>Erneut versuchen</button>
+          </div>
+        ) : loading ? (
           <div className="text-center py-8" style={{ color: 'var(--bb-muted)' }}>Wird geladen...</div>
         ) : (
           <div className="grid gap-2">
@@ -187,6 +203,7 @@ export default function AdminUsers() {
                     {u.premium_plan_id || "free"}
                   </span>
                   <button
+                    disabled={assigning}
                     onClick={() => { setSelectedUser(u); setSelectedPlan(u.premium_plan_id || "free"); }}
                     className="px-2 py-1 rounded-lg text-xs"
                     style={{ border: '1px solid rgba(0,229,255,.3)', color: 'var(--bb-cyan)' }}
@@ -202,3 +219,4 @@ export default function AdminUsers() {
     </div>
   );
 }
+
