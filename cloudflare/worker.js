@@ -36,24 +36,36 @@ const CRON_ROUTES = {
 // stuerzt das neue Backend ab (z. B. fehlende Env-Variablen dort), faellt der
 // Worker auf BACKEND_URL zurueck (siehe isVercelFailure) — das neue Ziel darf
 // nie die ganze API lahmlegen.
-const VERCEL_REJECT_BACKOFF_MS = 5 * 60 * 1000;
-let vercelRejectedUntil = 0;
+// Das alte Projekt bait-buddy.vercel.app enthaelt aktuelle API-Routen (z. B.
+// /api/ai/fish-recipes) NICHT. Der Front-Door-Worker darf deshalb niemals auf
+// diesen alten Stand zurueckfallen, auch nicht bei fehlendem/falschem Bypass.
+// Ein erreichbares altes Backend ist schlechter als ein sichtbarer 503-Fehler.
+const RETIRED_BACKEND_HOST = 'bait-buddy.vercel.app';
 
-function fallbackTarget(env) {
-  const base = (env.BACKEND_URL || '').replace(/\/+$/, '');
-  if (!base) throw new Error('BACKEND_URL is not configured');
-  return { base, headers: {}, canFallback: false };
+function unavailableResponse() {
+  return Response.json({ error: 'Backend voruebergehend nicht erreichbar' }, {
+    status: 503,
+    headers: { 'Cache-Control': 'no-store' },
+  });
 }
 
-export function backendTarget(env, now = Date.now()) {
-  // VERCEL_PROTECTION: so wurde das Secret im Cloudflare-Dashboard angelegt.
+export function backendTarget(env) {
   const bypass = (env.VERCEL_PROTECTION_BYPASS || env.VERCEL_PROTECTION || '').trim();
-  const vercelBase = (env.VERCEL_BACKEND_URL || '').replace(/\/+$/, '');
-  if (bypass && vercelBase && now >= vercelRejectedUntil) {
-    const hasFallback = Boolean((env.BACKEND_URL || '').trim());
-    return { base: vercelBase, headers: { 'x-vercel-protection-bypass': bypass }, canFallback: hasFallback };
+  const vercelBase = (env.VERCEL_BACKEND_URL || '').trim().replace(/\\/+$/, '');
+  const directBase = (env.BACKEND_URL || '').trim().replace(/\\/+$/, '');
+  const base = vercelBase || directBase;
+  if (!base) throw new Error('BACKEND_URL is not configured');
+  if (new URL(base).hostname === RETIRED_BACKEND_HOST) {
+    throw new Error('Legacy backend is retired; configure the current backend');
   }
-  return fallbackTarget(env);
+  // Das aktuelle Vercel-Projekt ist geschuetzt. Ohne Bypass NICHT zum
+  // alten Projekt und NICHT ohne Secret zur Vercel-Anmeldeseite weiterleiten.
+  if (vercelBase && !bypass) throw new Error('VERCEL_PROTECTION_BYPASS is not configured');
+  return {
+    base,
+    headers: vercelBase ? { 'x-vercel-protection-bypass': bypass } : {},
+    canFallback: false,
+  };
 }
 
 // Antworten, die nie von der App stammen:
@@ -70,16 +82,6 @@ export function isVercelFailure(res) {
   return location.startsWith('https://vercel.com/sso-api') || location.startsWith('https://vercel.com/login');
 }
 
-function markVercelRejected() {
-  vercelRejectedUntil = Date.now() + VERCEL_REJECT_BACKOFF_MS;
-  console.error('[backend] VERCEL_BACKEND_URL nicht nutzbar (Bypass abgewiesen oder Function-Absturz) — nutze BACKEND_URL.');
-}
-
-// Nur fuer Tests.
-export function _resetVercelRejection() {
-  vercelRejectedUntil = 0;
-}
-
 function proxyRequest(target, request, url) {
   const proxied = new Request(target.base + url.pathname + url.search, request);
   // Ein vom Client mitgeschickter Bypass-Header darf nie durchgereicht werden.
@@ -88,7 +90,8 @@ function proxyRequest(target, request, url) {
   // Original-Host fuer korrekte Absolut-URLs / Logging erhalten.
   proxied.headers.set('X-Forwarded-Host', url.host);
   proxied.headers.set('X-Forwarded-Proto', url.protocol.replace(':', ''));
-  return proxied;
+  // Redirects auf Vercel SSO duerfen nicht automatisch zu 200-HTML werden.
+  return new Request(proxied, { redirect: 'manual' });
 }
 
 export default {
@@ -98,14 +101,24 @@ export default {
     // API-Verkehr an das Backend weiterreichen (inkl. SSE-Streaming: der
     // Response-Body wird unveraendert durchgereicht, Cloudflare puffert SSE nicht).
     if (url.pathname === '/api' || url.pathname.startsWith('/api/')) {
-      const target = backendTarget(env);
-      if (!target.canFallback) return fetch(proxyRequest(target, request, url));
-      // Kopie vor dem ersten Versuch: der Body laesst sich nur einmal lesen.
-      const retry = request.clone();
-      const res = await fetch(proxyRequest(target, request, url));
-      if (!isVercelFailure(res)) return res;
-      markVercelRejected();
-      return fetch(proxyRequest(fallbackTarget(env), retry, url));
+      let target;
+      try {
+        target = backendTarget(env);
+      } catch (error) {
+        console.error('[backend] Konfiguration ungueltig:', error.message);
+        return unavailableResponse();
+      }
+      try {
+        const res = await fetch(proxyRequest(target, request, url));
+        if (isVercelFailure(res)) {
+          console.error('[backend] Aktuelle Origin nicht erreichbar oder Bypass abgewiesen');
+          return unavailableResponse();
+        }
+        return res;
+      } catch (error) {
+        console.error('[backend] Origin-Aufruf fehlgeschlagen:', error.message);
+        return unavailableResponse();
+      }
     }
 
     // Alles andere: statische SPA aus dem Assets-Binding.
@@ -126,11 +139,8 @@ export default {
         headers: { ...headers, Authorization: `Bearer ${env.CRON_SECRET}` },
       });
       const target = backendTarget(env);
-      let res = await call(target);
-      if (target.canFallback && isVercelFailure(res)) {
-        markVercelRejected();
-        res = await call(fallbackTarget(env));
-      }
+      const res = await call(target);
+      if (isVercelFailure(res)) throw new Error('Current backend unavailable or bypass rejected');
       const body = await res.text();
       console.log(`[cron] ${path} -> HTTP ${res.status} ${body.slice(0, 300)}`);
       if (!res.ok) throw new Error(`Cron ${path} failed with HTTP ${res.status}`);
