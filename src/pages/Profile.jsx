@@ -12,9 +12,11 @@ import RatingWidget from "@/components/feedback/RatingWidget";
 import DeleteAccountDialog from "@/components/settings/DeleteAccountDialog";
 import { Trash2 } from "lucide-react";
 import { useFeatureTracking } from "@/hooks/useFeatureTracking";
+import { usePlan } from "@/components/premium/PlanContext";
 
 export default function ProfilePage() {
    useFeatureTracking('profil');
+   const { allToolsFree } = usePlan();
    const navigate = useNavigate();
    const [user, setUser] = useState(null);
    const [isLoading, setIsLoading] = useState(true);
@@ -343,6 +345,12 @@ export default function ProfilePage() {
                   {currentPlan.price_eur > 0 ? `${currentPlan.price_eur}€ / Monat` : 'Kostenlos'}
                 </div>
               </div>
+              {currentPlan.id === 'free' && allToolsFree && (
+                <div className="p-3 rounded-xl text-sm" role="status" style={{ background: 'rgba(0,229,255,.08)', border: '1px solid rgba(0,229,255,.25)', color: 'var(--bb-cyan)' }}>
+                  <strong className="block text-white mb-1">Free-Modus aktiv</strong>
+                  Alle Funktionen sind durch die globale Freischaltung verfügbar. Dein Tarif bleibt Free; es wurde kein kostenpflichtiges Abo aktiviert.
+                </div>
+              )}
               {currentPlan.id !== 'free' && currentPlan.expires_at && (
                 <>
                   <div className="grid gap-2">
