@@ -77,7 +77,7 @@ braucht: die Variable ersetzt die Standardliste komplett.
    `https://baitbuddy-api.kaisaschnitt99.workers.dev` testen.
 5. `BACKEND_URL` in der Root-`wrangler.toml` auf
    `https://baitbuddy-api.kaisaschnitt99.workers.dev` umstellen und mergen.
-   Rückweg bei Problemen: denselben Wert zurück auf `https://bait-buddy.vercel.app`.
+   Bei Problemen den letzten nachweislich funktionsfähigen aktuellen Backend-Stand wiederherstellen. Das stillgelegte Projekt `https://bait-buddy.vercel.app` darf nicht mehr als Rückfallziel verwendet werden.
 6. Repo-Variable `CLOUDFLARE_BACKEND_ENABLED=true` setzen, damit Backend-Änderungen
    automatisch deployt werden. Stripe-Webhook-URL erst danach umziehen.
 
@@ -95,21 +95,25 @@ Die produktive Web-App-Domain ist **`catchgbt.com`** (Apex). Erwartete Origins:
    Build command `npm install --legacy-peer-deps && npm run build`, Deploy ueber
    die Root-`wrangler.toml` (`npx wrangler deploy`).
 3. Am Worker setzen: Secret `CRON_SECRET` (identisch zum Backend) und das Backend-Ziel.
-   **Stand 2026-09-25:** `BACKEND_URL` (`bait-buddy.vercel.app`) gehoert zum alten
-   Vercel-Konto, das wegen der Abrechnung gesperrt ist und seit PR #368 (2026-08-02)
-   nicht mehr deployt. Jeder Merge landet im **neuen Projekt** (Konto `ssbedburg`,
-   Alias `VERCEL_BACKEND_URL` in `wrangler.toml`), das per Deployment Protection
-   gesperrt ist. Umschalten:
-   1. Vercel (Konto ssbedburg) → Projekt `bait-buddy` → Settings → Deployment
-      Protection → **Protection Bypass for Automation** → Secret erzeugen.
-   2. Cloudflare → Worker `baitbuddy` → Settings → Variables and Secrets →
-      Secret **`VERCEL_PROTECTION_BYPASS`** mit diesem Wert anlegen.
-   3. Pruefen: `https://catchgbt.com/api/superadmin/stats` antwortet mit 401
-      (vorher 404 = altes Backend).
-   Der Worker (`backendTarget` in `cloudflare/worker.js`) nutzt den neuen Alias nur mit
-   gesetztem Secret und schickt es als `x-vercel-protection-bypass` mit (auch bei den
-   Crons). Secret loeschen = sofort zurueck auf `BACKEND_URL`.
-   Spaeter ersetzt die Container-URL beide.
+   **Stand 2026-10-16:** Das Vercel-Projekt unter dem alten Konto
+   (`bait-buddy.vercel.app`) ist eingefroren und hat neue KI-Routen, darunter
+   `POST /api/ai/fish-recipes`, nicht. Beide Backend-URLs in der Root-`wrangler.toml`
+   zeigen daher auf das aktuelle Projekt im Konto `ssbedburg`.
+   Cloudflare darf bei Fehlern oder fehlendem Bypass nicht auf den alten Stand
+   ausweichen. Stattdessen liefert der Worker HTTP 503 mit `Cache-Control: no-store`.
+   Dies betrifft auch Cron-Aufrufe (keine Ausführung auf veralteten Endpunkten).
+   Der Bypass muss weiterhin im Cloudflare-Worker `baitbuddy` als Secret
+   `VERCEL_PROTECTION_BYPASS` (alternativ `VERCEL_PROTECTION`) gesetzt sein.
+   Das Secret muss zum Projekt `ssbedburg/bait-buddy` gehören.
+   Prüfen:
+   - `GET https://catchgbt.com/api/health`: HTTP 200 und `{ "ok": true, "app": "BaitBuddy" }`.
+   - `POST https://catchgbt.com/api/ai/fish-recipes` ohne Anmeldung: HTTP 401
+     (Route ist vorhanden und auth-geschützt). HTTP 404 bedeutet falsche Route
+     oder veraltetes Backend, HTTP 503 einen nicht verfügbaren Origin/Bypass.
+   - Mit Anmeldung Rezeptvorschläge für Hecht abrufen; die bestehende Token-
+     Abrechnung und die KI-Antwort müssen erhalten bleiben.
+   Für die Container-Migration `VERCEL_BACKEND_URL` entfernen und
+   `BACKEND_URL` auf den getesteten Container-Endpunkt setzen.
    Hinweis: Der Backend-Container (`docker/backend.Dockerfile`, `[[containers]]`)
    ist die Ziel-Architektur, aber **zurueckgestellt** — er braucht den Workers
    Paid Plan. Bis dahin proxyt der Front-Door `/api/*` an das Vercel-Backend.
