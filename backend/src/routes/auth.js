@@ -33,6 +33,18 @@ async function passwordGrant(email, password) {
   return { data };
 }
 
+// Das Profil kommt beim Passwort-Grant bereits von GoTrue. Die wichtigsten
+// Metadaten direkt mitzuliefern spart dem Frontend nach dem Login einen
+// zweiten Roundtrip auf /api/auth/me.
+function publicLoginUser(user) {
+  return {
+    id: user.id,
+    email: user.email,
+    full_name: user.user_metadata?.full_name || '',
+    ...user.user_metadata,
+  };
+}
+
 router.post('/auth/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'E-Mail und Passwort sind erforderlich' });
@@ -43,11 +55,7 @@ router.post('/auth/login', async (req, res) => {
   return res.json({
     token: data.access_token,
     refresh_token: data.refresh_token,
-    user: {
-      id: data.user.id,
-      email: data.user.email,
-      full_name: data.user.user_metadata?.full_name || '',
-    },
+    user: publicLoginUser(data.user),
   });
 });
 
@@ -131,11 +139,7 @@ router.post('/auth/register', async (req, res) => {
   return res.json({
     token: data.access_token,
     refresh_token: data.refresh_token,
-    user: {
-      id: data.user.id,
-      email: data.user.email,
-      full_name: data.user.user_metadata?.full_name || '',
-    },
+    user: publicLoginUser(data.user),
   });
 });
 

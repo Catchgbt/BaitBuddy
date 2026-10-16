@@ -8,7 +8,7 @@ import { LanguageProvider } from '@/components/i18n/LanguageContext';
 import DeleteAccountSection from '@/components/settings/DeleteAccountSection';
 import LandingAuthPanel from '@/components/home/LandingAuthPanel';
 import LandingPitch from '@/components/home/LandingPitch';
-import { maybeShowEventPopup, EVENT_POPUP_DWELL_MS } from '@/lib/loginEventPopup';
+import { maybeShowEventPopup } from '@/lib/loginEventPopup';
 
 function LandingPageContent() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -47,9 +47,9 @@ function LandingPageContent() {
                 auth.redirectToLogin(createPageUrl('Dashboard'));
                 return;
             }
-            if (await maybeShowEventPopup()) {
-                await new Promise(resolve => setTimeout(resolve, EVENT_POPUP_DWELL_MS));
-            }
+            // Der optionale Event-Hinweis darf den Weg ins Dashboard nicht
+            // verzögern.
+            void maybeShowEventPopup();
             window.location.href = createPageUrl('Dashboard');
         } catch (error) {
             console.error('Login error:', error);

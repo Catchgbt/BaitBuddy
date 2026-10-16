@@ -5,7 +5,7 @@ import { createPageUrl } from '@/utils';
 import { setGuestSession } from '@/components/utils/guestMode';
 import { isOnline } from '@/utils/networkStatus';
 import { buildPublicUrl } from '@/lib/publicUrl';
-import { maybeShowEventPopup, EVENT_POPUP_DWELL_MS } from '@/lib/loginEventPopup';
+import { maybeShowEventPopup } from '@/lib/loginEventPopup';
 import { Browser } from '@capacitor/browser';
 import { Eye, EyeOff, Mail, ChevronRight, ChevronLeft, CloudUpload, KeyRound } from 'lucide-react';
 import OAuthMigrationModal from '@/components/auth/OAuthMigrationModal';
@@ -31,10 +31,8 @@ const INPUT_CLASS =
 // Seitenwechsel (statt React-Router-Navigation) ist hier gewollt: er baut den
 // App-Zustand mit der frischen Sitzung neu auf.
 async function goToDashboard() {
-  const popupShown = await maybeShowEventPopup();
-  if (popupShown) {
-    await new Promise((resolve) => setTimeout(resolve, EVENT_POPUP_DWELL_MS));
-  }
+  // Der Event-Hinweis ist rein optional und darf den Login nicht blockieren.
+  void maybeShowEventPopup();
   window.location.href = postLoginPath();
 }
 
@@ -139,14 +137,16 @@ export default function LandingAuthPanel() {
       return;
     }
     try {
+      let session;
       if (loginMode === 'login') {
-        await auth.login(loginEmail, loginPassword);
+        session = await auth.login(loginEmail, loginPassword);
       } else {
-        await auth.register(loginEmail, loginPassword, loginName);
+        session = await auth.register(loginEmail, loginPassword, loginName);
       }
 
-      // Nach erfolgreichem Email-Login: User-Daten laden
-      const user = await auth.me();
+      // Login/Register liefern das Profil bereits mit. Nur alte oder
+      // alternative Auth-Adapter brauchen noch den Fallback auf /me.
+      const user = session?.user || await auth.me();
       setLoggedInUser(user);
 
       // Zeige Migration-Modal, falls noch nicht mit OAuth verlinkt
