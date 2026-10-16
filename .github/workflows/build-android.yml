@@ -6,12 +6,20 @@ on:
       version_code:
         description: 'Android versionCode (muss hoeher sein als der zuletzt in der Play Console hochgeladene)'
         required: false
-        default: '31'
+        default: '33'
       version_name:
         description: 'Android versionName'
         required: false
-        default: '2.117899.1'
+        default: '2.117899.2'
   push:
+    branches:
+      - main
+    # Bei Aenderungen am Android-Billing automatisch ein neues signiertes AAB bauen.
+    # Tag-Pushes bleiben weiterhin moeglich (GitHub ignoriert Pfadfilter bei Tags).
+    paths:
+      - '.github/workflows/build-android.yml'
+      - 'android/app/build.gradle'
+      - 'android/app/src/main/java/app/baitbuddy/mobile/BillingManager.java'
     tags:
       - 'v*'
 
@@ -107,8 +115,8 @@ jobs:
             -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
             -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
             -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }} \
-            -PappVersionCode=${{ github.event.inputs.version_code || '31' }} \
-            -PappVersionName=${{ github.event.inputs.version_name || '2.117899.1' }}
+            -PappVersionCode=${{ github.event.inputs.version_code || '33' }} \
+            -PappVersionName=${{ github.event.inputs.version_name || '2.117899.2' }}
 
       - name: Upload Release AAB
         if: ${{ env.KEYSTORE_BASE64 != '' }}
@@ -131,15 +139,15 @@ jobs:
             -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
             -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
             -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }} \
-            -PappVersionCode=${{ github.event.inputs.version_code || '31' }} \
-            -PappVersionName=${{ github.event.inputs.version_name || '2.117899.1' }}
+            -PappVersionCode=${{ github.event.inputs.version_code || '33' }} \
+            -PappVersionName=${{ github.event.inputs.version_name || '2.117899.2' }}
           cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/baitbuddy.apk"
 
       - name: Publish APK as GitHub Release
         if: ${{ env.KEYSTORE_BASE64 != '' }}
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('android-{0}', github.event.inputs.version_code || '31') }}
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('android-{0}', github.event.inputs.version_code || '33') }}
           name: ${{ github.event.inputs.version_name || github.ref_name }}
           target_commitish: ${{ github.sha }}
           files: baitbuddy.apk
