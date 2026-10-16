@@ -13,7 +13,7 @@ vi.mock('../lib/supabase.js', () => ({
 vi.mock('../lib/llm.js', () => ({
   invokeLLM: (...args) => llmMock.invokeLLM(...args),
   invokeLLMStream: (...args) => llmMock.invokeLLMStream(...args),
-  getAnthropicKey: () => 'test-key',
+  getLLMConfig: () => ({ provider: 'OpenAI', model: 'gpt-5.4-mini', configured: true }),
 }));
 
 let app;
@@ -824,5 +824,23 @@ describe('KI-Volumen (Buddy-Tokens)', () => {
     expect(res.body).toMatchObject({ ok: true, plan_id: 'free', limit: 500, used: 120, remaining: 380 });
     expect(res.body.costs).toMatchObject({ chat: 2, realtime: 150 });
     expect(res.body.plan_quotas).toMatchObject({ free: 500, elite: 30000 });
+  });
+});
+
+describe('POST /api/ai/fish-recipes — OpenAI service errors', () => {
+  it('liefert Rezepte und erhält den bisherigen Antwortvertrag', async () => {
+    llmMock.invokeLLM = vi.fn().mockResolvedValue(JSON.stringify({ recipes: [{ name: 'Hechtfilet' }], prepNotes: 'Entgräten' }));
+    const res = await request(app).post('/api/ai/fish-recipes').set('Authorization', 'Bearer tok').send({ species: 'Hecht' });
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ ok: true, species: 'Hecht', recipes: [{ name: 'Hechtfilet' }] });
+    expect(llmMock.invokeLLM.mock.calls[0][0].onUsage).toEqual(expect.any(Function));
+  });
+
+  it('meldet einen fehlenden KI-Schlüssel als 503 statt Datenbankfehler', async () => {
+    llmMock.invokeLLM = vi.fn().mockRejectedValue(Object.assign(new Error('secret provider details'), { code: 'LLM_NOT_CONFIGURED' }));
+    const res = await request(app).post('/api/ai/fish-recipes').set('Authorization', 'Bearer tok').send({ species: 'Hecht' });
+    expect(res.status).toBe(503);
+    expect(res.body.error).toContain('KI-Dienst');
+    expect(JSON.stringify(res.body)).not.toMatch(/Datenbank|secret provider/);
   });
 });

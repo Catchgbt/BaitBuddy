@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { checkChatRateLimit } from '../middleware/rateLimit.js';
 import { supabase } from '../lib/supabase.js';
-import { invokeLLM, invokeLLMStream, getAnthropicKey } from '../lib/llm.js';
+import { invokeLLM, invokeLLMStream, getLLMConfig } from '../lib/llm.js';
 import {
   FISHING_KNOWLEDGE,
   PRACTICAL_GUIDE_RULES,
@@ -15,7 +15,7 @@ import { buildPraxisPromptSection } from '../lib/buddyPraxisFaq.js';
 import { isInClosedSeason } from '../lib/closedSeason.js';
 import { isAllowedFetchUrl } from '../lib/urlSafety.js';
 import { resolvePlan, PLAN_RANK } from '../lib/planResolver.js';
-import { sendDbError } from '../lib/errorResponse.js';
+import { sendDbError, sendAiError } from '../lib/errorResponse.js';
 import { fetchWithTimeout } from '../lib/fetchWithTimeout.js';
 import { getTTSAudio } from '../lib/multiProviderTTS.js';
 import { personalizationContext } from '../lib/personalizationEngine.js';
@@ -121,26 +121,27 @@ function matchBalancedBrace(str, startIdx) {
 }
 
 router.get('/health', (req, res) => {
-  const key = getAnthropicKey();
+  const config = getLLMConfig();
+  const key = config.configured;
   const keyInfo = key
-    ? 'Anthropic API Key gesetzt'
-    : 'Anthropic API Key FEHLT - KI-Chat funktioniert nicht!';
+    ? 'OpenAI API Key gesetzt'
+    : 'OpenAI API Key FEHLT - KI-Chat funktioniert nicht!';
 
   res.json({
     ok: !!key,
     status: key ? 'healthy' : 'degraded',
     ai_service: {
-      provider: 'Anthropic (Claude)',
+      provider: config.provider,
       api_key_configured: !!key,
       api_key_info: keyInfo,
-      model: process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5',
+      model: config.model,
     },
     server: {
       node_env: process.env.NODE_ENV,
       timestamp: new Date().toISOString(),
       uptime_seconds: process.uptime?.() || 0,
     },
-    recommendation: key ? 'Alles OK' : 'Admin: Setze ANTHROPIC_API_KEY in Vercel-Umgebungsvariablen'
+    recommendation: key ? 'Alles OK' : 'Admin: Setze OPENAI_API_KEY in Vercel-Umgebungsvariablen'
   });
 });
 
@@ -149,16 +150,16 @@ router.get('/health', (req, res) => {
 // ohne LLM-Call gibt es /health bzw. /api/health.
 router.get('/ai/test', requireAuth, async (req, res) => {
   try {
-    if (!getAnthropicKey()) {
+    if (!getLLMConfig().configured) {
       // Nur serverseitig loggen, welche Env-Variablen-NAMEN in Frage kaemen —
       // im Response landen weder Namen noch Werte (Aufzaehlung provisionierter
       // Secrets ist selbst Info-Disclosure).
-      console.warn('[AI] /ai/test: ANTHROPIC_API_KEY nicht gesetzt. Relevante Env-Variablen:',
+      console.warn('[AI] /ai/test: OPENAI_API_KEY nicht gesetzt. Relevante Env-Variablen:',
         Object.keys(process.env).filter(k => /open|api|key|claude|anthropic|gro/i.test(k)).sort());
-      return res.json({ ok: false, error: 'ANTHROPIC_API_KEY ist nicht gesetzt', step: 'key_check' });
+      return res.json({ ok: false, error: 'OPENAI_API_KEY ist nicht gesetzt', step: 'key_check' });
     }
     const reply = await invokeLLM({ prompt: 'Sage nur: Hallo, ich funktioniere!' });
-    return res.json({ ok: true, reply, provider: 'Anthropic (Claude)' });
+    return res.json({ ok: true, reply, provider: getLLMConfig().provider });
   } catch (e) {
     console.error('Error in /ai/test:', e);
     return res.status(500).json({ ok: false, error: 'KI-Test fehlgeschlagen', step: 'llm_call' });
@@ -189,9 +190,9 @@ async function buildChatPrompt(req) {
   const { messages = [], userLocation = null } = req.body;
   const userEmail = req.user.email;
 
-  // Pre-Check: Anthropic API Key vorhanden? Fehler sofort, bevor der LLM aufgerufen wird.
+  // Pre-Check: OpenAI API Key vorhanden? Fehler sofort, bevor der LLM aufgerufen wird.
   // Nur in Produktion — Tests mocken den LLM und brauchen diese frühe Prüfung nicht.
-  if (process.env.NODE_ENV !== 'test' && !getAnthropicKey()) {
+  if (process.env.NODE_ENV !== 'test' && !getLLMConfig().configured) {
     const msg = 'Meine KI-Services sind gerade nicht konfiguriert (fehlender API-Schlüssel). Der Admin muss das fixen.';
     return { ok: false, status: 503, body: { ok: false, error: msg, reply: msg, message: msg } };
   }
@@ -367,10 +368,10 @@ router.post('/ai/chat', requireAuth, checkChatRateLimit, meterAiTokens('chat'), 
     let userMessage = 'Entschuldige, ich habe gerade Verbindungsprobleme. Versuch es gleich nochmal!';
     let httpStatus = 500;
 
-    if (msg.includes('ANTHROPIC_API_KEY')) {
+    if (msg.includes('OPENAI_API_KEY')) {
       userMessage = 'Meine KI-Services sind gerade nicht konfiguriert (fehlender API-Schlüssel). Der Admin muss das fixen.';
       httpStatus = 503;
-      console.warn('[AI] ANTHROPIC_API_KEY nicht gesetzt');
+      console.warn('[AI] OPENAI_API_KEY nicht gesetzt');
     } else if (msg.includes('429') || msg.includes('rate limit') || msg.includes('Rate limit')) {
       userMessage = 'Ich bin gerade überlastet. Versuch es in ein paar Sekunden nochmal!';
       httpStatus = 429;
@@ -1031,7 +1032,7 @@ ANTWORT-FORMAT (JSON):
 
 Antworte NUR mit dem JSON-Objekt, kein Markdown.`;
 
-    const raw = await invokeLLM({ prompt });
+    const raw = await invokeLLM({ prompt, onUsage: req.aiTokens?.setUsage });
 
     let parsed;
     try {
@@ -1043,7 +1044,7 @@ Antworte NUR mit dem JSON-Objekt, kein Markdown.`;
 
     return res.json({ ok: true, species, ...parsed });
   } catch (e) {
-    return sendDbError(res, e);
+    return sendAiError(res, e);
   }
 });
 
@@ -1289,7 +1290,7 @@ Antworte NUR mit dem JSON-Objekt.`;
       },
       trend,
       analysis: parsed,
-      data_source: 'Open-Meteo + Anthropic Claude',
+      data_source: 'Open-Meteo + OpenAI',
       fetched_at: new Date().toISOString(),
     });
   } catch (e) {

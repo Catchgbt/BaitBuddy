@@ -1,205 +1,148 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { invokeLLM, invokeLLMStream, getAnthropicKey } from './llm.js';
+import { invokeLLM, invokeLLMStream, getOpenAIKey, getLLMConfig } from './llm.js';
 
-// Baut aus SSE-Text-Stücken einen async-iterierbaren Response-Body (wie fetch
-// ihn liefert), damit invokeLLMStream ihn Chunk für Chunk verarbeiten kann.
-function sseBody(chunks) {
-  return (async function* () {
-    for (const c of chunks) yield new TextEncoder().encode(c);
-  })();
+const response = (text = 'Hallo', extra = {}) => ({
+  status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text }] }], ...extra,
+});
+const ok = (data = response()) => ({ ok: true, json: async () => data });
+const failure = status => ({ ok: false, status, text: async () => 'private upstream details' });
+const event = value => `data: ${JSON.stringify(value)}\r\n\r\n`;
+function stream(chunks) {
+  return { ok: true, body: (async function* () { for (const chunk of chunks) yield new TextEncoder().encode(chunk); })() };
 }
 
-describe('invokeLLM', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
+beforeEach(() => { vi.stubEnv('OPENAI_API_KEY', 'test-openai-key'); });
+afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.restoreAllMocks(); });
 
-  it('liefert den Text der ersten Choice zurück', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ content: [{ type: 'text', text: 'Hallo' }] }),
-    }));
-    const out = await invokeLLM({ prompt: 'test' });
-    expect(out).toBe('Hallo');
-  });
-
-  it('wirft einen aussagekräftigen Fehler bei fehlender/leerer Antwortstruktur', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ content: [] }),
-    }));
-    await expect(invokeLLM({ prompt: 'test' })).rejects.toThrow(/unerwartete Antwortstruktur/i);
-  });
-
-  it('wirft bei nicht-ok Response mit Status', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: false,
-      status: 429,
-      text: async () => 'rate limited',
-    }));
-    await expect(invokeLLM({ prompt: 'test' })).rejects.toThrow(/429/);
-  });
-
-  it('wiederholt bei transientem 503 und liefert nach erfolgreichem Retry', async () => {
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce({ ok: false, status: 503, text: async () => 'unavailable' })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ content: [{ type: 'text', text: 'nach retry' }] }) });
+describe('OpenAI Responses API', () => {
+  it('sendet Text serverseitig, ohne Speicherung, und meldet echte Tokenzahlen', async () => {
+    const onUsage = vi.fn();
+    const fetchMock = vi.fn().mockResolvedValue(ok(response('Hallo', { usage: { input_tokens: 20, output_tokens: 4 } })));
     vi.stubGlobal('fetch', fetchMock);
+    expect(await invokeLLM({ prompt: 'Petri', onUsage })).toBe('Hallo');
+    const [url, options] = fetchMock.mock.calls[0];
+    expect(url).toBe('https://api.openai.com/v1/responses');
+    expect(options.headers.Authorization).toBe('Bearer test-openai-key');
+    expect(JSON.parse(options.body)).toEqual({ model: 'gpt-5.4-mini', store: false, max_output_tokens: 2048,
+      input: [{ role: 'user', content: [{ type: 'input_text', text: 'Petri' }] }] });
+    expect(onUsage).toHaveBeenCalledWith({ input_tokens: 20, output_tokens: 4 });
+  });
 
-    const out = await invokeLLM({ prompt: 'test' });
-    expect(out).toBe('nach retry');
+  it.each([
+    ['QUJD', 'data:image/jpeg;base64,QUJD'],
+    ['iVBORw0KGgoAAA', 'data:image/png;base64,iVBORw0KGgoAAA'],
+    ['data:image/webp;base64,ABC', 'data:image/webp;base64,ABC'],
+  ])('übergibt Bilder im Responses-Format: %s', async (imageBase64, expected) => {
+    const fetchMock = vi.fn().mockResolvedValue(ok());
+    vi.stubGlobal('fetch', fetchMock);
+    await invokeLLM({ prompt: 'Fisch bestimmen', imageBase64 });
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).input[0].content[1]).toEqual({ type: 'input_image', image_url: expected });
+  });
+
+  it('verwendet ausschließlich OPENAI_API_KEY, trimmt und erlaubt ein konfiguriertes Modell', () => {
+    vi.stubEnv('OPENAI_API_KEY', ' "sk-project-example" \n');
+    vi.stubEnv('OPENAI_MODEL', ' gpt-4.1 ');
+    expect(getOpenAIKey()).toBe('sk-project-example');
+    expect(getLLMConfig()).toEqual({ provider: 'OpenAI', model: 'gpt-4.1', configured: true });
+    vi.stubEnv('OPENAI_API_KEY', ' ');
+    vi.stubEnv('ANTHROPIC_API_KEY', 'sk-ant-unused');
+    expect(getOpenAIKey()).toBeNull();
+    expect(getLLMConfig().configured).toBe(false);
+  });
+
+  it('blockiert ohne OpenAI-Key vor dem Netzwerkaufruf, auch mit altem Anthropic-Key', async () => {
+    vi.stubEnv('OPENAI_API_KEY', '');
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(invokeLLM({ prompt: 'x' })).rejects.toMatchObject({ code: 'LLM_NOT_CONFIGURED', status: 503 });
+    await expect(invokeLLMStream({ prompt: 'x' })).rejects.toMatchObject({ code: 'LLM_NOT_CONFIGURED' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it.each([429, 503])('wiederholt transiente HTTP-%s-Fehler begrenzt', async status => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(failure(status)).mockResolvedValueOnce(ok());
+    vi.stubGlobal('fetch', fetchMock);
+    expect(await invokeLLM({ prompt: 'x' })).toBe('Hallo');
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it('wiederholt bei 429 und liefert nach erfolgreichem Retry', async () => {
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce({ ok: false, status: 429, text: async () => 'rate limited' })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ content: [{ type: 'text', text: 'ok' }] }) });
+  it('stoppt nach drei Versuchen und verrät keine Provider-Details', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(failure(429));
     vi.stubGlobal('fetch', fetchMock);
-
-    const out = await invokeLLM({ prompt: 'test' });
-    expect(out).toBe('ok');
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    await expect(invokeLLM({ prompt: 'x' })).rejects.toMatchObject({ status: 429, message: 'OpenAI API Fehler 429' });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
-  it('wiederholt NICHT bei 400 (nicht-transienter Fehler)', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 400, text: async () => 'bad request' });
+  it.each([400, 401, 403])('wiederholt HTTP-%s nicht', async status => {
+    const fetchMock = vi.fn().mockResolvedValue(failure(status));
     vi.stubGlobal('fetch', fetchMock);
-
-    await expect(invokeLLM({ prompt: 'test' })).rejects.toThrow(/400/);
+    await expect(invokeLLM({ prompt: 'x' })).rejects.toThrow(new RegExp(String(status)));
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it('nutzt das Vision-Modell und baut eine data-URL für imageBase64', async () => {
-    let sentBody;
-    vi.stubGlobal('fetch', vi.fn(async (url, opts) => {
-      sentBody = JSON.parse(opts.body);
-      return { ok: true, json: async () => ({ content: [{ type: 'text', text: 'bild-analyse' }] }) };
-    }));
-
-    const out = await invokeLLM({ prompt: 'analysiere', imageBase64: 'QUJD' });
-    expect(out).toBe('bild-analyse');
-
-    const content = sentBody.messages[0].content;
-    expect(Array.isArray(content)).toBe(true);
-    expect(content[0].source.type).toBe('base64');
-    expect(content[0].source.media_type).toBe('image/jpeg');
-    expect(content[0].source.data).toBe('QUJD');
-    expect(content[1].text).toBe('analysiere');
-  });
-
-  it('zerlegt eine data-URL in media_type und rohe Base64-Daten', async () => {
-    let sentBody;
-    vi.stubGlobal('fetch', vi.fn(async (url, opts) => {
-      sentBody = JSON.parse(opts.body);
-      return { ok: true, json: async () => ({ content: [{ type: 'text', text: 'ok' }] }) };
-    }));
-
-    await invokeLLM({ prompt: 'x', imageBase64: 'data:image/png;base64,ABC' });
-    expect(sentBody.messages[0].content[0].source.media_type).toBe('image/png');
-    expect(sentBody.messages[0].content[0].source.data).toBe('ABC');
-  });
-
-  it('wirft, wenn kein Anthropic-Key gesetzt ist', async () => {
-    const orig = {
-      ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
-      CLAUDE_API_KEY: process.env.CLAUDE_API_KEY,
-    };
-    delete process.env.ANTHROPIC_API_KEY;
-    delete process.env.CLAUDE_API_KEY;
-    const fetchMock = vi.fn();
+  it('wiederholt Netzwerkfehler', async () => {
+    const fetchMock = vi.fn().mockRejectedValueOnce(new TypeError('fetch failed')).mockResolvedValueOnce(ok());
     vi.stubGlobal('fetch', fetchMock);
+    expect(await invokeLLM({ prompt: 'x' })).toBe('Hallo');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
 
-    try {
-      await expect(invokeLLM({ prompt: 'test' })).rejects.toThrow(/ANTHROPIC_API_KEY/);
-      expect(fetchMock).not.toHaveBeenCalled();
-    } finally {
-      for (const [k, v] of Object.entries(orig)) {
-        if (v === undefined) delete process.env[k];
-        else process.env[k] = v;
-      }
-    }
+  it.each([
+    response('', {}),
+    response('abgeschnitten', { status: 'incomplete' }),
+    response('x', { output: [{ type: 'message', content: [{ type: 'refusal', refusal: 'no' }] }] }),
+  ])('akzeptiert leere, unvollständige oder abgelehnte Antworten nicht', async data => {
+    const fetchMock = vi.fn().mockResolvedValue(ok(data));
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(invokeLLM({ prompt: 'x' })).rejects.toThrow();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
 
-describe('invokeLLMStream', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
+describe('OpenAI Streaming', () => {
+  it('verarbeitet Chunkgrenzen, CRLF, Abschluss und echte Nutzungswerte', async () => {
+    const first = event({ type: 'response.output_text.delta', delta: 'Hallo ' });
+    const usage = { input_tokens: 8, output_tokens: 5 };
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(stream([
+      first.slice(0, 30), first.slice(30) + event({ type: 'response.output_text.delta', delta: 'Welt.' }),
+      event({ type: 'response.completed', response: response('Hallo Welt.', { usage }) }).trimEnd(),
+    ])));
+    const onDelta = vi.fn();
+    const onUsage = vi.fn();
+    expect(await invokeLLMStream({ prompt: 'x', onDelta, onUsage })).toBe('Hallo Welt.');
+    expect(onDelta.mock.calls.map(([text]) => text)).toEqual(['Hallo ', 'Welt.']);
+    expect(onUsage).toHaveBeenCalledWith(usage);
   });
 
-  it('parst SSE-Deltas, ruft onDelta pro Stück und liefert den Volltext', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: true,
-      body: sseBody([
-        'data: {"type":"content_block_delta","delta":{"type":"text_delta","text":"Hallo "}}\n\n',
-        'data: {"type":"content_block_delta","delta":{"type":"text_delta","text":"Welt."}}\n\n',
-        'data: {"type":"message_stop"}\n\n',
-      ]),
-    }));
-
-    const deltas = [];
-    const full = await invokeLLMStream({ prompt: 'x', onDelta: (t) => deltas.push(t) });
-
-    expect(deltas).toEqual(['Hallo ', 'Welt.']);
-    expect(full).toBe('Hallo Welt.');
+  it.each(['response.failed', 'response.incomplete', 'error'])('wirft bei %s ohne Stream-Retry', async type => {
+    const fetchMock = vi.fn().mockResolvedValue(stream([event({ type })]));
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(invokeLLMStream({ prompt: 'x' })).rejects.toMatchObject({ code: 'LLM_STREAM_ERROR' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it('verarbeitet über Chunk-Grenzen zerrissene SSE-Zeilen korrekt', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: true,
-      // Ein Event ist über zwei Chunks verteilt (kein abschließendes \n im ersten).
-      body: sseBody([
-        'data: {"type":"content_block_delta","delta":{"type":"text_delta","text":"Te',
-        'il1"}}\n\ndata: {"type":"content_block_delta","delta":{"type":"text_delta","text":"Teil2"}}\n\n',
-      ]),
-    }));
-
-    const full = await invokeLLMStream({ prompt: 'x' });
-    expect(full).toBe('Teil1Teil2');
+  it('erkennt einen abgebrochenen Stream statt Teiltext als Erfolg zu melden', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(stream([event({ type: 'response.output_text.delta', delta: 'Teil' })])));
+    await expect(invokeLLMStream({ prompt: 'x' })).rejects.toMatchObject({ code: 'LLM_INCOMPLETE' });
   });
 
-  it('wirft bei nicht-ok Response', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: false,
-      status: 500,
-      text: async () => 'boom',
+  it('reicht den Abbruch durch den Client an fetch weiter', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    vi.stubGlobal('fetch', vi.fn(async (_url, options) => {
+      expect(options.signal.aborted).toBe(true);
+      throw new DOMException('Abgebrochen', 'AbortError');
     }));
-    await expect(invokeLLMStream({ prompt: 'x' })).rejects.toThrow(/500/);
+    await expect(invokeLLMStream({ prompt: 'x', signal: controller.signal })).rejects.toMatchObject({ name: 'AbortError' });
   });
 });
 
-describe('getAnthropicKey — toleranter Env-Lookup', () => {
-  const NAMES = ['ANTHROPIC_API_KEY', 'CLAUDE_API_KEY', 'NGROK_TOKEN'];
-  const orig = {};
-
-  beforeEach(() => {
-    for (const k of NAMES) { orig[k] = process.env[k]; delete process.env[k]; }
-  });
-
-  afterEach(() => {
-    for (const k of NAMES) {
-      if (orig[k] === undefined) delete process.env[k];
-      else process.env[k] = orig[k];
-    }
-  });
-
-  it('nimmt ANTHROPIC_API_KEY direkt und trimmt Whitespace/Anführungszeichen', () => {
-    process.env.ANTHROPIC_API_KEY = ' "sk-ant-test" \n';
-    expect(getAnthropicKey()).toBe('sk-ant-test');
-  });
-
-  it('findet abweichend benannte Varianten wie CLAUDE_API_KEY', () => {
-    process.env.CLAUDE_API_KEY = 'sk-ant-variant';
-    expect(getAnthropicKey()).toBe('sk-ant-variant');
-  });
-
-  it('ignoriert Fremd-Variablen wie NGROK_TOKEN', () => {
-    process.env.NGROK_TOKEN = 'not-a-claude-key';
-    expect(getAnthropicKey()).toBe(null);
-  });
-
-  it('liefert null bei leerem Wert', () => {
-    process.env.ANTHROPIC_API_KEY = '   ';
-    expect(getAnthropicKey()).toBe(null);
-  });
+it('beendet ein abgelaufenes Gesamtzeitbudget ohne weitere Versuche', async () => {
+  const controller = new AbortController();
+  controller.abort();
+  vi.spyOn(AbortSignal, 'timeout').mockReturnValue(controller.signal);
+  const fetchMock = vi.fn().mockRejectedValue(new DOMException('Timeout', 'AbortError'));
+  vi.stubGlobal('fetch', fetchMock);
+  await expect(invokeLLM({ prompt: 'x' })).rejects.toMatchObject({ code: 'LLM_TIMEOUT', status: 504 });
+  expect(fetchMock).toHaveBeenCalledTimes(1);
 });
