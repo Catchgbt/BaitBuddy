@@ -703,12 +703,16 @@ function UsersAdmin() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [visible, setVisible] = useState(USERS_PAGE);
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
+    let active = true;
+    setError("");
     superAdmin.users()
-      .then(res => setData(Array.isArray(res?.users) ? res.users : []))
-      .catch(e => setError(errorText(e, "Nutzer konnten nicht geladen werden")));
-  }, []);
+      .then(res => { if (active) setData(Array.isArray(res?.users) ? res.users : []); })
+      .catch(e => { if (active) setError(errorText(e, "Nutzer konnten nicht geladen werden")); });
+    return () => { active = false; };
+  }, [reload]);
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -747,7 +751,7 @@ function UsersAdmin() {
           <button key={value} type="button" className={`bb-admin-range${filter === value ? " is-active" : ""}`} aria-pressed={filter === value} onClick={() => setFilter(value)}>{label}</button>
         ))}
       </div>
-      {error ? <Empty>{error}</Empty> : !data ? <Busy /> : shown.length === 0 ? <Empty>Keine Nutzer in dieser Auswahl.</Empty> : (
+      {error ? <div role="alert"><Empty>{error}</Empty><button type="button" className="bb-secondary" onClick={() => setReload(v => v + 1)}>Erneut versuchen</button></div> : !data ? <Busy /> : shown.length === 0 ? <Empty>Keine Nutzer in dieser Auswahl.</Empty> : (
         <>
           <ul className="grid grid-cols-[minmax(0,1fr)] gap-3">
             {shown.slice(0, visible).map(user => <UserRow key={user.id} user={user} onAssigned={replace} />)}
@@ -794,6 +798,7 @@ function AppSettingsAdmin() {
   }, []);
 
   const toggle = async (sw, value) => {
+    if (saving) return;
     if (value && sw.confirmOn && !window.confirm(sw.confirmOn)) return;
     setSaving(sw.key);
     try {
@@ -826,7 +831,7 @@ function AppSettingsAdmin() {
                   <Switch
                     className="bb-switch"
                     checked={value}
-                    disabled={saving === sw.key}
+                    disabled={!!saving}
                     onCheckedChange={(next) => toggle(sw, next)}
                     aria-labelledby={`switch-${sw.key}`}
                   />
@@ -978,3 +983,4 @@ export default function Admin() {
     </div>
   );
 }
+
