@@ -19,9 +19,11 @@ import { FAQ_ENTRIES, FAQ_CATEGORIES } from './buddyFaq.data.js';
 
 export { FAQ_ENTRIES, FAQ_CATEGORIES };
 
-// Mindest-Abdeckung für eine Sofort-Antwort (online, ohne LLM).
+// Mindest-Abdeckung für eine allgemeine Offline-Antwort, wenn ein Treffer nur
+// teilweise zur Frage passt.
 export const INSTANT_MIN_COVERAGE = 0.75;
-// Längere Fragen sind fast immer individuell — die gehen an die KI.
+// Längere oder nur teilweise passende Fragen gehen im Auto-Modus weiter an
+// die Cloud-KI, damit die lokale Antwort nicht am Thema vorbeigeht.
 export const INSTANT_MAX_CONTENT_TOKENS = 8;
 
 // Füllwörter: werden vor dem Abgleich entfernt.
@@ -47,6 +49,7 @@ const NEUTRAL = new Set([
   'guter', 'gutes', 'tipp', 'tipps', 'infos', 'info', 'erklaer', 'erklaere', 'erklaeren', 'sag',
   'sage', 'hallo', 'hi', 'hey', 'moin', 'servus', 'danke', 'buddy', 'baitbuddy', 'frage', 'fragen',
   'angeln', 'angle', 'angelt', 'angel', 'fischen', 'fische', 'fisch', 'fangen', 'fange', 'faengt',
+  'zeig', 'zeige',
   'benutze', 'benutzen', 'nutze', 'nutzen', 'immer', 'ok', 'okay', 'tun', 'tue', 'tut',
   'beissen', 'beisst', 'beisse', 'beissend', 'beissverhalten', 'alles', 'app', 'wasser', 'worauf',
   'baue', 'bauen', 'finde', 'finden', 'heraus', 'beachten', 'beachte', 'achten', 'darf', 'duerfen',
@@ -86,9 +89,13 @@ const ACTION_PHRASES = /\b(ins|in mein|in meinem|ins mein) (fangbuch|logbuch)\b/
 // hilfreiche Antwort davor überlagert.
 const OFFLINE_WRITE_ACTION = /\b(trag|trage|speicher|speichere|erstell|erstelle|start|starte|plan|plane|leg|lege|notier|notiere|merk|merke|fueg|fuege|loesch|loesche|poste|melde|aktivier|aktiviere|deaktivier|deaktiviere)\b/;
 
-function isOfflineWriteAction(question) {
+function isWriteActionRequest(question) {
   const normalized = normalizeText(question);
-  return OFFLINE_WRITE_ACTION.test(normalized) || ACTION_PHRASES.test(normalized);
+  const words = tokenize(normalized).filter(w => !['bitte', 'hey', 'buddy', 'ok', 'okay', 'und', 'jetzt'].includes(w));
+  const startsWithWriteVerb = words.length > 0 && OFFLINE_WRITE_ACTION.test(`^${words[0]}$`);
+  return startsWithWriteVerb
+    || ACTION_PHRASES.test(normalized)
+    || (ACTION_REQUEST.test(normalized) && ACTION_INFINITIVES.test(normalized));
 }
 
 // Rückbezüge auf den bisherigen Gesprächsverlauf.
@@ -245,27 +252,28 @@ export function pickFaqAnswer(entry, random = Math.random) {
 /**
  * Entscheidet, ob der Buddy eine Frage lokal beantwortet.
  *
- * Online ('instant'): nur bei eindeutig allgemeinen Standardfragen — hohe
- * Abdeckung, kurz, keine App-Aktion, kein Bezug auf eigene Daten/Ort/Zeit und
- * (in einem laufenden Gespräch) kein Rückbezug. Alles andere geht an die KI.
+ * Online ('instant'): hinreichend passende allgemeine Datensatz-Treffer werden
+ * lokal beantwortet. Fragen ohne ausreichenden Treffer gehen an die KI.
  *
  * Offline ('offline'): jeder Treffer ist besser als keine Antwort; ist die
  * Frage spezieller als der Eintrag, wird das offen dazugesagt.
  *
  * @param {string} question
- * @param {{ online?: boolean, inConversation?: boolean }} [options]
+ * @param {{ online?: boolean }} [options]
  * @returns {{ mode: 'instant'|'offline', entry, answer: string, page: string|null } | null}
  */
-export function resolveLocalAnswer(question, { online = true, inConversation = false } = {}) {
+export function resolveLocalAnswer(question, { online = true } = {}) {
   const match = findFaqMatch(question);
   if (!match) return null;
   const { entry, coverage, contentTokens } = match;
 
   if (online) {
+    // Eine passende, allgemeine Datensatzfrage bleibt lokal. Schreibaktionen
+    // und persönliche Daten brauchen dagegen Kontext/Funktionen, die nur die
+    // Online-KI bzw. die App-Aktionen liefern kann.
     if (coverage < INSTANT_MIN_COVERAGE) return null;
     if (contentTokens > INSTANT_MAX_CONTENT_TOKENS) return null;
-    if (isActionRequest(question) || needsPersonalContext(question)) return null;
-    if (inConversation && isFollowUpQuestion(question)) return null;
+    if (isWriteActionRequest(question) || needsPersonalContext(question)) return null;
     return { mode: 'instant', entry, answer: pickFaqAnswer(entry), page: entry.page || null };
   }
 
@@ -274,7 +282,7 @@ export function resolveLocalAnswer(question, { online = true, inConversation = f
   // Antwort am Thema vorbei — dann lieber die ehrliche Fallback-Nachricht.
   if (coverage === 0) return null;
   let answer = pickFaqAnswer(entry);
-  if (isOfflineWriteAction(question)) {
+  if (isWriteActionRequest(question)) {
     answer = `Diese Änderung kann ich ohne Verbindung gerade nicht speichern oder anlegen. ${answer}`;
   } else if (isActionRequest(question)) {
     // Ein „Zeig mir …“-Wissenswunsch ist trotz des Aktionsverbs fachlich

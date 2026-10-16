@@ -124,28 +124,29 @@ describe('resolveLocalAnswer — online (Sofort-Antwort ohne API)', () => {
     expect(instant('Hallo').page).toBeNull();
   });
 
-  it('überlässt persönliche, orts- und zeitbezogene Fragen der KI', () => {
-    expect(instant('Wann ist heute die beste Angelzeit?')).toBeNull();
+  it('beantwortet passende allgemeine Datensatzfragen lokal', () => {
+    expect(instant('Welcher Köder ist gut für Hecht?')?.mode).toBe('instant');
+    expect(instant('Zeig mir gute Spots')?.mode).toBe('instant');
+    expect(instant('Wann beißen Fische am besten?')?.mode).toBe('instant');
+  });
+
+  it('lässt Schreibaktionen und persönliche Fragen zur KI durch', () => {
+    expect(instant('Trag einen Karpfen in mein Fangbuch ein')).toBeNull();
     expect(instant('Welche Köder passen zu meinen letzten Fängen?')).toBeNull();
     expect(instant('Was brauche ich für meinen nächsten Angelausflug?')).toBeNull();
+    expect(instant('Zeig mir, wie ich einen Gummifisch führe')?.mode).toBe('instant');
   });
 
-  it('überlässt App-Aktionen der KI (nur sie kann sie ausführen)', () => {
-    expect(instant('Trag einen Karpfen in mein Fangbuch ein')).toBeNull();
-    expect(instant('Öffne die Karte')).toBeNull();
-    expect(instant('Kannst du mir zeigen, wie ein Gummifisch läuft?')).toBeNull();
-  });
-
-  it('überlässt speziellere Fragen der KI (zu geringe Abdeckung)', () => {
+  it('lässt Fragen ohne passenden Datensatz-Treffer zur KI durch', () => {
     expect(instant('Schonzeit Hecht Bayern')).toBeNull();
     expect(instant('Wie fange ich Zander im Winter?')).toBeNull();
     expect(instant('Hallo, ich hab eine Frage zu meinem Boot')).toBeNull();
   });
 
-  it('überlässt Rückfragen im laufenden Gespräch der KI', () => {
-    expect(instant('Und für Zander?', { inConversation: true })).toBeNull();
+  it('beantwortet auch passende Rückfragen lokal', () => {
+    expect(instant('Und für Zander?', { inConversation: true })?.mode).toBe('instant');
     expect(instant('Welcher Köder eignet sich dafür?', { inConversation: true })).toBeNull();
-    // Ohne vorherigen Verlauf ist dieselbe Frage eigenständig.
+    // Ohne passenden Datensatz-Treffer geht die Frage weiter an die KI.
     expect(instant('Und für Zander?', { inConversation: false })?.entry.id).toBe('zander');
   });
 });

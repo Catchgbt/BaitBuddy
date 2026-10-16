@@ -428,11 +428,10 @@ export function KiBuddyBetaInner({ initialMode } = {}) {
 
   async function ask(q, isRetry = false) {
     if (!isRetry) {
-      // Häufige Standardfragen beantwortet die lokale FAQ-Datenbank sofort —
-      // ohne API-Aufruf und Wartezeit. Ohne Netz geht es direkt in den
-      // Offline-Pfad, statt erst Timeouts und Retries abzuwarten.
+      // Jede hinreichend passende FAQ-Frage beantwortet die lokale Datenbank
+      // sofort — ohne API-Aufruf und Wartezeit. Nur Fragen ohne passenden
+      // Datensatz gehen weiter an die KI.
       const online = typeof navigator === "undefined" || navigator.onLine !== false;
-      const inConversation = messagesRef.current.some(m => m.role === "assistant");
 
       // Datenquelle "Datenbank" (Punkt 8: Umschalter Wissen/Modell): nie eine
       // Modellanfrage — weder Gerät noch Cloud —, sondern ausschließlich die
@@ -441,7 +440,7 @@ export function KiBuddyBetaInner({ initialMode } = {}) {
         abortRef.current?.abort();
         speechQueueRef.current?.cancel();
         speechQueueRef.current = null;
-        const knowledge = resolveLocalAnswer(q, { online: false, inConversation });
+        const knowledge = resolveLocalAnswer(q, { online: false });
         answerLocally(knowledge || {
           answer: "Dazu habe ich in meinem gespeicherten Wissen noch keine passende Antwort. Wähle Auto oder KI-Modell für eine ausführlichere Antwort.",
           mode: "knowledge",
@@ -452,8 +451,8 @@ export function KiBuddyBetaInner({ initialMode } = {}) {
       if (dataSource !== "model") {
         const engine = localBuddy.engineFor(online);
         if (engine === "local" || engine === "none") {
-          // Eindeutige Standardfragen bleiben Sofort-Antworten — schneller als jedes Modell.
-          const instant = resolveLocalAnswer(q, { online: true, inConversation });
+          // FAQ-Treffer bleiben Sofort-Antworten — schneller als jedes Modell.
+          const instant = resolveLocalAnswer(q, { online: true });
           abortRef.current?.abort();
           speechQueueRef.current?.cancel();
           speechQueueRef.current = null;
@@ -461,10 +460,10 @@ export function KiBuddyBetaInner({ initialMode } = {}) {
           if (engine === "local") { askOnDevice(q); return; }
           // Modus "Nur auf dem Gerät", aber kein Modell bereit: keine Cloud.
           appendMessages({ role: "system", text: "Die KI auf dem Gerät ist noch nicht eingerichtet. Lade ein Modell unter Einstellungen > KI-Buddy herunter." });
-          answerLocally(resolveLocalAnswer(q, { online: false, inConversation }));
+          answerLocally(resolveLocalAnswer(q, { online: false }));
           return;
         }
-        const local = resolveLocalAnswer(q, { online, inConversation });
+        const local = resolveLocalAnswer(q, { online });
         if (local || !online) {
           // Ein noch laufender Request/eine Sprachausgabe des vorherigen Turns
           // darf die lokale Antwort nicht überholen.
@@ -483,7 +482,7 @@ export function KiBuddyBetaInner({ initialMode } = {}) {
         if (engine === "local") { askOnDevice(q); return; }
         if (engine === "none") {
           appendMessages({ role: "system", text: "Die KI auf dem Gerät ist noch nicht eingerichtet. Lade ein Modell unter Einstellungen > KI-Buddy herunter." });
-          answerLocally(resolveLocalAnswer(q, { online: false, inConversation }));
+          answerLocally(resolveLocalAnswer(q, { online: false }));
           return;
         }
       }
