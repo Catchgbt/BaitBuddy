@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
   BarChart3, MessageSquare, Trophy, LifeBuoy, Mail, Trash2, RotateCcw, Loader2, ShieldAlert, Send, Users, Crown, Fish, Search,
@@ -483,44 +483,119 @@ function TicketCard({ ticket, onChange, onDelete }) {
 
 function TicketsAdmin() {
   const [tickets, setTickets] = useState(null);
+  const [total, setTotal] = useState(0);
+  const [pageSize, setPageSize] = useState(50);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("open");
+  const [search, setSearch] = useState("");
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [reload, setReload] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const load = useCallback(() => {
+  useEffect(() => {
+    let current = true;
+    setLoading(true);
     setError("");
-    superAdmin.tickets()
-      .then(list => setTickets(Array.isArray(list) ? list : []))
-      .catch(e => setError(errorText(e, "Tickets konnten nicht geladen werden")));
-  }, []);
-  useEffect(load, [load]);
+    superAdmin.tickets({ page, status: filter, search: query })
+      .then(result => {
+        if (!current) return;
+        if (!result || !Array.isArray(result.tickets)) {
+          throw new Error("Unerwartete Ticket-Antwort vom Server");
+        }
+        setTickets(result.tickets);
+        setTotal(result.total);
+        setPageSize(result.page_size || 50);
+      })
+      .catch(e => {
+        if (current) setError(errorText(e, "Tickets konnten nicht geladen werden"));
+      })
+      .finally(() => { if (current) setLoading(false); });
+    return () => { current = false; };
+  }, [page, filter, query, reload]);
 
+  const refresh = () => setReload(v => v + 1);
   const remove = async (ticket) => {
     if (!window.confirm(`Ticket „${ticket.subject}“ endgültig löschen?`)) return;
     try {
       await superAdmin.deleteTicket(ticket.id);
-      setTickets(list => list.filter(t => t.id !== ticket.id));
       toast.success("Ticket gelöscht");
+      if (tickets?.length === 1 && page > 1) setPage(page - 1);
+      else refresh();
     } catch (e) {
       toast.error(errorText(e, "Löschen fehlgeschlagen"));
     }
   };
-  const update = (next) => setTickets(list => list.map(t => (t.id === next.id ? next : t)));
 
-  const shown = (tickets || []).filter(t => filter === "all" || t.status === "offen" || t.status === "in_bearbeitung");
+  const selectFilter = (value) => {
+    setFilter(value);
+    setPage(1);
+  };
+  const applySearch = (event) => {
+    event.preventDefault();
+    setPage(1);
+    setQuery(search.trim());
+  };
+  const lastPage = Math.max(1, Math.ceil(total / pageSize));
 
   return (
     <section className="bb-card">
       <div className="bb-section-head">
         <h2 className="bb-section-title"><LifeBuoy size={20} aria-hidden="true" />Support-Tickets</h2>
-        <div className="flex gap-1" role="group" aria-label="Tickets filtern">
-          <button type="button" className={`bb-admin-range${filter === "open" ? " is-active" : ""}`} aria-pressed={filter === "open"} onClick={() => setFilter("open")}>Offen</button>
-          <button type="button" className={`bb-admin-range${filter === "all" ? " is-active" : ""}`} aria-pressed={filter === "all"} onClick={() => setFilter("all")}>Alle</button>
-        </div>
+        <button type="button" onClick={refresh} className="bb-admin-icon-btn" aria-label="Tickets aktualisieren" disabled={loading}>
+          {loading ? <Loader2 size={18} className="animate-spin" aria-hidden="true" /> : <RotateCcw size={18} aria-hidden="true" />}
+        </button>
       </div>
-      {error ? <Empty>{error}</Empty> : !tickets ? <Busy /> : shown.length === 0 ? <Empty>Keine Tickets in dieser Auswahl.</Empty> : (
+      <p className="text-xs bb-muted mb-3">Alle Nutzeranfragen zentral bearbeiten. Antworten werden im Ticket gespeichert und bei eingerichtetem SMTP per E-Mail verschickt.</p>
+      <form onSubmit={applySearch} className="flex flex-wrap gap-2 mb-3">
+        <Input
+          type="search"
+          value={search}
+          maxLength={100}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Betreff, Name oder E-Mail suchen"
+          className="bg-gray-800/50 border-gray-700 text-white min-w-0 flex-1"
+          aria-label="Tickets suchen"
+        />
+        <button className="bb-action" type="submit"><Search size={16} aria-hidden="true" />Suchen</button>
+      </form>
+      <div className="flex flex-wrap gap-1 mb-3" role="group" aria-label="Tickets filtern">
+        {[
+          ["open", "Offen"],
+          ["all", "Alle"],
+          ["in_bearbeitung", "In Bearbeitung"],
+          ["geloest", "Gelöst"],
+          ["geschlossen", "Geschlossen"],
+        ].map(([value, label]) => (
+          <button key={value} type="button"
+            className={`bb-admin-range${filter === value ? " is-active" : ""}`}
+            aria-pressed={filter === value}
+            onClick={() => selectFilter(value)}>{label}</button>
+        ))}
+      </div>
+      <p className="text-xs bb-muted mb-3" aria-live="polite">
+        {loading ? "Tickets werden geladen …" : `${total} Tickets · Seite ${page} von ${lastPage}`}
+      </p>
+      {error ? (
+        <div role="alert" className="grid gap-2 py-3">
+          <p className="text-sm text-red-300">{error}</p>
+          <button className="bb-action" type="button" onClick={refresh}>Erneut laden</button>
+        </div>
+      ) : loading && !tickets ? <Busy /> : (tickets || []).length === 0 && !loading ? (
+        <Empty>Keine Tickets in dieser Auswahl.</Empty>
+      ) : (
         <ul className="grid gap-3">
-          {shown.map(ticket => <TicketCard key={ticket.id} ticket={ticket} onChange={update} onDelete={remove} />)}
+          {(tickets || []).map(ticket => (
+            <TicketCard key={ticket.id} ticket={ticket} onChange={refresh} onDelete={remove} />
+          ))}
         </ul>
+      )}
+      {lastPage > 1 && (
+        <div className="flex items-center justify-between gap-2 mt-4">
+          <button type="button" className="bb-admin-range" disabled={page <= 1 || loading} onClick={() => setPage(p => p - 1)}>Zurück</button>
+          <span className="text-xs bb-muted">Seite {page} / {lastPage}</span>
+          <button type="button" className="bb-admin-range" disabled={page >= lastPage || loading} onClick={() => setPage(p => p + 1)}>Weiter</button>
+        </div>
       )}
     </section>
   );
@@ -835,6 +910,9 @@ function BroadcastMail() {
 
 export default function Admin() {
   const [me, setMe] = useState(undefined);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const availableTabs = ["stats", "users", "app", "community", "events", "tickets", "mail"];
+  const activeTab = availableTabs.includes(searchParams.get("tab")) ? searchParams.get("tab") : "stats";
 
   useEffect(() => {
     auth.me().then(setMe).catch(() => setMe(null));
@@ -874,7 +952,13 @@ export default function Admin() {
   return (
     <div className="bb-page">
       <PageTitle title="Admin Bereich" subtitle="Statistik, Nutzer, Moderation und Support" />
-      <Tabs defaultValue="stats" className="w-full min-w-0">
+      <Tabs value={activeTab} onValueChange={value => {
+        setSearchParams(previous => {
+          const next = new URLSearchParams(previous);
+          next.set("tab", value);
+          return next;
+        });
+      }} className="w-full min-w-0">
         <TabsList className="flex w-full justify-start overflow-x-auto scrollbar-hide">
           <TabsTrigger value="stats">Statistik</TabsTrigger>
           <TabsTrigger value="users">Nutzer</TabsTrigger>

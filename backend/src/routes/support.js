@@ -1,7 +1,7 @@
 import express from 'express';
 import { supabase } from '../lib/supabase.js';
-import { requireAuth } from '../middleware/auth.js';
-import { getMailTransporter, mailFrom, escapeHtml, supportEmail } from '../lib/mailer.js';
+import { requireAuth, superuserEmail } from '../middleware/auth.js';
+import { getMailTransporter, mailFrom, escapeHtml } from '../lib/mailer.js';
 
 const router = express.Router();
 
@@ -44,7 +44,14 @@ router.post('/support/tickets', requireAuth, async (req, res) => {
     // Email-Versand (Entwickler-Benachrichtigung + Bestätigungsmail an Nutzer)
     const emailTransporter = getMailTransporter();
     if (emailTransporter) {
-      const developerEmail = process.env.DEVELOPER_EMAIL || supportEmail();
+      // Always notify the same account that is authorized to process tickets.
+      // Preserve optional developer notification via BCC without replacing
+      // the superuser as primary recipient.
+      const recipient = superuserEmail();
+      const developerEmail = (process.env.DEVELOPER_EMAIL || '').trim();
+      const developerBcc = developerEmail && developerEmail.toLowerCase() !== recipient
+        ? { bcc: developerEmail }
+        : {};
 
       const ticketDetailsHtml = `
         <h2>Neues Support-Ticket</h2>
@@ -63,7 +70,8 @@ router.post('/support/tickets', requireAuth, async (req, res) => {
       try {
         await emailTransporter.sendMail({
           from: mailFrom(),
-          to: developerEmail,
+          to: recipient,
+          ...developerBcc,
           subject: `[TICKET] ${subject}`,
           html: ticketDetailsHtml,
           replyTo: user_email,

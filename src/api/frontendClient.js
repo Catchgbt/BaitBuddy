@@ -1011,7 +1011,11 @@ export const superAdmin = {
   events:          ()                    => api.get('/api/superadmin/events'),
   deleteEvent:     (id)                  => api.del(`/api/superadmin/events/${id}`),
   restartEvent:    (id)                  => api.post(`/api/superadmin/events/${id}/restart`),
-  tickets:         ()                    => api.get('/api/superadmin/tickets'),
+  tickets:         ({ page = 1, status = 'open', search = '' } = {}) => {
+    const params = new URLSearchParams({ page: String(page), status });
+    if (search.trim()) params.set('q', search.trim());
+    return api.get(`/api/superadmin/tickets?${params}`);
+  },
   updateTicket:    (id, data)            => api.patch(`/api/superadmin/tickets/${id}`, data),
   deleteTicket:    (id)                  => api.del(`/api/superadmin/tickets/${id}`),
   mailStatus:      ()                    => api.get('/api/superadmin/mail/status'),
