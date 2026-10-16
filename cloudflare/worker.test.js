@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import worker, { backendTarget, isVercelFailure, _resetVercelRejection } from './worker.js';
+import worker, { backendTarget, isVercelFailure } from './worker.js';
 
 const OLD = 'https://bait-buddy.vercel.app';
 const NEW = 'https://bait-buddy-ssbedburg-2361s-projects.vercel.app';
+const protectedEnv = { BACKEND_URL: OLD, VERCEL_BACKEND_URL: NEW, VERCEL_PROTECTION_BYPASS: 'geheim' };
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  _resetVercelRejection();
 });
 
 const ssoRedirect = () => new Response(null, {
@@ -14,63 +14,130 @@ const ssoRedirect = () => new Response(null, {
   headers: { location: 'https://vercel.com/sso-api?url=https%3A%2F%2Fx.vercel.app%2Fapi%2Fhealth' },
 });
 
-describe('backendTarget', () => {
-  it('bleibt ohne Bypass-Secret beim bisherigen Backend', () => {
-    expect(backendTarget({ BACKEND_URL: OLD, VERCEL_BACKEND_URL: NEW })).toEqual({ base: OLD, headers: {}, canFallback: false });
+describe('backendTarget – no stale API backend', () => {
+  it('routes to the current deployment with the server-side bypass header', () => {
+    expect(backendTarget({ ...protectedEnv, VERCEL_BACKEND_URL: `${NEW}/` }))
+      .toEqual({ base: NEW, headers: { 'x-vercel-protection-bypass': 'geheim' }, canFallback: false });
   });
 
-  it('wechselt mit Bypass-Secret auf das neue Vercel-Projekt', () => {
-    expect(backendTarget({ BACKEND_URL: OLD, VERCEL_BACKEND_URL: `${NEW}/`, VERCEL_PROTECTION_BYPASS: ' abc ' }))
-      .toEqual({ base: NEW, headers: { 'x-vercel-protection-bypass': 'abc' }, canFallback: true });
+  it('supports the legacy name of the bypass secret', () => {
+    expect(backendTarget({ ...protectedEnv, VERCEL_PROTECTION_BYPASS: undefined, VERCEL_PROTECTION: 'abc' }).headers)
+      .toEqual({ 'x-vercel-protection-bypass': 'abc' });
   });
 
-  it('akzeptiert das Secret auch unter dem Namen VERCEL_PROTECTION', () => {
-    expect(backendTarget({ BACKEND_URL: OLD, VERCEL_BACKEND_URL: NEW, VERCEL_PROTECTION: 'abc' }))
-      .toEqual({ base: NEW, headers: { 'x-vercel-protection-bypass': 'abc' }, canFallback: true });
+  it('fails closed rather than using the old backend when bypass is absent', () => {
+    expect(() => backendTarget({ BACKEND_URL: OLD, VERCEL_BACKEND_URL: NEW }))
+      .toThrow('VERCEL_PROTECTION_BYPASS is not configured');
   });
 
-  it('ignoriert das Secret, solange keine neue Adresse gesetzt ist', () => {
-    expect(backendTarget({ BACKEND_URL: OLD, VERCEL_PROTECTION_BYPASS: 'abc' }).base).toBe(OLD);
+  it('blocks the retired origin even without VERCEL_BACKEND_URL', () => {
+    expect(() => backendTarget({ BACKEND_URL: OLD })).toThrow('Legacy backend is retired');
   });
 
-  it('wirft ohne jede Backend-Adresse', () => {
+  it('supports a future independent backend container', () => {
+    expect(backendTarget({ BACKEND_URL: 'https://baitbuddy-api.example.com/' }))
+      .toEqual({ base: 'https://baitbuddy-api.example.com', headers: {}, canFallback: false });
+  });
+
+  it('rejects missing backend configuration', () => {
     expect(() => backendTarget({})).toThrow('BACKEND_URL is not configured');
   });
 });
 
-describe('fetch-Proxy', () => {
-  it('reicht /api mit Bypass-Header an das neue Backend weiter und verwirft Client-Header', async () => {
-    const fetchMock = vi.fn(async () => new Response('{}'));
+describe('fetch proxy – preserve requests and never fail over to outdated API', () => {
+  it('forwards recipe POST to current backend with body, bearer and trusted bypass', async () => {
+    const fetchMock = vi.fn(async () => new Response('{"error":"Kein Token"}', {
+      status: 401, headers: { 'content-type': 'application/json' },
+    }));
     vi.stubGlobal('fetch', fetchMock);
-    const env = { BACKEND_URL: OLD, VERCEL_BACKEND_URL: NEW, VERCEL_PROTECTION_BYPASS: 'geheim' };
-    await worker.fetch(new Request('https://catchgbt.com/api/auth/me?x=1', {
-      headers: { 'x-vercel-protection-bypass': 'vom-client', authorization: 'Bearer t' },
-    }), env);
+    const res = await worker.fetch(new Request('https://catchgbt.com/api/ai/fish-recipes?source=app', {
+      method: 'POST',
+      headers: { 'x-vercel-protection-bypass': 'client-spoof', authorization: 'Bearer test', 'content-type': 'application/json' },
+      body: '{"species":"Hecht"}',
+    }), protectedEnv);
+    expect(res.status).toBe(401);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     const sent = fetchMock.mock.calls[0][0];
-    expect(sent.url).toBe(`${NEW}/api/auth/me?x=1`);
+    expect(sent.url).toBe(`${NEW}/api/ai/fish-recipes?source=app`);
+    expect(sent.redirect).toBe('manual');
+    expect(sent.method).toBe('POST');
     expect(sent.headers.get('x-vercel-protection-bypass')).toBe('geheim');
-    expect(sent.headers.get('authorization')).toBe('Bearer t');
+    expect(sent.headers.get('authorization')).toBe('Bearer test');
     expect(sent.headers.get('x-forwarded-host')).toBe('catchgbt.com');
+    expect(await sent.text()).toBe('{"species":"Hecht"}');
   });
 
-  it('schickt ohne Secret keinen Bypass-Header mit', async () => {
-    const fetchMock = vi.fn(async () => new Response('{}'));
+  it('returns explicit 503 when the bypass secret is missing; never contacts old backend', async () => {
+    const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
-    await worker.fetch(new Request('https://catchgbt.com/api/health', {
-      headers: { 'x-vercel-protection-bypass': 'vom-client' },
+    const res = await worker.fetch(new Request('https://catchgbt.com/api/ai/fish-recipes', {
+      method: 'POST', body: '{"species":"Hecht"}',
     }), { BACKEND_URL: OLD, VERCEL_BACKEND_URL: NEW });
-    const sent = fetchMock.mock.calls[0][0];
-    expect(sent.url).toBe(`${OLD}/api/health`);
-    expect(sent.headers.has('x-vercel-protection-bypass')).toBe(false);
+    expect(res.status).toBe(503);
+    expect(res.headers.get('cache-control')).toBe('no-store');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('returns 503 without retrying against old origin if Vercel bypass is rejected', async () => {
+    const fetchMock = vi.fn(async () => ssoRedirect());
+    vi.stubGlobal('fetch', fetchMock);
+    const res = await worker.fetch(new Request('https://catchgbt.com/api/ai/fish-recipes', {
+      method: 'POST', body: '{"species":"Hecht"}',
+    }), protectedEnv);
+    expect(res.status).toBe(503);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0].url).toBe(`${NEW}/api/ai/fish-recipes`);
+  });
+
+  it('returns 503 on Vercel function crash without switching to outdated routes', async () => {
+    const fetchMock = vi.fn(async () => new Response('A server error has occurred', {
+      status: 500, headers: { server: 'Vercel', 'x-vercel-error': 'FUNCTION_INVOCATION_FAILED' },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    expect((await worker.fetch(new Request('https://catchgbt.com/api/ai/fish-recipes'), protectedEnv)).status).toBe(503);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns 503 for a network failure', async () => {
+    const fetchMock = vi.fn(async () => { throw new Error('Connection refused'); });
+    vi.stubGlobal('fetch', fetchMock);
+    expect((await worker.fetch(new Request('https://catchgbt.com/api/health'), protectedEnv)).status).toBe(503);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('passes genuine app errors through without hiding auth or quota failures', async () => {
+    const fetchMock = vi.fn(async () => new Response('{"error":"Datenbankfehler"}', {
+      status: 500, headers: { 'content-type': 'application/json' },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const res = await worker.fetch(new Request('https://catchgbt.com/api/catches'), protectedEnv);
+    expect(res.status).toBe(500);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('passes genuine backend 404 through; no silent legacy fallback', async () => {
+    const fetchMock = vi.fn(async () => new Response('{"error":"Not found"}', {
+      status: 404, headers: { 'content-type': 'application/json' },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const res = await worker.fetch(new Request('https://catchgbt.com/api/unknown'), protectedEnv);
+    expect(res.status).toBe(404);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('distinguishes platform failures from application responses', () => {
+    expect(isVercelFailure(ssoRedirect())).toBe(true);
+    expect(isVercelFailure(new Response('<html>', { status: 401, headers: { server: 'Vercel', 'content-type': 'text/html' } }))).toBe(true);
+    expect(isVercelFailure(new Response('{"error":"Kein Token"}', { status: 401, headers: { server: 'Vercel', 'content-type': 'application/json' } }))).toBe(false);
+    expect(isVercelFailure(new Response('{}', { status: 404, headers: { 'content-type': 'application/json' } }))).toBe(false);
   });
 });
 
-describe('Cron', () => {
-  it('ruft den Admin-Pfad mit CRON_SECRET und Bypass-Header auf', async () => {
+describe('Cron – use only the current deployment', () => {
+  it('calls the current backend with cron auth and bypass', async () => {
     const fetchMock = vi.fn(async () => new Response('ok'));
     vi.stubGlobal('fetch', fetchMock);
-    const env = { BACKEND_URL: OLD, VERCEL_BACKEND_URL: NEW, VERCEL_PROTECTION_BYPASS: 'geheim', CRON_SECRET: 'c' };
-    await worker.scheduled({ cron: '0 2 * * *' }, env, { waitUntil: () => {} });
+    await worker.scheduled({ cron: '0 2 * * *' }, { ...protectedEnv, CRON_SECRET: 'c' }, { waitUntil: () => {} });
     expect(fetchMock).toHaveBeenCalledWith(`${NEW}/api/admin/events/auto-archive`, {
       method: 'GET',
       redirect: 'manual',
@@ -78,80 +145,13 @@ describe('Cron', () => {
     });
   });
 
-  it('weicht auf BACKEND_URL aus, wenn Vercel den Bypass abweist', async () => {
-    const fetchMock = vi.fn(async (url) => (url.startsWith(NEW) ? ssoRedirect() : new Response('ok')));
+  it('rejects a protected Vercel failure without calling stale cron endpoints', async () => {
+    const fetchMock = vi.fn(async () => ssoRedirect());
     vi.stubGlobal('fetch', fetchMock);
-    const env = { BACKEND_URL: OLD, VERCEL_BACKEND_URL: NEW, VERCEL_PROTECTION_BYPASS: 'falsch', CRON_SECRET: 'c' };
-    await worker.scheduled({ cron: '0 2 * * *' }, env, { waitUntil: () => {} });
-    expect(fetchMock.mock.calls.map((c) => c[0])).toEqual([
-      `${NEW}/api/admin/events/auto-archive`,
-      `${OLD}/api/admin/events/auto-archive`,
-    ]);
-    expect(fetchMock.mock.calls[1][1].headers).toEqual({ Authorization: 'Bearer c' });
-  });
-});
-
-describe('Rückfall bei abgewiesenem Bypass', () => {
-  const env = { BACKEND_URL: OLD, VERCEL_BACKEND_URL: NEW, VERCEL_PROTECTION_BYPASS: 'falsch' };
-
-  it('erkennt die Vercel-Anmeldung, aber keine Antworten der App', () => {
-    expect(isVercelFailure(ssoRedirect())).toBe(true);
-    expect(isVercelFailure(new Response('<html>', { status: 401, headers: { server: 'Vercel', 'content-type': 'text/html' } }))).toBe(true);
-    expect(isVercelFailure(new Response('{"error":"Kein Token"}', { status: 401, headers: { server: 'Vercel', 'content-type': 'application/json' } }))).toBe(false);
-    expect(isVercelFailure(new Response(null, { status: 302, headers: { location: 'https://catchgbt.com/Dashboard' } }))).toBe(false);
-    expect(isVercelFailure(new Response('{}'))).toBe(false);
-  });
-
-  it('beantwortet die Anfrage über BACKEND_URL (inkl. Body) statt die Vercel-Anmeldung durchzureichen', async () => {
-    const seen = [];
-    vi.stubGlobal('fetch', vi.fn(async (req) => {
-      seen.push({ url: req.url, body: await req.text(), bypass: req.headers.get('x-vercel-protection-bypass') });
-      return req.url.startsWith(NEW) ? ssoRedirect() : new Response('{"ok":true}', { status: 200 });
-    }));
-    const res = await worker.fetch(new Request('https://catchgbt.com/api/auth/login', {
-      method: 'POST', body: '{"email":"a@b.test"}', headers: { 'content-type': 'application/json' },
-    }), env);
-    expect(res.status).toBe(200);
-    expect(seen).toEqual([
-      { url: `${NEW}/api/auth/login`, body: '{"email":"a@b.test"}', bypass: 'falsch' },
-      { url: `${OLD}/api/auth/login`, body: '{"email":"a@b.test"}', bypass: null },
-    ]);
-  });
-
-  it('versucht es danach eine Weile gar nicht mehr bei Vercel', async () => {
-    const fetchMock = vi.fn(async (req) => (req.url.startsWith(NEW) ? ssoRedirect() : new Response('{}')));
-    vi.stubGlobal('fetch', fetchMock);
-    await worker.fetch(new Request('https://catchgbt.com/api/health'), env);
-    await worker.fetch(new Request('https://catchgbt.com/api/health'), env);
-    expect(fetchMock.mock.calls.map((c) => c[0].url)).toEqual([
-      `${NEW}/api/health`, `${OLD}/api/health`, `${OLD}/api/health`,
-    ]);
-  });
-
-  it('weicht auch aus, wenn die Function des neuen Backends abstürzt', async () => {
-    const crash = () => new Response('A server error has occurred', {
-      status: 500, headers: { server: 'Vercel', 'x-vercel-error': 'FUNCTION_INVOCATION_FAILED' },
-    });
-    const fetchMock = vi.fn(async (req) => (req.url.startsWith(NEW) ? crash() : new Response('{"ok":true}')));
-    vi.stubGlobal('fetch', fetchMock);
-    const res = await worker.fetch(new Request('https://catchgbt.com/api/health'), env);
-    expect(res.status).toBe(200);
-    expect(fetchMock.mock.calls.map((c) => c[0].url)).toEqual([`${NEW}/api/health`, `${OLD}/api/health`]);
-  });
-
-  it('reicht Fehler der App selbst (ohne x-vercel-error) durch', async () => {
-    const fetchMock = vi.fn(async () => new Response('{"error":"Datenbankfehler"}', { status: 500, headers: { 'content-type': 'application/json' } }));
-    vi.stubGlobal('fetch', fetchMock);
-    const res = await worker.fetch(new Request('https://catchgbt.com/api/catches'), env);
-    expect(res.status).toBe(500);
+    await expect(worker.scheduled({ cron: '0 2 * * *' },
+      { ...protectedEnv, CRON_SECRET: 'c' }, { waitUntil: () => {} }))
+      .rejects.toThrow('Current backend unavailable or bypass rejected');
     expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
-
-  it('reicht echte App-Antworten des neuen Backends unverändert durch', async () => {
-    const fetchMock = vi.fn(async () => new Response('{"error":"Kein Token"}', { status: 401, headers: { 'content-type': 'application/json' } }));
-    vi.stubGlobal('fetch', fetchMock);
-    const res = await worker.fetch(new Request('https://catchgbt.com/api/auth/me'), env);
-    expect(res.status).toBe(401);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toBe(`${NEW}/api/admin/events/auto-archive`);
   });
 });
