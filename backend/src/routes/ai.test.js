@@ -775,6 +775,23 @@ describe('KI-Volumen (Buddy-Tokens)', () => {
     expect(llmMock.invokeLLM).not.toHaveBeenCalled();
   });
 
+  it('startet keine Cloud-KI, wenn der Monatsstand nicht lesbar ist', async () => {
+    vi.resetModules();
+    supabaseMock.current = createSupabaseMock({
+      authUser: { id: 'u1', email: 'a@b.de' },
+      fromResults: { ai_token_balances: { data: null, error: { message: 'relation missing' } } },
+    });
+    ({ default: app } = await import('../server.js'));
+    llmMock.invokeLLM = vi.fn();
+    const res = await request(app)
+      .post('/api/ai/chat')
+      .set('Authorization', 'Bearer tok-billing-unavailable')
+      .send({ messages: [{ role: 'user', content: 'Hallo' }] });
+    expect(res.status).toBe(503);
+    expect(res.body.code).toBe('ai_token_billing_unavailable');
+    expect(llmMock.invokeLLM).not.toHaveBeenCalled();
+  });
+
   it('verbucht eine erfolgreiche Chat-Antwort samt echter Anbieter-Token', async () => {
     await useBalance(10);
     llmMock.invokeLLM = vi.fn(async ({ onUsage }) => {
@@ -808,6 +825,24 @@ describe('KI-Volumen (Buddy-Tokens)', () => {
     expect(res.text).toContain('event: done');
     expect(supabaseMock.current.rpc).toHaveBeenCalledTimes(1);
     expect(supabaseMock.current.rpc.mock.calls[0][1]).toMatchObject({ p_feature: 'chat' });
+  });
+
+  it('sendet beim Stream kein done-Event, wenn die Abbuchung fehlschlägt', async () => {
+    vi.resetModules();
+    supabaseMock.current = createSupabaseMock({
+      authUser: { id: 'u1', email: 'a@b.de' },
+      fromResults: { ai_token_balances: { data: { used: 0 }, error: null } },
+      rpcResults: { record_ai_token_usage: { data: null, error: { message: 'RPC failed' } } },
+    });
+    ({ default: app } = await import('../server.js'));
+    llmMock.invokeLLMStream = vi.fn(async ({ onDelta }) => { onDelta('Ok.'); return 'Ok.'; });
+    const res = await request(app)
+      .post('/api/ai/chat/stream')
+      .set('Authorization', 'Bearer tok-stream-charge-failed')
+      .send({ messages: [{ role: 'user', content: 'Hallo' }] });
+    expect(res.text).toContain('event: error');
+    expect(res.text).toContain('ai_token_charge_failed');
+    expect(res.text).not.toContain('event: done');
   });
 
   it('sperrt eine Live-Voice-Sitzung, bevor ein OpenAI-Token erzeugt wird', async () => {
