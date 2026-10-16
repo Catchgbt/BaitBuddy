@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -168,6 +169,11 @@ export default function Help() {
     <div className="bb-page pb-safe-fixed">
       <div className="max-w-4xl mx-auto space-y-6 w-full min-w-0">
         <PageTitle title="Hilfe & Support" subtitle="Wir helfen dir gerne weiter." />
+        {user?.is_superuser === true && (
+          <Link to="/Admin?tab=tickets" className="bb-action inline-flex items-center gap-2">
+            Support-Tickets verwalten
+          </Link>
+        )}
 
         <Tabs value={tab} onValueChange={setTab} className="w-full min-w-0">
           <TabsList className="flex w-full justify-start overflow-x-auto scrollbar-hide">
