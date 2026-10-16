@@ -26,7 +26,10 @@ vi.mock('@/api/supabaseClient', () => ({
   },
 }));
 
-vi.mock('@/lib/guestStore', () => ({
+vi.mock('@/lib/guestStore', async (importOriginal) => ({
+  // frontendClient verwendet weitere guestStore-Funktionen; Originalexporte
+  // erhalten, damit der Test nur den Migrationspfad simuliert.
+  ...(await importOriginal()),
   hasGuestData: vi.fn(() => false),
   migrateGuestData: vi.fn(async () => ({ migrated: 0, failed: 0, byEntity: {} })),
 }));
