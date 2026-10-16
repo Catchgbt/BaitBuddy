@@ -9,7 +9,8 @@ vi.mock('@/api/frontendClient', () => ({
   events: {},
 }));
 vi.mock('@/api/auth', () => ({ auth: { logout: vi.fn(), redirectToLogin: vi.fn() } }));
-vi.mock('@/components/premium/PlanContext', () => ({ usePlan: () => ({ plan: { id: 'elite', name: 'Ultimate' } }) }));
+const planState = vi.hoisted(() => ({ plan: { id: 'elite', name: 'Ultimate' }, allToolsFree: false }));
+vi.mock('@/components/premium/PlanContext', () => ({ usePlan: () => planState }));
 vi.mock('@/components/location/LocationManager', () => ({ useLocation: () => ({ currentLocation: null }) }));
 vi.mock('@/hooks/useFishingConditions', () => ({ useFishingConditions: () => ({ window: null, hasLocation: false }) }));
 vi.mock('@/components/layout/AppTopBar', () => ({ AvatarCircle: () => <span>Avatar</span> }));
@@ -48,5 +49,14 @@ describe('Command Center — Admin-Zugang', () => {
     renderCommandCenter({ id: 'admin', email: 'admin@baitbuddy.test', is_admin: true, is_superuser: false });
 
     expect(screen.queryByRole('link', { name: /Admin-Bereich/ })).toBeNull();
+  });
+
+  it('zeigt den Hinweis, wenn alle Funktionen vorübergehend kostenlos sind', () => {
+    planState.allToolsFree = true;
+    renderCommandCenter({ id: 'angler', email: 'angler@baitbuddy.test' });
+
+    expect(screen.getByRole('status')).toHaveTextContent('Alle Funktionen frei');
+    expect(screen.getByRole('status')).toHaveTextContent('im Moment kostenlos verfügbar');
+    planState.allToolsFree = false;
   });
 });

@@ -60,7 +60,7 @@ function RelevantCard({ to, icon: Icon, title, detail, accent, onNavigate }) {
 }
 
 export default function CommandCenter({ isOpen, setIsOpen, currentPageName, user }) {
-  const { plan } = usePlan();
+  const { plan, allToolsFree } = usePlan();
   const { currentLocation } = useGeoLocation();
   const conditions = useFishingConditions(currentLocation?.lat, currentLocation?.lon);
   const [openArea, setOpenArea] = useState(null);
@@ -129,7 +129,7 @@ export default function CommandCenter({ isOpen, setIsOpen, currentPageName, user
               <span className="bb-cc-plan-icon"><Crown size={22} aria-hidden="true" /></span>
               <span className="flex-1 min-w-0">
                 <strong className="bb-title-accent">{plan?.name || (user ? 'Kostenlos' : 'Gast')}</strong>
-                <span className="bb-cc-meta">{isPaid ? 'Dein aktiver Tarif' : 'Mehr KI-Funktionen freischalten'}</span>
+                <span className="bb-cc-meta">{allToolsFree ? 'Alle Funktionen aktuell freigeschaltet' : isPaid ? 'Dein aktiver Tarif' : 'Mehr KI-Funktionen freischalten'}</span>
               </span>
               {user ? (
                 <Link to="/PremiumPlans" onClick={close} className="bb-cc-plan-btn">{isPaid ? 'Tarif' : 'Upgrade'}</Link>
@@ -139,6 +139,12 @@ export default function CommandCenter({ isOpen, setIsOpen, currentPageName, user
                 </button>
               )}
             </div>
+            {allToolsFree && (
+              <div className="bb-cc-free-notice" role="status">
+                <CheckCircle2 size={20} aria-hidden="true" />
+                <span><strong>Alle Funktionen frei</strong><span>Der vollständige Funktionsumfang ist im Moment kostenlos verfügbar.</span></span>
+              </div>
+            )}
             {user?.is_superuser === true && (
               <Link to="/Admin" onClick={close} className="bb-cc-admin">
                 <span className="bb-cc-admin-icon"><ShieldCheck size={22} aria-hidden="true" /></span>

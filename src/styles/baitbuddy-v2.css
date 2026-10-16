@@ -448,6 +448,21 @@
   flex-shrink: 0;
   white-space: nowrap;
 }
+.bb-cc-free-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(34,224,122,.38);
+  border-radius: 14px;
+  color: var(--bb-green);
+  background: rgba(34,224,122,.09);
+}
+.bb-cc-free-notice > svg { flex-shrink: 0; margin-top: 1px; }
+.bb-cc-free-notice strong,
+.bb-cc-free-notice span span { display: block; }
+.bb-cc-free-notice strong { font-size: 14px; line-height: 1.25; }
+.bb-cc-free-notice span span { margin-top: 3px; color: #c9e8d5; font-size: 12px; line-height: 1.35; }
 .bb-cc-admin {
   display: flex;
   align-items: center;
