@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, lazy, Suspense, startTransition } from "react";
+import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { usePrefetch } from "@/hooks/usePrefetch";
 import SEO from "@/components/pwa/SEO";
 import { LocationProvider } from "@/components/location/LocationManager";
@@ -14,6 +14,7 @@ import UpdateNotification from "@/components/pwa/UpdateNotification";
 import OfflineIndicator from "@/components/pwa/OfflineIndicator";
 import { entities } from "@/api/frontendClient";
 import { auth } from "@/api/auth";
+import { useAuth } from "@/lib/AuthContext";
 import SwipeToRefresh from "@/components/utils/SwipeToRefresh";
 import { useQueryClient } from "@tanstack/react-query";
 import { HapticProvider } from "@/components/utils/HapticFeedback";
@@ -103,43 +104,21 @@ export default function Layout({ children, currentPageName }) {
 function LayoutContent({ children, currentPageName }) {
   const queryClient = useQueryClient();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  // AuthProvider hat die Sitzung bereits geprüft, bevor App.jsx das Layout rendert.
+  // Ein zweites auth.me() in requestIdleCallback kann die Ansicht auf mobilen
+  // Browsern dauerhaft im Ladespinner festhalten.
+  const { user, isLoadingAuth: authLoading } = useAuth();
   const scrollPositionsRef = useRef({});
   const [previousPage, setPreviousPage] = useState(null);
+  const firstOpenRequestedFor = useRef(null);
 
-  const refreshUser = async () => {
-    try {
-      let currentUser = await auth.me();
-
-      if (currentUser && !currentUser.first_open_at) {
-        currentUser = await auth.updateMe({ first_open_at: new Date().toISOString() });
-      }
-
-      startTransition(() => {
-        setUser(currentUser);
-        setAuthLoading(false);
-      });
-      window.dispatchEvent(new CustomEvent('user-refresh-request'));
-    } catch {
-      startTransition(() => {
-        setUser(null);
-        setAuthLoading(false);
-      });
-    }
-  };
-
-  // Profiländerungen (z. B. neuer Anzeigename) sofort in Kopfzeile und
-  // Command Center übernehmen.
+  // Profilergänzung als Nebenaufgabe, niemals als Voraussetzung fürs Routing.
   useEffect(() => {
-    const onUserUpdated = (event) => {
-      const updated = event?.detail;
-      if (!updated?.id) return;
-      setUser(prev => (prev && prev.id === updated.id ? { ...prev, ...updated } : prev));
-    };
-    window.addEventListener('bb-user-updated', onUserUpdated);
-    return () => window.removeEventListener('bb-user-updated', onUserUpdated);
-  }, []);
+    if (!user?.id || user.first_open_at || firstOpenRequestedFor.current === user.id) return;
+    firstOpenRequestedFor.current = user.id;
+    auth.updateMe({ first_open_at: new Date().toISOString() })
+      .catch(error => console.warn('[Layout] first_open_at konnte nicht gespeichert werden:', error));
+  }, [user?.id, user?.first_open_at]);
 
   // Track total online time via UsageSession
   useEffect(() => {
@@ -197,21 +176,6 @@ function LayoutContent({ children, currentPageName }) {
       stopSession();
     };
   }, [user?.email]);
-
-  useEffect(() => {
-    // requestIdleCallback fehlt in manchen WebViews/In-App-Browsern (z. B. iOS
-    // Safari < 16.4, Facebook/Messenger-In-App-Browser). Ein nackter Verweis
-    // auf die Variable wirft dort "Can't find variable: requestIdleCallback"
-    // und crasht die App in die ErrorBoundary — deshalb per typeof absichern.
-    const hasIdleCallback = typeof requestIdleCallback !== 'undefined';
-    const id = hasIdleCallback
-      ? requestIdleCallback(() => refreshUser())
-      : setTimeout(() => refreshUser(), 0);
-    return () => {
-      if (hasIdleCallback && typeof cancelIdleCallback !== 'undefined') cancelIdleCallback(id);
-      else clearTimeout(id);
-    };
-  }, []);
 
   useEffect(() => {
     if (previousPage && previousPage !== currentPageName) {
