@@ -22,6 +22,15 @@ beforeEach(() => {
 });
 
 describe('AuthProvider mit echtem API-Refresh', () => {
+  it.each([429, 500, 503])('bleibt bei Refresh-Störung %i mit bekanntem Konto angemeldet', async status => {
+    localStorage.setItem('bb_user', JSON.stringify({ id: 'u1' }));
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(response(401, { error: 'expired' }))
+      .mockResolvedValueOnce(response(status, { error: 'temporarily unavailable' })));
+    render(<AuthProvider><SessionState /></AuthProvider>);
+    await screen.findByText('signed-in');
+    expect(localStorage.getItem('bb_refresh')).toBe('valid-refresh');
+  });
   it.each([429, 500, 503])('löscht bei vorübergehendem Refresh-Fehler %i keine Anmeldedaten', async status => {
     vi.stubGlobal('fetch', vi.fn()
       .mockResolvedValueOnce(response(401, { error: 'expired' }))

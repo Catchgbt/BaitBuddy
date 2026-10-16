@@ -59,6 +59,10 @@ Die App nutzt **absichtlich zwei parallele Auth-Pfade**, beide aktiv:
 ### ⚠️ Kritisch
 `autoRefreshToken` ist in `supabaseClient.js` **deaktiviert**, um Token-Konflikt zu vermeiden (nur `bb_token`-Refresh ist aktiv). Eine vollständige Konsolidierung wurde bewusst zurückgestellt (zu großer Eingriff, OAuth nicht offline verifizierbar). **Bei zukünftigen Auth-Änderungen diese Dualität beachten.**
 
+- Ein 429-/5xx-/Netzfehler von GoTrue ist **keine** ungültige Sitzung. `/api/auth/refresh` und die Tokenprüfung müssen temporäre Fehler weitergeben, statt daraus 401 zu machen. Das Frontend behält die Tokens und nutzt bei bekanntem Konto das gecachte Profil; Backend-Berechtigungen bleiben serverseitig geprüft.
+- Refresh-Anfragen teilen ein Promise pro Fenster und, sofern verfügbar, einen Web Lock zwischen Tabs. Verspätete 401-Antworten verwenden bereits erneuerte Tokens; laufende Refresh-Antworten dürfen einen späteren Login oder Logout nicht überschreiben.
+- Der Browser-Supabase-Listener darf nur seine eigene, noch unveränderte Sitzung synchronisieren. Eine vom Backend erneuerte `bb_token`-Sitzung hat Vorrang vor alten SDK-Ereignissen. Ausstehende Profilprüfungen dürfen einen Logout nicht rückgängig machen.
+
 ---
 
 ## 🤖 KI-Buddy (CloudMD) — Kernfeature

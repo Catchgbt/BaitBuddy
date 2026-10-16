@@ -11,6 +11,7 @@ function jsonResponse(body, { ok = true, status = ok ? 200 : 400, headers = {} }
 }
 
 describe('ApiClient.request', () => {
+  afterEach(() => vi.unstubAllGlobals());
   beforeEach(() => {
     localStorage.clear();
     vi.restoreAllMocks();
@@ -94,6 +95,93 @@ describe('ApiClient.request', () => {
 
     await expect(api.post('/api/auth/login', { email: 'a@b.de', password: 'x' })).rejects.toThrow();
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('rotiert bei einem verspäteten 401 eines parallelen Requests nicht erneut', async () => {
+    api.setToken('expired');
+    api.setRefreshToken('refresh');
+    let finishLateRequest;
+    const lateResponse = new Promise(resolve => { finishLateRequest = resolve; });
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({}, { status: 401, ok: false }))
+      .mockReturnValueOnce(lateResponse)
+      .mockResolvedValueOnce(jsonResponse({ token: 'fresh', refresh_token: 'rotated' }))
+      .mockResolvedValue(jsonResponse({ id: 'u1' }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const first = api.get('/api/auth/me');
+    const late = api.get('/api/auth/me');
+    await first;
+    finishLateRequest(jsonResponse({}, { status: 401, ok: false }));
+    await late;
+
+    expect(fetchMock.mock.calls.filter(([url]) => url.endsWith('/api/auth/refresh'))).toHaveLength(1);
+    expect(fetchMock.mock.calls.at(-1)[1].headers.Authorization).toBe('Bearer fresh');
+  });
+
+  it.each([200, 401])('lässt einen laufenden Refresh (%i) keine neuere Anmeldung überschreiben', async status => {
+    api.setToken('old-access');
+    api.setRefreshToken('old-refresh');
+    let finishRefresh;
+    const pending = new Promise(resolve => { finishRefresh = resolve; });
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({}, { status: 401, ok: false }))
+      .mockReturnValueOnce(pending)
+      .mockResolvedValue(jsonResponse({ id: 'new-user' }));
+    vi.stubGlobal('fetch', fetchMock);
+    const result = api.get('/api/auth/me');
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    api.setToken('new-login');
+    api.setRefreshToken('new-login-refresh');
+    finishRefresh(jsonResponse({ token: 'old-rotated', refresh_token: 'old-rotated-refresh' }, { status, ok: status === 200 }));
+    await result;
+    expect(api.getToken()).toBe('new-login');
+    expect(api.getRefreshToken()).toBe('new-login-refresh');
+  });
+
+  it('stellt die Sitzung durch eine verspätete Refresh-Antwort nach Logout nicht wieder her', async () => {
+    api.setToken('expired');
+    api.setRefreshToken('refresh');
+    let finishRefresh;
+    const pending = new Promise(resolve => { finishRefresh = resolve; });
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({}, { status: 401, ok: false }))
+      .mockReturnValueOnce(pending);
+    vi.stubGlobal('fetch', fetchMock);
+    const result = api.get('/api/auth/me');
+    const assertion = expect(result).rejects.toMatchObject({ status: 401 });
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    api.setToken(null);
+    api.setRefreshToken(null);
+    finishRefresh(jsonResponse({ token: 'fresh', refresh_token: 'rotated' }));
+    await assertion;
+    expect(api.getToken()).toBeNull();
+    expect(api.getRefreshToken()).toBeNull();
+  });
+
+  it('übernimmt die Rotation eines anderen Tabs, während es auf den Refresh-Lock wartet', async () => {
+    api.setToken('expired');
+    api.setRefreshToken('refresh');
+    let enterLock;
+    const lockRequest = vi.fn((name, options, callback) => new Promise(resolve => {
+      enterLock = () => resolve(callback());
+    }));
+    vi.stubGlobal('navigator', { locks: { request: lockRequest } });
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({}, { status: 401, ok: false }))
+      .mockResolvedValue(jsonResponse({ id: 'u1' }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = api.get('/api/auth/me');
+    await vi.waitFor(() => expect(lockRequest).toHaveBeenCalled());
+    // Shared localStorage wird im anderen Tab nach dessen Refresh aktualisiert.
+    api.setToken('other-tab-access');
+    api.setRefreshToken('other-tab-refresh');
+    enterLock();
+    await expect(result).resolves.toEqual({ id: 'u1' });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[1][1].headers.Authorization).toBe('Bearer other-tab-access');
+    expect(api.getRefreshToken()).toBe('other-tab-refresh');
   });
 
   it('nutzt das Offline-Profil, wenn der Refresh nach einem 401 keine Verbindung hat', async () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, waitFor } from '@testing-library/react';
+import { act, cleanup, render, waitFor } from '@testing-library/react';
 import React from 'react';
 
 const { mockAuth, mockSupabaseAuth, authStateCallback } = vi.hoisted(() => ({
@@ -49,9 +49,14 @@ function AuthStatus() {
 
 describe('AuthContext – Supabase-Token-Sync', () => {
   beforeEach(() => {
+    cleanup();
     localStorage.clear();
-    mockAuth.getToken.mockReturnValue(null);
-    mockAuth.me.mockReset();
+    mockAuth.getToken.mockImplementation(() => localStorage.getItem('bb_token'));
+    mockAuth.setToken.mockImplementation(token => {
+      if (token) localStorage.setItem('bb_token', token);
+      else localStorage.removeItem('bb_token');
+    });
+    mockAuth.me.mockReset().mockResolvedValue({ id: 'u1', email: 'angler@example.test' });
     vi.mocked(hasGuestData).mockReset().mockReturnValue(false);
     vi.mocked(migrateGuestData).mockReset().mockResolvedValue({ migrated: 0, failed: 0, byEntity: {} });
     mockAuth.setToken.mockClear();
@@ -69,9 +74,11 @@ describe('AuthContext – Supabase-Token-Sync', () => {
     render(<AuthProvider><div /></AuthProvider>);
     await waitFor(() => expect(authStateCallback.current).toBeTypeOf('function'));
 
-    authStateCallback.current('TOKEN_REFRESHED', {
-      access_token: 'neues-token',
-      refresh_token: 'neuer-refresh',
+    await act(async () => {
+      authStateCallback.current('TOKEN_REFRESHED', {
+        access_token: 'neues-token',
+        refresh_token: 'neuer-refresh',
+      });
     });
 
     expect(mockAuth.setToken).toHaveBeenCalledWith('neues-token');
@@ -82,9 +89,50 @@ describe('AuthContext – Supabase-Token-Sync', () => {
     render(<AuthProvider><div /></AuthProvider>);
     await waitFor(() => expect(authStateCallback.current).toBeTypeOf('function'));
 
-    authStateCallback.current('SIGNED_OUT', null);
+    await act(async () => {
+      authStateCallback.current('SIGNED_IN', { access_token: 'oauth-token' });
+      authStateCallback.current('SIGNED_OUT', null);
+    });
 
     expect(mockAuth.setToken).toHaveBeenCalledWith(null);
+  });
+
+  it.each(['SIGNED_IN', 'TOKEN_REFRESHED', 'SIGNED_OUT'])('lässt eine alte Browser-Session bei %s die erneuerte App-Sitzung nicht ändern', async event => {
+    localStorage.setItem('bb_token', 'backend-refreshed-token');
+    render(<AuthProvider><AuthStatus /></AuthProvider>);
+    await waitFor(() => expect(mockAuth.me).toHaveBeenCalled());
+    mockAuth.setToken.mockClear();
+    mockAuth.setRefreshToken.mockClear();
+
+    await act(async () => {
+      authStateCallback.current('INITIAL_SESSION', { access_token: 'stale-oauth-token' });
+      authStateCallback.current(event, event === 'SIGNED_OUT' ? null : {
+        access_token: 'stale-oauth-token', refresh_token: 'stale-refresh',
+      });
+    });
+
+    expect(mockAuth.setToken).not.toHaveBeenCalled();
+    expect(mockAuth.setRefreshToken).not.toHaveBeenCalled();
+    expect(localStorage.getItem('bb_token')).toBe('backend-refreshed-token');
+  });
+
+  it('lädt das Konto nach einem verspäteten OAuth-Login ohne Neuladen', async () => {
+    const { getByTestId } = render(<AuthProvider><AuthStatus /></AuthProvider>);
+    await waitFor(() => expect(getByTestId('auth-status')).toHaveTextContent('guest'));
+    await act(async () => {
+      authStateCallback.current('SIGNED_IN', { access_token: 'oauth-token', refresh_token: 'oauth-refresh' });
+    });
+    await waitFor(() => expect(getByTestId('auth-status')).toHaveTextContent('angler@example.test'));
+  });
+
+  it('ignoriert eine Profilantwort, die erst nach dem Logout eintrifft', async () => {
+    localStorage.setItem('bb_token', 'access');
+    let finishProfile;
+    mockAuth.me.mockImplementation(() => new Promise(resolve => { finishProfile = resolve; }));
+    const { getByText, getByTestId } = render(<AuthProvider><TestConsumer /><AuthStatus /></AuthProvider>);
+    await act(async () => { getByText('logout').click(); });
+    await act(async () => { finishProfile({ id: 'u1', email: 'old@example.test' }); });
+    expect(getByTestId('auth-status')).toHaveTextContent('guest');
   });
 
   it('logout() ruft supabase.auth.signOut() auf (raeumt beide Sessions auf)', async () => {

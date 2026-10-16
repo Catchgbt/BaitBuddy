@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { auth } from "@/api/auth";
 import { supabase } from "@/api/supabaseClient";
 import { entities } from "@/api/frontendClient";
@@ -13,6 +13,7 @@ export const AuthProvider = ({ children }) => {
   const [isLoadingPublicSettings]                         = useState(false);
   const [authError, setAuthError]                         = useState(null);
   const [appPublicSettings]                               = useState(null);
+  const authCheckId = useRef(0);
 
   useEffect(() => { checkAppState(); }, []);
 
@@ -34,18 +35,38 @@ export const AuthProvider = ({ children }) => {
   // dagegen über DIESEN Client. Achtung: autoRefreshToken ist in
   // supabaseClient.js bewusst DEAKTIVIERT (der einzige aktive Refresh-Pfad ist
   // der 401-getriggerte bb_refresh in frontendClient.js), damit sich beide
-  // Systeme nicht um das single-use Refresh-Token streiten. Dieser App-weite
-  // Listener spiegelt daher vor allem SIGNED_IN (initialer OAuth-Login) und
-  // SIGNED_OUT nach bb_token/bb_refresh; TOKEN_REFRESHED feuert von diesem
-  // Client praktisch nicht, wird aber sicherheitshalber mit behandelt.
+  // Systeme nicht um das single-use Refresh-Token streiten.
+  // Die Browser-Session darf eine inzwischen vom Backend erneuerte Sitzung
+  // nicht mit ihren alten Tokens überschreiben oder bei SIGNED_OUT löschen.
   useEffect(() => {
+    let browserAccessToken = null;
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      const currentToken = auth.getToken();
+      if (event === 'INITIAL_SESSION') {
+        browserAccessToken = session?.access_token || null;
+        return;
+      }
       if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.access_token) {
-        auth.setToken(session.access_token);
-        if (session.refresh_token) auth.setRefreshToken(session.refresh_token);
+        const ownsSession = !currentToken || currentToken === browserAccessToken || currentToken === session.access_token;
+        browserAccessToken = session.access_token;
+        if (ownsSession) {
+          auth.setToken(session.access_token);
+          if (session.refresh_token) auth.setRefreshToken(session.refresh_token);
+          // Ein SDK-Ereignis kann erst nach dem initialen App-Check eintreffen.
+          // Das Profil dann außerhalb des SDK-Callbacks nachladen.
+          void Promise.resolve().then(checkAppState);
+        }
       } else if (event === 'SIGNED_OUT') {
-        auth.setToken(null);
-        auth.setRefreshToken?.(null);
+        if (browserAccessToken && currentToken === browserAccessToken) {
+          authCheckId.current++;
+          auth.setToken(null);
+          auth.setRefreshToken?.(null);
+          auth.clearCachedUser?.();
+          setUser(null);
+          setIsAuthenticated(false);
+          setIsLoadingAuth(false);
+        }
+        browserAccessToken = null;
       }
     });
     return () => subscription.unsubscribe();
@@ -64,6 +85,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const checkAppState = async () => {
+    const checkId = ++authCheckId.current;
     try {
       setIsLoadingAuth(true);
       setAuthError(null);
@@ -80,6 +102,7 @@ export const AuthProvider = ({ children }) => {
       // Profil zurück, sofern ein Token vorliegt — ein zuvor angemeldeter Nutzer
       // bleibt damit ohne Verbindung angemeldet.
       const currentUser = await auth.me();
+      if (checkId !== authCheckId.current) return;
       setUser(currentUser);
       setIsAuthenticated(true);
       // Gastdatenübernahme kann mehrere API-Requests erfordern. Sie darf
@@ -88,6 +111,7 @@ export const AuthProvider = ({ children }) => {
       // Datensätze für einen späteren Versuch auf.
       void adoptGuestData();
     } catch (error) {
+      if (checkId !== authCheckId.current) return;
       setIsAuthenticated(false);
       setUser(null);
       // Nur bei einer echten Ablehnung (401/403) die Tokens verwerfen. Bei einem
@@ -98,13 +122,15 @@ export const AuthProvider = ({ children }) => {
         auth.setRefreshToken?.(null);
       }
     } finally {
-      setIsLoadingAuth(false);
+      if (checkId === authCheckId.current) setIsLoadingAuth(false);
     }
   };
 
   const logout = async (shouldRedirect = true) => {
+    authCheckId.current++;
     setUser(null);
     setIsAuthenticated(false);
+    setIsLoadingAuth(false);
     auth.setToken(null);
     auth.setRefreshToken?.(null);
     auth.clearCachedUser?.();
