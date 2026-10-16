@@ -40,6 +40,15 @@ describe('requireAuth Token-Cache', () => {
     expect(res.body.error).toMatch(/Anmeldedienst/);
   });
 
+  it('wiederholt einen kurzzeitigen GoTrue-Ausfall und lässt den Request danach durch', async () => {
+    supabaseMock.current.auth.getUser
+      .mockRejectedValueOnce(new Error('temporary network failure'))
+      .mockResolvedValueOnce({ data: { user: { id: 'u1', email: 'a@b.de' } }, error: null });
+    const res = await request(app).get('/api/sync/status').set('Authorization', 'Bearer retry-token');
+    expect(res.status).toBe(200);
+    expect(supabaseMock.current.auth.getUser).toHaveBeenCalledTimes(2);
+  });
+
   it.each([0, 429, 500, 503])('meldet zurückgegebene SDK-Fehler (%i) als Ausfall statt Logout', async status => {
     supabaseMock.current.auth.getUser.mockResolvedValue({
       data: { user: null }, error: { status, message: 'GoTrue unavailable' },

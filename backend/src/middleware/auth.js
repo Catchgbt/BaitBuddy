@@ -9,7 +9,32 @@ import { supabase } from '../lib/supabase.js';
 // Zustand nötig, da er nur ein Optimierung ist, keine Sicherheitsgrenze.
 const TOKEN_CACHE_TTL_MS = 60 * 1000;
 const TOKEN_CACHE_MAX = 1000;
+const AUTH_RETRY_DELAYS_MS = [75, 200];
 const tokenCache = new Map(); // token -> { user, expires }
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function isTransientAuthError(error) {
+  const status = Number(error?.status);
+  if (!Number.isFinite(status)) return true;
+  return [408, 429, 500, 502, 503, 504].includes(status);
+}
+
+async function getUserFromAuthService(token) {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      const result = await supabase.auth.getUser(token);
+      const error = result?.error;
+      if (!error || !isTransientAuthError(error) || attempt >= AUTH_RETRY_DELAYS_MS.length) {
+        return result;
+      }
+    } catch (error) {
+      if (attempt >= AUTH_RETRY_DELAYS_MS.length || !isTransientAuthError(error)) throw error;
+    }
+
+    await sleep(AUTH_RETRY_DELAYS_MS[attempt]);
+  }
+}
 
 function getCachedUser(token) {
   const hit = tokenCache.get(token);
@@ -34,7 +59,7 @@ function setCachedUser(token, user) {
 async function resolveUser(token) {
   const cached = getCachedUser(token);
   if (cached) return cached;
-  const { data, error } = await supabase.auth.getUser(token);
+  const { data, error } = await getUserFromAuthService(token);
   // supabase-js gibt Netzwerk-/GoTrue-Fehler meist als { error } zurück,
   // statt zu werfen. Auch diese dürfen nicht als ungültiges Token gelten.
   if (error) {

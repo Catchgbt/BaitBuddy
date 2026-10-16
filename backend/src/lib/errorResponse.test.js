@@ -24,4 +24,10 @@ describe('sendDbError', () => {
     sendDbError(res, { message: 'x' }, 503);
     expect(res.status).toHaveBeenCalledWith(503);
   });
+
+  it('reicht einen transienten Upstream-Status für Client-Retries durch', () => {
+    const res = mockRes();
+    sendDbError(res, { status: 503, message: 'upstream unavailable' });
+    expect(res.status).toHaveBeenCalledWith(503);
+  });
 });

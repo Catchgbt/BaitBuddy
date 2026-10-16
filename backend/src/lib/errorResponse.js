@@ -4,7 +4,15 @@
 // loggt den echten Fehler serverseitig und schickt eine generische Meldung.
 export function sendDbError(res, error, status = 500) {
   console.error('[DB error]', error?.message || error);
-  return res.status(status).json({ error: 'Datenbankfehler — bitte später erneut versuchen' });
+  // Supabase/PostgREST kann den Upstream-Status mitliefern. Bewahre
+  // transiente Fehler auf, damit der Frontend-Client seine vorhandenen
+  // Backoff-Wiederholungen nutzen kann. Ein permanenter SQL-/Schemafehler
+  // bleibt bewusst ein 500er und wird nicht als vorübergehend maskiert.
+  const upstreamStatus = Number(error?.status);
+  const responseStatus = [408, 429, 502, 503, 504].includes(upstreamStatus)
+    ? upstreamStatus
+    : status;
+  return res.status(responseStatus).json({ error: 'Datenbankfehler — bitte später erneut versuchen' });
 }
 
 // KI-Fehler separat behandeln; keine Provider-Antwort oder Schlüssel offenlegen.
