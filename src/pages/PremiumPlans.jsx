@@ -11,6 +11,8 @@ import {
 } from "@/components/premium/googlePlayBilling";
 import WebCheckoutButton from "@/components/premium/WebCheckoutButton";
 import AiVolumeCard from "@/components/premium/AiVolumeCard";
+import AllToolsFreeNotice from "@/components/premium/AllToolsFreeNotice";
+import { usePlan } from "@/components/premium/PlanContext";
 import PageTitle from "@/components/layout/PageTitle";
 import { useBuddyPreferences } from "@/lib/BuddyPreferencesContext";
 import { DETAIL_OPTIONS } from "@/lib/buddyPreferences";
@@ -77,6 +79,7 @@ export default function PremiumPlans() {
   const [aiUsage, setAiUsage] = useState(null);
   const { buddy, saveBuddy } = useBuddyPreferences();
   const { getTool } = useTool();
+  const { allToolsFree } = usePlan();
 
   useEffect(() => {
     loadData();
@@ -453,6 +456,8 @@ export default function PremiumPlans() {
           subtitle="Wähle den passenden Plan für dein Angelerlebnis. Mehr Möglichkeiten. Mehr Fänge."
           script="Bessere Entscheidungen. Mehr Fische."
         />
+
+        {allToolsFree && <AllToolsFreeNotice />}
 
         {/* Plan-Kacheln */}
         <div className="bb-plan-tiles" role="list" aria-label="Tarife">
