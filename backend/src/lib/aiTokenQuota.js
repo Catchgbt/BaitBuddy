@@ -10,11 +10,9 @@
 // Fehlgeschlagene Aufrufe kosten nichts. Die KI auf dem Gerät läuft nicht über
 // den Server und verbraucht deshalb kein Volumen.
 //
-// Fail-open: Fehlt die Tabelle (Migration noch nicht eingespielt) oder scheitert
-// das Lesen/Schreiben, wird nicht gesperrt — ein DB-Problem darf zahlenden
-// Nutzern den Buddy nicht abschalten. Gleichzeitige Anfragen können das Limit
-// deshalb um höchstens eine Anfrage überschreiten (Prüfung vor, Buchung nach
-// dem Aufruf).
+// Die Verbrauchsbuchung ist Teil des Erfolgswegs: Wenn die Datenbankbuchung
+// fehlschlägt, darf keine erfolgreiche Cloud-KI-Antwort ausgeliefert werden.
+// Sonst entstehen Providerkosten ohne Guthabenabbuchung.
 import { supabase } from './supabase.js';
 import { resolvePlan, planRank, PLAN_RANK } from './planResolver.js';
 import { isAllToolsFree } from './appSettings.js';
@@ -23,11 +21,11 @@ import { isSuperuserEmail } from '../middleware/auth.js';
 // Monatsvolumen je Plan-Rang (planResolver.PLAN_RANK). Über die Env-Variable
 // AI_TOKEN_QUOTAS (JSON, Schlüssel = Plan-ID) je Plan überschreibbar.
 export const DEFAULT_TOKEN_QUOTAS = Object.freeze({
-  free: 500,
-  basic: 5000,
-  pro: 12000,
-  elite: 30000,
-  friends: 40000,
+  free: 5000,
+  basic: 50000,
+  pro: 120000,
+  elite: 300000,
+  friends: 400000,
 });
 
 // Kosten je Werkzeug in Buddy-Tokens. Über AI_TOKEN_COSTS (JSON) überschreibbar.
@@ -37,12 +35,12 @@ export const DEFAULT_TOKEN_QUOTAS = Object.freeze({
 //   vision    — Bildanalyse (Fangfoto, Ausrüstung, Kamera)
 //   tool      — übrige KI-Werkzeuge (Prognose, Rezepte, Berichte, Analysen)
 export const DEFAULT_TOKEN_COSTS = Object.freeze({
-  chat: 2,
-  tts: 1,
+  chat: 20,
+  tts: 10,
   tts_chars: 200,
-  realtime: 150,
-  vision: 5,
-  tool: 3,
+  realtime: 1500,
+  vision: 50,
+  tool: 30,
 });
 
 export const QUOTA_EXCEEDED_CODE = 'ai_token_quota_exceeded';
@@ -182,7 +180,7 @@ export async function getTokenUsage(user, now = new Date()) {
 
 /**
  * Verbucht Verbrauch atomar. Liefert den neuen Monatsstand oder null, wenn die
- * Buchung nicht möglich war (fail-open, wird geloggt).
+ * Buchung nicht möglich war (wird geloggt und vom Erfolgsweg abgefangen).
  */
 export async function recordTokenUsage(userId, feature, tokens, { inputTokens = null, outputTokens = null, now = new Date() } = {}) {
   const amount = positiveInt(tokens, 0);
@@ -271,7 +269,18 @@ export function meterAiTokens(feature, { cost } = {}) {
     const sendJson = res.json.bind(res);
     res.json = (body) => {
       if (req.aiTokens.deferred || charged || res.statusCode >= 400) return sendJson(body);
-      charge().finally(() => sendJson(body));
+      charge().then((newUsed) => {
+        if (newUsed === null) {
+          res.statusCode = 503;
+          return sendJson({
+            ok: false,
+            code: 'ai_token_charge_failed',
+            error: 'Die KI-Nutzung konnte nicht verbucht werden. Bitte versuche es erneut.',
+            message: 'Die KI-Nutzung konnte nicht verbucht werden. Bitte versuche es erneut.',
+          });
+        }
+        return sendJson(body);
+      });
       return res;
     };
     return next();
