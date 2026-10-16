@@ -82,7 +82,11 @@ export const AuthProvider = ({ children }) => {
       const currentUser = await auth.me();
       setUser(currentUser);
       setIsAuthenticated(true);
-      await adoptGuestData();
+      // Gastdatenübernahme kann mehrere API-Requests erfordern. Sie darf
+      // den Auth-Ladeschirm (und damit alle Routen inkl. /Admin) nicht blockieren.
+      // adoptGuestData behandelt Fehler selbst und bewahrt fehlgeschlagene
+      // Datensätze für einen späteren Versuch auf.
+      void adoptGuestData();
     } catch (error) {
       setIsAuthenticated(false);
       setUser(null);

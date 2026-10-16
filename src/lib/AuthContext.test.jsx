@@ -26,6 +26,15 @@ vi.mock('@/api/supabaseClient', () => ({
   },
 }));
 
+vi.mock('@/lib/guestStore', async (importOriginal) => ({
+  // frontendClient verwendet weitere guestStore-Funktionen; Originalexporte
+  // erhalten, damit der Test nur den Migrationspfad simuliert.
+  ...(await importOriginal()),
+  hasGuestData: vi.fn(() => false),
+  migrateGuestData: vi.fn(async () => ({ migrated: 0, failed: 0, byEntity: {} })),
+}));
+
+import { hasGuestData, migrateGuestData } from './guestStore';
 import { AuthProvider, useAuth } from './AuthContext';
 
 function TestConsumer() {
@@ -33,10 +42,18 @@ function TestConsumer() {
   return <button type="button" onClick={() => logout(false)}>logout</button>;
 }
 
+function AuthStatus() {
+  const { user, isLoadingAuth } = useAuth();
+  return <span data-testid="auth-status">{isLoadingAuth ? 'loading' : user?.email || 'guest'}</span>;
+}
+
 describe('AuthContext – Supabase-Token-Sync', () => {
   beforeEach(() => {
     localStorage.clear();
     mockAuth.getToken.mockReturnValue(null);
+    mockAuth.me.mockReset();
+    vi.mocked(hasGuestData).mockReset().mockReturnValue(false);
+    vi.mocked(migrateGuestData).mockReset().mockResolvedValue({ migrated: 0, failed: 0, byEntity: {} });
     mockAuth.setToken.mockClear();
     mockAuth.setRefreshToken.mockClear();
     mockSupabaseAuth.signOut.mockClear();
@@ -79,4 +96,15 @@ describe('AuthContext – Supabase-Token-Sync', () => {
     expect(mockSupabaseAuth.signOut).toHaveBeenCalled();
     expect(mockAuth.setToken).toHaveBeenCalledWith(null);
   });
+  it('gibt die App frei, obwohl die Gastdatenübernahme noch läuft', async () => {
+    mockAuth.getToken.mockReturnValue('test-token');
+    mockAuth.me.mockResolvedValue({ id: 'u1', email: 'superuser@example.test', is_superuser: true });
+    vi.mocked(hasGuestData).mockReturnValue(true);
+    vi.mocked(migrateGuestData).mockImplementation(() => new Promise(() => {}));
+
+    const { getByTestId } = render(<AuthProvider><AuthStatus /></AuthProvider>);
+    await waitFor(() => expect(getByTestId('auth-status')).toHaveTextContent('superuser@example.test'));
+    expect(migrateGuestData).toHaveBeenCalledTimes(1);
+  });
+
 });
