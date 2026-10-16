@@ -51,8 +51,8 @@ function unavailableResponse() {
 
 export function backendTarget(env) {
   const bypass = (env.VERCEL_PROTECTION_BYPASS || env.VERCEL_PROTECTION || '').trim();
-  const vercelBase = (env.VERCEL_BACKEND_URL || '').trim().replace(/\\/+$/, '');
-  const directBase = (env.BACKEND_URL || '').trim().replace(/\\/+$/, '');
+  const vercelBase = (env.VERCEL_BACKEND_URL || '').trim().replace(new RegExp('/+$'), '');
+  const directBase = (env.BACKEND_URL || '').trim().replace(new RegExp('/+$'), '');
   const base = vercelBase || directBase;
   if (!base) throw new Error('BACKEND_URL is not configured');
   if (new URL(base).hostname === RETIRED_BACKEND_HOST) {
