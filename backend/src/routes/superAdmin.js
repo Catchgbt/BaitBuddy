@@ -354,14 +354,36 @@ router.post('/superadmin/events/:id/restart', safe(async (req, res) => {
 }));
 
 // ── Support-Tickets ─────────────────────────────────────────────────────────
+// Paginated inbox: no silent truncation at 500 records. Every query is
+// scoped to the verified superuser through router.use('/superadmin', ...).
 router.get('/superadmin/tickets', safe(async (req, res) => {
-  let q = supabase.from('support_tickets').select('*');
-  if (req.query.status && TICKET_STATUSES.has(String(req.query.status))) {
-    q = q.eq('status', String(req.query.status));
+  const page = clampInt(req.query.page, 1, 1, 100000);
+  const pageSize = 50;
+  const status = String(req.query.status || 'all');
+  if (status !== 'all' && status !== 'open' && !TICKET_STATUSES.has(status)) {
+    return res.status(400).json({ error: 'Unbekannter Ticketfilter' });
   }
-  const { data, error } = await q.order('created_date', { ascending: false }).range(0, 499);
+  if (req.query.q !== undefined && (typeof req.query.q !== 'string' || req.query.q.length > 100)) {
+    return res.status(400).json({ error: 'Suchtext zu lang' });
+  }
+  // PostgREST .or() is a filter string, so strip its syntax characters and
+  // LIKE wildcards. This prevents user input from injecting new filter terms.
+  const search = String(req.query.q || '').replace(/[,().%*_\\]/g, ' ').trim();
+  let q = supabase.from('support_tickets').select('*', { count: 'exact' });
+  if (status === 'open') q = q.in('status', ['offen', 'in_bearbeitung']);
+  else if (status !== 'all') q = q.eq('status', status);
+  if (search) {
+    q = q.or(`subject.ilike.%${search}%,user_name.ilike.%${search}%,user_email.ilike.%${search}%`);
+  }
+  const { data, error, count } = await q.order('created_date', { ascending: false })
+    .range((page - 1) * pageSize, page * pageSize - 1);
   if (error) return sendDbError(res, error);
-  return res.json(data || []);
+  return res.json({
+    tickets: data || [],
+    total: typeof count === 'number' ? count : (data || []).length,
+    page,
+    page_size: pageSize,
+  });
 }));
 
 router.patch('/superadmin/tickets/:id', safe(async (req, res) => {
