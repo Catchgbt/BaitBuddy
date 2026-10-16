@@ -166,6 +166,53 @@ describe('Community und Events', () => {
 describe('Support-Tickets', () => {
   const ticket = { id: 't1', subject: 'Login', user_email: 'angler@baitbuddy.test', user_name: 'Angler', status: 'geloest' };
 
+  it('liefert dem Superuser alle Ticketseiten inklusive Such- und Statusfilter', async () => {
+    await boot({ fromResults: { support_tickets: { data: [
+      { id: 't1', subject: 'App Fehler', user_email: 'angler@baitbuddy.test', status: 'offen' },
+    ], count: 67, error: null } } });
+    const res = await auth(request(app).get('/api/superadmin/tickets?page=2&status=open&q=angler'));
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      tickets: [{ id: 't1', subject: 'App Fehler', user_email: 'angler@baitbuddy.test', status: 'offen' }],
+      total: 67, page: 2, page_size: 50,
+    });
+    const query = supabaseMock.current.__builders.support_tickets;
+    expect(query.in).toHaveBeenCalledWith('status', ['offen', 'in_bearbeitung']);
+    expect(query.or).toHaveBeenCalledWith(expect.stringContaining('user_email.ilike.%angler%'));
+    expect(query.range).toHaveBeenCalledWith(50, 99);
+  });
+
+  it('begrenzt und bereinigt Suchbegriffe; weist ungueltige Filter ab', async () => {
+    await boot();
+    const badStatus = await auth(request(app).get('/api/superadmin/tickets?status=private'));
+    expect(badStatus.status).toBe(400);
+    const tooLong = await auth(request(app).get(`/api/superadmin/tickets?q=${'x'.repeat(101)}`));
+    expect(tooLong.status).toBe(400);
+    const safeSearch = await auth(request(app).get('/api/superadmin/tickets?q=angler%2Cstatus.eq.offen'));
+    expect(safeSearch.status).toBe(200);
+    const filters = supabaseMock.current.__builders.support_tickets.or.mock.lastCall[0];
+    expect(filters).not.toContain(',status.eq.');
+    expect(filters).not.toContain('status.eq.offen');
+  });
+
+  it('blockiert Ticket-Bearbeitung fuer andere Administratoren', async () => {
+    await boot({ authUser: ADMIN });
+    const change = await auth(request(app).patch('/api/superadmin/tickets/t1'))
+      .send({ status: 'geloest', admin_response: 'Test' });
+    expect(change.status).toBe(403);
+    expect(supabaseMock.current.from).not.toHaveBeenCalledWith('support_tickets');
+  });
+
+  it('aendert den Ticketstatus ohne unbeabsichtigten Mailversand', async () => {
+    await boot({ fromResults: { support_tickets: { data: ticket, error: null } } });
+    const res = await auth(request(app).patch('/api/superadmin/tickets/t1'))
+      .send({ status: 'in_bearbeitung' });
+    expect(res.status).toBe(200);
+    expect(supabaseMock.current.__builders.support_tickets.update)
+      .toHaveBeenCalledWith(expect.objectContaining({ status: 'in_bearbeitung' }));
+    expect(sendMail).not.toHaveBeenCalled();
+  });
+
   it('beantwortet ein Ticket und schickt die Antwort per E-Mail', async () => {
     await boot({ fromResults: { support_tickets: { data: ticket, error: null } } });
     const res = await auth(request(app).patch('/api/superadmin/tickets/t1'))
