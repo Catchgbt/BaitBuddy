@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, Palette, Zap, Volume2, Shield, FileText, BellRing, Fish, Compass } from 'lucide-react';
+import { Settings, Palette, Zap, Volume2, Shield, FileText, BellRing, Fish, Compass, LifeBuoy, ShieldCheck } from 'lucide-react';
 import GeneralSettings from './GeneralSettings';
 import AppearanceSettings from './AppearanceSettings';
 import BatterySettings from './BatterySettings';
@@ -17,6 +17,7 @@ import NavigationSettings from './NavigationSettings';
 import FishingPreferencesSettings from './FishingPreferencesSettings';
 import OnboardingSettings from './OnboardingSettings';
 import PageTitle from '@/components/layout/PageTitle';
+import { useAuth } from '@/lib/AuthContext';
 
 // KI-Buddy-Reiter: Persönlichkeit/Stimme plus KI-Modus (Cloud oder Gerät).
 // Das Zahnrad des Voice Buddys führt hierher (?tab=buddy).
@@ -34,6 +35,7 @@ export default function SettingsPageTabbed({ headerAction = null } = {}) {
   const activeTab = searchParams.get('tab') || 'general';
   const setActiveTab = tab => setSearchParams({ tab }, { replace: true });
   const { animationsEnabled } = useTheme();
+  const { user } = useAuth();
 
   const tabs = [
     { id: 'buddy', label: 'KI-Buddy', icon: Volume2, component: BuddyTab },
@@ -135,6 +137,31 @@ export default function SettingsPageTabbed({ headerAction = null } = {}) {
         <div className="mt-8 space-y-6">
           {/* Delete Account */}
           <DeleteAccountSection />
+
+          <section className="glass-morphism border-gray-800 rounded-2xl p-6" aria-labelledby="settings-help-title">
+            <h2 id="settings-help-title" className="text-cyan-400 text-lg font-semibold mb-4 flex items-center gap-2">
+              <LifeBuoy className="w-5 h-5" aria-hidden="true" />
+              Hilfe & Support
+            </h2>
+            <div className="space-y-2">
+              <Link
+                to="/Help"
+                className="flex items-center gap-3 p-3 rounded-xl bg-gray-800/40 hover:bg-gray-700/50 transition-colors text-gray-200 hover:text-cyan-400"
+              >
+                <LifeBuoy className="w-4 h-4 text-cyan-500 shrink-0" aria-hidden="true" />
+                <span className="text-sm font-medium">Hilfe</span>
+              </Link>
+              {user?.is_superuser === true && (
+                <Link
+                  to="/Admin"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-gray-800/40 hover:bg-gray-700/50 transition-colors text-gray-200 hover:text-cyan-400"
+                >
+                  <ShieldCheck className="w-4 h-4 text-cyan-500 shrink-0" aria-hidden="true" />
+                  <span className="text-sm font-medium">Admin-Bereich</span>
+                </Link>
+              )}
+            </div>
+          </section>
 
           {/* Legal */}
           <div className="glass-morphism border-gray-800 rounded-2xl p-6">
