@@ -14,8 +14,26 @@ export const AuthProvider = ({ children }) => {
   const [authError, setAuthError]                         = useState(null);
   const [appPublicSettings]                               = useState(null);
   const authCheckId = useRef(0);
+  const loggedOut = useRef(false);
 
-  useEffect(() => { checkAppState(); }, []);
+  useEffect(() => {
+    void checkAppState();
+    const onStorage = (event) => {
+      if (event.storageArea && event.storageArea !== localStorage) return;
+      if (event.key !== null && event.key !== 'bb_token') return;
+      loggedOut.current = !auth.getToken();
+      void checkAppState();
+    };
+    // Nach einem vorübergehenden Ausfall ohne Profil-Cache erneut prüfen.
+    const onOnline = () => { if (auth.getToken()) void checkAppState(); };
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('online', onOnline);
+    return () => {
+      authCheckId.current++;
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('online', onOnline);
+    };
+  }, []);
 
   // Profiländerungen (auth.updateMe) sofort übernehmen — sonst zeigten
   // Buddy-Begrüßung, Einstellungen und Avatar bis zum Neuladen den alten Stand.
@@ -47,6 +65,7 @@ export const AuthProvider = ({ children }) => {
         return;
       }
       if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.access_token) {
+        if (loggedOut.current) return;
         const ownsSession = !currentToken || currentToken === browserAccessToken || currentToken === session.access_token;
         browserAccessToken = session.access_token;
         if (ownsSession) {
@@ -97,6 +116,7 @@ export const AuthProvider = ({ children }) => {
         setIsLoadingAuth(false);
         return;
       }
+      loggedOut.current = false;
 
       // auth.me() liefert offline (Netzwerkfehler) das zwischengespeicherte
       // Profil zurück, sofern ein Token vorliegt — ein zuvor angemeldeter Nutzer
@@ -127,6 +147,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async (shouldRedirect = true) => {
+    loggedOut.current = true;
     authCheckId.current++;
     setUser(null);
     setIsAuthenticated(false);
@@ -177,3 +198,4 @@ export const useAuth = () => {
   if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };
+

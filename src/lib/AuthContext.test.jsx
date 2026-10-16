@@ -144,6 +144,48 @@ describe('AuthContext – Supabase-Token-Sync', () => {
     expect(mockSupabaseAuth.signOut).toHaveBeenCalled();
     expect(mockAuth.setToken).toHaveBeenCalledWith(null);
   });
+
+  it('übernimmt einen Logout aus einem anderen Tab und verwirft eine laufende Profilantwort', async () => {
+    localStorage.setItem('bb_token', 'access');
+    let finishProfile;
+    mockAuth.me.mockImplementation(() => new Promise(resolve => { finishProfile = resolve; }));
+    const { getByTestId } = render(<AuthProvider><AuthStatus /></AuthProvider>);
+    await act(async () => {
+      localStorage.removeItem('bb_token');
+      window.dispatchEvent(new StorageEvent('storage', { key: 'bb_token', oldValue: 'access' }));
+      finishProfile({ id: 'u1', email: 'old@example.test' });
+    });
+    expect(getByTestId('auth-status')).toHaveTextContent('guest');
+  });
+
+  it('übernimmt einen Login aus einem anderen Tab', async () => {
+    const { getByTestId } = render(<AuthProvider><AuthStatus /></AuthProvider>);
+    await act(async () => {
+      localStorage.setItem('bb_token', 'other-tab');
+      window.dispatchEvent(new StorageEvent('storage', { key: 'bb_token', newValue: 'other-tab' }));
+    });
+    await waitFor(() => expect(getByTestId('auth-status')).toHaveTextContent('angler@example.test'));
+  });
+
+  it('prüft die erhaltene Sitzung erneut, wenn das Netz zurückkehrt', async () => {
+    localStorage.setItem('bb_token', 'access');
+    mockAuth.me.mockRejectedValueOnce(new TypeError('offline'));
+    const { getByTestId } = render(<AuthProvider><AuthStatus /></AuthProvider>);
+    await waitFor(() => expect(getByTestId('auth-status')).toHaveTextContent('guest'));
+    await act(async () => { window.dispatchEvent(new Event('online')); });
+    await waitFor(() => expect(getByTestId('auth-status')).toHaveTextContent('angler@example.test'));
+  });
+
+  it('ignoriert verspätete SDK-Anmeldungen nach einem expliziten Logout', async () => {
+    const { getByText, getByTestId } = render(<AuthProvider><TestConsumer /><AuthStatus /></AuthProvider>);
+    await act(async () => { getByText('logout').click(); });
+    mockAuth.setToken.mockClear();
+    await act(async () => {
+      authStateCallback.current('SIGNED_IN', { access_token: 'stale', refresh_token: 'stale-refresh' });
+    });
+    expect(mockAuth.setToken).not.toHaveBeenCalled();
+    expect(getByTestId('auth-status')).toHaveTextContent('guest');
+  });
   it('gibt die App frei, obwohl die Gastdatenübernahme noch läuft', async () => {
     mockAuth.getToken.mockReturnValue('test-token');
     mockAuth.me.mockResolvedValue({ id: 'u1', email: 'superuser@example.test', is_superuser: true });
@@ -156,3 +198,4 @@ describe('AuthContext – Supabase-Token-Sync', () => {
   });
 
 });
+
