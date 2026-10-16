@@ -1,0 +1,26 @@
+# Echte Werbung auf catchgbt.com
+
+## Umgesetzt
+
+- Responsive AdSense-Displayanzeige statt leerer Partnerkarte/Banner.
+- Gäste und Free/Basic bekommen Display-Slots unter den bestehenden Routen-/Kontextregeln. Werbefreie Tarife bleiben werbefrei.
+- Künstliche Gast-Countdowns und Reward-Angebote sind im Web-Gate deaktiviert: kein echtes Video, kein verifizierter Reward-Anbieter vorhanden.
+- Anzeigen werden ausschließlich nach abgeschlossener TCF-CMP-Entscheidung angefordert. Bei geltender DSGVO werden Zustimmung für Zweck 1 und Google-Vendor 755 verlangt. Ohne CMP, bei Ablehnung oder fehlenden IDs keine Anbieteranfragen.
+- Ungefüllte Anzeigen und Ladefehler blenden die Fläche aus. Keine eigenen Klickflächen über Anzeigen.
+- `VITE_API_URL` gilt nun auch für Werbekonfiguration und Tracking. Ein 404 auf der Live-API muss zusätzlich im Hosting behoben werden; die Änderung allein beweist keine Reparatur des Live-Routings.
+
+## Für die erste echte Auslieferung erforderlich
+
+1. Im eigenen AdSense-Konto catchgbt.com hinzufügen und die Website freigeben lassen. Ohne Kontozugang ist der bestehende Status unbekannt.
+2. Einen responsiven Display-Anzeigenblock erstellen. Seine öffentliche Publisher-ID (`ca-pub-` und 16 Ziffern) als `VITE_ADSENSE_CLIENT`, die zehnstellige Anzeigenblock-ID als `VITE_ADSENSE_SLOT` im Frontend-Build hinterlegen. Keine AdMob-App-IDs verwenden.
+3. Eine Google-zertifizierte TCF-CMP konfigurieren und deren exaktes Kontoscript im HTML einbinden. Diesen kontospezifischen Code erst nach Einrichtung übernehmen, keine erfundenen IDs. Datenschutzinformationen aktualisieren. Das eingebundene Script muss `window.__tcfapi` bereitstellen.
+4. Neu bauen und deployen. Der Vite-Build erzeugt das AdSense-Account-Meta-Tag und `/ads.txt` aus der echten Publisher-ID.
+5. `/api/ads/config` muss JSON mit erfolgreichem Status liefern; `ads_enabled` im Admin aktivieren. API-404 im bestehenden Worker-/Backend-Deployment untersuchen.
+6. Auf Mobil/Desktop prüfen: Zustimmung zeigt einen gefüllten Slot, Ablehnung keine Anzeige, Pro/Ultimate keine Anzeige. Blocker/fehlendes Inventar dürfen die App nicht blockieren. Nicht auf eigene Anzeigen klicken.
+
+Diese Änderungen erstellen kein AdSense-Konto und bewirken keine Google-Freigabe. Die bisherige Reward-API ist kein Auslieferungsnachweis; deren Absicherung über verifizierte Providerereignisse ist vor einer späteren Rewarded-Aktivierung separat erforderlich.
+
+## Referenzen
+
+- https://support.google.com/adsense/answer/9183363
+- https://support.google.com/adsense/answer/13554116
