@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   X, ChevronRight, ChevronDown, Crown, Bot, Target, Clock, CalendarDays, Backpack,
   LayoutGrid, History, Download, CheckCircle2, LogOut, LogIn, Zap, Wrench, Map as MapIcon,
-  Users, Trophy, CloudSun, Fish, GraduationCap, Settings, LifeBuoy,
+  Users, Trophy, CloudSun, Fish, GraduationCap, Settings, LifeBuoy, ShieldCheck,
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { entities, events } from '@/api/frontendClient';
@@ -139,6 +139,16 @@ export default function CommandCenter({ isOpen, setIsOpen, currentPageName, user
                 </button>
               )}
             </div>
+            {user?.is_superuser === true && (
+              <Link to="/Admin" onClick={close} className="bb-cc-admin">
+                <span className="bb-cc-admin-icon"><ShieldCheck size={22} aria-hidden="true" /></span>
+                <span className="flex-1 min-w-0">
+                  <strong>Admin-Bereich</strong>
+                  <span className="bb-cc-meta">Nutzer, Tarife und App verwalten</span>
+                </span>
+                <ChevronRight size={20} aria-hidden="true" />
+              </Link>
+            )}
           </section>
 
           {/* Hey Buddy */}
