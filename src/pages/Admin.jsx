@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import PageTitle from "@/components/layout/PageTitle";
-import { auth } from "@/api/auth";
+import { useAuth } from "@/lib/AuthContext";
 import { superAdmin } from "@/api/frontendClient";
 import { TOOLS } from "@/lib/toolRegistry";
 import { publishAppSettings } from "@/lib/appSettings";
@@ -909,16 +909,15 @@ function BroadcastMail() {
 }
 
 export default function Admin() {
-  const [me, setMe] = useState(undefined);
+  // Der App-Router wartet bereits auf die AuthProvider-Prüfung. Eine zweite
+  // Profilanfrage hier verzögert den Adminbereich und kann bei Netzfehlern
+  // einen weiteren Ladeschirm auslösen.
+  const { user: me, isLoadingAuth } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const availableTabs = ["stats", "users", "app", "community", "events", "tickets", "mail"];
   const activeTab = availableTabs.includes(searchParams.get("tab")) ? searchParams.get("tab") : "stats";
 
-  useEffect(() => {
-    auth.me().then(setMe).catch(() => setMe(null));
-  }, []);
-
-  if (me === undefined) return <div className="bb-page"><Busy /></div>;
+  if (isLoadingAuth) return <div className="bb-page"><Busy /></div>;
 
   // Ein Backend ohne Admin-Bereich liefert das Feld gar nicht. Dann ist nicht
   // das Konto gesperrt, sondern der verbundene Server veraltet.

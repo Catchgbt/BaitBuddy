@@ -26,7 +26,7 @@ const superAdminMock = {
   settings: vi.fn(async () => ({ ads_enabled: true, all_tools_free: false, updated_at: null, updated_by: null })),
   updateSettings: vi.fn(),
 };
-vi.mock('@/api/auth', () => ({ auth: { me: vi.fn(async () => ({ is_superuser: true })) } }));
+vi.mock('@/lib/AuthContext', () => ({ useAuth: () => ({ user: { is_superuser: true }, isLoadingAuth: false }) }));
 vi.mock('@/api/frontendClient', () => ({ superAdmin: superAdminMock }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() } }));
 

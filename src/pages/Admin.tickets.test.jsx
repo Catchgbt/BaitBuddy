@@ -11,7 +11,7 @@ const tickets = [
     status: 'offen', admin_response: '' },
 ];
 
-const authMock = { me: vi.fn(async () => ({ email: 'kaisaschnitt99@gmail.com', is_superuser: true })) };
+const authMock = { user: { email: 'kaisaschnitt99@gmail.com', is_superuser: true }, isLoadingAuth: false };
 const adminMock = {
   tickets: vi.fn(async ({ page }) => ({
     tickets: page === 2 ? [{ ...tickets[0], id: 't2', subject: 'Zweites Ticket' }] : tickets,
@@ -22,7 +22,7 @@ const adminMock = {
   stats: vi.fn(() => new Promise(() => {})),
 };
 
-vi.mock('@/api/auth', () => ({ auth: authMock }));
+vi.mock('@/lib/AuthContext', () => ({ useAuth: () => authMock }));
 vi.mock('@/api/frontendClient', () => ({ superAdmin: adminMock }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() } }));
 
@@ -34,7 +34,7 @@ function renderInbox() {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  authMock.me.mockResolvedValue({ email: 'kaisaschnitt99@gmail.com', is_superuser: true });
+  authMock.user = { email: 'kaisaschnitt99@gmail.com', is_superuser: true };
   vi.spyOn(window, 'confirm').mockReturnValue(true);
 });
 afterEach(() => {
@@ -78,7 +78,7 @@ describe('Superuser ticket inbox', () => {
   });
 
   it('does not display the ticket inbox to non-superusers', async () => {
-    authMock.me.mockResolvedValue({ email: 'normal@baitbuddy.test', is_superuser: false });
+    authMock.user = { email: 'normal@baitbuddy.test', is_superuser: false };
     renderInbox();
     expect(await screen.findByText('Kein Zugriff')).toBeInTheDocument();
     expect(adminMock.tickets).not.toHaveBeenCalled();
