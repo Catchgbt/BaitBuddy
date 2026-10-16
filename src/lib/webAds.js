@@ -1,6 +1,8 @@
+import { ADSENSE_CLIENT } from './adPublisher';
+
 // Public AdSense identifiers; never API keys. Empty configuration serves no ads.
 export function getWebAdConfig(env = import.meta.env) {
-  const client = (env.VITE_ADSENSE_CLIENT || '').trim();
+  const client = (env.VITE_ADSENSE_CLIENT ?? ADSENSE_CLIENT).trim();
   const slot = (env.VITE_ADSENSE_SLOT || '').trim();
   return /^ca-pub-\d{16}$/.test(client) && /^\d{10}$/.test(slot)
     ? { client, slot } : null;

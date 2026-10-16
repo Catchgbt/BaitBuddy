@@ -8,6 +8,9 @@ describe('web ad configuration', () => {
     }
     expect(getWebAdConfig({ VITE_ADSENSE_CLIENT: 'ca-pub-1234567890123456', VITE_ADSENSE_SLOT: '1234567890' })).toEqual({ client: 'ca-pub-1234567890123456', slot: '1234567890' });
   });
+  it('uses the owner publisher ID when only a slot is supplied', () => {
+    expect(getWebAdConfig({ VITE_ADSENSE_SLOT: '1234567890' })).toEqual({ client: 'ca-pub-8135212085624241', slot: '1234567890' });
+  });
   it('requires completed CMP and explicit applicable consent', () => {
     const data = { cmpStatus: 'loaded', eventStatus: 'useractioncomplete', gdprApplies: true, purpose: { consents: { 1: true } }, vendor: { consents: { 755: true } } };
     expect(hasAdConsent(data, true)).toBe(true);

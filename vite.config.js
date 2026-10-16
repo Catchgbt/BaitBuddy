@@ -1,6 +1,7 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv } from 'vite'
 import { resolve } from 'path'
+import { ADSENSE_CLIENT } from './src/lib/adPublisher.js'
 
 function adsPublisherAssets() {
   let publisher;
@@ -8,7 +9,7 @@ function adsPublisherAssets() {
     name: 'ads-publisher-assets',
     configResolved(config) {
       const env = loadEnv(config.mode, config.envDir, 'VITE_');
-      const client = (env.VITE_ADSENSE_CLIENT || '').trim();
+      const client = (env.VITE_ADSENSE_CLIENT ?? ADSENSE_CLIENT).trim();
       publisher = /^ca-pub-\d{16}$/.test(client) ? client : null;
     },
     transformIndexHtml() {

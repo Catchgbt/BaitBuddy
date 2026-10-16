@@ -9,6 +9,10 @@
 - Ungefüllte Anzeigen und Ladefehler blenden die Fläche aus. Keine eigenen Klickflächen über Anzeigen.
 - `VITE_API_URL` gilt nun auch für Werbekonfiguration und Tracking. Ein 404 auf der Live-API muss zusätzlich im Hosting behoben werden; die Änderung allein beweist keine Reparatur des Live-Routings.
 
+## Publisher-ID übernommen
+
+Die vom Betreiber gelieferte öffentliche ID `ca-pub-8135212085624241` ist als Standard in `src/lib/adPublisher.js` hinterlegt. Sie wird vom AdSense-Lader, Account-Meta-Tag und der generierten ads.txt gemeinsam verwendet. Das Script wird weiterhin erst nach Zustimmung und mit gültiger Anzeigenplatz-ID geladen. Die Account-Verifikation kann nach Veröffentlichung über das Meta-Tag erfolgen. Der gelieferte Script-Tag enthält keine Anzeigenplatz-ID und belegt keine Website-Freigabe.
+
 ## Für die erste echte Auslieferung erforderlich
 
 1. Im eigenen AdSense-Konto catchgbt.com hinzufügen und die Website freigeben lassen. Ohne Kontozugang ist der bestehende Status unbekannt.
