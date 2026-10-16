@@ -105,12 +105,12 @@ export const AuthProvider = ({ children }) => {
 
   const checkAppState = async () => {
     const checkId = ++authCheckId.current;
+    const tokenAtStart = auth.getToken();
     try {
       setIsLoadingAuth(true);
       setAuthError(null);
 
-      const token = auth.getToken();
-      if (!token) {
+      if (!tokenAtStart) {
         setIsAuthenticated(false);
         setUser(null);
         setIsLoadingAuth(false);
@@ -132,6 +132,10 @@ export const AuthProvider = ({ children }) => {
       void adoptGuestData();
     } catch (error) {
       if (checkId !== authCheckId.current) return;
+      // Die Anfrage kann noch mit einem alten Token unterwegs sein, während
+      // sich der Nutzer bereits neu anmeldet. Eine verspätete 401-Antwort
+      // darf dann niemals den frisch gesetzten Login-Token löschen.
+      if (auth.getToken() !== tokenAtStart) return;
       setIsAuthenticated(false);
       setUser(null);
       // Nur bei einer echten Ablehnung (401/403) die Tokens verwerfen. Bei einem

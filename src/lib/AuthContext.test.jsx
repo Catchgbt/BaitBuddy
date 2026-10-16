@@ -135,6 +135,19 @@ describe('AuthContext – Supabase-Token-Sync', () => {
     expect(getByTestId('auth-status')).toHaveTextContent('guest');
   });
 
+  it('löscht bei einer verspäteten 401-Antwort nicht den neuen Login-Token', async () => {
+    localStorage.setItem('bb_token', 'old-token');
+    let rejectProfile;
+    mockAuth.me.mockImplementation(() => new Promise((_, reject) => { rejectProfile = reject; }));
+    render(<AuthProvider><AuthStatus /></AuthProvider>);
+
+    await waitFor(() => expect(mockAuth.me).toHaveBeenCalled());
+    localStorage.setItem('bb_token', 'new-login-token');
+    await act(async () => { rejectProfile({ status: 401 }); });
+
+    expect(localStorage.getItem('bb_token')).toBe('new-login-token');
+  });
+
   it('logout() ruft supabase.auth.signOut() auf (raeumt beide Sessions auf)', async () => {
     const { getByText } = render(<AuthProvider><TestConsumer /></AuthProvider>);
     await waitFor(() => expect(authStateCallback.current).toBeTypeOf('function'));
