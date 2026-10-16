@@ -67,11 +67,18 @@ router.post('/auth/refresh', async (req, res) => {
     }, 10000);
     const data = await r.json().catch(() => ({}));
     if (!r.ok || !data.access_token) {
-      return res.status(401).json({ error: 'Sitzung abgelaufen – bitte neu anmelden' });
+      // Nur eine tatsächliche Token-Ablehnung beendet die Sitzung. GoTrue-
+      // Überlast oder eine defekte Gateway-Antwort sind kein Logout-Grund.
+      if ([400, 401, 403].includes(r.status)) {
+        return res.status(401).json({ error: 'Sitzung abgelaufen – bitte neu anmelden' });
+      }
+      const status = r.status === 429 ? 429 : 503;
+      return res.status(status).json({ error: 'Anmeldedienst vorübergehend nicht erreichbar' });
     }
     return res.json({ token: data.access_token, refresh_token: data.refresh_token });
   } catch (e) {
-    return sendDbError(res, e);
+    console.error('[auth/refresh] Sitzungserneuerung fehlgeschlagen');
+    return res.status(e?.timeout ? 504 : 503).json({ error: 'Anmeldedienst vorübergehend nicht erreichbar' });
   }
 });
 

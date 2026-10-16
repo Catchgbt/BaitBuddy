@@ -35,7 +35,13 @@ async function resolveUser(token) {
   const cached = getCachedUser(token);
   if (cached) return cached;
   const { data, error } = await supabase.auth.getUser(token);
-  if (error || !data?.user) return null;
+  // supabase-js gibt Netzwerk-/GoTrue-Fehler meist als { error } zurück,
+  // statt zu werfen. Auch diese dürfen nicht als ungültiges Token gelten.
+  if (error) {
+    if ([400, 401, 403].includes(error.status)) return null;
+    throw error;
+  }
+  if (!data?.user) return null;
   setCachedUser(token, data.user);
   return data.user;
 }

@@ -54,15 +54,13 @@ function clearCachedUser() {
   } catch { /* ignore */ }
 }
 
-// Ein Fehler ohne HTTP-Status kam nie beim Server an (offline, DNS, Timeout).
-// Nur solche Fehler rechtfertigen den Offline-Fallback — ein 401/403 ist eine
-// echte Ablehnung und muss zum Logout führen.
+// Ein vorübergehender Netz-/Serverfehler ist keine abgelaufene Sitzung.
+// Das bekannte Profil hält die Oberfläche nutzbar; alle Backend-Gates prüfen
+// weiterhin das Token. Ein echter 401/403 darf nie den Cache verwenden.
 function isNetworkError(error) {
   if (error == null) return false;
   if (error.status == null) return true;
-  // Cloudflare-Infrastrukturfehler (520–530): Origin nicht erreichbar. Für den
-  // Client verhält sich das wie ein Netzwerkausfall — der Offline-Cache greift.
-  return error.status >= 520 && error.status <= 530;
+  return error.status === 408 || error.status === 429 || error.status >= 500;
 }
 
 // ── Resilienz: Exponential Backoff bei transienter Serverüberlast ───────────────
@@ -141,14 +139,24 @@ class ApiClient {
   // Refresh-Call (Supabase rotiert Refresh-Tokens bei jeder Nutzung).
   _refreshSession() {
     if (!this._refreshPromise) {
-      this._refreshPromise = (async () => {
+      const refreshToken = this.getRefreshToken();
+      const accessToken = this.getToken();
+      const sessionChanged = () => this.getRefreshToken() !== refreshToken || this.getToken() !== accessToken;
+      const refresh = async () => {
+        // Ein anderer Tab kann die Sitzung bereits erneuert haben, während
+        // wir auf den gemeinsamen Lock warteten. Nicht noch einmal rotieren.
+        if (sessionChanged()) return !!this.getToken();
+        if (!refreshToken) return false;
         const res = await fetch(`${API_URL}/api/auth/refresh`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refresh_token: this.getRefreshToken() }),
+          body: JSON.stringify({ refresh_token: refreshToken }),
           signal: timeoutSignal(15000), // 15s timeout for token refresh
         });
         const data = await res.json().catch(() => ({}));
+        // Logout oder erneuter Login während des Requests hat Vorrang vor
+        // dessen Antwort — weder alte Fehler noch Erfolge dürfen ihn ändern.
+        if (sessionChanged()) return !!this.getToken();
         if (!res.ok || !data.token) {
           // Nur eine echte Ablehnung (Refresh-Token ungültig/abgelaufen)
           // beendet die Sitzung. Bei 429 (Auth-Rate-Limit teilen sich z. B.
@@ -170,7 +178,12 @@ class ApiClient {
         this.setToken(data.token);
         if (data.refresh_token) this.setRefreshToken(data.refresh_token);
         return true;
-      })().finally(() => { this._refreshPromise = null; });
+      };
+      // Web Locks serialisieren die Rotation auch zwischen Browser-/PWA-Tabs.
+      // Ältere WebViews bleiben beim vorhandenen Promise pro Fenster.
+      this._refreshPromise = (typeof navigator !== 'undefined' && navigator.locks?.request
+        ? navigator.locks.request('baitbuddy-auth-refresh', { signal: timeoutSignal(20000) }, refresh)
+        : refresh()).finally(() => { this._refreshPromise = null; });
     }
     return this._refreshPromise;
   }
@@ -205,7 +218,9 @@ class ApiClient {
       // Login/Register/Refresh selbst sind ausgenommen (401 = falsche Daten).
       const noRetry = ['/api/auth/login', '/api/auth/register', '/api/auth/refresh', '/api/auth/clerk'];
       if (res.status === 401 && !_retried && !noRetry.some(p => path.startsWith(p)) && this.getRefreshToken()) {
-        const refreshed = await this._refreshSession();
+        // Ein verspäteter 401 kann noch zum alten Access-Token gehören,
+        // obwohl ein paralleler Request die Sitzung schon erneuert hat.
+        const refreshed = this.getToken() !== token || await this._refreshSession();
         if (refreshed) return this.request(method, path, body, { signal: externalSignal, _retried: true, _attempt });
       }
       // Transiente Serverüberlast (408/429/502/503/504): GET gestaffelt erneut

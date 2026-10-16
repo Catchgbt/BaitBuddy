@@ -39,4 +39,20 @@ describe('requireAuth Token-Cache', () => {
     expect(res.status).toBe(503);
     expect(res.body.error).toMatch(/Anmeldedienst/);
   });
+
+  it.each([0, 429, 500, 503])('meldet zurückgegebene SDK-Fehler (%i) als Ausfall statt Logout', async status => {
+    supabaseMock.current.auth.getUser.mockResolvedValue({
+      data: { user: null }, error: { status, message: 'GoTrue unavailable' },
+    });
+    const res = await request(app).get('/api/superadmin/tickets').set('Authorization', 'Bearer failure-token');
+    expect(res.status).toBe(503);
+  });
+
+  it.each([400, 401, 403])('lehnt tatsächlich ungültige Tokens (%i) weiterhin ab', async status => {
+    supabaseMock.current.auth.getUser.mockResolvedValue({
+      data: { user: null }, error: { status, message: 'Invalid token' },
+    });
+    const res = await request(app).get('/api/superadmin/tickets').set('Authorization', 'Bearer invalid-token');
+    expect(res.status).toBe(401);
+  });
 });
