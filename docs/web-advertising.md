@@ -11,12 +11,12 @@
 
 ## Publisher-ID übernommen
 
-Die vom Betreiber gelieferte öffentliche ID `ca-pub-8135212085624241` ist als Standard in `src/lib/adPublisher.js` hinterlegt. Sie wird vom AdSense-Lader, Account-Meta-Tag und der generierten ads.txt gemeinsam verwendet. Das Script wird weiterhin erst nach Zustimmung und mit gültiger Anzeigenplatz-ID geladen. Die Account-Verifikation kann nach Veröffentlichung über das Meta-Tag erfolgen. Der gelieferte Script-Tag enthält keine Anzeigenplatz-ID und belegt keine Website-Freigabe.
+Die vom Betreiber gelieferte öffentliche ID `ca-pub-8135212085624241` ist als Standard in `src/lib/adPublisher.js` hinterlegt. Sie wird vom AdSense-Lader, Account-Meta-Tag und der generierten ads.txt gemeinsam verwendet. Das Script wird weiterhin erst nach Zustimmung und mit gültiger Anzeigenplatz-ID geladen. Die Account-Verifikation kann nach Veröffentlichung über das Meta-Tag erfolgen. Der nachgelieferte Anzeigenblock „Test1“ enthält die Anzeigenplatz-ID `7915506191`; diese ist ebenfalls zentral hinterlegt. Umgebungsvariablen können beide IDs überschreiben (ein explizit leerer Wert deaktiviert den Slot). Die Bereitstellung des Codes belegt keine Website-Freigabe.
 
 ## Für die erste echte Auslieferung erforderlich
 
 1. Im eigenen AdSense-Konto catchgbt.com hinzufügen und die Website freigeben lassen. Ohne Kontozugang ist der bestehende Status unbekannt.
-2. Einen responsiven Display-Anzeigenblock erstellen. Seine öffentliche Publisher-ID (`ca-pub-` und 16 Ziffern) als `VITE_ADSENSE_CLIENT`, die zehnstellige Anzeigenblock-ID als `VITE_ADSENSE_SLOT` im Frontend-Build hinterlegen. Keine AdMob-App-IDs verwenden.
+2. Publisher und Anzeigenblock Test1 sind bereits im Code hinterlegt. Optional `VITE_ADSENSE_CLIENT` und `VITE_ADSENSE_SLOT` im Frontend-Build überschreiben. Keine AdMob-App-IDs verwenden.
 3. Eine Google-zertifizierte TCF-CMP konfigurieren und deren exaktes Kontoscript im HTML einbinden. Diesen kontospezifischen Code erst nach Einrichtung übernehmen, keine erfundenen IDs. Datenschutzinformationen aktualisieren. Das eingebundene Script muss `window.__tcfapi` bereitstellen.
 4. Neu bauen und deployen. Der Vite-Build erzeugt das AdSense-Account-Meta-Tag und `/ads.txt` aus der echten Publisher-ID.
 5. `/api/ads/config` muss JSON mit erfolgreichem Status liefern; `ads_enabled` im Admin aktivieren. API-404 im bestehenden Worker-/Backend-Deployment untersuchen.

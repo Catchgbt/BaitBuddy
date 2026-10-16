@@ -46,7 +46,7 @@ function ConsentedAd({ config, placement, userPlan }) {
     <aside aria-label="Anzeige" className="w-full bg-slate-900/80" style={{ display: failed ? 'none' : undefined }}>
       <div className="text-[10px] text-slate-500 px-4 pt-1">Anzeige</div>
       <ins ref={ref} className="adsbygoogle" style={{ display: 'block', minHeight: 100 }}
-        data-ad-client={config.client} data-ad-slot={config.slot} data-ad-format="horizontal"
+        data-ad-client={config.client} data-ad-slot={config.slot} data-ad-format="auto"
         data-full-width-responsive="true" />
     </aside>
   );
