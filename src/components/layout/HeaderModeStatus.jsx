@@ -16,21 +16,23 @@ export default function HeaderModeStatus({ user }) {
 
   useEffect(() => {
     let mounted = true;
+    let requestId = 0;
     setActiveTrip(undefined);
 
     if (!userKey) return () => { mounted = false; };
 
     const refresh = async () => {
+      const currentRequest = ++requestId;
       try {
         const plans = await FishingPlan.list('-created_at');
-        if (!mounted) return;
+        if (!mounted || currentRequest !== requestId) return;
         const active = Array.isArray(plans)
           ? plans.find((plan) => plan?.is_active === true)
           : undefined;
-        setActiveTrip(active === undefined && !Array.isArray(plans) ? undefined : (active || null));
+        setActiveTrip(Array.isArray(plans) ? (active || null) : undefined);
       } catch {
         // Kein Online-Nachweis: keinesfalls "Angelmodus aus" behaupten.
-        if (mounted) setActiveTrip(undefined);
+        if (mounted && currentRequest === requestId) setActiveTrip(undefined);
       }
     };
 
@@ -43,6 +45,7 @@ export default function HeaderModeStatus({ user }) {
     document.addEventListener('visibilitychange', onVisible);
     return () => {
       mounted = false;
+      requestId += 1;
       window.removeEventListener('active-trips-updated', refresh);
       window.removeEventListener('focus', refresh);
       document.removeEventListener('visibilitychange', onVisible);
