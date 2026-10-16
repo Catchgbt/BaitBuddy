@@ -166,8 +166,13 @@ describe('resolveLocalAnswer — offline', () => {
     expect(res.answer).not.toMatch(/nur allgemein/);
   });
 
-  it('erklärt bei Aktionen, dass sie ohne Verbindung nicht möglich sind', () => {
-    expect(offline('Trag einen Karpfen in mein Fangbuch ein').answer).toMatch(/nichts in der App anlegen/);
+  it('beantwortet Wissensfragen mit Aktionswort direkt und nennt nur echte Schreibaktionen', () => {
+    const spots = offline('Zeig mir gute Spots');
+    expect(spots.answer).toMatch(/^Gute Plätze bieten Fischen/);
+    expect(spots.answer).not.toMatch(/nichts in der App anlegen oder öffnen/);
+
+    expect(offline('Trag einen Karpfen in mein Fangbuch ein').answer)
+      .toMatch(/ohne Verbindung gerade nicht speichern oder anlegen/);
   });
 
   it('liefert null statt einer Antwort am Thema vorbei', () => {

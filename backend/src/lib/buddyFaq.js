@@ -80,6 +80,17 @@ const ACTION_INFINITIVES = /\b(eintragen|anlegen|oeffnen|speichern|notieren|erst
 const ACTION_REQUEST = /\b(kannst|koenntest|wuerdest)\s+du\b/;
 const ACTION_PHRASES = /\b(ins|in mein|in meinem|ins mein) (fangbuch|logbuch)\b/;
 
+// Schreibaktionen brauchen eine Verbindung. Navigations- und Wissensfragen
+// wie „Zeig mir gute Spots“ dürfen dagegen auch offline zuerst fachlich
+// beantwortet werden — die pauschale alte Meldung „nichts ... öffnen“ hat die
+// hilfreiche Antwort davor überlagert.
+const OFFLINE_WRITE_ACTION = /\b(trag|trage|speicher|speichere|erstell|erstelle|start|starte|plan|plane|leg|lege|notier|notiere|merk|merke|fueg|fuege|loesch|loesche|poste|melde|aktivier|aktiviere|deaktivier|deaktiviere)\b/;
+
+function isOfflineWriteAction(question) {
+  const normalized = normalizeText(question);
+  return OFFLINE_WRITE_ACTION.test(normalized) || ACTION_PHRASES.test(normalized);
+}
+
 // Rückbezüge auf den bisherigen Gesprächsverlauf.
 const FOLLOW_UP_START = /^(und|aber|oder|also|auch|ok und|okay und)\b/;
 const FOLLOW_UP_MARKERS = /\b(dafuer|damit|davon|dazu|dabei|darauf|daran|stattdessen|sonst|genauer|nochmal|noch mal|mehr dazu|das gleiche|dasselbe|der gleiche|und wenn|was ist mit|wie ist es mit|wie waere es mit)\b/;
@@ -263,8 +274,12 @@ export function resolveLocalAnswer(question, { online = true, inConversation = f
   // Antwort am Thema vorbei — dann lieber die ehrliche Fallback-Nachricht.
   if (coverage === 0) return null;
   let answer = pickFaqAnswer(entry);
-  if (isActionRequest(question)) {
-    answer = `Ohne Verbindung kann ich gerade nichts in der App anlegen oder öffnen — das klappt wieder, sobald die Verbindung steht. Soweit ich es aus meinem eingebauten Wissen sagen kann: ${answer}`;
+  if (isOfflineWriteAction(question)) {
+    answer = `Diese Änderung kann ich ohne Verbindung gerade nicht speichern oder anlegen. ${answer}`;
+  } else if (isActionRequest(question)) {
+    // Ein „Zeig mir …“-Wissenswunsch ist trotz des Aktionsverbs fachlich
+    // beantwortbar. Die passende Seite wird separat über `page` angeboten.
+    // Kein irreführender Hinweis, die Antwort sei nur allgemein.
   } else if (coverage < INSTANT_MIN_COVERAGE || needsPersonalContext(question)) {
     answer = `Meine Online-KI ist gerade nicht erreichbar, deshalb antworte ich nur allgemein, nicht auf deine Daten, deinen Ort oder die aktuelle Lage bezogen: ${answer}`;
   }
