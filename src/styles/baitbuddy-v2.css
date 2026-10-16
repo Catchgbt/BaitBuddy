@@ -186,6 +186,57 @@
   .bb-event-timer { font-size: 12px; gap: 6px; padding: 6px 10px 6px 12px; }
 }
 
+/* Verifizierte Dashboard-Statusanzeigen zwischen Logozeile und Event-Timer.
+   Eigene Grid-Zeile vermeidet Überlappungen mit Guthaben, Glocke und Avatar. */
+.bb-header-mode-status {
+  grid-column: 1 / -1;
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  width: 100%;
+  min-width: 0;
+  margin-top: -3px;
+}
+.bb-header-mode-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 25px;
+  max-width: 100%;
+  padding: 4px 10px;
+  border: 1px solid rgba(0, 229, 255, .45);
+  border-radius: 999px;
+  background: rgba(5, 18, 31, .77);
+  color: #def8fc;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-decoration: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.bb-header-mode-pill svg { flex-shrink: 0; color: var(--bb-cyan); }
+.bb-header-mode-pill--unlocked { border-color: rgba(34, 224, 122, .48); color: #bfffe4; }
+.bb-header-mode-pill--unlocked svg { color: var(--bb-green); }
+.bb-header-mode-pill--fishing.is-active { border-color: rgba(34, 224, 122, .70); }
+.bb-header-mode-pill--fishing.is-active svg { color: var(--bb-green); }
+.bb-header-mode-pill--fishing:hover,
+.bb-header-mode-pill--fishing:focus-visible {
+  border-color: var(--bb-cyan);
+  background: rgba(0, 229, 255, .14);
+}
+@media (max-width: 380px) {
+  .bb-header-mode-status { gap: 5px; }
+  .bb-header-mode-pill { font-size: 10px; padding: 4px 7px; gap: 4px; }
+  .bb-header-mode-pill svg { width: 12px; height: 12px; }
+}
+
 /* Live-Guthabenanzeige (KI-Punkte, AiCreditBadge.jsx) — kompakte Pille in
    der Kopfzeile neben Glocke/Avatar, Farbe je Verbrauchsstand. */
 /* Vorlage (Dashboard 2026-09): Pille mit Münzstapel, Stand und cyanem „+". */
