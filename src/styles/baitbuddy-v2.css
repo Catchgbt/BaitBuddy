@@ -416,6 +416,20 @@
   flex-shrink: 0;
 }
 .bb-cc-admin strong { display: block; color: #f4f8fb; font-size: 16px; }
+.bb-all-tools-free {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 15px 16px;
+  border-radius: 16px;
+  color: #b8fff0;
+  background: linear-gradient(120deg, rgba(34,197,94,.16), rgba(0,229,255,.08));
+  border: 1px solid rgba(74,222,128,.42);
+}
+.bb-all-tools-free > svg { flex-shrink: 0; margin-top: 1px; }
+.bb-all-tools-free strong { display: block; color: #ecfff9; font-size: 15px; }
+.bb-all-tools-free span span { display: block; margin-top: 3px; color: #a7d9d2; font-size: 13px; }
+.bb-all-tools-free.is-compact { padding: 12px 14px; }
 .bb-cc-buddy {
   display: flex;
   align-items: center;
