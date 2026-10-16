@@ -7,6 +7,7 @@ const authMock = vi.hoisted(() => ({
   me: vi.fn(),
   updateMe: vi.fn(),
 }));
+const planState = vi.hoisted(() => ({ allToolsFree: false }));
 
 vi.mock('@/api/auth', () => ({ auth: authMock }));
 vi.mock('@/api/frontendClient', () => ({
@@ -20,6 +21,7 @@ vi.mock('@/integrations/Core', () => ({ UploadFile: vi.fn() }));
 vi.mock('@/components/feedback/RatingWidget', () => ({ default: () => null }));
 vi.mock('@/components/settings/DeleteAccountDialog', () => ({ default: () => null }));
 vi.mock('@/hooks/useFeatureTracking', () => ({ useFeatureTracking: () => {} }));
+vi.mock('@/components/premium/PlanContext', () => ({ usePlan: () => planState }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }));
 
 const { default: ProfilePage } = await import('./Profile');
@@ -31,6 +33,7 @@ function renderProfile() {
 describe('Profil – Name ändern', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    planState.allToolsFree = false;
     authMock.me.mockResolvedValue({ id: 'u1', email: 'a@b.de', nickname: 'Basti', referral_code: 'ABCDEFGH' });
     authMock.updateMe.mockImplementation(async (data) => ({ id: 'u1', email: 'a@b.de', referral_code: 'ABCDEFGH', ...data }));
   });
@@ -68,5 +71,14 @@ describe('Profil – Name ändern', () => {
     renderProfile();
 
     expect(await screen.findByRole('heading', { name: 'Sebastian Muster' })).toBeInTheDocument();
+  });
+
+  it('zeigt Free weiterhin an, wenn alle Funktionen global freigeschaltet sind', async () => {
+    planState.allToolsFree = true;
+    renderProfile();
+
+    expect(await screen.findByText('Free-Modus aktiv')).toBeInTheDocument();
+    expect(screen.getByText(/Dein Tarif bleibt Free/)).toBeInTheDocument();
+    expect(screen.getByText('Free Plan')).toBeInTheDocument();
   });
 });
