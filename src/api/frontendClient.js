@@ -396,13 +396,24 @@ function makeEntity(entityName) {
         return limit ? records.slice(0, limit) : records;
       }
       if (!base) return [];
-      const p = new URLSearchParams();
-      if (limit) p.set('limit', limit);
-      if (orderBy) p.set('order', orderBy);
-      const qs = p.toString() ? `?${p.toString()}` : '';
-      const result = await safeGet(`${base}${qs}`);
-      if (result?.__error) return [];
-      return Array.isArray(result) ? result : [];
+      const requestedLimit = Number(limit) || null;
+      const pageSize = Math.min(requestedLimit || 500, 500);
+      const shouldPage = entityName === 'Catch' && (requestedLimit == null || requestedLimit > pageSize);
+      const all = [];
+      let offset = 0;
+      do {
+        const p = new URLSearchParams();
+        p.set('limit', shouldPage ? pageSize : (requestedLimit || pageSize));
+        if (offset) p.set('offset', offset);
+        if (orderBy) p.set('order', orderBy);
+        const result = await safeGet(`${base}?${p.toString()}`);
+        if (result?.__error) return [];
+        const page = Array.isArray(result) ? result : [];
+        all.push(...page);
+        if (!shouldPage || page.length < pageSize || (requestedLimit && all.length >= requestedLimit)) break;
+        offset += page.length;
+      } while (true);
+      return requestedLimit ? all.slice(0, requestedLimit) : all;
     },
 
     filter: async (filters = {}) => {

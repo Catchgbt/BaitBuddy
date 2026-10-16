@@ -8,6 +8,7 @@ import { entities, api } from '@/api/frontendClient';
 import {
   getUnsyncdOfflinePhotos,
   markPhotoAsSynced,
+  markPhotoAsUploaded,
   markPhotoSyncError,
   cleanupSyncedPhotos,
 } from '@/utils/offlinePhotoStorage';
@@ -31,6 +32,23 @@ const QUEUE_KEYS = {
 const MAX_ID_MAP_SIZE = 500;
 
 const OFFLINE_ID_PREFIX = 'offline_';
+
+// Offline-Daten dürfen einen Kontowechsel niemals überleben und anschließend
+// im neuen Konto landen. Die Kennung ist absichtlich nur ein Fingerabdruck und
+// kein Token: sie ist stabil genug für den Kontowechsel, verrät aber keine
+// Zugangsdaten in localStorage/IndexedDB.
+export function getOfflineOwnerKey() {
+  let cachedUser = null;
+  try {
+    cachedUser = JSON.parse(localStorage.getItem('bb_user') || 'null');
+  } catch { /* Token-Fallback unten */ }
+  const identity = cachedUser?.id || cachedUser?.email || api.getToken();
+  if (!identity) return null;
+  let hash = 5381;
+  const value = String(identity);
+  for (let i = 0; i < value.length; i += 1) hash = ((hash * 33) ^ value.charCodeAt(i)) >>> 0;
+  return `owner_${hash.toString(36)}`;
+}
 
 export function isOfflineCatchId(catchId) {
   return typeof catchId === 'string' && catchId.startsWith(OFFLINE_ID_PREFIX);
@@ -90,6 +108,7 @@ export function addToOfflineCatchQueue(catchData) {
       __id: `offline_${Date.now()}_${Math.random().toString(36).slice(2)}`,
       __created: new Date().toISOString(),
       __synced: false,
+      __owner: getOfflineOwnerKey(),
     };
     queue.push(withMeta);
     localStorage.setItem(QUEUE_KEYS.catches, JSON.stringify(queue));
@@ -127,7 +146,9 @@ export function removeFromOfflineCatchQueue(offlineId) {
   }
 }
 
-export async function syncOfflineCatches() {
+let catchSyncPromise = null;
+
+async function syncOfflineCatchesInternal() {
   if (!checkIsOnline()) {
     console.log('Offline — Sync verpasst');
     return { synced: 0, failed: 0, errors: [] };
@@ -143,7 +164,13 @@ export async function syncOfflineCatches() {
   const queue = getOfflineCatchQueue();
   if (queue.length === 0) return { synced: 0, failed: 0, errors: [] };
 
-  console.log(`Synchronisiere ${queue.length} offline erfasste Fänge...`);
+  const owner = getOfflineOwnerKey();
+  if (!owner) return { synced: 0, failed: 0, deferred: queue.length, errors: [] };
+  const ownedQueue = queue.filter((item) => item.__owner === owner);
+  const deferred = queue.length - ownedQueue.length;
+  if (ownedQueue.length === 0) return { synced: 0, failed: 0, deferred, errors: [] };
+
+  console.log(`Synchronisiere ${ownedQueue.length} offline erfasste Fänge...`);
 
   let synced = 0;
   let failed = 0;
@@ -151,9 +178,9 @@ export async function syncOfflineCatches() {
   const syncedIds = new Set();
   const idMap = getOfflineCatchIdMap();
 
-  for (const catchData of queue) {
+  for (const catchData of ownedQueue) {
     try {
-      const { __id, __created, __synced, ...realData } = catchData;
+      const { __id, __created, __synced, __owner, ...realData } = catchData;
       const result = await entities.Catch.create(realData);
       console.log(`Fang ${__id} synchronisiert:`, result.id);
       syncedIds.add(__id);
@@ -193,12 +220,28 @@ export async function syncOfflineCatches() {
     console.warn(`Sync fehlgeschlagen: ${failed} Fänge`);
   }
 
-  return { synced, failed, errors, idMap };
+  return { synced, failed, deferred, errors, idMap };
+}
+
+// Mehrere Auslöser (Online-Ereignis, Login und initialer Start) dürfen nicht
+// dieselbe Queue parallel senden. Ein gemeinsames Promise verhindert doppelte
+// Fänge auch dann, wenn die Auslöser im selben Event-Loop-Tick eintreffen.
+export function syncOfflineCatches() {
+  if (!catchSyncPromise) {
+    catchSyncPromise = syncOfflineCatchesInternal().finally(() => {
+      catchSyncPromise = null;
+    });
+  }
+  return catchSyncPromise;
 }
 
 // ─── Smart Create: Online POST, Offline Queue ──────────────────────────────
 
 export async function createCatchWithOfflineSupport(catchData) {
+  // Gast-Fänge gehören in den Gast-Speicher. So werden sie später zusammen
+  // mit Gast-Spots und ihren Referenzen übernommen, statt in einer
+  // kontoabhängigen Offline-Queue ohne Besitzer zu landen.
+  if (!api.getToken()) return entities.Catch.create(catchData);
   if (checkIsOnline()) {
     return entities.Catch.create(catchData);
   } else {
@@ -368,8 +411,13 @@ export async function syncOfflinePhotos() {
     const errors = [];
     const idMap = getOfflineCatchIdMap();
     const pendingOfflineIds = new Set(getOfflineCatchQueue().map((c) => c.__id));
+    const owner = getOfflineOwnerKey();
 
     for (const photo of photos) {
+      if (photo.ownerKey && photo.ownerKey !== owner) {
+        deferred++;
+        continue;
+      }
       const resolved = resolveSyncedCatchId(photo.catchId, idMap, pendingOfflineIds);
       if (resolved.defer) {
         // Der zugehoerige Fang ist noch nicht auf dem Server. Das Foto bleibt
@@ -390,31 +438,28 @@ export async function syncOfflinePhotos() {
         // Backend lehnt Dateinamen mit Pfadanteilen ab (Path-Traversal-Schutz).
         const file_name = String(photo.fileName || `offline_${photo.id}.jpg`).split(/[\\/]/).pop();
 
-        const uploadResult = await api.post('/api/files/upload', {
-          file_base64,
-          file_name,
-          file_type: photo.mimeType || 'image/jpeg',
-        });
-
-        if (uploadResult?.file_url) {
-          await markPhotoAsSynced(photo.id);
-
-          // Wenn das Foto mit einem Fang verlinkt ist, aktualisiere den Fang mit der photo_url
-          if (resolved.catchId) {
-            try {
-              await entities.Catch.update(resolved.catchId, { photo_url: uploadResult.file_url });
-              console.log(`Catch ${resolved.catchId} mit Foto-URL aktualisiert: ${uploadResult.file_url}`);
-            } catch (updateError) {
-              console.warn(`Fehler beim Aktualisieren von Catch ${resolved.catchId} mit Foto-URL:`, updateError);
-              // Nicht kritisch — Foto ist hochgeladen, nur die Verlinkung fehlgeschlagen
-            }
-          }
-
-          console.log(`Foto ${photo.id} synchronisiert: ${uploadResult.file_url}`);
-          synced++;
-        } else {
-          throw new Error('Keine Upload-URL erhalten');
+        let fileUrl = photo.uploadUrl;
+        if (!fileUrl) {
+          const uploadResult = await api.post('/api/files/upload', {
+            file_base64,
+            file_name,
+            file_type: photo.mimeType || 'image/jpeg',
+          });
+          fileUrl = uploadResult?.file_url;
+          if (!fileUrl) throw new Error('Keine Upload-URL erhalten');
+          // Upload und Verlinkung sind zwei Schritte. Die URL bleibt lokal,
+          // damit ein späterer Lauf nur noch die Verlinkung wiederholt.
+          await markPhotoAsUploaded(photo.id, fileUrl);
         }
+
+        // Erst nach erfolgreicher Verlinkung darf das Foto als fertig gelten.
+        if (resolved.catchId) {
+          await entities.Catch.update(resolved.catchId, { photo_url: fileUrl });
+          console.log(`Catch ${resolved.catchId} mit Foto-URL aktualisiert: ${fileUrl}`);
+        }
+        await markPhotoAsSynced(photo.id);
+        console.log(`Foto ${photo.id} synchronisiert: ${fileUrl}`);
+        synced++;
       } catch (e) {
         console.error(`Fehler beim Sync von Foto ${photo.id}:`, e);
         await markPhotoSyncError(photo.id, e.message);

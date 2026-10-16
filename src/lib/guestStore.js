@@ -9,11 +9,14 @@
 const PREFIX = 'bb_guest_entity_';
 const MIGRATION_LOCK_KEY = 'bb_guest_migration_running';
 const MIGRATION_RESULT_KEY = 'bb_guest_migration_result';
+const SPOT_ID_MAP_KEY = 'bb_guest_spot_id_map';
 export const GUEST_MIGRATION_EVENT = 'guest-migration-finished';
 
 // Entities, die ein Gast lokal anlegen darf. Alles andere bleibt am Backend —
 // Community, Käufe oder Events ergeben ohne Konto keinen Sinn.
-export const GUEST_ENTITIES = ['Catch', 'Spot'];
+// Spots zuerst: Fänge referenzieren beim Migrieren die vom Server neu vergebene
+// Spot-ID. Die Reihenfolge ist Teil des Migrationsvertrags.
+export const GUEST_ENTITIES = ['Spot', 'Catch'];
 
 export function isGuestEntity(entityName) {
   return GUEST_ENTITIES.includes(entityName);
@@ -111,6 +114,7 @@ export function clearGuestData() {
       // Ohne Storage gibt es auch nichts zu löschen.
     }
   }
+  try { localStorage.removeItem(SPOT_ID_MAP_KEY); } catch { /* ignore */ }
 }
 
 export function hasGuestData() {
@@ -162,6 +166,25 @@ function writeGuestMigrationResult(result) {
   }
 }
 
+function readSpotIdMap() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(SPOT_ID_MAP_KEY) || '{}');
+    return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeSpotIdMap(map) {
+  try {
+    if (Object.keys(map).length) localStorage.setItem(SPOT_ID_MAP_KEY, JSON.stringify(map));
+    else localStorage.removeItem(SPOT_ID_MAP_KEY);
+  } catch {
+    // Die Migration selbst darf nicht wegen einer optionalen Mapping-Notiz
+    // abbrechen; ein fehlendes Mapping lässt den Fang sicher liegen.
+  }
+}
+
 // Die lokal vergebene `id` und die Zeitstempel gehören zum Gast-Speicher, nicht
 // zum Datensatz — das Backend vergibt beim Anlegen eigene.
 function stripLocalFields(record) {
@@ -196,6 +219,7 @@ export async function migrateGuestData(entityClients) {
   let migrated = 0;
   let failed = 0;
   const byEntity = {};
+  const spotIdMap = readSpotIdMap();
   try {
     for (const entityName of GUEST_ENTITIES) {
       const records = readAll(entityName);
@@ -210,7 +234,14 @@ export async function migrateGuestData(entityClients) {
       const remaining = [];
       for (const record of records) {
         try {
-          await client.create(stripLocalFields(record));
+          const payload = stripLocalFields(record);
+          if (entityName === 'Catch' && payload.spot_id && String(payload.spot_id).startsWith('guest_')) {
+            const mappedSpotId = spotIdMap[payload.spot_id];
+            if (!mappedSpotId) throw new Error('Zugehöriger Gast-Spot wurde noch nicht übernommen');
+            payload.spot_id = mappedSpotId;
+          }
+          const created = await client.create(payload);
+          if (entityName === 'Spot' && record.id && created?.id) spotIdMap[record.id] = created.id;
           migrated += 1;
           byEntity[entityName] = (byEntity[entityName] || 0) + 1;
         } catch {
@@ -220,6 +251,7 @@ export async function migrateGuestData(entityClients) {
       }
       writeAll(entityName, remaining);
     }
+    writeSpotIdMap(spotIdMap);
   } finally {
     try {
       sessionStorage?.removeItem(MIGRATION_LOCK_KEY);

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Volume2, VolumeX, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { auth } from "@/api/auth";
 import { speakWithFallback, cancelElevenLabs } from "@/components/utils/elevenLabsTTS";
+import { getActiveBuddyAudio } from "@/lib/ttsVoice";
 
 export default function BuddyOutput({ text, autoPlay = true }) {
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -14,23 +14,15 @@ export default function BuddyOutput({ text, autoPlay = true }) {
     try {
       setIsSpeaking(true);
 
-      let user = null;
-      try {
-        user = await auth.me();
-      } catch {
-        // Gastmodus: Standard-Einstellungen verwenden
-      }
-
-      if (user?.settings?.audio_enabled === false) {
+      const audio = getActiveBuddyAudio();
+      if (audio.voiceEnabled === false) {
         setIsSpeaking(false);
         return;
       }
 
-      const speechRate = user?.settings?.speech_speed || 1.0;
-
       // Nur die natürliche ElevenLabs-Stimme; speakWithFallback löst auf,
       // wenn die Wiedergabe endet, und bleibt bei Fehlern still.
-      await speakWithFallback(text, { voiceEnabled: true, rate: speechRate });
+      await speakWithFallback(text, { voiceEnabled: true, rate: 1 });
     } catch (error) {
       console.error("BuddyOutput: Speech error:", error);
     } finally {

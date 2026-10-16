@@ -16,7 +16,10 @@ export function BuddyPreferencesProvider({ children }) {
   const [saving, setSaving] = useState(false);
   const queue = useRef(Promise.resolve());
   const source = saved?.userId === userId ? saved.settings : user?.settings;
-  const buddy = useMemo(() => normalizeBuddy(source?.buddy), [source?.buddy]);
+  const buddy = useMemo(() => normalizeBuddy(source?.buddy || {
+    voiceEnabled: source?.audio_enabled !== false,
+    speed: source?.speech_speed || 1,
+  }), [source?.buddy, source?.audio_enabled, source?.speech_speed]);
   const navigation = useMemo(() => normalizeNavigation(source?.navigation?.bottomNavigation), [source?.navigation]);
   const fishing = useMemo(() => normalizeFishing(source?.fishing), [source?.fishing]);
   const angler = useMemo(() => normalizeAngler(source?.angler), [source?.angler]);

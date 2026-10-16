@@ -5,7 +5,7 @@ import { sendDbError } from '../lib/errorResponse.js';
 
 const router = Router();
 
-const ALLOWED_CATCH_UPDATE_FIELDS = ['species', 'length_cm', 'weight_kg', 'bait_used', 'notes', 'photo_url', 'is_released', 'spot_id'];
+const ALLOWED_CATCH_UPDATE_FIELDS = ['species', 'length_cm', 'weight_kg', 'bait_used', 'notes', 'photo_url', 'is_released', 'spot_id', 'catch_time'];
 
 const filterCatchUpdate = (body) => {
   const filtered = {};
@@ -129,6 +129,17 @@ router.get('/catches', requireAuth, async (req, res) => {
 
 router.get('/catches/stats/summary', requireAuth, async (req, res) => {
   const email = req.user.email;
+  const loadAllSpecies = async () => {
+    const rows = [];
+    const pageSize = 500;
+    for (let offset = 0; ; offset += pageSize) {
+      const page = await supabase.from('catches').select('species').eq('created_by', email)
+        .range(offset, offset + pageSize - 1);
+      if (page.error) return page;
+      rows.push(...(page.data || []));
+      if ((page.data || []).length < pageSize) return { data: rows, error: null };
+    }
+  };
   // Aggregation der DB überlassen statt alle Zeilen ins Backend zu laden:
   // - total via HEAD-Count (überträgt keine Zeilen)
   // - biggest via serverseitigem ORDER BY length_cm DESC LIMIT 1
@@ -142,7 +153,7 @@ router.get('/catches/stats/summary', requireAuth, async (req, res) => {
       .eq('created_by', email)
       .order('length_cm', { ascending: false, nullsFirst: false })
       .limit(1),
-    supabase.from('catches').select('species').eq('created_by', email),
+    loadAllSpecies(),
   ]);
 
   if (countRes.error) return sendDbError(res, countRes.error);

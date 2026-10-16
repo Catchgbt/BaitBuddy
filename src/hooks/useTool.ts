@@ -49,7 +49,7 @@ const PLAN_LEVELS: Record<string, PlanLevel> = {
 };
 
 export function useTool(): UseToolResult {
-  const { plan } = usePlan();
+  const { plan, allToolsFree } = usePlan();
 
   const userPlan = useMemo<PlanLevel>(
     () => PLAN_LEVELS[plan?.id ?? ''] ?? 'free',
@@ -57,17 +57,19 @@ export function useTool(): UseToolResult {
   );
 
   const getAccessibleTools = useMemo(
-    () => () => ToolRegistry.getToolsByPlanLevel(userPlan),
-    [userPlan]
+    () => () => allToolsFree
+      ? ToolRegistry.getAllTools()
+      : ToolRegistry.getToolsByPlanLevel(userPlan),
+    [userPlan, allToolsFree]
   );
 
   const isToolAccessible = useMemo(
     () => (toolId: string) => {
       const tool = ToolRegistry.getToolById(toolId);
       if (!tool) return false;
-      return ToolRegistry.isToolAccessible(tool, userPlan);
+      return allToolsFree || ToolRegistry.isToolAccessible(tool, userPlan);
     },
-    [userPlan]
+    [userPlan, allToolsFree]
   );
 
   const getTool = useMemo(
@@ -83,12 +85,12 @@ export function useTool(): UseToolResult {
   const getAccessibleToolsByCategory = useMemo(
     () => (category: string) => {
       const tools = ToolRegistry.getToolsByCategory(category as any);
-      return tools.filter(tool => ToolRegistry.isToolAccessible(tool, userPlan));
+      return tools.filter(tool => allToolsFree || ToolRegistry.isToolAccessible(tool, userPlan));
     },
-    [userPlan]
+    [userPlan, allToolsFree]
   );
 
-  const getUserPlanLevel = useMemo(() => () => userPlan, [userPlan]);
+  const getUserPlanLevel = useMemo(() => () => allToolsFree ? 'friends' : userPlan, [userPlan, allToolsFree]);
 
   return {
     getAccessibleTools,

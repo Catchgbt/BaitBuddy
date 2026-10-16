@@ -7,6 +7,7 @@ const { mockEntities, mockApi, onlineState, mockPhotoStorage } = vi.hoisted(() =
   mockPhotoStorage: {
     getUnsyncdOfflinePhotos: vi.fn(async () => []),
     markPhotoAsSynced: vi.fn(async () => {}),
+    markPhotoAsUploaded: vi.fn(async () => {}),
     markPhotoSyncError: vi.fn(async () => {}),
     cleanupSyncedPhotos: vi.fn(async () => {}),
   },
@@ -77,6 +78,17 @@ describe('offlineSync – Catch-Queue', () => {
     expect(result).toEqual({ id: 'server-1' });
   });
 
+  it('legt Gast-Fänge auch offline im Gast-Speicher an', async () => {
+    mockApi.getToken.mockReturnValue(null);
+    mockEntities.Catch.create.mockResolvedValue({ id: 'guest-1' });
+
+    const result = await createCatchWithOfflineSupport({ species: 'Barsch' });
+
+    expect(mockEntities.Catch.create).toHaveBeenCalledWith({ species: 'Barsch' });
+    expect(result).toEqual({ id: 'guest-1' });
+    expect(getOfflineCatchQueue()).toHaveLength(0);
+  });
+
   it('syncOfflineCatches synchronisiert erfolgreich und entfernt aus der Queue', async () => {
     addToOfflineCatchQueue({ species: 'Hecht' });
     mockEntities.Catch.create.mockResolvedValue({ id: 'server-1' });
@@ -120,6 +132,32 @@ describe('offlineSync – Catch-Queue', () => {
     expect(getOfflineCatchQueue()).toHaveLength(1);
   });
 
+  it('synchronisiert Queue-Einträge nicht in ein anderes Konto', async () => {
+    mockApi.getToken.mockReturnValue('account-a-token');
+    const entry = addToOfflineCatchQueue({ species: 'Hecht' });
+    mockApi.getToken.mockReturnValue('account-b-token');
+
+    const result = await syncOfflineCatches();
+
+    expect(mockEntities.Catch.create).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ synced: 0, deferred: 1 });
+    expect(getOfflineCatchQueue()).toEqual([expect.objectContaining({ __id: entry.__id })]);
+  });
+
+  it('verhindert doppelte parallele Sync-Läufe', async () => {
+    addToOfflineCatchQueue({ species: 'Zander' });
+    let release;
+    const gate = new Promise((resolve) => { release = resolve; });
+    mockEntities.Catch.create.mockImplementation(() => gate.then(() => ({ id: 'server-1' })));
+
+    const first = syncOfflineCatches();
+    const second = syncOfflineCatches();
+    release();
+    await Promise.all([first, second]);
+
+    expect(mockEntities.Catch.create).toHaveBeenCalledTimes(1);
+  });
+
   it('addToOfflineCatchQueue wirft, wenn die Queue voll ist (Cap)', () => {
     for (let i = 0; i < 200; i++) {
       addToOfflineCatchQueue({ species: `Fisch-${i}` });
@@ -146,6 +184,7 @@ describe('offlineSync – Foto-Sync', () => {
     mockApi.post.mockReset();
     mockPhotoStorage.getUnsyncdOfflinePhotos.mockReset().mockResolvedValue([]);
     mockPhotoStorage.markPhotoAsSynced.mockClear();
+    mockPhotoStorage.markPhotoAsUploaded.mockClear();
     mockPhotoStorage.markPhotoSyncError.mockClear();
     mockPhotoStorage.cleanupSyncedPhotos.mockClear();
   });
@@ -309,14 +348,16 @@ describe('offlineSync – Offline Photo Integration with Catches', () => {
     onlineState.current = true;
     await syncOfflinePhotos();
 
-    // Foto wird trotzdem als synced markiert (Upload erfolgreich)
-    expect(mockPhotoStorage.markPhotoAsSynced).toHaveBeenCalledWith(9);
-
-    // Versuch, Fang zu aktualisieren, fehlgeschlagen — aber nicht kritisch
+    // Die Verlinkung ist Teil des Syncs: bei einem Fehler bleibt das Foto
+    // ungesynct und wird beim nächsten Lauf über die gespeicherte Upload-URL
+    // erneut verknüpft.
+    expect(mockPhotoStorage.markPhotoAsSynced).not.toHaveBeenCalled();
+    // Versuch, Fang zu aktualisieren, fehlgeschlagen
     expect(mockEntities.Catch.update).toHaveBeenCalledWith(
       'srv-3',
       { photo_url: 'https://storage/fang3.jpg' }
     );
+    expect(mockPhotoStorage.markPhotoAsUploaded).toHaveBeenCalledWith(9, 'https://storage/fang3.jpg');
   });
 });
 
