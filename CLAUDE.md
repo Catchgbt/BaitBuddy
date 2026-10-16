@@ -718,7 +718,10 @@ Die Hülle um jede Seite folgt den Vorlagen aus Issue #386:
   (`key='app_settings'`, `backend/src/lib/appSettings.js`, 30 s Server-Cache):
   - `ads_enabled` — Werbung für alle an/aus. Wirkt über `/api/ads/config`
     (`ads_enabled`) → `AdGate`/`getAdCapabilities(…, { adsEnabled })`; Rewarded
-    Ads werden serverseitig mit abgelehnt. Werbe-Config-Cache im Browser 5 Min.
+    Ads werden serverseitig mit abgelehnt. Werbe-Config-Cache im Browser 5 Min.;
+    `AdGate` aktualisiert sichtbare Apps alle 30 s sowie bei Fokus/Resume frisch.
+    Lokale Admin-Änderungen aktualisieren auch den Cache; laufende Interstitials
+    werden bei Abschaltung, werbefreiem Plan oder geschützter Session entfernt.
   - `all_tools_free` — alle Tools für alle frei: `PlanContext.hasFeature` → immer
     `true`, `planLevel` ≥ Friends; serverseitig `resolveServerToolAccess`,
     `/premium/check-feature` und das KI-Tageslimit für Free (`checkChatRateLimit`).

@@ -4,12 +4,13 @@ import { usePlan } from '@/components/premium/PlanContext';
 import { useAuth } from '@/lib/AuthContext';
 import { getAdCapabilities, isAdAllowedOnRoute, isAdAllowedInContext, MAIN_TOOL_ROUTES } from '@/lib/adEntitlements';
 import { canShowInterstitial, } from '@/components/ads/InterstitialAd';
-import { getAdConfig, loadAdConfig } from '@/lib/adConfig';
+import { getAdConfig, loadAdConfig, updateAdConfig } from '@/lib/adConfig';
 import { trackAdEvent } from '@/lib/adAnalytics';
 import { APP_SETTINGS_EVENT } from '@/lib/appSettings';
 import { getActiveAdContexts, subscribeAdContexts } from '@/lib/adActiveContext';
 
 const AdGateContext = createContext(null);
+const CONFIG_REFRESH_MS = 30_000;
 
 /**
  * AdGate Provider — zentrales Ad-Routing.
@@ -22,16 +23,8 @@ export function AdGateProvider({ children }) {
   const location = useLocation();
   const [pendingInterstitial, setPendingInterstitial] = useState(null);
   const prevPathRef = useRef(location.pathname);
-  // Verhindert eine Werbeanzeige unmittelbar beim App-Start: Ohne dieses Flag
-  // war previousPath beim allerersten Effect-Lauf identisch zu currentPath,
-  // wodurch der "nur beim Wechsel zwischen Haupttools"-Guard unten (der genau
-  // diesen Fall ausschließen soll) wirkungslos war und ein Gast, der per
-  // Deep-Link direkt auf einer Haupttool-Route landete, sofort ein
-  // Interstitial sah — die App muss aber zuerst normal öffnen.
-  const hasNavigatedRef = useRef(false);
-  const configRef = useRef(null);
   // Hauptschalter aus dem Admin-Bereich (/api/ads/config → ads_enabled).
-  const [adsEnabled, setAdsEnabled] = useState(() => getAdConfig().ads_enabled !== false);
+  const [config, setConfig] = useState(getAdConfig);
   // Laufende, nicht unterbrechbare Sessions (Drill/Bisserkennung, Kamera,
   // Sprachausgabe …) melden sich über setAdContextActive an — unabhängig von
   // der Route, z.B. wenn die Bisserkennung auf einer sonst unauffälligen Seite läuft.
@@ -39,53 +32,74 @@ export function AdGateProvider({ children }) {
 
   useEffect(() => subscribeAdContexts(setActiveAdContexts), []);
 
-  // Config laden
+  // Auch bereits geöffnete Apps übernehmen den Admin-Schalter. Im Hintergrund
+  // keine Abfragen; beim Wiederöffnen sofort frisch laden (Capacitor-Resume).
   useEffect(() => {
     let active = true;
-    loadAdConfig().then(cfg => {
-      configRef.current = cfg;
-      if (active) setAdsEnabled(cfg.ads_enabled !== false);
-    });
+    const refresh = (fresh) => {
+      loadAdConfig({ fresh }).then(cfg => {
+        if (active) setConfig(cfg);
+      });
+    };
+    const refreshVisible = () => {
+      if (document.visibilityState === 'visible') refresh(true);
+    };
+    refresh(false);
+    const timer = setInterval(refreshVisible, CONFIG_REFRESH_MS);
+    document.addEventListener('visibilitychange', refreshVisible);
+    window.addEventListener('focus', refreshVisible);
     // Schaltet der Superuser um, gilt es auf seinem Gerät sofort.
     const onSettings = (event) => {
-      if (typeof event.detail?.ads_enabled === 'boolean') setAdsEnabled(event.detail.ads_enabled);
+      if (typeof event.detail?.ads_enabled === 'boolean') {
+        setConfig(updateAdConfig({ ads_enabled: event.detail.ads_enabled }));
+      }
     };
     window.addEventListener(APP_SETTINGS_EVENT, onSettings);
     return () => {
       active = false;
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', refreshVisible);
+      window.removeEventListener('focus', refreshVisible);
       window.removeEventListener(APP_SETTINGS_EVENT, onSettings);
     };
   }, []);
 
   const capabilities = React.useMemo(
-    () => getAdCapabilities(plan?.id ?? 'free', isAuthenticated, { adsEnabled }),
-    [plan?.id, isAuthenticated, adsEnabled]
+    () => getAdCapabilities(plan?.id ?? 'free', isAuthenticated, { adsEnabled: config.ads_enabled !== false }),
+    [plan?.id, isAuthenticated, config.ads_enabled]
   );
+
+  const adsAllowed = !planLoading
+    && isAdAllowedOnRoute(location.pathname)
+    && isAdAllowedInContext(activeAdContexts);
+  const interstitialAllowed = adsAllowed && capabilities.interstitialAds && config.guest_interstitial_enabled;
+  const bannerAllowed = adsAllowed && capabilities.bannerAds && config.basic_banner_enabled;
+
+  // Laufende Anzeigen sofort entfernen, wenn der Admin abschaltet, der Plan
+  // wechselt oder eine geschützte Route/Session beginnt.
+  useEffect(() => {
+    if (!interstitialAllowed || pendingInterstitial?.targetPath !== location.pathname) {
+      setPendingInterstitial(null);
+    }
+  }, [interstitialAllowed, location.pathname, pendingInterstitial]);
 
   // Interstitial-Guard bei Navigation
   useEffect(() => {
-    if (planLoading) return;
     const currentPath = location.pathname;
     const previousPath = prevPathRef.current;
     prevPathRef.current = currentPath;
 
-    // Erster Lauf nach App-Start: keine echte Navigation, also kein Interstitial.
-    if (!hasNavigatedRef.current) {
-      hasNavigatedRef.current = true;
-      return;
-    }
+    // Nur echte Seitenwechsel: weder App-Start noch Config-/Kontext-Updates
+    // auf derselben Seite dürfen eine neue Werbeunterbrechung auslösen.
+    if (previousPath === currentPath) return;
 
     // Nur Gäste mit Interstitials
-    if (!capabilities.interstitialAds) return;
-    if (!isAdAllowedOnRoute(currentPath)) return;
-    if (!isAdAllowedInContext(activeAdContexts)) return;
+    if (!interstitialAllowed) return;
     if (!MAIN_TOOL_ROUTES.has(currentPath)) return;
     // Nur beim Wechsel zwischen Haupttools
-    if (!MAIN_TOOL_ROUTES.has(previousPath) && previousPath !== currentPath) return;
+    if (!MAIN_TOOL_ROUTES.has(previousPath)) return;
 
-    const cfg = configRef.current ?? getAdConfig();
-    if (!cfg.guest_interstitial_enabled) return;
-    if (!canShowInterstitial(cfg.guest_interstitial_cooldown_s ?? 120)) return;
+    if (!canShowInterstitial(config.guest_interstitial_cooldown_s ?? 120)) return;
 
     trackAdEvent('ad_requested', {
       ad_type: 'interstitial',
@@ -95,20 +109,19 @@ export function AdGateProvider({ children }) {
     });
 
     setPendingInterstitial({ sourceTool: previousPath, targetPath: currentPath });
-  }, [location.pathname, capabilities.interstitialAds, planLoading, activeAdContexts]);
+  }, [location.pathname, interstitialAllowed, config.guest_interstitial_cooldown_s]);
 
   const dismissInterstitial = useCallback(() => {
     setPendingInterstitial(null);
   }, []);
 
-  // Banner sollen zusätzlich zur Plan-Berechtigung Route- und Kontext-Blacklist
-  // respektieren (vorher prüfte der Banner-Slot nur capabilities.bannerAds).
-  const bannerAllowed = capabilities.bannerAds
-    && isAdAllowedOnRoute(location.pathname)
-    && isAdAllowedInContext(activeAdContexts);
-
   return (
-    <AdGateContext.Provider value={{ capabilities, bannerAllowed, pendingInterstitial, dismissInterstitial }}>
+    <AdGateContext.Provider value={{
+      capabilities,
+      bannerAllowed,
+      pendingInterstitial: interstitialAllowed && pendingInterstitial?.targetPath === location.pathname ? pendingInterstitial : null,
+      dismissInterstitial,
+    }}>
       {children}
     </AdGateContext.Provider>
   );

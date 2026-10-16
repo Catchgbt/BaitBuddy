@@ -32,13 +32,16 @@ export const DEFAULT_AD_CONFIG = {
 let _config = null;
 let _fetchedAt = 0;
 let _fetchPromise = null;
+let _revision = 0;
 
 function readCache() {
   try {
     const raw = localStorage.getItem(CACHE_KEY);
     if (!raw) return null;
     const { ts, data } = JSON.parse(raw);
-    if (Date.now() - ts < CACHE_TTL_MS) return data;
+    if (Date.now() - ts < CACHE_TTL_MS && data && typeof data === 'object') {
+      return { ts, data };
+    }
   } catch {
     // ignorieren
   }
@@ -53,39 +56,57 @@ function writeCache(data) {
   }
 }
 
-export async function loadAdConfig() {
-  if (_config && Date.now() - _fetchedAt < CACHE_TTL_MS) return _config;
+// Admin-Änderungen gelten sofort und dürfen nicht von einer älteren, noch
+// laufenden Config-Anfrage oder beim erneuten Mount überschrieben werden.
+export function updateAdConfig(patch) {
+  _revision += 1;
+  _config = { ...DEFAULT_AD_CONFIG, ..._config, ...patch };
+  _fetchedAt = Date.now();
+  writeCache(_config);
+  return _config;
+}
 
-  const cached = readCache();
+export async function loadAdConfig({ fresh = false } = {}) {
+  if (_fetchPromise) return _fetchPromise;
+  if (!fresh && _config && Date.now() - _fetchedAt < CACHE_TTL_MS) return _config;
+
+  const cached = !fresh && readCache();
   if (cached) {
-    _config = cached;
-    _fetchedAt = Date.now();
+    _config = { ...DEFAULT_AD_CONFIG, ...cached.data };
+    _fetchedAt = cached.ts;
     return _config;
   }
 
-  if (_fetchPromise) return _fetchPromise;
-
+  const revision = _revision;
   _fetchPromise = (async () => {
+    let next;
     try {
       const res = await fetch('/api/ads/config', {
         signal: timeoutSignal(4000),
+        cache: 'no-store',
       });
       if (res.ok) {
         const data = await res.json();
-        _config = { ...DEFAULT_AD_CONFIG, ...data };
+        next = { ...DEFAULT_AD_CONFIG, ...data };
       } else {
-        _config = { ...DEFAULT_AD_CONFIG };
+        next = { ...DEFAULT_AD_CONFIG };
       }
     } catch {
-      _config = { ...DEFAULT_AD_CONFIG };
+      next = { ...DEFAULT_AD_CONFIG };
     }
-    _fetchedAt = Date.now();
-    writeCache(_config);
-    _fetchPromise = null;
+    if (revision === _revision) {
+      _config = next;
+      _fetchedAt = Date.now();
+      writeCache(_config);
+    }
     return _config;
   })();
 
-  return _fetchPromise;
+  try {
+    return await _fetchPromise;
+  } finally {
+    _fetchPromise = null;
+  }
 }
 
 export function getAdConfig() {
