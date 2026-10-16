@@ -60,6 +60,9 @@ jobs:
       - name: Install Android SDK platform 36, NDK and CMake
         run: |
           export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/cmdline-tools/16.0/bin:$ANDROID_HOME/platform-tools:$PATH"
+          # Neue GitHub-Runner akzeptieren NDK-/Preview-Lizenzen nicht vorab.
+          # Ohne diesen Schritt stoppt sdkmanager vor der Java-Kompilierung.
+          yes | sdkmanager --licenses >/dev/null
           sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;29.0.13113456" "cmake;3.31.6"
 
       - name: Install deps
