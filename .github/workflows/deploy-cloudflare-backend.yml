@@ -1,26 +1,19 @@
 name: Deploy Backend to Cloudflare
 
-# Express-Backend als Cloudflare Container (Worker `baitbuddy-api`,
-# cloudflare/backend/wrangler.toml). Getrennt vom Frontend-Deploy: Solange
-# BACKEND_URL in der Root-wrangler.toml auf Vercel zeigt, bekommt dieser Worker
-# keinen Nutzer-Traffic.
+# Parallelbetrieb: Jeder Push nach main deployed das bestehende Express-Backend
+# auch als Cloudflare Container (Worker baitbuddy-api). Vercel bleibt bestehen.
+# Der Front-Door-Worker routet erst dann zum Container, wenn BACKEND_URL
+# ausdruecklich umgestellt wird. Dieses Workflow aendert kein Live-Routing.
 #
-# Voraussetzungen: Workers Paid Plan (Containers) und die Backend-Secrets am
-# Worker (Liste: cloudflare/backend/containerEnv.js). Automatische Deploys bei
-# Backend-Änderungen erst, wenn die Repo-Variable CLOUDFLARE_BACKEND_ENABLED=true
-# gesetzt ist — sonst wäre jeder Push auf main rot, solange der Plan fehlt.
+# Voraussetzungen: Workers Paid Plan (Containers), GitHub Action Secrets
+# CLOUDFLARE_API_TOKEN und CLOUDFLARE_ACCOUNT_ID sowie benoetigte Secrets
+# am Worker baitbuddy-api (cloudflare/backend/containerEnv.js).
 
 on:
   workflow_dispatch:
   push:
     branches:
       - main
-    paths:
-      - 'backend/**'
-      - 'scripts/**'
-      - 'docker/backend.Dockerfile'
-      - 'cloudflare/backend/**'
-      - '.github/workflows/deploy-cloudflare-backend.yml'
 
 concurrency:
   group: deploy-cloudflare-backend
@@ -28,8 +21,8 @@ concurrency:
 
 jobs:
   deploy:
-    if: ${{ github.event_name == 'workflow_dispatch' || vars.CLOUDFLARE_BACKEND_ENABLED == 'true' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     permissions:
       contents: read
     env:
@@ -38,6 +31,16 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Verify Cloudflare deployment credentials
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CF_TOKEN" ] || [ -z "$CF_ACCOUNT" ]; then
+            echo "::error::Cloudflare deployment requires GitHub secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID."
+            exit 1
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -48,6 +51,9 @@ jobs:
       # @cloudflare/containers wird für das Worker-Bundle gebraucht.
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
+
+      - name: Test Cloudflare backend environment
+        run: npm test -- cloudflare/backend/containerEnv.test.js
 
       # Baut docker/backend.Dockerfile (Docker ist auf ubuntu-latest vorhanden),
       # pusht das Image in die Cloudflare-Registry und rollt den Container aus.
