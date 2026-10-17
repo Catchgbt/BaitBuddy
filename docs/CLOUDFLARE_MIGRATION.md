@@ -16,6 +16,37 @@
 Produktives Go-Live nach Nameserver-Umschaltung. Bis dahin: Vercel läuft parallel mit
 Übergangslösung (`BACKEND_URL` -> neues Vercel-Projekt in `wrangler.toml`).
 
+## Parallelbetrieb: Vercel + Cloudflare-Backend (17.10.2026)
+
+BaitBuddy behaelt die bestehende Vercel-Bereitstellung. Bei **jedem Push auf `main`**
+(z. B. nach einem Merge) startet GitHub Actions zusaetzlich den Workflow
+`.github/workflows/deploy-cloudflare-backend.yml` und baut bzw. deployed
+den Express-Container fuer den separaten Cloudflare-Worker `baitbuddy-api`.
+Der Front-Door-Worker wird unabhaengig ueber `deploy-cloudflare.yml`
+aktualisiert. Vercels eigene Git-Integration bleibt ebenfalls unabhaengig.
+
+**Voraussetzungen fuer einen erfolgreichen Cloudflare-Backend-Deploy:**
+
+1. Cloudflare Workers Paid Plan mit verfuegbaren Containers.
+2. GitHub Actions Secrets `CLOUDFLARE_API_TOKEN` (Workers/Containers-Deploy-Rechte)
+   und `CLOUDFLARE_ACCOUNT_ID` im Repository.
+3. Backend-Secrets direkt am Worker `baitbuddy-api`, darunter
+   `SUPABASE_SERVICE_ROLE_KEY`, die verwendeten KI-/Stripe-/SMTP-Secrets und
+   `CRON_SECRET` (siehe `cloudflare/backend/containerEnv.js`).
+4. Der Workflow prueft die Cloudflare-Deploy-Zugangsdaten, fuehrt den Test
+   `cloudflare/backend/containerEnv.test.js` aus, deployt Worker plus Container
+   und kontrolliert danach dessen `/api/health` (bis zu 10 Minuten Wartezeit).
+   Fehlende Berechtigungen oder ein fehlender Paid Plan fuehren zu einem
+   **sichtbaren fehlgeschlagenen GitHub-Actions-Lauf**, nicht zu einem
+   unbelegten Erfolg.
+
+**Sicherheit:** Dieser Workflow aendert `BACKEND_URL` im Root-`wrangler.toml`
+nicht und schaltet weder Domain noch Stripe-Webhooks um. Das laufende
+Vercel-Backend bleibt das konfigurierte Produktivziel, bis ein kontrollierter
+Routingwechsel mit echten Login-/KI-/Kauf-Tests explizit freigegeben wird.
+Bei fehlerhaftem Cloudflare-Container erfolgt kein automatischer Wechsel
+des Live-Backends.
+
 ## Zielarchitektur
 
 | Schicht | Vorher (Vercel) | Nachher (Cloudflare) |
@@ -56,9 +87,10 @@ ein fehlender Paid Plan bricht den Frontend-Deploy nicht.
   `primary` weiter (eine Instanz: In-Memory-Caches/Rate-Limit bleiben konsistent).
 - `cloudflare/backend/containerEnv.js` — welche Worker-Secrets als Umgebung in den
   Container gehen (Test prüft, dass `backend/.env.example` vollständig abgedeckt ist).
-- `.github/workflows/deploy-cloudflare-backend.yml` — manuell oder (mit Repo-Variable
-  `CLOUDFLARE_BACKEND_ENABLED=true`) bei Backend-Änderungen auf `main`; prüft danach
+- `.github/workflows/deploy-cloudflare-backend.yml` — bei jedem Push auf `main`
+  (und manuell); prüft anschließend
   `https://baitbuddy-api.kaisaschnitt99.workers.dev/api/health`.
+  Die Repo-Variable `CLOUDFLARE_BACKEND_ENABLED` wird nicht mehr benötigt.
 
 **Nicht `ALLOWED_ORIGINS` setzen**, solange die Android-App `capacitor://localhost`
 braucht: die Variable ersetzt die Standardliste komplett.
@@ -78,8 +110,8 @@ braucht: die Variable ersetzt die Standardliste komplett.
 5. `BACKEND_URL` in der Root-`wrangler.toml` auf
    `https://baitbuddy-api.kaisaschnitt99.workers.dev` umstellen und mergen.
    Bei Problemen den letzten nachweislich funktionsfähigen aktuellen Backend-Stand wiederherstellen. Das stillgelegte Projekt `https://bait-buddy.vercel.app` darf nicht mehr als Rückfallziel verwendet werden.
-6. Repo-Variable `CLOUDFLARE_BACKEND_ENABLED=true` setzen, damit Backend-Änderungen
-   automatisch deployt werden. Stripe-Webhook-URL erst danach umziehen.
+6. Automatische Backend-Deploys sind nach erfolgreichem Merge in `main` bereits
+   aktiviert. Stripe-Webhook-URL erst nach explizitem, getesteten Traffic-Switch umziehen.
 
 ## Ziel-Domain
 
