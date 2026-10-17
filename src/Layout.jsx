@@ -374,15 +374,15 @@ function LayoutContent({ children, currentPageName }) {
                     onOpenCommandCenter={() => setIsSidebarOpen(true)}
                     title={PAGE_TOP_BARS[currentPageName]?.title}
                     action={PAGE_TOP_BARS[currentPageName]?.action}
-                    className={PAGE_TOP_BARS[currentPageName]?.className}
+                    className={['Map', 'MapPage'].includes(currentPageName) ? 'bb-map-topbar' : PAGE_TOP_BARS[currentPageName]?.className}
                     showEventTimer={currentPageName === 'Dashboard'}
                   />
                 )}
 
-                <div className="w-full min-h-screen px-0 sm:px-0">
+                <div className={`w-full px-0 sm:px-0 ${['Map', 'MapPage'].includes(currentPageName) ? '' : 'min-h-screen'}`}>
                   <SwipeToRefresh onRefresh={() => queryClient.invalidateQueries()}>
                     <AnimatePresence initial={false}>
-                      <PageTransition key={currentPageName}>
+                      <PageTransition key={currentPageName} immersive={['Map', 'MapPage'].includes(currentPageName)}>
                         {children}
                       </PageTransition>
                     </AnimatePresence>

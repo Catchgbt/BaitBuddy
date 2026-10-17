@@ -15,7 +15,7 @@ import { useNavigationContext } from '@/lib/NavigationContext';
  *
  * Tab switches reset direction to forward (1) for a fresh slide-in effect.
  */
-export default function PageTransition({ children }) {
+export default function PageTransition({ children, immersive = false }) {
   const { direction } = useNavigationContext();
 
   const slideDistance = 48; // px — responsive slide distance for native feel
@@ -55,7 +55,7 @@ export default function PageTransition({ children }) {
       className="bg-transparent"
       style={{
         minHeight: 'calc(100vh - 200px)',
-        paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))',
+        paddingBottom: immersive ? 0 : 'calc(5rem + env(safe-area-inset-bottom))',
         // GPU acceleration for smooth animations
         willChange: 'transform, opacity',
         // Prevent layout shift from affecting siblings during animation
