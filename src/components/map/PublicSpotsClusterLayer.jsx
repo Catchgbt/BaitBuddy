@@ -5,17 +5,12 @@ import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 
-// Grüner Marker für öffentliche Angelvereine/Parks/Spots — identisch zum
-// bisher in MapPage genutzten greenIcon, damit die Legende gleich bleibt.
-const publicIcon = L.icon({
-  iconUrl:
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-  className: "",
+// Lokales Vektor-Icon: keine externen Marker-Bilder beim Öffnen der Karte.
+const publicIcon = L.divIcon({
+  className: 'bb-map-pin bb-map-pin-public',
+  html: '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 12c4-7 10-7 14 0-4 7-10 7-14 0Z M6 12l-4-4v8Z"/><circle cx="16" cy="11" r="1"/></svg></span>',
+  iconSize: [38, 46],
+  iconAnchor: [19, 46],
 });
 
 // HTML-Escaping für Popup-Inhalte, da Name/Adresse aus Datendateien stammen.
@@ -64,7 +59,7 @@ const buildPopup = (location) => {
  * als geclusterte Marker. Clustering ist zwingend, weil es ~800 Standorte sind;
  * einzelne React-Marker würden auf Low-End-Geräten (≤2GB RAM) ruckeln.
  */
-export default function PublicSpotsClusterLayer({ locations = [], visible = true }) {
+export default function PublicSpotsClusterLayer({ locations = [], visible = true, onSelect }) {
   const map = useMap();
   const clusterRef = useRef(null);
 
@@ -83,7 +78,8 @@ export default function PublicSpotsClusterLayer({ locations = [], visible = true
       const lng = Number(location.coordinates?.lng);
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
       const marker = L.marker([lat, lng], { icon: publicIcon });
-      marker.bindPopup(buildPopup(location));
+      if (onSelect) marker.on('click', () => onSelect(location));
+      else marker.bindPopup(buildPopup(location));
       cluster.addLayer(marker);
     });
 
@@ -96,7 +92,7 @@ export default function PublicSpotsClusterLayer({ locations = [], visible = true
         clusterRef.current = null;
       }
     };
-  }, [map, locations]);
+  }, [map, locations, onSelect]);
 
   useEffect(() => {
     if (!map || !clusterRef.current) return;

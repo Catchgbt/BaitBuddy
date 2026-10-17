@@ -13,11 +13,13 @@ import MapLayerControls from "@/components/map/v2/MapLayerControls";
 import HillshadeLayer from "@/components/map/v2/HillshadeLayer";
 import Terrain3DLayer from "@/components/map/v2/Terrain3DLayer";
 import HydrographicAnalysis from "@/components/map/v2/HydrographicAnalysis";
-import SatelliteOverlayLayer from "@/components/map/v2/SatelliteOverlayLayer";
 import AdvancedCacheManager from "@/components/map/v2/AdvancedCacheManager";
 import MapModeManager from "@/components/map/MapModeManager";
+import { MapSearch, MapWeather, MapSpotPreview, matchesSpecies, spotCoordinates } from "@/components/map/MapExplorerUI";
+import "@/styles/map-explorer.css";
+import "leaflet/dist/leaflet.css";
 import { RadarLayer, useRainviewerRadar, RADAR_MODES } from "@/components/map/RadarOverlay";
-import { MapPin, MapPinOff, CloudRain, Crosshair, Play, Pause, ChevronDown, Sunrise, Ticket, Plus, LocateFixed } from "lucide-react";
+import { MapPin, MapPinOff, CloudRain, Crosshair, Play, Pause, Fish, Sunrise, Ticket, Plus, LocateFixed } from "lucide-react";
 import SunriseSunsetPanel from "@/components/map/SunriseSunsetPanel";
 import PublicSpotsClusterLayer from "@/components/map/PublicSpotsClusterLayer";
 import { PERMIT_LOCATIONS, CATEGORY_LABELS, GERMAN_STATES } from "@/data/permitLocations";
@@ -32,6 +34,8 @@ const STATIC_PUBLIC_LOCATIONS = (Array.isArray(angelparksExport) ? angelparksExp
     id: p.id,
     name: p.name,
     category: p.category || "club",
+    fische: p.fische,
+    target_species: p.target_species,
     coordinates: { lat: Number(p.coordinates.lat), lng: Number(p.coordinates.lng) },
     address: p.address,
     website: p.website,
@@ -39,47 +43,16 @@ const STATIC_PUBLIC_LOCATIONS = (Array.isArray(angelparksExport) ? angelparksExp
     source: p.source,
   }));
 
-// Leaflet CSS laden
-if (typeof document !== "undefined") {
-  const existingLink = document.querySelector('link[data-leaflet]');
-  if (!existingLink) {
-    const link = document.createElement("link");
-    link.setAttribute("data-leaflet", "1");
-    link.rel = "stylesheet";
-    link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-    document.head.appendChild(link);
-  }
-}
-
-// Standard Leaflet Icons - Fix für className
-const createIcon = (iconUrl, shadowUrl) => {
-  return L.icon({
-    iconUrl,
-    shadowUrl,
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41],
-    className: '' // Leerer String statt undefined
-  });
-};
-
-const defaultIcon = createIcon(
-  "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png"
-);
-
-const userIcon = createIcon(
-  "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
-  "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png"
-);
+const createIcon = (iconUrl, shadowUrl) => L.icon({ iconUrl, shadowUrl, iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41], className: '' });
+const defaultIcon = L.divIcon({ className: 'bb-map-pin', html: '<span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 12c4-7 10-7 14 0-4 7-10 7-14 0Z M6 12l-4-4v8Z"/><circle cx="16" cy="11" r="1"/></svg></span>', iconSize: [38, 46], iconAnchor: [19, 46] });
+const userIcon = L.divIcon({ className: 'bb-map-position', html: '<span></span>', iconSize: [24, 24], iconAnchor: [12, 12] });
 
 const orangeIcon = createIcon(
   "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png",
   "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png"
 );
 
-function MapController({ center, zoom }) {
+function MapController({ center, zoom, onMove }) {
   const map = useMap();
   
   useEffect(() => {
@@ -88,6 +61,17 @@ function MapController({ center, zoom }) {
     }
   }, [center, zoom, map]);
   
+  useEffect(() => {
+    const update = () => { const point = map.getCenter(); onMove({ lat: point.lat, lng: point.lng }); };
+    map.on('moveend', update);
+    return () => map.off('moveend', update);
+  }, [map, onMove]);
+  useEffect(() => {
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => map.invalidateSize({ pan: true, debounceMoveend: true }));
+    observer.observe(map.getContainer());
+    return () => observer.disconnect();
+  }, [map]);
   return null;
 }
 
@@ -130,24 +114,28 @@ export default function MapPage() {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [mapCenter, setMapCenter] = useState([51.1657, 10.4515]);
   const [mapZoom, setMapZoom] = useState(6);
+  const [viewportCenter, setViewportCenter] = useState({ lat: 51.1657, lng: 10.4515 });
   const [nearestSpot, setNearestSpot] = useState(null);
   const [travelInfo, setTravelInfo] = useState(null);
   const [showHillshade, setShowHillshade] = useState(false);
   const [show3DTerrain, setShow3DTerrain] = useState(false);
   const [showHydrographic, setShowHydrographic] = useState(false);
-  const [showSatellite, setShowSatellite] = useState(false);
-  const [mapMode, setMapMode] = useState(() => {
-    return localStorage.getItem('mapMode') || 'guided';
-  });
-  const [isFirstTime, setIsFirstTime] = useState(() => {
-    return !localStorage.getItem('mapTourCompleted');
-  });
+  const [showSatellite, setShowSatellite] = useState(true);
   const [showPublicSpots, setShowPublicSpots] = useState(false);
   const [showPermitLocations, setShowPermitLocations] = useState(false);
   const [permitStateFilter, setPermitStateFilter] = useState("all");
   // Ansicht: Spots-Karte, Wetter-Radar oder Beiszeiten-Rechner
   const [mapView, setMapView] = useState("spots");
   const [showDetails, setShowDetails] = useState(false);
+  const [speciesFilter, setSpeciesFilter] = useState('');
+  const [previewSpot, setPreviewSpot] = useState(null);
+  const selectSpot = useCallback(spot => {
+    const coords = spotCoordinates(spot);
+    if (!coords) return;
+    setPreviewSpot(spot);
+    setMapCenter([coords.lat, coords.lon]);
+    setMapZoom(14);
+  }, []);
   const radar = useRainviewerRadar(mapView === "radar");
   useEffect(() => {
     if (searchParams.get('addSpot') === '1' && currentLocation?.lat != null) {
@@ -156,7 +144,7 @@ export default function MapPage() {
       setSearchParams({}, { replace: true });
     }
     const selected = spots.find(spot => String(spot.id) === searchParams.get('spot'));
-    if (selected) { setSelectedLocation({ ...selected, type: 'spot' }); setMapCenter([Number(selected.latitude), Number(selected.longitude)]); setMapZoom(14); }
+    if (selected) { setPreviewSpot({ ...selected, type: 'spot' }); setMapCenter([Number(selected.latitude), Number(selected.longitude)]); setMapZoom(14); }
   }, [searchParams, setSearchParams, currentLocation, spots]);
 
   useEffect(() => {
@@ -164,8 +152,9 @@ export default function MapPage() {
   }, []);
 
   const handleLocateMe = useCallback(() => {
+    if (currentLocation) { setMapCenter([currentLocation.lat, currentLocation.lon]); setMapZoom(13); }
     requestGpsLocation?.();
-  }, [requestGpsLocation]);
+  }, [requestGpsLocation, currentLocation]);
 
   // Eigener Standort auf der Karte: der aktive Standort der App (GPS, manuell
   // gesetzt oder Spot), sonst der letzte GPS-Fix.
@@ -230,6 +219,8 @@ export default function MapPage() {
           id: feature.properties?.id,
           name: feature.properties?.name,
           category: feature.properties?.category,
+          target_species: feature.properties?.target_species,
+          fische: feature.properties?.fische,
           coordinates: {
             lng: feature.geometry.coordinates[0],
             lat: feature.geometry.coordinates[1]
@@ -246,6 +237,8 @@ export default function MapPage() {
           name: h.name,
           category: h.category || 'spot',
           water_type: h.water_type,
+          target_species: h.target_species,
+          fische: h.fische,
           coordinates: {
             lat: Number(h.latitude),
             lng: Number(h.longitude)
@@ -298,6 +291,11 @@ export default function MapPage() {
       const userSpots = await Spot.list();
       const safeUserSpots = Array.isArray(userSpots) ? userSpots : [];
       setSpots(safeUserSpots);
+      setPreviewSpot(previous => {
+        if (previous?.type !== 'spot') return previous;
+        const updated = safeUserSpots.find(spot => spot.id === previous.id);
+        return updated ? { ...updated, type: 'spot' } : null;
+      });
 
       if (safeUserSpots.length > 0) {
         toast.success("Deine Spots geladen", {
@@ -385,20 +383,14 @@ export default function MapPage() {
     setClickedCoords(null);
   }, []);
 
-  const handleModeChange = useCallback((newMode) => {
-    setMapMode(newMode);
-    localStorage.setItem('mapMode', newMode);
-    toast.success(`Modus gewechselt zu ${newMode === 'guided' ? 'Geführt' : newMode === 'simple' ? 'Einfach' : 'Erweitert'}`);
-  }, []);
-
   const validSpots = useMemo(() =>
-    spots.filter(s => s.latitude != null && s.longitude != null),
-    [spots]
+    spots.filter(s => spotCoordinates(s) && matchesSpecies(s, speciesFilter)),
+    [spots, speciesFilter]
   );
 
   const validPublicLocations = useMemo(() =>
-    publicLocations.filter(l => l.coordinates?.lat != null && l.coordinates?.lng != null),
-    [publicLocations]
+    publicLocations.filter(l => spotCoordinates(l) && matchesSpecies(l, speciesFilter)),
+    [publicLocations, speciesFilter]
   );
 
   const filteredPermitLocations = useMemo(() => {
@@ -411,7 +403,7 @@ export default function MapPage() {
     return { lat: mapCenter[0], lon: mapCenter[1], label: 'Kartenmittelpunkt' };
   }, [gpsLocation, mapCenter]);
 
-  if (loading) {
+  if (loading && spots.length === 0 && publicLocations.length === 0) {
     return (
       <div className="bb-page flex items-center justify-center" style={{ minHeight: '100vh' }}>
         <div className="flex flex-col items-center gap-4">
@@ -423,30 +415,18 @@ export default function MapPage() {
   }
 
   return (
-    <div className="pb-32 overflow-y-auto" style={{ background: 'var(--bb-bg)' }}>
-      {/* Mode Manager & Guided Tour */}
-      <MapModeManager
-        mapMode={mapMode}
-        onModeChange={handleModeChange}
-        isFirstTime={isFirstTime}
-        onTourComplete={() => setIsFirstTime(false)}
+    <div className={`bb-map-page${previewSpot ? " has-preview" : ""}`}>
+      <MapSearch
+        spots={[...spots.map(spot => ({ ...spot, type: 'spot' })), ...publicLocations]}
+        onSelect={selectSpot}
+        onPlace={center => { setMapCenter(center); setMapZoom(13); setPreviewSpot(null); }}
+        onSettings={() => setShowDetails(value => !value)} settingsOpen={showDetails}
+        species={speciesFilter} onSpecies={value => { setSpeciesFilter(value); setPreviewSpot(null); }}
       />
-
-      <div className="max-w-7xl mx-auto p-4 space-y-4 min-h-screen">
-
-        <div className="flex items-center justify-between gap-2">
-          <h1 className="text-lg sm:text-2xl font-bold" style={{ color: 'var(--bb-cyan)' }}>
-            Karte & Spots
-          </h1>
-          <button type="button"
-            onClick={() => setShowDetails(v => !v)}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs bg-gray-800/70 border border-gray-700 text-gray-300 hover:bg-gray-700/70 transition-colors"
-          >
-            Details
-            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showDetails ? 'rotate-180' : ''}`} />
-          </button>
-        </div>
-
+      <div className="bb-map-content">
+      {showDetails && <section className="bb-map-options" aria-label="Kartenoptionen">
+        <div className="flex items-center justify-between mb-3"><h2>Kartenoptionen</h2><button type="button" onClick={() => setShowDetails(false)}>Schließen</button></div>
+        <MapModeManager />
         {/* Umschalter: Spots | Wetter-Radar | Beiszeiten */}
         <div className="flex p-1 rounded-xl bg-gray-900/70 border border-gray-800 gap-1">
           <button type="button"
@@ -521,7 +501,7 @@ export default function MapPage() {
                 <div>Cache-Optimierung</div>
               </div>
               <div className="text-xs text-cyan-600 mt-2 italic">
-                Klick den Hub rechts unten um Features zu aktivieren
+                Über das Ebenen-Symbol rechts auf der Karte aktivieren
               </div>
             </div>
           </div>
@@ -608,12 +588,14 @@ export default function MapPage() {
         </div>
         )}
 
-        <div className="h-[calc(100dvh-15rem)] min-h-[360px] md:h-[560px] rounded-2xl overflow-hidden border-2 border-gray-800 shadow-2xl relative z-10">
+      </section>}
+
+        <div className="bb-map-canvas">
           <MapContainer
             center={mapCenter}
             zoom={mapZoom}
             style={{ height: '100%', width: '100%' }}
-            zoomControl={true}
+            zoomControl={false}
           >
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -632,7 +614,12 @@ export default function MapPage() {
               visible={showHydrographic}
               bounds={mapCenter ? L.latLngBounds([[mapCenter[0] - 0.5, mapCenter[1] - 0.5], [mapCenter[0] + 0.5, mapCenter[1] + 0.5]]) : null}
             />
-            <SatelliteOverlayLayer visible={showSatellite} opacity={0.6} />
+            {showSatellite && <TileLayer
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+              attribution='Imagery &copy; Esri, Maxar, Earthstar Geographics, and the GIS User Community'
+              maxNativeZoom={18}
+              eventHandlers={{ tileerror: () => setShowSatellite(false) }}
+            />}
 
             {/* Layer Controls */}
             <MapLayerControls
@@ -651,9 +638,9 @@ export default function MapPage() {
             />
 
             {/* Advanced Cache Manager */}
-            <AdvancedCacheManager visible={true} />
+            <AdvancedCacheManager visible={showDetails} />
 
-            <MapController center={mapCenter} zoom={mapZoom} />
+            <MapController center={mapCenter} zoom={mapZoom} onMove={setViewportCenter} />
             <MapClickHandler onMapClick={handleMapClick} />
 
             {ownLocation && (
@@ -716,28 +703,16 @@ export default function MapPage() {
                 position={[Number(spot.latitude), Number(spot.longitude)]}
                 icon={defaultIcon}
                 eventHandlers={{
-                  click: () => setSelectedLocation({ ...spot, type: 'spot' })
+                  click: () => selectSpot({ ...spot, type: 'spot' })
                 }}
               >
-                <Popup>
-                  <div className="min-w-[200px]">
-                    <div className="font-semibold text-base mb-1">{spot.name}</div>
-                    <div className="text-sm text-gray-600">
-                      {spot.water_type && `${spot.water_type.charAt(0).toUpperCase() + spot.water_type.slice(1)}`}
-                    </div>
-                    {spot.depth_meters && (
-                      <div className="text-xs text-gray-500 mt-1">
-                        Tiefe: ~{spot.depth_meters}m
-                      </div>
-                    )}
-                  </div>
-                </Popup>
               </Marker>
             ))}
 
             <PublicSpotsClusterLayer
               locations={validPublicLocations}
               visible={showPublicSpots}
+              onSelect={selectSpot}
             />
 
             {showPermitLocations && filteredPermitLocations.map((loc) => (
@@ -788,20 +763,13 @@ export default function MapPage() {
           <button type="button"
             onClick={handleLocateMe}
             aria-label="Zu meinem Standort"
-            className="absolute top-3 right-3 z-[1000] w-11 h-11 flex items-center justify-center rounded-full bg-gray-900/85 border border-gray-700 text-cyan-300 shadow-lg backdrop-blur-sm active:scale-95 transition-transform"
+            className="bb-map-control bb-map-locate"
           >
             <Crosshair className="w-5 h-5" />
           </button>
-          {ownLocation && (
-            <button type="button"
-              onClick={handleRemoveOwnLocation}
-              aria-label="Meinen Standort entfernen"
-              title="Meinen Standort entfernen"
-              className="absolute top-16 right-3 z-[1000] w-11 h-11 flex items-center justify-center rounded-full bg-gray-900/85 border border-gray-700 text-red-300 shadow-lg backdrop-blur-sm active:scale-95 transition-transform"
-            >
-              <MapPinOff className="w-5 h-5" />
-            </button>
-          )}
+          <MapWeather lat={ownLocation?.lat} lon={ownLocation?.lon} />
+          <button type="button" className="bb-map-add" aria-label="Spot hinzufügen" onClick={() => { setClickedCoords(viewportCenter); setShowAddModal(true); }}><Plus size={28} /></button>
+          {speciesFilter && <div className="bb-map-filter-status" role="status"><Fish size={14} />{validSpots.length + (showPublicSpots ? validPublicLocations.length : 0)} Spots mit {speciesFilter}</div>}
 
           {/* Radar-Steuerung (Zeitleiste, Play/Pause, Transparenz) */}
           {mapView === 'radar' && (
@@ -863,6 +831,8 @@ export default function MapPage() {
           )}
         </div>
       </div>
+
+      {previewSpot && <MapSpotPreview key={previewSpot.id} spot={previewSpot} ownLocation={ownLocation} onDetails={() => setSelectedLocation(previewSpot)} onClose={() => setPreviewSpot(null)} onUpdate={loadMapData} />}
 
       {/* Beiszeiten-Panel — erscheint unterhalb der Karte wenn Tab aktiv */}
       {mapView === "bitezeit" && (

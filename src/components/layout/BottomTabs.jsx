@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Lock } from 'lucide-react';
+import { Lock, Fish } from 'lucide-react';
 import { useNavigationContext } from '@/lib/NavigationContext';
 import { useBuddyPreferences } from '@/lib/BuddyPreferencesContext';
 import { navigationItems } from '@/components/navigation/navigationItems';
@@ -217,11 +217,12 @@ export default function BottomTabs() {
   };
 
   const split = Math.ceil(navigation.length / 2);
+  const mapActive = activePage === 'Map' || activePage === 'MapPage';
   const buddyActive = BUDDY_PAGES.has(activePage);
   const activityClass = buddyActivity !== 'idle' ? ` bb-fab-${buddyActivity}` : '';
 
   return (
-    <nav className="bb-navbar" role="tablist" aria-label="Hauptnavigation">
+    <nav className={`bb-navbar${mapActive ? ' bb-map-navbar' : ''}`} role="tablist" aria-label="Hauptnavigation">
       <div className="bb-navbar-inner">
         {navigation.slice(0, split).map(renderLink)}
 
@@ -234,6 +235,7 @@ export default function BottomTabs() {
             data-tool-active={toolPulse ? 'true' : undefined}
             aria-label={voiceSpeaking ? 'Buddy-Sprache stoppen' : 'KI-Buddy öffnen; 3 Sekunden halten für Voice'}
             title={voiceSpeaking ? 'Sprache stoppen' : 'KI-Buddy öffnen · 3 Sek. halten für Voice'}
+            onClick={event => { if (event.detail === 0) { if (voiceSpeaking) cancelElevenLabs(); else openBuddyChat(); } }}
             onPointerDown={startLongPress}
             onPointerUp={endLongPress}
             onPointerLeave={cancelLongPress}
@@ -260,14 +262,14 @@ export default function BottomTabs() {
                 />
               </svg>
             )}
-            <img
+            {mapActive ? <Fish size={27} aria-hidden="true" /> : <img
               src="/assets/buddy/buddy-icon.webp"
               alt=""
               aria-hidden="true"
               draggable="false"
               width="64"
               height="64"
-            />
+            />}
           </button>
           <span className="bb-nav-label" aria-hidden="true">{navigationItems.KiBuddyBeta.name}</span>
           {showHint && <div className="bb-fab-hint" role="tooltip">3 Sek. halten = Voice</div>}

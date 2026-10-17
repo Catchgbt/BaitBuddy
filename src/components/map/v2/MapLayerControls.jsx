@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Eye, EyeOff, Layers } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import L from 'leaflet';
+import { Eye, EyeOff, Layers, Mountain, Box, Waves, Satellite } from 'lucide-react';
 
 /**
  * MapLayerControls - Steuerung für erweiterte Kartenlayer
@@ -19,13 +20,19 @@ function MapLayerControls({
   satelliteEnabled = false
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const controlRef = useRef(null);
+  useEffect(() => {
+    if (!controlRef.current) return;
+    L.DomEvent.disableClickPropagation(controlRef.current);
+    L.DomEvent.disableScrollPropagation(controlRef.current);
+  }, []);
 
   const layers = [
     {
       id: 'hillshade',
       label: 'Relief-Shading',
       description: 'Geländerelief-Visualisierung',
-      icon: '🏔️',
+      icon: Mountain,
       enabled: hillshadeEnabled,
       onToggle: onHillshadeToggle
     },
@@ -33,7 +40,7 @@ function MapLayerControls({
       id: '3d-terrain',
       label: '3D Terrain',
       description: 'Dreidimensionale Höhenvisualisierung',
-      icon: '🗻',
+      icon: Box,
       enabled: terrain3DEnabled,
       onToggle: on3DTerrainToggle
     },
@@ -41,7 +48,7 @@ function MapLayerControls({
       id: 'hydrographic',
       label: 'Hydrographische Daten',
       description: 'Wasser-Temperatur, Strömung, Tiefe',
-      icon: '💧',
+      icon: Waves,
       enabled: hydrographicEnabled,
       onToggle: onHydrographicToggle
     },
@@ -49,7 +56,7 @@ function MapLayerControls({
       id: 'satellite',
       label: 'Satelliten-Bilder',
       description: 'Multi-spektrale Satellitendaten',
-      icon: '🛰️',
+      icon: Satellite,
       enabled: satelliteEnabled,
       onToggle: onSatelliteToggle
     }
@@ -58,18 +65,20 @@ function MapLayerControls({
   const enabledCount = layers.filter(l => l.enabled).length;
 
   return (
-    <div className="absolute top-3 right-3 z-[500]">
+    <div ref={controlRef} className="absolute top-3 right-3 z-[1000]">
       {/* Collapsed button */}
       {!isExpanded && (
         <button type="button"
           onClick={() => setIsExpanded(true)}
-          className="flex items-center gap-2 bg-gray-900/80 backdrop-blur-sm border border-gray-700 rounded-lg p-2.5 text-cyan-400 hover:bg-gray-900 transition hover:border-cyan-600"
+          className="flex items-center gap-2 bg-gray-900/80 backdrop-blur-sm border border-gray-700 rounded-xl min-w-[48px] min-h-[48px] justify-center p-2.5 text-cyan-400 hover:bg-gray-900 transition hover:border-cyan-600"
           title="Erweiterte Kartenlayer"
+          aria-label="Kartenebenen"
+          aria-expanded={isExpanded}
         >
           <Layers className="w-5 h-5" />
           {enabledCount > 0 && (
             <span className="text-xs font-semibold bg-cyan-600/40 px-1.5 py-0.5 rounded">
-              {enabledCount} aktiv
+              {enabledCount}
             </span>
           )}
         </button>
@@ -77,13 +86,14 @@ function MapLayerControls({
 
       {/* Expanded panel */}
       {isExpanded && (
-        <div className="bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-700 p-4 w-64 shadow-xl">
+        <div className="bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-700 p-4 w-64 max-h-[55vh] overflow-y-auto shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2 text-cyan-400 font-semibold">
               <Layers className="w-5 h-5" />
               <span>Kartenlayer</span>
             </div>
             <button type="button"
+              aria-label="Kartenebenen schließen"
               onClick={() => setIsExpanded(false)}
               className="text-gray-400 hover:text-gray-200 text-xl"
             >
@@ -96,6 +106,7 @@ function MapLayerControls({
             {layers.map(layer => (
               <button type="button"
                 key={layer.id}
+                aria-pressed={layer.enabled}
                 onClick={() => {
                   layer.onToggle(!layer.enabled);
                 }}
@@ -106,7 +117,7 @@ function MapLayerControls({
                 }`}
               >
                 {/* Icon */}
-                <div className="text-xl mt-0.5">{layer.icon}</div>
+                <layer.icon className="w-5 h-5 mt-0.5 shrink-0" aria-hidden="true" />
 
                 {/* Content */}
                 <div className="text-left flex-1">

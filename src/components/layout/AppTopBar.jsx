@@ -92,8 +92,8 @@ export default function AppTopBar({ isRoot, user, isDemo, onOpenCommandCenter, t
 
   if (isRoot) {
     return (
-      <header className="bb-topbar bb-topbar-root">
-        <BrandLogo size="lg" align="left" withMark={false} />
+      <header className={`bb-topbar bb-topbar-root ${className}`}>
+        <BrandLogo size="lg" align="left" withMark={className === 'bb-map-topbar'} />
         {right}
         {showEventTimer && <HeaderModeStatus user={user} />}
         {showEventTimer && <EventTimer />}
